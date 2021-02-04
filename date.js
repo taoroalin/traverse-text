@@ -13,11 +13,13 @@ const monthNames = [
   "December",
 ];
 
-const getOrdinal = (number) => {
-  if (number === 1) return number + "st";
-  if (number === 2) return number + "nd";
-  if (number === 3) return number + "rd";
-  return number + "th";
+const getOrdinal = (i) => {
+  const j = i % 10,
+    k = i % 100;
+  if (j == 1 && k != 11) return i + "st";
+  if (j == 2 && k != 12) return i + "nd";
+  if (j == 3 && k != 13) return i + "rd";
+  return i + "th";
 };
 
 const formatDate = (date) =>

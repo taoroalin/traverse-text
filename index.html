@@ -2,28 +2,62 @@
   <script src="datalog-js/datalog.js"></script>
   <script src="edn-js/edn.js"></script>
   <script src="date.js"></script>
+  <script src="parse.js"></script>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
 </head>
 
 <body>
-  <template id="block">
-    <div class="block__body">
 
-    </div>
-    <div class="block__children">
-
-    </div>
-  </template>
   <template id="page">
-    <h1 class="page__title"></h1>
-    <div class="page__body">
+    <div class="page">
+      <h1 class="page__title"></h1>
 
+      <div class="page__body">
+
+      </div>
+      <div class="page__backlinks">
+
+      </div>
     </div>
   </template>
+
+  <template id="block">
+    <div class="block">
+      <div class="block__body" contenteditable="true" tabindex="-1">
+
+      </div>
+      <div class="block__children">
+
+      </div>
+    </div>
+  </template>
+
+  <template id="page-ref">
+    <span class="page-ref"><span>[[</span><span class="page-ref__body"></span><span>]]</span></span>
+  </template>
+
+  <template id="tag">
+    <span class="tag"></span>
+  </template>
+
   <template id="backrefs">
     <div>Linked References</div>
   </template>
+
+
   <div id="app">
+    <div id="page-frame">
+
+    </div>
+    <div id="search" style="display:none">
+      <input id="search__input" />
+      <div id="search__options">
+
+      </div>
+    </div>
   </div>
+
   <script src="index.js"></script>
+
 </body>
