@@ -1,17 +1,13 @@
 <head>
-  <script src="datalog-js/datalog.js"></script>
-  <script src="edn-js/edn.js"></script>
-  <script src="date.js"></script>
-  <script src="parse.js"></script>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
 </head>
 
-<body>
+<body class="light-mode">
 
   <template id="page">
     <div class="page">
-      <h1 class="page__title"></h1>
+      <h1 class="page__title" contenteditable="true"></h1>
 
       <div class="page__body">
 
@@ -33,31 +29,45 @@
     </div>
   </template>
 
+  <template id="block-text"><span class="block-text"></span></template>
+
   <template id="page-ref">
-    <span class="page-ref"><span>[[</span><span class="page-ref__body"></span><span>]]</span></span>
+    <span class="page-ref"><span class="page-ref__brackets">[[</span>
+      <span class="page-ref__body">
+
+      </span>
+      <span class="page-ref__brackets">]]</span>
+    </span>
   </template>
 
   <template id="tag">
     <span class="tag"></span>
   </template>
 
-  <template id="backrefs">
-    <div>Linked References</div>
-  </template>
+  <template id="backrefs-list">
+    <div class="backrefs-list">
+      <div class="backrefs-list__title"><span class="bckrefs-list__count"></span>Linked References</div>
 
+    </div>
+  </template>
 
   <div id="app">
     <div id="page-frame">
 
     </div>
+
     <div id="search" style="display:none">
       <input id="search__input" />
       <div id="search__options">
 
       </div>
     </div>
+
   </div>
 
+  <script src="datalog-js/datalog.js"></script>
+  <script src="edn-js/edn.js"></script>
+  <script src="date.js"></script>
+  <script src="parse.js"></script>
   <script src="index.js"></script>
-
 </body>

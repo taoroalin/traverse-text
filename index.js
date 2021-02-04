@@ -1,6 +1,7 @@
 // State
 let database = new DQ();
 let editingBlock = null;
+let oldestLoadedDailyNoteDate = null;
 
 // Constants
 
@@ -17,12 +18,41 @@ const pageTemplate = document.getElementById("page").content;
 const blockTemplate = document.getElementById("block").content;
 
 const searchElement = document.getElementById("search");
+const pageFrame = document.getElementById("page-frame");
+
+const gotoPageTitle = (title) => {
+  oldestLoadedDailyNoteDate = null;
+  document.removeEventListener("scroll", dailyNotesInfiniteScrollListener);
+
+  const existingPage = Array.from(database.vae[title]["node/title"])[0];
+  if (existingPage) {
+    pageFrame.textContent = "";
+    renderPage(pageFrame, existingPage);
+  }
+};
+
+const gotoDailyNotes = () => {
+  document.removeEventListener("scroll", dailyNotesInfiniteScrollListener);
+  document.addEventListener("scroll", dailyNotesInfiniteScrollListener);
+  pageFrame.textContent = "";
+  oldestLoadedDailyNoteDate = new Date(Date.now());
+  oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1);
+  for (let i = 0; i < 10; i++) {
+    const daysNotes =
+      database.vae[formatDate(oldestLoadedDailyNoteDate)]["node/title"];
+    if (daysNotes) {
+      renderPage(pageFrame, Array.from(daysNotes)[0]);
+      oldestLoadedDailyNoteDate.setDate(
+        oldestLoadedDailyNoteDate.getDate() - 1
+      );
+    }
+  }
+};
 
 // Rendering
-const renderPage = (parentNode, entityId, isDailyNotePage) => {
+const renderPage = (parentNode, entityId) => {
   const element = pageTemplate.cloneNode(true);
   const title = element.firstElementChild.firstElementChild;
-  title.contentEditable = !isDailyNotePage;
   const body = element.firstElementChild.children[1];
   title.innerText = database.eav[entityId]["node/title"];
   const children = database.eav[entityId]["block/children"];
@@ -39,7 +69,7 @@ const renderBlock = (parentNode, entityId) => {
   const body = element.firstElementChild.firstElementChild;
   const childrenContainer = element.firstElementChild.children[1];
   element.firstElementChild.setAttribute("data-id", entityId);
-  body.innerText = database.eav[entityId]["block/string"];
+  renderBlockBody(body, database.eav[entityId]["block/string"]);
   const children = database.eav[entityId]["block/children"];
   if (children) {
     for (let child of children) {
@@ -50,6 +80,20 @@ const renderBlock = (parentNode, entityId) => {
 };
 
 // Global event listeners that switch on active element, as a possibly more performant, simpler option than propagating through multiple event handlers
+
+const dailyNotesInfiniteScrollListener = (event) => {
+  const fromBottom =
+    pageFrame.getBoundingClientRect().bottom - window.innerHeight;
+  if (fromBottom < 700) {
+    oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1);
+    const daysNotes =
+      database.vae[formatDate(oldestLoadedDailyNoteDate)]["node/title"];
+    if (daysNotes) {
+      renderPage(pageFrame, Array.from(daysNotes)[0]);
+    }
+  }
+};
+
 document.addEventListener("input", (event) => {
   if (event.target.className === "block__body") {
     const id = event.target.parentNode.dataset.id;
@@ -59,9 +103,24 @@ document.addEventListener("input", (event) => {
 
 document.addEventListener("keydown", (event) => {
   // Check for global shortcut keys
+  if (event.key === "m" && event.ctrlKey) {
+    if (document.body.className === "light-mode") {
+      document.body.className = "dark-mode";
+    } else {
+      document.body.className = "light-mode";
+    }
+    event.preventDefault();
+    return;
+  }
+  if (event.key === "d" && event.altKey) {
+    gotoDailyNotes();
+    event.preventDefault();
+    return;
+  }
   if (event.key === "Escape") {
     // if escape key, get rid of ALL modal / popup whatevers, don't care which one we're in right now
     searchElement.style.display = "none";
+    return;
   }
   if (event.ctrlKey && event.key === "u") {
     if (searchElement.style.display === "none") {
@@ -71,6 +130,7 @@ document.addEventListener("keydown", (event) => {
       searchElement.style.display = "none";
     }
     event.preventDefault();
+    return;
   }
 
   // Check for actions based on active element
@@ -125,22 +185,21 @@ document.addEventListener("keydown", (event) => {
     document.activeElement.id === "search__input"
   ) {
     if (event.key === "Enter") {
-      const existingPage = Array.from(
-        database.vae[event.target.value]["node/title"]
-      )[0];
-      console.log(existingPage);
-      if (existingPage) {
-        document.getElementById("page-frame").textContent = "";
-        renderPage(document.getElementById("page-frame"), existingPage);
-      }
+      gotoPageTitle(event.target.value);
+      event.preventDefault();
+      return;
     }
+  }
+});
+
+document.addEventListener("click", (event) => {
+  if (event.target.className === "page-ref__body") {
+    gotoPageTitle(event.target.innerText);
   }
 });
 
 async function start() {
   // Load database
-  let now = new Date(Date.now());
-  now.setDate(now.getDate() - 1);
   const response = await fetch("test-data/graphminer.edn");
   const ednText = await response.text();
   const roamEDN = parseEdn(ednText);
@@ -177,22 +236,9 @@ async function start() {
         );
       }
   }
-  // console.log(`loaded in ${performance.now() - loadSTime}`);
+  console.log(`loaded data into DQ in ${performance.now() - loadSTime}`);
 
-  // Render daily notes
-  // const rptime = performance.now();
-  for (let i = 0; i < 100; i++) {
-    const daysNotes = database.vae[formatDate(now)]["node/title"];
-    if (daysNotes) {
-      renderPage(
-        document.getElementById("page-frame"),
-        Array.from(daysNotes)[0],
-        true
-      );
-      now.setDate(now.getDate() - 1);
-    }
-  }
-  // console.log(`rendering 100 times took ${performance.now() - rptime}`);
+  gotoDailyNotes();
 
   let textLength = 0;
   const bs = database.aev["block/string"];
@@ -200,7 +246,7 @@ async function start() {
     textLength += bs[k].length;
   }
   console.log(`my text is ${textLength} long`);
-  console.log(JSON.stringify(database.eav));
+  // console.log(JSON.stringify(database.eav));
 }
 
 start();
