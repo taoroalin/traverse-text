@@ -3,11 +3,16 @@
   --background:#161616;
   --text: white;
   --link: #367bb8;
+  --brackets:#A7B6C2;
+  --tag:#A7B6C2;
+
 }
 .light-mode{
   --background:white;
   --text:black;
   --link: #367bb8;
+  --brackets:#A7B6C2;
+  --tag:#A7B6C2;
 }
 
 input{
@@ -71,6 +76,7 @@ body {
 
 .page-ref__brackets{
   font-weight: lighter;
+  color:var(--brackets);
 }
 
 .page-ref__body{
@@ -83,6 +89,23 @@ body {
   cursor:pointer;
   font-weight:bolder;
 }
+
+.tag{
+  color:var(--tag);
+}
+
+.tag:hover{
+  text-decoration: underline;
+  cursor:pointer;
+  font-weight:bolder;
+}
+
+.backrefs-list__title{
+  font-size: 1.2em;
+  font-weight:bold;
+  padding: 15px 0;
+}
+
 
 /* unused 
 #block-input{

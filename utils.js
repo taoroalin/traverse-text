@@ -26,3 +26,7 @@ const formatDate = (date) =>
   `${monthNames[date.getMonth()]} ${getOrdinal(
     date.getDate()
   )}, ${date.getFullYear()}`;
+
+const truncateElipsis = (text) => {
+
+}

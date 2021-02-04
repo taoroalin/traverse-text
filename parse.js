@@ -6,7 +6,7 @@ const tagTemplate = document.getElementById("tag").content.firstElementChild;
 
 const renderBlockBody = (parent, text) => {
   let stack = [parent];
-  const doubleSquareBrackets = text.matchAll(/(\[\[)|(\]\])/g);
+  const doubleSquareBrackets = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(https:\/\/twitter.com\/[a-zA-Z0-9_]{4,15}\/status\/[0-9]+)/g);
   let idx = 0;
   for (let match of doubleSquareBrackets) {
     if (match.index > idx) {
@@ -15,14 +15,20 @@ const renderBlockBody = (parent, text) => {
       );
       stack[stack.length - 1].appendChild(textNode);
     }
-    if (match[0][0] === "[") {
-      const linkNode = pageRefTemplate.cloneNode(true);
-      stack[stack.length - 1].appendChild(linkNode);
-      stack.push(linkNode.children[1]);
-    } else {
+    if (match[1]) {
+      const pageRefElement = pageRefTemplate.cloneNode(true);
+      stack[stack.length - 1].appendChild(pageRefElement);
+      stack.push(pageRefElement.children[1]);
+    } else if (match[2]) {
       if (stack.length > 1) {
         stack.pop();
       }
+    } else if (match[3]) {
+      const tagElement = tagTemplate.cloneNode(true);
+      tagElement.innerText = match[3];
+      stack[stack.length - 1].appendChild(tagElement);
+    } else if (match[4]) {
+      embedTweet(stack[stack.length - 1], match[3]);
     }
     idx = match.index + match[0].length;
   }

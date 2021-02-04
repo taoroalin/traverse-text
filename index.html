@@ -4,10 +4,9 @@
 </head>
 
 <body class="light-mode">
-
   <template id="page">
     <div class="page">
-      <h1 class="page__title" contenteditable="true"></h1>
+      <h1 class="page__title" contenteditable="true" tabindex="-1"></h1>
 
       <div class="page__body">
 
@@ -32,12 +31,8 @@
   <template id="block-text"><span class="block-text"></span></template>
 
   <template id="page-ref">
-    <span class="page-ref"><span class="page-ref__brackets">[[</span>
-      <span class="page-ref__body">
-
-      </span>
-      <span class="page-ref__brackets">]]</span>
-    </span>
+    <span class="page-ref"><span class="page-ref__brackets">[[</span><span class="page-ref__body"></span><span
+        class="page-ref__brackets">]]</span></span>
   </template>
 
   <template id="tag">
@@ -64,10 +59,10 @@
     </div>
 
   </div>
-
-  <script src="datalog-js/datalog.js"></script>
   <script src="edn-js/edn.js"></script>
-  <script src="date.js"></script>
+  <script src="integrations.js"></script>
+  <script src="utils.js"></script>
   <script src="parse.js"></script>
+  <script src="datalog-js/datalog.js"></script>
   <script src="index.js"></script>
 </body>

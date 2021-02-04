@@ -6,20 +6,52 @@ let oldestLoadedDailyNoteDate = null;
 // Constants
 
 const attributesICareAbout = [
+  "node/title",
   "block/children",
   "block/string",
-  "node/title",
   "block/order",
   "block/open",
+  "block/refs",
+  "block/uid",
+  "children/view-type",
+  "create/time"
 ];
 
 // Templates
-const pageTemplate = document.getElementById("page").content;
-const blockTemplate = document.getElementById("block").content;
+const pageTemplate = document.getElementById("page").content.firstElementChild;
+const blockTemplate = document.getElementById("block").content.firstElementChild;
+const backrefsListTemplate = document.getElementById("backrefs-list").content.firstElementChild;
 
+// Singleton elements
 const searchElement = document.getElementById("search");
 const pageFrame = document.getElementById("page-frame");
+const searchInput = document.getElementById("search__input");
 
+// Utils
+const renderBlockBreadcrumb = (parentNode, blockId) => {
+  const initialBeforeNode = document.createElement("div");
+  let beforeNode = initialBeforeNode;
+  let curBlockId = blockId;
+  while (true) {
+    const title = database.eav[curBlockId]["node/title"]
+    if (title) {
+      const titleElement = document.createElement("span");
+      titleElement.innerText = title;
+      parentNode.insertBefore(beforeNode, titleElement)
+      beforeNode = titleElement;
+    } else {
+      curBlockId = database.vae[curBlockId]["block/children"]
+      const content = document.createElement("span");
+      content.innerText = truncateElipsis(database.eav[curBlock]["block/string"], 40)
+      parentNode.insertBefore(beforeNode, content);
+      beforeNode = content;
+    }
+    break;
+  }
+  initialBeforeNode.remove();
+}
+
+// App state transitions
 const gotoPageTitle = (title) => {
   oldestLoadedDailyNoteDate = null;
   document.removeEventListener("scroll", dailyNotesInfiniteScrollListener);
@@ -52,24 +84,41 @@ const gotoDailyNotes = () => {
 // Rendering
 const renderPage = (parentNode, entityId) => {
   const element = pageTemplate.cloneNode(true);
-  const title = element.firstElementChild.firstElementChild;
-  const body = element.firstElementChild.children[1];
+  const title = element.firstElementChild;
+  const body = element.children[1];
+
   title.innerText = database.eav[entityId]["node/title"];
+
   const children = database.eav[entityId]["block/children"];
   if (children) {
     for (let child of children) {
       renderBlock(body, child);
     }
   }
+
+  const backrefs = database.vae[entityId]["block/refs"];
+  if (backrefs) {
+    const backrefsListElement = backrefsListTemplate.cloneNode(true);
+    element.children[2].appendChild(backrefsListElement)
+    for (let backref of backrefs) {
+      renderBlock(backrefsListElement, backref);
+    }
+  }
+
   parentNode.appendChild(element);
 };
 
 const renderBlock = (parentNode, entityId) => {
   const element = blockTemplate.cloneNode(true);
-  const body = element.firstElementChild.firstElementChild;
-  const childrenContainer = element.firstElementChild.children[1];
-  element.firstElementChild.setAttribute("data-id", entityId);
-  renderBlockBody(body, database.eav[entityId]["block/string"]);
+  const body = element.firstElementChild;
+  const childrenContainer = element.children[1];
+  element.setAttribute("data-id", entityId);
+
+  const string = database.eav[entityId]["block/string"]
+  if (string) {
+    renderBlockBody(body, string);
+  }
+
   const children = database.eav[entityId]["block/children"];
   if (children) {
     for (let child of children) {
@@ -125,7 +174,8 @@ document.addEventListener("keydown", (event) => {
   if (event.ctrlKey && event.key === "u") {
     if (searchElement.style.display === "none") {
       searchElement.style.display = "block";
-      document.getElementById("search__input").focus();
+      searchInput.value = "";
+      searchInput.focus();
     } else {
       searchElement.style.display = "none";
     }
@@ -186,6 +236,7 @@ document.addEventListener("keydown", (event) => {
   ) {
     if (event.key === "Enter") {
       gotoPageTitle(event.target.value);
+      searchElement.style.display = "none";
       event.preventDefault();
       return;
     }
@@ -195,6 +246,8 @@ document.addEventListener("keydown", (event) => {
 document.addEventListener("click", (event) => {
   if (event.target.className === "page-ref__body") {
     gotoPageTitle(event.target.innerText);
+  } else if (event.target.closest(".tag")) {
+    gotoPageTitle(event.target.closest(".tag").innerText.substring(1));
   }
 });
 
@@ -217,7 +270,7 @@ async function start() {
   }
   const loadSTime = performance.now();
   for (let datom of datoms) {
-    if (attributesICareAbout.includes(datom[1]))
+    if (true || attributesICareAbout.includes(datom[1]))
       if (manyAttributes.includes(datom[1])) {
         database.addDatom(
           datom[0] + DQ.minEntityId,
