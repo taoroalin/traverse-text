@@ -319,6 +319,8 @@ start = () => {
       refAttributes.push(k);
     }
   }
+  console.log(manyAttributes);
+  console.log(JSON.stringify(manyAttributes));
   const loadSTime = performance.now();
   database = new DQ([], schema)
   for (let datom of datoms) {
