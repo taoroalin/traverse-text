@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "build": "cd storage && node server.js"
+  }
+}
