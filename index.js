@@ -153,7 +153,13 @@ const uploadHandler = () => {
 
 const downloadHandler = () => {
   console.log("download")
-
+  const result = [];
+  for (let pageId in database.aev["title"]) {
+    console.log(pageId);
+    result.push(database.pull(pageId));
+  }
+  const json = JSON.stringify(result);
+  console.log(json);
 }
 
 document.addEventListener("input", (event) => {

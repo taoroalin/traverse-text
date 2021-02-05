@@ -5,7 +5,7 @@ const blockRefTemplate = document.getElementById("block-ref").content.firstEleme
 
 const renderBlockBody = (parent, text) => {
   let stack = [parent];
-  const doubleSquareBrackets = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z]+\)\))|(https:\/\/twitter.com\/[a-zA-Z0-9_]{4,15}\/status\/[0-9]+)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g);
+  const doubleSquareBrackets = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z]+\)\))|(showtweethttps:\/\/twitter.com\/[a-zA-Z0-9_]{4,15}\/status\/[0-9]+)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g);
   let idx = 0;
   for (let match of doubleSquareBrackets) {
     if (match.index > idx) {

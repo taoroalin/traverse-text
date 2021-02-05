@@ -1,5 +1,7 @@
 # Micro Roam
 
+Fast note taking app inspired by Roam Research. Aims to be 10x faster than Roam at all times, including site load, note load, creating blocks, ect. If you see it performing 5x faster than Roam or less, feel free to complain to me.
+
 ## Internals
 
 This project is made with *System Complexity*, in mind. That means instead of writing your own code to be elegant, you write code such that the entire project, including the platform, libraries, frameworks, as a whole is as as simple as possible. To that end, this project doesn't use libraries or NPM. 
