@@ -1,0 +1,7 @@
+[submodule "datalog-js"]
+	path = datalog-js
+	url = https://github.com/taoroalin/datalog-js.git
+
+[submodule "edn-js"]
+	path = edn-js
+	url = https://github.com/taoroalin/edn-js.git
