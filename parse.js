@@ -1,12 +1,11 @@
-const textTemplate = document.getElementById("block-text").content
-  .firstElementChild;
-const pageRefTemplate = document.getElementById("page-ref").content
-  .firstElementChild;
+const pageRefTemplate = document.getElementById("page-ref").content.firstElementChild;
 const tagTemplate = document.getElementById("tag").content.firstElementChild;
+const urlTemplate = document.getElementById("url").content.firstElementChild;
+const blockRefTemplate = document.getElementById("block-ref").content.firstElementChild;
 
 const renderBlockBody = (parent, text) => {
   let stack = [parent];
-  const doubleSquareBrackets = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(https:\/\/twitter.com\/[a-zA-Z0-9_]{4,15}\/status\/[0-9]+)/g);
+  const doubleSquareBrackets = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z]+\)\))|(https:\/\/twitter.com\/[a-zA-Z0-9_]{4,15}\/status\/[0-9]+)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g);
   let idx = 0;
   for (let match of doubleSquareBrackets) {
     if (match.index > idx) {
@@ -28,7 +27,25 @@ const renderBlockBody = (parent, text) => {
       tagElement.innerText = match[3];
       stack[stack.length - 1].appendChild(tagElement);
     } else if (match[4]) {
-      embedTweet(stack[stack.length - 1], match[3]);
+      // @query would use a query here if I had them
+      const blockIds = database.vae[match[4].substring(2, match[4].length - 2)]["block/uid"]
+      if (blockIds) {
+        const blockId = Array.from(blockIds)[0];
+        const blockRefElement = blockRefTemplate.cloneNode(true);
+        blockRefElement.innerText = database.eav[blockId]["block/string"]
+        blockRefElement.setAttribute("data-id", blockId)
+        stack[stack.length - 1].appendChild(blockRefElement);
+      } else {
+        const textNode = document.createTextNode(match[0]);
+        stack[stack.length - 1].appendChild(textNode);
+      }
+    } else if (match[5]) {
+      embedTweet(stack[stack.length - 1], match[5]);
+    } else if (match[6]) {
+      const urlElement = urlTemplate.cloneNode(true);
+      urlElement.innerText = match[6];
+      urlElement.href = match[6];
+      stack[stack.length - 1].appendChild(urlElement);
     }
     idx = match.index + match[0].length;
   }

@@ -81,6 +81,12 @@ const gotoDailyNotes = () => {
   }
 };
 
+// todo make this page look ok
+const gotoBlock = (blockId) => {
+  pageFrame.textContent = "";
+  renderBlock(pageFrame, blockId);
+}
+
 // Rendering
 const renderPage = (parentNode, entityId) => {
   const element = pageTemplate.cloneNode(true);
@@ -246,6 +252,8 @@ document.addEventListener("keydown", (event) => {
 document.addEventListener("click", (event) => {
   if (event.target.className === "page-ref__body") {
     gotoPageTitle(event.target.innerText);
+  } else if (event.target.className === "block-ref") {
+    gotoBlock(event.target.dataset.id)
   } else if (event.target.closest(".tag")) {
     gotoPageTitle(event.target.closest(".tag").innerText.substring(1));
   }
