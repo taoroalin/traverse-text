@@ -1,14 +1,15 @@
 <head>
   <script>
+    // start loading data before scripts
     var start = () => { }; // index.js will replace this with real start function
     let ednText = null;
-    let startReady = false;
-    let dataFetched = false;
+    let partnerLoaded = false; // call start after partner and scripts load.
     fetch("test-data/graphminer.edn").then(response => {
       response.text().then(text => {
         ednText = text;
         dataFetched = true;
-        if (startReady) start(); // assuming data takes longer to load than scripts.
+        if (partnerLoaded) start();
+        partnerLoaded = true;
       })
     })
   </script>
@@ -33,8 +34,10 @@
 
   <template id="block">
     <div class="block">
+      <div class="block__bullet-hitbox" contenteditable="false">
+        <div class="block__bullet"></div>
+      </div>
       <div class="block__body" contenteditable="true" tabindex="-1">
-
       </div>
       <div class="block__children">
 
@@ -46,6 +49,11 @@
     <div class="backrefs-list">
       <div class="backrefs-list__title"><span class="bckrefs-list__count"></span>Linked References</div>
 
+    </div>
+  </template>
+
+  <template id="block-focus-frame">
+    <div class="block-focus-frame">
     </div>
   </template>
 
@@ -84,6 +92,20 @@
 
     </div>
 
+    <div id="top-buttons">
+      <button id="upload-button">
+        Upload JSON
+      </button>
+
+      <button id="save-button">
+        Save
+      </button>
+
+      <button id="download-button">
+        Download JSON
+      </button>
+
+    </div>
   </div>
   <script src="edn-js/edn.js"></script>
   <script src="integrations.js"></script>

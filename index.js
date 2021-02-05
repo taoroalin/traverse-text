@@ -21,6 +21,7 @@ const attributesICareAbout = [
 const pageTemplate = document.getElementById("page").content.firstElementChild;
 const blockTemplate = document.getElementById("block").content.firstElementChild;
 const backrefsListTemplate = document.getElementById("backrefs-list").content.firstElementChild;
+const blockFocusFrameTemplate = document.getElementById("block-focus-frame").content.firstElementChild;
 
 // Singleton elements
 const searchElement = document.getElementById("search");
@@ -52,21 +53,23 @@ const renderBlockBreadcrumb = (parentNode, blockId) => {
 }
 
 // App state transitions
-const gotoPageTitle = (title) => {
+const gotoBlack = () => {
   oldestLoadedDailyNoteDate = null;
   document.removeEventListener("scroll", dailyNotesInfiniteScrollListener);
+  pageFrame.textContent = "";
+}
 
+const gotoPageTitle = (title) => {
   const existingPage = Array.from(database.vae[title]["node/title"])[0];
   if (existingPage) {
-    pageFrame.textContent = "";
+    gotoBlack();
     renderPage(pageFrame, existingPage);
   }
 };
 
 const gotoDailyNotes = () => {
-  document.removeEventListener("scroll", dailyNotesInfiniteScrollListener);
+  gotoBlack();
   document.addEventListener("scroll", dailyNotesInfiniteScrollListener);
-  pageFrame.textContent = "";
   oldestLoadedDailyNoteDate = new Date(Date.now());
   oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1);
   for (let i = 0; i < 10; i++) {
@@ -83,8 +86,10 @@ const gotoDailyNotes = () => {
 
 // todo make this page look ok
 const gotoBlock = (blockId) => {
-  pageFrame.textContent = "";
-  renderBlock(pageFrame, blockId);
+  gotoBlack();
+  const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true);
+  pageFrame.appendChild(blockFocusFrame);
+  renderBlock(blockFocusFrame, blockId);
 }
 
 // Rendering
@@ -116,8 +121,8 @@ const renderPage = (parentNode, entityId) => {
 
 const renderBlock = (parentNode, entityId) => {
   const element = blockTemplate.cloneNode(true);
-  const body = element.firstElementChild;
-  const childrenContainer = element.children[1];
+  const body = element.children[1];
+  const childrenContainer = element.children[2];
   element.setAttribute("data-id", entityId);
 
   const string = database.eav[entityId]["block/string"]
@@ -149,6 +154,20 @@ const dailyNotesInfiniteScrollListener = (event) => {
   }
 };
 
+const saveHandler = () => {
+  console.log("save")
+}
+
+const uploadHandler = () => {
+  console.log("upload")
+
+}
+
+const downloadHandler = () => {
+  console.log("download")
+
+}
+
 document.addEventListener("input", (event) => {
   if (event.target.className === "block__body") {
     const id = event.target.parentNode.dataset.id;
@@ -158,6 +177,21 @@ document.addEventListener("input", (event) => {
 
 document.addEventListener("keydown", (event) => {
   // Check for global shortcut keys
+  if (event.key === "d" && event.ctrlKey) {
+    uploadHandler()
+    event.preventDefault()
+    return;
+  }
+  if (event.key === "s" && event.ctrlKey && event.shiftKey) {
+    downloadHandler()
+    event.preventDefault()
+    return;
+  }
+  if (event.key === "s" && event.ctrlKey) {
+    saveHandler()
+    event.preventDefault()
+    return;
+  }
   if (event.key === "m" && event.ctrlKey) {
     if (document.body.className === "light-mode") {
       document.body.className = "dark-mode";
@@ -250,12 +284,21 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.addEventListener("click", (event) => {
+  const closestBullet = event.target.closest(".block__bullet-hitbox")
   if (event.target.className === "page-ref__body") {
     gotoPageTitle(event.target.innerText);
+  } else if (closestBullet) {
+    gotoBlock(closestBullet.parentNode.dataset.id)
   } else if (event.target.className === "block-ref") {
     gotoBlock(event.target.dataset.id)
   } else if (event.target.closest(".tag")) {
     gotoPageTitle(event.target.closest(".tag").innerText.substring(1));
+  } else if (event.target.id === "upload-button") {
+    uploadHandler()
+  } else if (event.target.id === "download-button") {
+    downloadHandler()
+  } else if (event.target.id === "save-button") {
+    saveHandler()
   }
 });
 
@@ -308,8 +351,8 @@ start = () => {
   // const db = new DQ();
   // db.push(jsonGraph);
 }
-startReady = true;
-if (dataFetched) start();
+if (partnerLoaded) start();
+partnerLoaded = true;
 
 // console.log(
 //   "Application state is stored as global variables. This means you can observe and change everything from the console. Some important globals are: database, editingBlock"
