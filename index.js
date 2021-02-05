@@ -5,18 +5,6 @@ let oldestLoadedDailyNoteDate = null;
 
 // Constants
 
-const attributesICareAbout = [
-  "node/title",
-  "block/children",
-  "block/string",
-  "block/order",
-  "block/open",
-  "block/refs",
-  "block/uid",
-  "children/view-type",
-  "create/time"
-];
-
 // Templates
 const pageTemplate = document.getElementById("page").content.firstElementChild;
 const blockTemplate = document.getElementById("block").content.firstElementChild;
@@ -34,16 +22,16 @@ const renderBlockBreadcrumb = (parentNode, blockId) => {
   let beforeNode = initialBeforeNode;
   let curBlockId = blockId;
   while (true) {
-    const title = database.eav[curBlockId]["node/title"]
+    const title = database.eav[curBlockId].title
     if (title) {
       const titleElement = document.createElement("span");
       titleElement.innerText = title;
       parentNode.insertBefore(beforeNode, titleElement)
       beforeNode = titleElement;
     } else {
-      curBlockId = database.vae[curBlockId]["block/children"]
+      curBlockId = database.vae[curBlockId]["children"]
       const content = document.createElement("span");
-      content.innerText = truncateElipsis(database.eav[curBlock]["block/string"], 40)
+      content.innerText = truncateElipsis(database.eav[curBlock].string, 40)
       parentNode.insertBefore(beforeNode, content);
       beforeNode = content;
     }
@@ -60,7 +48,7 @@ const gotoBlack = () => {
 }
 
 const gotoPageTitle = (title) => {
-  const existingPage = Array.from(database.vae[title]["node/title"])[0];
+  const existingPage = (database.vae[title].title)[0];
   if (existingPage) {
     gotoBlack();
     renderPage(pageFrame, existingPage);
@@ -74,9 +62,9 @@ const gotoDailyNotes = () => {
   oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1);
   for (let i = 0; i < 10; i++) {
     const daysNotes =
-      database.vae[formatDate(oldestLoadedDailyNoteDate)]["node/title"];
+      database.vae[formatDate(oldestLoadedDailyNoteDate)].title;
     if (daysNotes) {
-      renderPage(pageFrame, Array.from(daysNotes)[0]);
+      renderPage(pageFrame, (daysNotes)[0]);
       oldestLoadedDailyNoteDate.setDate(
         oldestLoadedDailyNoteDate.getDate() - 1
       );
@@ -98,24 +86,24 @@ const renderPage = (parentNode, entityId) => {
   const title = element.firstElementChild;
   const body = element.children[1];
 
-  title.innerText = database.eav[entityId]["node/title"];
+  title.innerText = database.eav[entityId].title;
 
-  const children = database.eav[entityId]["block/children"];
+  const children = database.eav[entityId]["children"];
   if (children) {
     for (let child of children) {
       renderBlock(body, child);
     }
   }
-
-  const backrefs = database.vae[entityId]["block/refs"];
-  if (backrefs) {
-    const backrefsListElement = backrefsListTemplate.cloneNode(true);
-    element.children[2].appendChild(backrefsListElement)
-    for (let backref of backrefs) {
-      renderBlock(backrefsListElement, backref);
+  /*
+    const backrefs = database.vae[entityId][":block/refs"];
+    if (backrefs) {
+      const backrefsListElement = backrefsListTemplate.cloneNode(true);
+      element.children[2].appendChild(backrefsListElement)
+      for (let backref of backrefs) {
+        renderBlock(backrefsListElement, backref);
+      }
     }
-  }
-
+  */
   parentNode.appendChild(element);
 };
 
@@ -125,12 +113,12 @@ const renderBlock = (parentNode, entityId) => {
   const childrenContainer = element.children[2];
   element.setAttribute("data-id", entityId);
 
-  const string = database.eav[entityId]["block/string"]
+  const string = database.eav[entityId].string
   if (string) {
     renderBlockBody(body, string);
   }
 
-  const children = database.eav[entityId]["block/children"];
+  const children = database.eav[entityId]["children"];
   if (children) {
     for (let child of children) {
       renderBlock(childrenContainer, child);
@@ -147,9 +135,9 @@ const dailyNotesInfiniteScrollListener = (event) => {
   if (fromBottom < 700) {
     oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1);
     const daysNotes =
-      database.vae[formatDate(oldestLoadedDailyNoteDate)]["node/title"];
+      database.vae[formatDate(oldestLoadedDailyNoteDate)].title;
     if (daysNotes) {
-      renderPage(pageFrame, Array.from(daysNotes)[0]);
+      renderPage(pageFrame, (daysNotes)[0]);
     }
   }
 };
@@ -171,7 +159,7 @@ const downloadHandler = () => {
 document.addEventListener("input", (event) => {
   if (event.target.className === "block__body") {
     const id = event.target.parentNode.dataset.id;
-    database.setDatom(id, "block/string", event.target.value);
+    database.setDatom(id, ":block/string", event.target.value);
   }
 });
 
@@ -239,17 +227,17 @@ document.addEventListener("keydown", (event) => {
         event.preventDefault();
         break;
       case "ArrowDown":
-        blocks = Array.from(document.querySelectorAll(".block__body"));
+        blocks = (document.querySelectorAll(".block__body"));
         const newActiveBlock = blocks[blocks.indexOf(event.target) + 1];
         window.getSelection().collapse(newActiveBlock, 0);
         break;
       case "ArrowUp":
-        blocks = Array.from(document.querySelectorAll(".block__body"));
+        blocks = (document.querySelectorAll(".block__body"));
         blocks[blocks.indexOf(event.target) - 1].focus();
         break;
       case "ArrowLeft":
         if (window.getSelection().focusOffset === 0) {
-          blocks = Array.from(document.querySelectorAll(".block__body"));
+          blocks = (document.querySelectorAll(".block__body"));
           blocks[blocks.indexOf(document.activeElement) - 1].focus();
           // TODO it only goes to second last, .collapse doesn't select after the last char
           window
@@ -265,7 +253,7 @@ document.addEventListener("keydown", (event) => {
           window.getSelection().focusOffset ===
           document.activeElement.innerText.length
         ) {
-          blocks = Array.from(document.querySelectorAll(".block__body"));
+          blocks = (document.querySelectorAll(".block__body"));
           blocks[blocks.indexOf(document.activeElement) + 1].focus();
         }
         break;
@@ -304,54 +292,15 @@ document.addEventListener("click", (event) => {
 
 start = () => {
   // Load database
-  const pstime = performance.now();
-  const roamEDN = parseEdn(ednText);
-  console.log(`parse took ${performance.now() - pstime}`)
-  const datoms = roamEDN[0].datoms;
-  const schema = roamEDN[0].schema;
-  let manyAttributes = [];
-  let refAttributes = [];
-  for (let [k, v] of Object.entries(schema)) {
-    if (v["db/cardinality"] === "db.cardinality/many") {
-      manyAttributes.push(k);
-    }
-    if (v["db/valueType"] === "db.type/ref") {
-      refAttributes.push(k);
-    }
-  }
-  console.log(manyAttributes);
-  console.log(JSON.stringify(manyAttributes));
   const loadSTime = performance.now();
-  database = new DQ([], schema)
-  for (let datom of datoms) {
-    if (manyAttributes.includes(datom[1])) {
-      database.addDatom(
-        datom[0] + DQ.minEntityId,
-        datom[1],
-        refAttributes.includes(datom[1])
-          ? datom[2] + DQ.minEntityId
-          : datom[2]
-      );
-    } else {
-      database.setDatom(
-        datom[0] + DQ.minEntityId,
-        datom[1],
-        refAttributes.includes(datom[1])
-          ? datom[2] + DQ.minEntityId
-          : datom[2]
-      );
-    }
+  database = new DQ({ many: [":node/subpages", ":vc/blocks", ":edit/seen-by", ":attrs/lookup", ":node/windows", ":node/sections", ":harc/v", ":block/refs", ":harc/a", "children", ":create/seen-by", ":node/links", ":query/results", ":harc/e", ":block/parents"] })
+  for (let page of roamJSON) {
+    database.push(page);
   }
   console.log(`loaded data into DQ in ${performance.now() - loadSTime}`);
-
+  console.log(database)
+  console.log(database.aev[":block/chidren"])
   gotoDailyNotes();
-  // console.log(JSON.stringify(database.eav));
-
-  // const jsonResponse = await fetch("test-data/graphminer.json");
-  // const jsonGraph = await jsonResponse.json();
-  // console.log(jsonGraph);
-  // const db = new DQ();
-  // db.push(jsonGraph);
 }
 if (partnerLoaded) start();
 partnerLoaded = true;
