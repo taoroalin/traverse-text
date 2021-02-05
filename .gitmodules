@@ -5,3 +5,7 @@
 [submodule "edn-js"]
 	path = edn-js
 	url = https://github.com/taoroalin/edn-js.git
+
+[submodule "preprocess-js"]
+	path = preprocess-js
+	url = https://github.com/taoroalin/preprocess-js.git
