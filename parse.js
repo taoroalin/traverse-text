@@ -28,16 +28,19 @@ const renderBlockBody = (parent, text) => {
       stack[stack.length - 1].appendChild(tagElement);
     } else if (match[4]) {
       // @query would use a query here if I had them
-      const blockIds = database.vae[match[4].substring(2, match[4].length - 2)]["block/uid"]
-      if (blockIds) {
-        const blockId = Array.from(blockIds)[0];
-        const blockRefElement = blockRefTemplate.cloneNode(true);
-        blockRefElement.innerText = database.eav[blockId]["block/string"]
-        blockRefElement.setAttribute("data-id", blockId)
-        stack[stack.length - 1].appendChild(blockRefElement);
-      } else {
-        const textNode = document.createTextNode(match[0]);
-        stack[stack.length - 1].appendChild(textNode);
+      const ae = database.vae[match[4].substring(2, match[4].length - 2)]
+      if (ae) {
+        const blockIds = ae["block/uid"]
+        if (blockIds) {
+          const blockId = Array.from(blockIds)[0];
+          const blockRefElement = blockRefTemplate.cloneNode(true);
+          blockRefElement.innerText = database.eav[blockId]["block/string"]
+          blockRefElement.setAttribute("data-id", blockId)
+          stack[stack.length - 1].appendChild(blockRefElement);
+        } else {
+          const textNode = document.createTextNode(match[0]);
+          stack[stack.length - 1].appendChild(textNode);
+        }
       }
     } else if (match[5]) {
       embedTweet(stack[stack.length - 1], match[5]);

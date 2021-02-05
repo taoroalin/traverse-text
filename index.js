@@ -1,5 +1,5 @@
 // State
-let database = new DQ();
+let database = null;
 let editingBlock = null;
 let oldestLoadedDailyNoteDate = null;
 
@@ -259,11 +259,11 @@ document.addEventListener("click", (event) => {
   }
 });
 
-async function start() {
+start = () => {
   // Load database
-  const response = await fetch("test-data/graphminer.edn");
-  const ednText = await response.text();
+  const pstime = performance.now();
   const roamEDN = parseEdn(ednText);
+  console.log(`parse took ${performance.now() - pstime}`)
   const datoms = roamEDN[0].datoms;
   const schema = roamEDN[0].schema;
   let manyAttributes = [];
@@ -277,40 +277,39 @@ async function start() {
     }
   }
   const loadSTime = performance.now();
+  database = new DQ([], schema)
   for (let datom of datoms) {
-    if (true || attributesICareAbout.includes(datom[1]))
-      if (manyAttributes.includes(datom[1])) {
-        database.addDatom(
-          datom[0] + DQ.minEntityId,
-          datom[1],
-          refAttributes.includes(datom[1])
-            ? datom[2] + DQ.minEntityId
-            : datom[2]
-        );
-      } else {
-        database.setDatom(
-          datom[0] + DQ.minEntityId,
-          datom[1],
-          refAttributes.includes(datom[1])
-            ? datom[2] + DQ.minEntityId
-            : datom[2]
-        );
-      }
+    if (manyAttributes.includes(datom[1])) {
+      database.addDatom(
+        datom[0] + DQ.minEntityId,
+        datom[1],
+        refAttributes.includes(datom[1])
+          ? datom[2] + DQ.minEntityId
+          : datom[2]
+      );
+    } else {
+      database.setDatom(
+        datom[0] + DQ.minEntityId,
+        datom[1],
+        refAttributes.includes(datom[1])
+          ? datom[2] + DQ.minEntityId
+          : datom[2]
+      );
+    }
   }
   console.log(`loaded data into DQ in ${performance.now() - loadSTime}`);
 
   gotoDailyNotes();
-
-  let textLength = 0;
-  const bs = database.aev["block/string"];
-  for (let k in bs) {
-    textLength += bs[k].length;
-  }
-  console.log(`my text is ${textLength} long`);
   // console.log(JSON.stringify(database.eav));
-}
 
-start();
+  // const jsonResponse = await fetch("test-data/graphminer.json");
+  // const jsonGraph = await jsonResponse.json();
+  // console.log(jsonGraph);
+  // const db = new DQ();
+  // db.push(jsonGraph);
+}
+startReady = true;
+if (dataFetched) start();
 
 // console.log(
 //   "Application state is stored as global variables. This means you can observe and change everything from the console. Some important globals are: database, editingBlock"

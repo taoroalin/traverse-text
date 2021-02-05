@@ -27,6 +27,9 @@ const formatDate = (date) =>
     date.getDate()
   )}, ${date.getFullYear()}`;
 
-const truncateElipsis = (text) => {
-
+const truncateElipsis = (text, limit = 40) => {
+  if (text.length > limit) {
+    return text.substring(0, limit - 3) + "..."
+  }
+  return text
 }
