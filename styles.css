@@ -42,6 +42,10 @@ body {
     background-color: var(--background);
 }
 
+a{
+  color:var(--link);
+}
+
 a:visited { color:var(--link) }
 
 
