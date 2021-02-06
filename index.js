@@ -115,6 +115,8 @@ const renderBlock = (parentNode,entityId) => {
 
 // Global event listeners that switch on active element, as a possibly more performant, simpler option than propagating through multiple event handlers
 
+// Event listener functions that can't be written inline because multiple triggers / disconnect / reconnect
+
 const dailyNotesInfiniteScrollListener = (event) => {
   const fromBottom =
     pageFrame.getBoundingClientRect().bottom - window.innerHeight
@@ -157,6 +159,7 @@ const toggleSearch = () => {
 }
 
 document.addEventListener("input",(event) => {
+  // reparse block and insert cursor into correct position while typing
   const block = event.target.closest(".block__body")
   if (block) {
     const selection = window.getSelection()
@@ -320,6 +323,9 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
 
 document.getElementById("search__input").addEventListener("blur",() => searchElement.style.display = "none")
 
+
+// Loading and storing graph
+
 setGraphFromJSON = () => {
   const loadSTime = performance.now()
   database = new DQ({ many: { ":node/subpages": true,":vc/blocks": true,":edit/seen-by": true,":attrs/lookup": true,":node/windows": true,":node/sections": true,":harc/v": true,":block/refs": true,":harc/a": true,"children": true,":create/seen-by": true,":node/links": true,":query/results": true,":harc/e": true,":block/parents": true } })
@@ -341,5 +347,6 @@ setGraphFromJSON = () => {
   },50)
 }
 
+// Kick off app once data and code load
 if (partnerLoaded) setGraphFromJSON()
 partnerLoaded = true
