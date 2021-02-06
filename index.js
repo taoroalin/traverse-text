@@ -35,7 +35,6 @@ const gotoDailyNotes = () => {
   gotoBlack()
   document.addEventListener("scroll",dailyNotesInfiniteScrollListener)
   oldestLoadedDailyNoteDate = new Date(Date.now())
-  oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1)
   for (let i = 0; i < 10; i++) {
     const daysNotes = database.vae[formatDate(oldestLoadedDailyNoteDate)]
     if (daysNotes && daysNotes.title) {
@@ -161,12 +160,33 @@ document.addEventListener("input",(event) => {
   const block = event.target.closest(".block__body")
   if (block) {
     const selection = window.getSelection()
-    const position = selection.getRangeAt(0).startOffset
+    const focusNode = selection.focusNode
+    let position = selection.focusOffset
+    if (focusNode.startIdx) position += focusNode.startIdx
+    let curIdx = 0
+
     const id = block.dataset.id
-    const string = block.innerText
-    database.setDatom(id,":block/string",string)
+    let string = block.innerText
+    if (block.innerText.length === position)
+      string += " "
+    database.setDatom(id,"string",string)
     block.textContent = ""
     renderBlockBody(block,string,position)
+
+    const scanElement = (element) => {
+      for (let el of element.childNodes) {
+        if (el.nodeName === "#text") {
+          if (position < curIdx + el.textContent.length) {
+            selection.collapse(el,position - curIdx)
+            return
+          }
+          curIdx += el.textContent.length
+        } else {
+          scanElement(el)
+        }
+      }
+    }
+    scanElement(block)
   }
 })
 
@@ -318,7 +338,7 @@ setGraphFromJSON = () => {
       database.push(roamJSON[i])
     }
     console.log(`loaded data into DQ in ${performance.now() - loadSTime}`)
-  },250)
+  },50)
 }
 
 if (partnerLoaded) setGraphFromJSON()
