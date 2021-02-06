@@ -4,7 +4,11 @@ Fast note taking app inspired by Roam Research. Aims to be 10x faster than Roam 
 
 ## Internals
 
-This project is made with *System Complexity*, in mind. That means instead of writing your own code to be elegant, you write code such that the entire project, including the platform, libraries, frameworks, as a whole is as as simple as possible. To that end, this project doesn't use libraries or NPM. 
+This project is made with *System Complexity*, in mind. That means instead of writing your own code to be elegant, you write code such that the entire project, including the platform, libraries, frameworks, as a whole is as as simple as possible. To that end, this project doesn't use libraries or NPM.
+
+## Forking
+
+This repo uses git submodules, which means you need to clone with the --recursive flag.
 
 ### Templating
 

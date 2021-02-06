@@ -15,30 +15,10 @@ const blockFocusFrameTemplate = document.getElementById("block-focus-frame").con
 const searchElement = document.getElementById("search");
 const pageFrame = document.getElementById("page-frame");
 const searchInput = document.getElementById("search__input");
+const downloadButton = document.getElementById("download-button");
 
 // Utils
-const renderBlockBreadcrumb = (parentNode, blockId) => {
-  const initialBeforeNode = document.createElement("div");
-  let beforeNode = initialBeforeNode;
-  let curBlockId = blockId;
-  while (true) {
-    const title = database.eav[curBlockId].title
-    if (title) {
-      const titleElement = document.createElement("span");
-      titleElement.innerText = title;
-      parentNode.insertBefore(beforeNode, titleElement)
-      beforeNode = titleElement;
-    } else {
-      curBlockId = database.vae[curBlockId]["children"]
-      const content = document.createElement("span");
-      content.innerText = truncateElipsis(database.eav[curBlock].string, 40)
-      parentNode.insertBefore(beforeNode, content);
-      beforeNode = content;
-    }
-    break;
-  }
-  initialBeforeNode.remove();
-}
+
 
 // App state transitions
 const gotoBlack = () => {
@@ -78,6 +58,17 @@ const gotoBlock = (blockId) => {
   const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true);
   pageFrame.appendChild(blockFocusFrame);
   renderBlock(blockFocusFrame, blockId);
+
+  if (database.vae[blockId]) {
+    const backrefs = database.vae[blockId][":block/refs"];
+    if (backrefs) {
+      const backrefsListElement = backrefsListTemplate.cloneNode(true);
+      blockFocusFrame.appendChild(backrefsListElement)
+      for (let backref of backrefs) {
+        renderBlock(backrefsListElement, backref);
+      }
+    }
+  }
 }
 
 // Rendering
@@ -94,16 +85,17 @@ const renderPage = (parentNode, entityId) => {
       renderBlock(body, child);
     }
   }
-  /*
-    const backrefs = database.vae[entityId][":block/refs"];
-    if (backrefs) {
-      const backrefsListElement = backrefsListTemplate.cloneNode(true);
-      element.children[2].appendChild(backrefsListElement)
-      for (let backref of backrefs) {
-        renderBlock(backrefsListElement, backref);
-      }
+
+  const uid = database.eav[entityId].uid;
+  const backrefs = database.vae[uid][":block/refs"];
+  if (backrefs) {
+    const backrefsListElement = backrefsListTemplate.cloneNode(true);
+    element.children[2].appendChild(backrefsListElement)
+    for (let backref of backrefs) {
+      renderBlock(backrefsListElement, backref);
     }
-  */
+  }
+
   parentNode.appendChild(element);
 };
 
@@ -144,6 +136,7 @@ const dailyNotesInfiniteScrollListener = (event) => {
 
 const saveHandler = () => {
   console.log("save")
+
 }
 
 const uploadHandler = () => {
@@ -155,11 +148,23 @@ const downloadHandler = () => {
   console.log("download")
   const result = [];
   for (let pageId in database.aev["title"]) {
-    console.log(pageId);
     result.push(database.pull(pageId));
   }
   const json = JSON.stringify(result);
-  console.log(json);
+  const data = new Blob([json], {type: 'text/json'});
+  const url = window.URL.createObjectURL(data);
+  downloadButton.setAttribute('href', url);
+  downloadButton.setAttribute('download', "output.json");
+}
+
+const toggleSearch=()=>{
+  if (searchElement.style.display === "none") {
+    searchElement.style.display = "block";
+    searchInput.value = "";
+    searchInput.focus();
+  } else {
+    searchElement.style.display = "none";
+  }
 }
 
 document.addEventListener("input", (event) => {
@@ -206,13 +211,7 @@ document.addEventListener("keydown", (event) => {
     return;
   }
   if (event.ctrlKey && event.key === "u") {
-    if (searchElement.style.display === "none") {
-      searchElement.style.display = "block";
-      searchInput.value = "";
-      searchInput.focus();
-    } else {
-      searchElement.style.display = "none";
-    }
+    toggleSearch();
     event.preventDefault();
     return;
   }
@@ -287,6 +286,8 @@ document.addEventListener("click", (event) => {
     gotoBlock(event.target.dataset.id)
   } else if (event.target.closest(".tag")) {
     gotoPageTitle(event.target.closest(".tag").innerText.substring(1));
+  } else if (event.target.id === "search-button") {
+    toggleSearch()
   } else if (event.target.id === "upload-button") {
     uploadHandler()
   } else if (event.target.id === "download-button") {
@@ -297,9 +298,8 @@ document.addEventListener("click", (event) => {
 });
 
 start = () => {
-  // Load database
   const loadSTime = performance.now();
-  database = new DQ({ many: [":node/subpages", ":vc/blocks", ":edit/seen-by", ":attrs/lookup", ":node/windows", ":node/sections", ":harc/v", ":block/refs", ":harc/a", "children", ":create/seen-by", ":node/links", ":query/results", ":harc/e", ":block/parents"] })
+  database = new DQ({ many: {":node/subpages":true, ":vc/blocks":true, ":edit/seen-by":true, ":attrs/lookup":true, ":node/windows":true, ":node/sections":true, ":harc/v":true, ":block/refs":true, ":harc/a":true, "children":true, ":create/seen-by":true, ":node/links":true, ":query/results":true, ":harc/e":true, ":block/parents":true} })
   for (let page of roamJSON) {
     database.push(page);
   }

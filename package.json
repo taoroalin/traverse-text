@@ -1,5 +1,0 @@
-{
-  "scripts": {
-    "start": "cd storage && node server.js"
-  }
-}
