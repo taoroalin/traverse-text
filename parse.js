@@ -14,15 +14,23 @@ const renderBlockBody = (parent,text) => {
       const textNode = document.createTextNode(
         text.substring(idx,match.index)
       )
+      textNode.startIdx = idx
       stackTop.appendChild(textNode)
+      idx = match.index
     }
     if (match[1]) {
       const pageRefElement = pageRefTemplate.cloneNode(true)
       stackTop.appendChild(pageRefElement)
+      const textNode = document.createTextNode("[[")
+      textNode.startIdx = idx
+      pageRefElement.children[0].appendChild(textNode)
       stack.push(pageRefElement.children[1])
       stackTop = stack[stack.length - 1]
     } else if (match[2]) {
-      if (stack.length > 1) {
+      if (stackTop.className === "page-ref__body") {
+        const textNode = document.createTextNode("]]")
+        textNode.startIdx = idx
+        stackTop.parentNode.children[2].appendChild(textNode)
         stack.pop()
         stackTop = stack[stack.length - 1]
       }
@@ -43,24 +51,31 @@ const renderBlockBody = (parent,text) => {
           stackTop.appendChild(blockRefElement)
         } else {
           const textNode = document.createTextNode(match[0])
+          textNode["data-index"] = idx
           stackTop.appendChild(textNode)
         }
       }
     } else if (match[5]) {
       if (stackTop.className === "bold") {
-        stackTop.appendChild(document.createTextNode("**"))
+        const textNode = document.createTextNode("**")
+        textNode.startIdx = idx
+        stackTop.appendChild(textNode)
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
         const boldElement = boldTemplate.cloneNode(true)
         stackTop.appendChild(boldElement)
-        boldElement.appendChild(document.createTextNode("**"))
+        const textNode = document.createTextNode("**")
+        textNode.startIdx = idx
+        boldElement.appendChild(textNode)
         stack.push(boldElement)
         stackTop = boldElement
       }
     } else if (match[6]) {
       const urlElement = urlTemplate.cloneNode(true)
-      urlElement.innerText = match[6]
+      const textNode = document.createTextNode(match[6])
+      textNode.startIdx = idx
+      urlElement.appendChild(textNode)
       urlElement.href = match[6]
       stackTop.appendChild(urlElement)
     }
@@ -68,6 +83,7 @@ const renderBlockBody = (parent,text) => {
   }
   if (idx < text.length) {
     const textNode = document.createTextNode(text.substring(idx))
+    textNode.startIdx = idx
     stack[stack.length - 1].appendChild(textNode)
   }
   /**
@@ -75,8 +91,9 @@ const renderBlockBody = (parent,text) => {
    * Instead of backtracking and deleting when a block doesn't close, I can just erase the className of the block. Then it's still part of the tree but looks like it's gone! No performance cost!!
    */
   while (stackTop.className !== "block__body") {
+    if (stackTop.className === "page-ref")
+      stackTop.children[0].className = ""
     stackTop.className = ""
     stackTop = stackTop.parentNode
   }
 }
-
