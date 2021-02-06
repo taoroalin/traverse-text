@@ -48,7 +48,8 @@ span{
 }
 
 body {
-    font-family: 'Ubuntu', 'Inter', Verdana, Arial;
+    font-family: 'Inter', Verdana, Arial;
+    font-weight: normal;
     margin: 0;
     color:var(--text);
     background-color: var(--background);
@@ -101,7 +102,7 @@ a:visited { color:var(--link) }
   cursor:pointer;
 }
 
-#top-buttons button{
+#top-buttons button,#top-buttons a{
   padding: 11px 10px;
   background-color:var(--background);
   font-size:0.9em;

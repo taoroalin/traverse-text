@@ -161,15 +161,12 @@ document.addEventListener("input",(event) => {
   const block = event.target.closest(".block__body")
   if (block) {
     const selection = window.getSelection()
-    const range = selection.getRangeAt(0)
-    const position = selection.offset
-    console.log(position)
+    const position = selection.getRangeAt(0).startOffset
     const id = block.dataset.id
     const string = block.innerText
     database.setDatom(id,":block/string",string)
     block.textContent = ""
-    renderBlockBody(block,string)
-    selection.collapse(block,position)
+    renderBlockBody(block,string,position)
   }
 })
 
