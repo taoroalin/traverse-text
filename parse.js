@@ -3,7 +3,7 @@ const tagTemplate = document.getElementById("tag").content.firstElementChild
 const urlTemplate = document.getElementById("url").content.firstElementChild
 const blockRefTemplate = document.getElementById("block-ref").content.firstElementChild
 
-const renderBlockBody = (parent,text) => {
+const renderBlockBody = (parent,text,cursorLocation) => {
   let stack = [parent]
   const doubleSquareBrackets = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]+\)\))|(showtweethttps:\/\/twitter.com\/[a-zA-Z0-9_]{4,15}\/status\/[0-9]+)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
   let idx = 0

@@ -7,7 +7,6 @@
     fetch("test-data/graphminer.json").then(response => {
       response.json().then(json => {
         roamJSON = json;
-        dataFetched = true;
         if (partnerLoaded) setGraphFromJSON();
         partnerLoaded = true;
       })
@@ -21,7 +20,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
 </head>
 
-<body class="dark-mode">
+<body class="light-mode">
 
   <template id="page">
     <div class="page">
