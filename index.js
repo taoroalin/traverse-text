@@ -303,11 +303,22 @@ document.getElementById("search__input").addEventListener("blur",() => searchEle
 setGraphFromJSON = () => {
   const loadSTime = performance.now()
   database = new DQ({ many: { ":node/subpages": true,":vc/blocks": true,":edit/seen-by": true,":attrs/lookup": true,":node/windows": true,":node/sections": true,":harc/v": true,":block/refs": true,":harc/a": true,"children": true,":create/seen-by": true,":node/links": true,":query/results": true,":harc/e": true,":block/parents": true } })
-  for (let page of roamJSON) {
-    database.push(page)
+
+  // badcode this is some unneccesary complexity. It indexes the most recent few blocks, renders those, then indexes the rest
+
+  // go from last to first
+  const stoppingPoint = Math.max(0,roamJSON.length - 300)
+  for (let i = roamJSON.length - 1; i > stoppingPoint; i--) {
+    database.push(roamJSON[i])
   }
   gotoDailyNotes()
-  console.log(`loaded data into DQ in ${performance.now() - loadSTime}`)
+  console.log(`made DOM in ${performance.now() - loadSTime}`)
+  setTimeout(() => {
+    for (let i = stoppingPoint; i >= 0; i--) {
+      database.push(roamJSON[i])
+    }
+    console.log(`loaded data into DQ in ${performance.now() - loadSTime}`)
+  },250)
 }
 
 if (partnerLoaded) setGraphFromJSON()

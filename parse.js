@@ -2,30 +2,34 @@ const pageRefTemplate = document.getElementById("page-ref").content.firstElement
 const tagTemplate = document.getElementById("tag").content.firstElementChild
 const urlTemplate = document.getElementById("url").content.firstElementChild
 const blockRefTemplate = document.getElementById("block-ref").content.firstElementChild
+const boldTemplate = document.getElementById("bold").content.firstElementChild
 
-const renderBlockBody = (parent,text,cursorLocation) => {
+const renderBlockBody = (parent,text) => {
   let stack = [parent]
-  const doubleSquareBrackets = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]+\)\))|(showtweethttps:\/\/twitter.com\/[a-zA-Z0-9_]{4,15}\/status\/[0-9]+)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
+  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]+\)\))|(\*\*)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
   let idx = 0
-  for (let match of doubleSquareBrackets) {
+  let stackTop = parent
+  for (let match of matches) {
     if (match.index > idx) {
       const textNode = document.createTextNode(
         text.substring(idx,match.index)
       )
-      stack[stack.length - 1].appendChild(textNode)
+      stackTop.appendChild(textNode)
     }
     if (match[1]) {
       const pageRefElement = pageRefTemplate.cloneNode(true)
-      stack[stack.length - 1].appendChild(pageRefElement)
+      stackTop.appendChild(pageRefElement)
       stack.push(pageRefElement.children[1])
+      stackTop = stack[stack.length - 1]
     } else if (match[2]) {
       if (stack.length > 1) {
         stack.pop()
+        stackTop = stack[stack.length - 1]
       }
     } else if (match[3]) {
       const tagElement = tagTemplate.cloneNode(true)
       tagElement.innerText = match[3]
-      stack[stack.length - 1].appendChild(tagElement)
+      stackTop.appendChild(tagElement)
     } else if (match[4]) {
       // @query would use a query here if I had them
       const ae = database.vae[match[4].substring(2,match[4].length - 2)]
@@ -36,19 +40,29 @@ const renderBlockBody = (parent,text,cursorLocation) => {
           const blockRefElement = blockRefTemplate.cloneNode(true)
           blockRefElement.innerText = database.eav[blockId].string
           blockRefElement.setAttribute("data-id",blockId)
-          stack[stack.length - 1].appendChild(blockRefElement)
+          stackTop.appendChild(blockRefElement)
         } else {
           const textNode = document.createTextNode(match[0])
-          stack[stack.length - 1].appendChild(textNode)
+          stackTop.appendChild(textNode)
         }
       }
     } else if (match[5]) {
-      embedTweet(stack[stack.length - 1],match[5])
+      if (stackTop.className === "bold") {
+        stackTop.appendChild(document.createTextNode("**"))
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const boldElement = boldTemplate.cloneNode(true)
+        stackTop.appendChild(boldElement)
+        boldElement.appendChild(document.createTextNode("**"))
+        stack.push(boldElement)
+        stackTop = boldElement
+      }
     } else if (match[6]) {
       const urlElement = urlTemplate.cloneNode(true)
       urlElement.innerText = match[6]
       urlElement.href = match[6]
-      stack[stack.length - 1].appendChild(urlElement)
+      stackTop.appendChild(urlElement)
     }
     idx = match.index + match[0].length
   }
@@ -56,4 +70,13 @@ const renderBlockBody = (parent,text,cursorLocation) => {
     const textNode = document.createTextNode(text.substring(idx))
     stack[stack.length - 1].appendChild(textNode)
   }
+  /**
+   * PARSING REVELATION!!!!
+   * Instead of backtracking and deleting when a block doesn't close, I can just erase the className of the block. Then it's still part of the tree but looks like it's gone! No performance cost!!
+   */
+  while (stackTop.className !== "block__body") {
+    stackTop.className = ""
+    stackTop = stackTop.parentNode
+  }
 }
+
