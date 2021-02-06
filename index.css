@@ -10,6 +10,7 @@
   --brackets:#A7B6C2;
   --tag:#A7B6C2;
   --block-ref:rgb(63, 63, 63);
+  --bullet:#89a5b9;
 }
 
 .light-mode{
@@ -19,6 +20,7 @@
   --brackets:#A7B6C2;
   --tag:#A7B6C2;
   --block-ref:lightgrey;
+  --bullet:#394B59;
 }
 
 input{
@@ -91,12 +93,19 @@ a:visited { color:var(--link) }
   align-content: space-between;
 }
 
+#download-button{
+  color:var(--text);
+  display:block;
+  font-size:0.9em;
+  padding: 11px 10px;
+  cursor:pointer;
+}
+
 #top-buttons button{
   padding: 11px 10px;
   background-color:var(--background);
   font-size:0.9em;
 }
-
 
 /* Page styles */
 
@@ -136,11 +145,11 @@ a:visited { color:var(--link) }
 }
 
 .block__bullet{
-  background-color:var(--text);
+  background-color:var(--bullet);
   border-radius:3px;
-  margin:6px 0px 0px 6px;
-  width:7px;
-  height:7px;
+  margin:7px 0px 0px 6px;
+  width:6px;
+  height:6px;
 }
 
 .block__body{

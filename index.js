@@ -1,7 +1,3 @@
-// State
-let database = null;
-let editingBlock = null;
-let oldestLoadedDailyNoteDate = null;
 
 // Constants
 
@@ -41,14 +37,13 @@ const gotoDailyNotes = () => {
   oldestLoadedDailyNoteDate = new Date(Date.now());
   oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1);
   for (let i = 0; i < 10; i++) {
-    const daysNotes =
-      database.vae[formatDate(oldestLoadedDailyNoteDate)].title;
-    if (daysNotes) {
-      renderPage(pageFrame, (daysNotes)[0]);
-      oldestLoadedDailyNoteDate.setDate(
-        oldestLoadedDailyNoteDate.getDate() - 1
-      );
+    const daysNotes = database.vae[formatDate(oldestLoadedDailyNoteDate)];
+    if (daysNotes && daysNotes.title) {
+      renderPage(pageFrame, (daysNotes.title)[0]);
     }
+    oldestLoadedDailyNoteDate.setDate(
+      oldestLoadedDailyNoteDate.getDate() - 1
+    );
   }
 };
 
@@ -136,11 +131,6 @@ const dailyNotesInfiniteScrollListener = (event) => {
 
 const saveHandler = () => {
   console.log("save")
-
-}
-
-const uploadHandler = () => {
-  console.log("upload")
 
 }
 
@@ -288,27 +278,38 @@ document.addEventListener("click", (event) => {
     gotoPageTitle(event.target.closest(".tag").innerText.substring(1));
   } else if (event.target.id === "search-button") {
     toggleSearch()
-  } else if (event.target.id === "upload-button") {
-    uploadHandler()
   } else if (event.target.id === "download-button") {
     downloadHandler()
   } else if (event.target.id === "save-button") {
     saveHandler()
+  } else if (event.target.id === "upload-button") {
+    document.getElementById("upload-input").click();
   }
 });
 
-start = () => {
+document.getElementById('upload-input').addEventListener('change', (event)=>{
+  const file = event.target.files[0];
+  graphName = file.name.substring(0,file.name.length-5);
+  file.text().then((text)=>{
+    console.log(text);
+    roamJSON = JSON.parse(text);
+    setGraphFromJSON();
+  })
+});
+
+document.getElementById("search__input").addEventListener("blur", ()=>searchElement.style.display = "none")
+
+setGraphFromJSON = ()=>{
   const loadSTime = performance.now();
   database = new DQ({ many: {":node/subpages":true, ":vc/blocks":true, ":edit/seen-by":true, ":attrs/lookup":true, ":node/windows":true, ":node/sections":true, ":harc/v":true, ":block/refs":true, ":harc/a":true, "children":true, ":create/seen-by":true, ":node/links":true, ":query/results":true, ":harc/e":true, ":block/parents":true} })
   for (let page of roamJSON) {
     database.push(page);
   }
-  console.log(`loaded data into DQ in ${performance.now() - loadSTime}`);
-  console.log(database)
-  console.log(database.aev[":block/chidren"])
   gotoDailyNotes();
+  console.log(`loaded data into DQ in ${performance.now() - loadSTime}`);
 }
-if (partnerLoaded) start();
+
+if (partnerLoaded) setGraphFromJSON();
 partnerLoaded = true;
 
 // console.log(
