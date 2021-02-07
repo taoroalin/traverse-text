@@ -1,5 +1,3 @@
-// Constants
-
 // Templates
 const pageTemplate = document.getElementById("page").content.firstElementChild
 const blockTemplate = document.getElementById("block").content.firstElementChild
@@ -60,7 +58,7 @@ const gotoBlock = (blockId) => {
       const backrefsListElement = backrefsListTemplate.cloneNode(true)
       blockFocusFrame.appendChild(backrefsListElement)
       for (let backref of backrefs) {
-        renderBlock(backrefsListElement,backref)
+        renderBlock(backrefsListElement.children[1],backref)
       }
     }
   }
@@ -86,7 +84,7 @@ const renderPage = (parentNode,entityId) => {
     const backrefsListElement = backrefsListTemplate.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
     for (let backref of backrefs) {
-      renderBlock(backrefsListElement,backref)
+      renderBlock(backrefsListElement.children[1],backref)
     }
   }
 
@@ -118,6 +116,7 @@ const renderBlock = (parentNode,entityId) => {
 // Event listener functions that can't be written inline because multiple triggers / disconnect / reconnect
 
 const dailyNotesInfiniteScrollListener = (event) => {
+  console.log("scroll")
   const fromBottom =
     pageFrame.getBoundingClientRect().bottom - window.innerHeight
   if (fromBottom < 700) {
@@ -135,7 +134,7 @@ const downloadHandler = () => {
   const result = []
   console.log(database.aev.title)
   for (let pageId in database.aev.title) {
-    result.push(database.pull(pageId))
+    result.push(databasePull(database,pageId))
   }
   const json = JSON.stringify(result)
   const data = new Blob([json],{ type: 'text/json' })
@@ -159,6 +158,7 @@ document.addEventListener("input",(event) => {
     if (block.innerText.length === position)
       string += " "
     databaseSetDatom(database,id,"string",string)
+    console.log(`new string is ${database.eav[id].string}`)
     block.textContent = ""
     renderBlockBody(block,string,position)
 
@@ -199,16 +199,10 @@ document.addEventListener("keydown",(event) => {
   if (event.key === "m" && event.ctrlKey) {
     if (document.body.className === "light") {
       user.theme = "dark"
-      document.body.className = "dark"
-      const transaction = idb.transaction(["user"],"readwrite")
-      const store = transaction.objectStore("user")
-      store.put(user)
+      changeUser()
     } else {
       user.theme = "light"
-      document.body.className = "light"
-      const transaction = idb.transaction(["user"],"readwrite")
-      const store = transaction.objectStore("user")
-      store.put(user)
+      changeUser()
     }
     event.preventDefault()
     return
@@ -307,11 +301,15 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   file.text().then((text) => {
     database = roamJsonToDatabase(graphName,JSON.parse(text))
     gotoDailyNotes()
-    setInterval(save,10000)
   })
 })
 
-window.onblur = save
+const changeUser = () => {
+  document.body.className = user.theme
+  const transaction = idb.transaction(["user"],"readwrite")
+  const store = transaction.objectStore("user")
+  store.put(user)
+}
 
 const saveWorker = new Worker('/worker.js')
 
@@ -319,6 +317,7 @@ saveWorker.onmessage = (event) => {
   console.log("worker message")
   console.log(event)
 }
+
 
 // const t = performance.now()
 // for (let i = 0; i < 1000000; i++) {
