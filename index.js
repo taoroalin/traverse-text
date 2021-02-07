@@ -35,10 +35,15 @@ const gotoDailyNotes = () => {
   gotoBlack()
   document.addEventListener("scroll",dailyNotesInfiniteScrollListener)
   oldestLoadedDailyNoteDate = new Date(Date.now())
-  for (let i = 0; i < 100; i++) {
+  const numNotesLoaded = 0
+  for (let i = 0; i < 1000; i++) {
     const daysNotes = database.vae[formatDate(oldestLoadedDailyNoteDate)]
     if (daysNotes && daysNotes.title) {
       renderPage(pageFrame,(daysNotes.title)[0])
+      numNotesLoaded += 1
+      if (numNotesLoaded > 10) {
+        break
+      }
     }
     oldestLoadedDailyNoteDate.setDate(
       oldestLoadedDailyNoteDate.getDate() - 1
@@ -132,7 +137,6 @@ const dailyNotesInfiniteScrollListener = (event) => {
 
 const saveHandler = () => {
   console.log("save")
-
 }
 
 const downloadHandler = () => {
@@ -349,6 +353,7 @@ const loadDatabase = (graphName) => {
   const transaction = idb.transaction(["graphs"],"readwrite")
   const store = transaction.objectStore("graphs")
   const req = store.get(graphName)
+  console.log(`tried to get ${graphName}`)
   req.onerror = (event) => {
     console.log(event)
   }
@@ -384,7 +389,7 @@ IdbRequest.onerror = (event) => {
 IdbRequest.onsuccess = (event) => {
   idb = event.target.result
   console.log(event.target.result)
-  loadDatabase()
+  loadDatabase(graphName)
 }
 IdbRequest.onupgradeneeded = (event) => {
   const db = event.target.result
