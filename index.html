@@ -34,7 +34,6 @@
         if (event.target.result) {
           database = JSON.parse(event.target.result.graph)
           gotoDailyNotes()
-          setInterval(save,10000);
         } else {
           console.log("no graph to load")
         }
@@ -52,8 +51,9 @@
 
   const save = () => {
     console.log("posting save message")
-    postMessage(["save",database])
+    saveWorker.postMessage(["save",database])
   }
+
 </script>
 <link rel="stylesheet" href="index.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
@@ -89,7 +89,7 @@
   <template id="backrefs-list">
     <div class="backrefs-list">
       <div class="backrefs-list__title"><span class="bckrefs-list__count"></span>Linked References</div>
-
+      <div class="backrefs-list__body"></div>
     </div>
   </template>
 
@@ -124,11 +124,6 @@
   </template>
 
   <div id="app">
-
-    <div id="page-frame">
-
-    </div>
-
     <div id="top-bar">
       <input id="search-input" placeholder="search">
       <button id="switch-graph-button">
@@ -142,6 +137,11 @@
         Download JSON
       </a>
     </div>
+
+    <div id="page-frame">
+
+    </div>
+
   </div>
   <script src="utils.js"></script>
   <script src="parse.js"></script>
