@@ -24,7 +24,8 @@
     const userStore = transaction.objectStore("user")
     const userReq = userStore.get("default user")
     userReq.onsuccess = (event) => {
-      const user = event.target.result
+      user = event.target.result
+      document.body.className = user.theme
       console.log(user)
       const transaction = idb.transaction(["graphs"],"readwrite")
       const graphsStore = transaction.objectStore("graphs")
@@ -33,6 +34,7 @@
         if (event.target.result) {
           database = JSON.parse(event.target.result.graph)
           gotoDailyNotes()
+          setInterval(save,10000);
         } else {
           console.log("no graph to load")
         }
@@ -46,6 +48,11 @@
       console.log("userReq error")
       console.log(error)
     }
+  }
+
+  const save = () => {
+    console.log("posting save message")
+    postMessage(["save",database])
   }
 </script>
 <link rel="stylesheet" href="index.css">
@@ -68,9 +75,9 @@
 
   <template id="block">
     <div class="block">
-      <div class="block__bullet-hitbox" contenteditable="false">
-        <div class="block__bullet"></div>
-      </div>
+      <svg class="block__bullet" width="20" height="20">
+        <circle cx="10" cy="10" r="3.5" fill="var(--bullet)" />
+      </svg>
       <div class="block__body" contenteditable="true" tabindex="-1">
       </div>
       <div class="block__children">
@@ -122,17 +129,10 @@
 
     </div>
 
-    <div id="search" style="display:none">
-      <input id="search__input" />
-      <div id="search__options">
-
-      </div>
-
-    </div>
-
-    <div id="top-buttons">
-      <button id="search-button">
-        Search
+    <div id="top-bar">
+      <input id="search-input" placeholder="search">
+      <button id="switch-graph-button">
+        Switch Graph
       </button>
       <button id="upload-button">
         <input style="display:none" type="file" id="upload-input">
