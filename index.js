@@ -1,4 +1,4 @@
-
+const manyAttributes = { ":node/subpages": true,":vc/blocks": true,":edit/seen-by": true,":attrs/lookup": true,":node/windows": true,":node/sections": true,":harc/v": true,":block/refs": true,":harc/a": true,"children": true,":create/seen-by": true,":node/links": true,":query/results": true,":harc/e": true,":block/parents": true }
 // Constants
 
 // Templates
@@ -24,7 +24,7 @@ const gotoBlack = () => {
 }
 
 const gotoPageTitle = (title) => {
-  const existingPage = (database.vae[title].title)[0]
+  const existingPage = database.vae[title].title[0]
   if (existingPage) {
     gotoBlack()
     renderPage(pageFrame,existingPage)
@@ -35,11 +35,11 @@ const gotoDailyNotes = () => {
   gotoBlack()
   document.addEventListener("scroll",dailyNotesInfiniteScrollListener)
   oldestLoadedDailyNoteDate = new Date(Date.now())
-  const numNotesLoaded = 0
-  for (let i = 0; i < 1000; i++) {
+  let numNotesLoaded = 0
+  for (let i = 0; i < 366; i++) {
     const daysNotes = database.vae[formatDate(oldestLoadedDailyNoteDate)]
     if (daysNotes && daysNotes.title) {
-      renderPage(pageFrame,(daysNotes.title)[0])
+      renderPage(pageFrame,daysNotes.title[0])
       numNotesLoaded += 1
       if (numNotesLoaded > 10) {
         break
@@ -78,15 +78,16 @@ const renderPage = (parentNode,entityId) => {
 
   title.innerText = database.eav[entityId].title
 
-  const children = database.eav[entityId]["children"]
+  const children = database.eav[entityId].children
   if (children) {
     for (let child of children) {
       renderBlock(body,child)
     }
   }
-
   const uid = database.eav[entityId].uid
   const backrefs = database.vae[uid][":block/refs"]
+  console.log(`backrefs ${backrefs} uid ${uid}`)
+  console.log(database.vae[uid])
   if (backrefs) {
     const backrefsListElement = backrefsListTemplate.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
@@ -109,7 +110,7 @@ const renderBlock = (parentNode,entityId) => {
     renderBlockBody(body,string)
   }
 
-  const children = database.eav[entityId]["children"]
+  const children = database.eav[entityId].children
   if (children) {
     for (let child of children) {
       renderBlock(childrenContainer,child)
@@ -142,7 +143,8 @@ const saveHandler = () => {
 const downloadHandler = () => {
   console.log("download")
   const result = []
-  for (let pageId in database.aev["title"]) {
+  console.log(database.aev.title)
+  for (let pageId in database.aev.title) {
     result.push(database.pull(pageId))
   }
   const json = JSON.stringify(result)
@@ -308,8 +310,6 @@ document.addEventListener("click",(event) => {
     toggleSearch()
   } else if (event.target.id === "download-button") {
     downloadHandler()
-  } else if (event.target.id === "save-button") {
-    saveDatabase()
   } else if (event.target.id === "upload-button") {
     document.getElementById("upload-input").click()
   }
@@ -330,27 +330,17 @@ document.getElementById("search__input").addEventListener("blur",() => searchEle
 
 setGraphFromJSON = (roamJSON) => {
   const loadSTime = performance.now()
-  database = new DQ(graphName,{ many: { ":node/subpages": true,":vc/blocks": true,":edit/seen-by": true,":attrs/lookup": true,":node/windows": true,":node/sections": true,":harc/v": true,":block/refs": true,":harc/a": true,"children": true,":create/seen-by": true,":node/links": true,":query/results": true,":harc/e": true,":block/parents": true } })
-
-  // badcode this is some unneccesary complexity. It indexes the most recent few blocks, renders those, then indexes the rest
-
-  // go from last to first
-  const stoppingPoint = Math.max(0,roamJSON.length - 300)
-  for (let i = roamJSON.length - 1; i > stoppingPoint; i--) {
-    database.push(roamJSON[i])
+  database = new DQ(graphName,manyAttributes)
+  for (let page of roamJSON) {
+    database.push(page)
   }
   gotoDailyNotes()
   console.log(`made DOM in ${performance.now() - loadSTime}`)
-  setTimeout(() => {
-    for (let i = stoppingPoint; i >= 0; i--) {
-      database.push(roamJSON[i])
-    }
-    console.log(`loaded data into DQ in ${performance.now() - loadSTime}`)
-  },50)
+  setInterval(saveDatabase,2000)
 }
 
 const loadDatabase = (graphName) => {
-  const transaction = idb.transaction(["graphs"],"readwrite")
+  const transaction = idb.transaction(["graphs"],"readonly")
   const store = transaction.objectStore("graphs")
   const req = store.get(graphName)
   console.log(`tried to get ${graphName}`)
@@ -358,26 +348,15 @@ const loadDatabase = (graphName) => {
     console.log(event)
   }
   req.onsuccess = (event) => {
-    database = new DQ()
+    const ctime = performance.now()
     const databaseData = event.target.result
     console.log(databaseData)
-    Object.assign(database,databaseData)
+    database = new DQ(graphName,manyAttributes,databaseData.nextEntityId,databaseData.eav,databaseData.aev,databaseData.vae)
     console.log(database)
-    console.log("loaded?")
+    console.log(performance.now() - ctime)
     gotoDailyNotes()
-  }
-}
-
-const saveDatabase = () => {
-  const transaction = idb.transaction(["graphs"],"readwrite")
-  const store = transaction.objectStore("graphs")
-  const req = store.add(database)
-  console.log("requested")
-  req.onsuccess = (event) => {
-    console.log("stored database")
-  }
-  req.onerror = (event) => {
-    console.log(event)
+    console.log("loaded")
+    setInterval(() => saveWorker.postMessage(database),2000)
   }
 }
 
@@ -395,3 +374,15 @@ IdbRequest.onupgradeneeded = (event) => {
   const db = event.target.result
   const store = db.createObjectStore("graphs",{ keyPath: "graphName" })
 }
+
+const saveWorker = new Worker('/worker.js')
+
+saveWorker.onmessage = (event) => {
+  console.log(`message from save worker! ${event}`)
+}
+
+// const t = performance.now()
+// for (let i = 0; i < 1000000; i++) {
+
+// }
+// console.log(`took ${performance.now() - t}`)
