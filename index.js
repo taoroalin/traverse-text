@@ -336,7 +336,7 @@ setGraphFromJSON = (roamJSON) => {
   }
   gotoDailyNotes()
   console.log(`made DOM in ${performance.now() - loadSTime}`)
-  setInterval(saveDatabase,2000)
+  setInterval(() => { },2000)
 }
 
 const loadDatabase = (graphName) => {
