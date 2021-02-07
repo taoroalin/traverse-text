@@ -2,19 +2,11 @@
   <script>
     // start loading data before scripts
     var setGraphFromJSON = () => { }; // index.js will replace this with real start function
-    let roamJSON = null;
-    let partnerLoaded = false; // call start after partner and scripts load.
-    fetch("test-data/graphminer.json").then(response => {
-      response.json().then(json => {
-        roamJSON = json;
-        if (partnerLoaded) setGraphFromJSON();
-        partnerLoaded = true;
-      })
-    })
     let graphName = "graphminer"
     let database = null;
     let editingBlock = null;
     let oldestLoadedDailyNoteDate = null;
+    let idb = null;
   </script>
   <link rel="stylesheet" href="index.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">

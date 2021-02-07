@@ -305,7 +305,7 @@ document.addEventListener("click",(event) => {
   } else if (event.target.id === "download-button") {
     downloadHandler()
   } else if (event.target.id === "save-button") {
-    saveHandler()
+    saveDatabase()
   } else if (event.target.id === "upload-button") {
     document.getElementById("upload-input").click()
   }
@@ -315,9 +315,7 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   const file = event.target.files[0]
   graphName = file.name.substring(0,file.name.length - 5)
   file.text().then((text) => {
-    console.log(text)
-    roamJSON = JSON.parse(text)
-    setGraphFromJSON()
+    setGraphFromJSON(JSON.parse(text))
   })
 })
 
@@ -326,9 +324,9 @@ document.getElementById("search__input").addEventListener("blur",() => searchEle
 
 // Loading and storing graph
 
-setGraphFromJSON = () => {
+setGraphFromJSON = (roamJSON) => {
   const loadSTime = performance.now()
-  database = new DQ({ many: { ":node/subpages": true,":vc/blocks": true,":edit/seen-by": true,":attrs/lookup": true,":node/windows": true,":node/sections": true,":harc/v": true,":block/refs": true,":harc/a": true,"children": true,":create/seen-by": true,":node/links": true,":query/results": true,":harc/e": true,":block/parents": true } })
+  database = new DQ(graphName,{ many: { ":node/subpages": true,":vc/blocks": true,":edit/seen-by": true,":attrs/lookup": true,":node/windows": true,":node/sections": true,":harc/v": true,":block/refs": true,":harc/a": true,"children": true,":create/seen-by": true,":node/links": true,":query/results": true,":harc/e": true,":block/parents": true } })
 
   // badcode this is some unneccesary complexity. It indexes the most recent few blocks, renders those, then indexes the rest
 
@@ -347,6 +345,45 @@ setGraphFromJSON = () => {
   },50)
 }
 
-// Kick off app once data and code load
-if (partnerLoaded) setGraphFromJSON()
-partnerLoaded = true
+const loadDatabase = (graphName) => {
+  const transaction = idb.transaction(["graphs"],"readwrite")
+  const store = transaction.objectStore("graphs")
+  const req = store.get(graphName)
+  req.onerror = (event) => {
+    console.log(event)
+  }
+  req.onsuccess = (event) => {
+    database = new DQ()
+    const databaseData = event.target.result
+    console.log(databaseData)
+    Object.assign(database,databaseData)
+    console.log(database)
+  }
+}
+
+const saveDatabase = () => {
+  const transaction = idb.transaction(["graphs"],"readwrite")
+  const store = transaction.objectStore("graphs")
+  const req = store.add(database)
+  req.onsuccess = (event) => {
+    console.log("stored database")
+  }
+  req.onerror = (event) => {
+    console.log(event.errorCode)
+  }
+}
+
+const IdbRequest = window.indexedDB.open("microroam",1)
+IdbRequest.onerror = (event) => {
+  console.log(event.target.errorCode)
+  alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB`)
+}
+IdbRequest.onsuccess = (event) => {
+  idb = event.target.result
+  console.log(event.target.result)
+  setTimeout(loadDatabase,1000)
+}
+IdbRequest.onupgradeneeded = (event) => {
+  const db = event.target.result
+  const store = db.createObjectStore("graphs",{ keyPath: "graphName" })
+}
