@@ -7,12 +7,9 @@ const backrefsListTemplate = document.getElementById("backrefs-list").content.fi
 const blockFocusFrameTemplate = document.getElementById("block-focus-frame").content.firstElementChild
 
 // Singleton elements
-const searchElement = document.getElementById("search")
 const pageFrame = document.getElementById("page-frame")
-const searchInput = document.getElementById("search__input")
+const searchInput = document.getElementById("search-input")
 const downloadButton = document.getElementById("download-button")
-
-// Utils
 
 
 // App state transitions
@@ -147,16 +144,6 @@ const downloadHandler = () => {
   downloadButton.setAttribute('download',"output.json")
 }
 
-const toggleSearch = () => {
-  if (searchElement.style.display === "none") {
-    searchElement.style.display = "block"
-    searchInput.value = ""
-    searchInput.focus()
-  } else {
-    searchElement.style.display = "none"
-  }
-}
-
 document.addEventListener("input",(event) => {
   // reparse block and insert cursor into correct position while typing
   const block = event.target.closest(".block__body")
@@ -171,7 +158,7 @@ document.addEventListener("input",(event) => {
     let string = block.innerText
     if (block.innerText.length === position)
       string += " "
-    database.setDatom(id,"string",string)
+    databaseSetDatom(database,id,"string",string)
     block.textContent = ""
     renderBlockBody(block,string,position)
 
@@ -205,15 +192,23 @@ document.addEventListener("keydown",(event) => {
     return
   }
   if (event.key === "s" && event.ctrlKey) {
-    saveHandler()
+    save()
     event.preventDefault()
     return
   }
   if (event.key === "m" && event.ctrlKey) {
     if (document.body.className === "light") {
+      user.theme = "dark"
       document.body.className = "dark"
+      const transaction = idb.transaction(["user"],"readwrite")
+      const store = transaction.objectStore("user")
+      store.put(user)
     } else {
+      user.theme = "light"
       document.body.className = "light"
+      const transaction = idb.transaction(["user"],"readwrite")
+      const store = transaction.objectStore("user")
+      store.put(user)
     }
     event.preventDefault()
     return
@@ -224,7 +219,7 @@ document.addEventListener("keydown",(event) => {
     return
   }
   if (event.ctrlKey && event.key === "u") {
-    toggleSearch()
+    searchInput.focus()
     event.preventDefault()
     return
   }
@@ -278,7 +273,7 @@ document.addEventListener("keydown",(event) => {
     }
   } else if (
     document.activeElement &&
-    document.activeElement.id === "search__input"
+    document.activeElement.id === "search-input"
   ) {
     if (event.key === "Enter") {
       gotoPageTitle(event.target.value)
@@ -290,7 +285,7 @@ document.addEventListener("keydown",(event) => {
 })
 
 document.addEventListener("click",(event) => {
-  const closestBullet = event.target.closest(".block__bullet-hitbox")
+  const closestBullet = event.target.closest(".block__bullet")
   if (event.target.className === "page-ref__body") {
     gotoPageTitle(event.target.innerText)
   } else if (closestBullet) {
@@ -299,8 +294,6 @@ document.addEventListener("click",(event) => {
     gotoBlock(event.target.dataset.id)
   } else if (event.target.closest(".tag")) {
     gotoPageTitle(event.target.closest(".tag").innerText.substring(1))
-  } else if (event.target.id === "search-button") {
-    toggleSearch()
   } else if (event.target.id === "download-button") {
     downloadHandler()
   } else if (event.target.id === "upload-button") {
@@ -314,15 +307,13 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   file.text().then((text) => {
     database = roamJsonToDatabase(graphName,JSON.parse(text))
     gotoDailyNotes()
-    saveWorker.postMessage(["save",database])
+    setInterval(save,10000)
   })
 })
 
-document.getElementById("search__input").addEventListener("blur",() => searchElement.style.display = "none")
+window.onblur = save
 
-window.onblur = () => saveWorker.postMessage(["save",database])
-
-const saveWorker = new Worker('/worker.js') // start loading data before scripts
+const saveWorker = new Worker('/worker.js')
 
 saveWorker.onmessage = (event) => {
   console.log("worker message")
