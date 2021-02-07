@@ -1,18 +1,57 @@
-<head>
-  <script>
-    // start loading data before scripts
-    var setGraphFromJSON = () => { }; // index.js will replace this with real start function
-    let graphName = "graphminer"
-    let database = null;
-    let editingBlock = null;
-    let oldestLoadedDailyNoteDate = null;
-    let idb = null;
-  </script>
-  <link rel="stylesheet" href="index.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
-</head>
+<script>
+  let user = { user: "default user",theme: "light",graphName: "graphminer" }
+  let database = null;
+  let editingBlock = null;
+  let oldestLoadedDailyNoteDate = null;
 
-<body class="dark-mode">
+  let idb = null
+  const dbReq = indexedDB.open("microroam",1)
+  dbReq.onerror = (event) => {
+    alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
+    You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
+  }
+  dbReq.onupgradeneeded = (event) => {
+    const db = dbReq.result
+    console.log(db)
+    db.createObjectStore("graphs",{ keyPath: "graphName" })
+    db.createObjectStore("user",{ keyPath: "user" })
+    const userStore = dbReq.transaction.objectStore("user")
+    const userReq = userStore.add(user)
+  }
+  dbReq.onsuccess = (event) => {
+    idb = event.target.result
+    const transaction = idb.transaction(["user"],"readonly")
+    const userStore = transaction.objectStore("user")
+    const userReq = userStore.get("default user")
+    userReq.onsuccess = (event) => {
+      const user = event.target.result
+      console.log(user)
+      const transaction = idb.transaction(["graphs"],"readwrite")
+      const graphsStore = transaction.objectStore("graphs")
+      const graphReq = graphsStore.get(user.graphName)
+      graphReq.onsuccess = (event) => {
+        if (event.target.result) {
+          database = JSON.parse(event.target.result.graph)
+          gotoDailyNotes()
+        } else {
+          console.log("no graph to load")
+        }
+      }
+      graphReq.onerror = (event) => {
+        console.log("graphReq error")
+        console.log(event)
+      }
+    }
+    userReq.onerror = (event) => {
+      console.log("userReq error")
+      console.log(error)
+    }
+  }
+</script>
+<link rel="stylesheet" href="index.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
+
+<body class="light">
 
   <template id="page">
     <div class="page">
@@ -104,7 +143,6 @@
       </a>
     </div>
   </div>
-  <script src="integrations.js"></script>
   <script src="utils.js"></script>
   <script src="parse.js"></script>
   <script src="datalog-js/datalog.js"></script>

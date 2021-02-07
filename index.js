@@ -1,4 +1,3 @@
-const manyAttributes = { "lines": true,":drawing/lines": true,":node/subpages": true,":vc/blocks": true,":edit/seen-by": true,":attrs/lookup": true,":node/windows": true,":node/sections": true,":harc/v": true,":block/refs": true,":harc/a": true,"children": true,":create/seen-by": true,":node/links": true,":query/results": true,":harc/e": true,":block/parents": true }
 // Constants
 
 // Templates
@@ -86,8 +85,6 @@ const renderPage = (parentNode,entityId) => {
   }
   const uid = database.eav[entityId].uid
   const backrefs = database.vae[uid][":block/refs"]
-  console.log(`backrefs ${backrefs} uid ${uid}`)
-  console.log(database.vae[uid])
   if (backrefs) {
     const backrefsListElement = backrefsListTemplate.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
@@ -134,10 +131,6 @@ const dailyNotesInfiniteScrollListener = (event) => {
       renderPage(pageFrame,(daysNotes)[0])
     }
   }
-}
-
-const saveHandler = () => {
-  console.log("save")
 }
 
 const downloadHandler = () => {
@@ -202,7 +195,7 @@ document.addEventListener("input",(event) => {
 document.addEventListener("keydown",(event) => {
   // Check for global shortcut keys
   if (event.key === "d" && event.ctrlKey) {
-    uploadHandler()
+    document.getElementById("upload-input").click()
     event.preventDefault()
     return
   }
@@ -217,10 +210,10 @@ document.addEventListener("keydown",(event) => {
     return
   }
   if (event.key === "m" && event.ctrlKey) {
-    if (document.body.className === "light-mode") {
-      document.body.className = "dark-mode"
+    if (document.body.className === "light") {
+      document.body.className = "dark"
     } else {
-      document.body.className = "light-mode"
+      document.body.className = "light"
     }
     event.preventDefault()
     return
@@ -319,66 +312,21 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   const file = event.target.files[0]
   graphName = file.name.substring(0,file.name.length - 5)
   file.text().then((text) => {
-    setGraphFromJSON(JSON.parse(text))
+    database = roamJsonToDatabase(graphName,JSON.parse(text))
+    gotoDailyNotes()
+    saveWorker.postMessage(["save",database])
   })
 })
 
 document.getElementById("search__input").addEventListener("blur",() => searchElement.style.display = "none")
 
+window.onblur = () => saveWorker.postMessage(["save",database])
 
-// Loading and storing graph
-
-setGraphFromJSON = (roamJSON) => {
-  const loadSTime = performance.now()
-  database = new DQ(graphName,manyAttributes)
-  for (let page of roamJSON) {
-    database.push(page)
-  }
-  gotoDailyNotes()
-  console.log(`made DOM in ${performance.now() - loadSTime}`)
-  setInterval(() => { },2000)
-}
-
-const loadDatabase = (graphName) => {
-  const transaction = idb.transaction(["graphs"],"readonly")
-  const store = transaction.objectStore("graphs")
-  const req = store.get(graphName)
-  console.log(`tried to get ${graphName}`)
-  req.onerror = (event) => {
-    console.log(event)
-  }
-  req.onsuccess = (event) => {
-    const ctime = performance.now()
-    const databaseData = event.target.result
-    console.log(databaseData)
-    database = new DQ(graphName,manyAttributes,databaseData.nextEntityId,databaseData.eav,databaseData.aev,databaseData.vae)
-    console.log(database)
-    console.log(performance.now() - ctime)
-    gotoDailyNotes()
-    console.log("loaded")
-    setInterval(() => saveWorker.postMessage(database),2000)
-  }
-}
-
-const IdbRequest = window.indexedDB.open("microroam",1)
-IdbRequest.onerror = (event) => {
-  console.log(event.target.errorCode)
-  alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB`)
-}
-IdbRequest.onsuccess = (event) => {
-  idb = event.target.result
-  console.log(event.target.result)
-  loadDatabase(graphName)
-}
-IdbRequest.onupgradeneeded = (event) => {
-  const db = event.target.result
-  const store = db.createObjectStore("graphs",{ keyPath: "graphName" })
-}
-
-const saveWorker = new Worker('/worker.js')
+const saveWorker = new Worker('/worker.js') // start loading data before scripts
 
 saveWorker.onmessage = (event) => {
-  console.log(`message from save worker! ${event}`)
+  console.log("worker message")
+  console.log(event)
 }
 
 // const t = performance.now()
