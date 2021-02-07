@@ -3,7 +3,7 @@
   outline:none;
 }
 
-.dark-mode{
+.dark{
   --background:#161616;
   --text: white;
   --link: #367bb8;
@@ -13,7 +13,7 @@
   --bullet:#89a5b9;
 }
 
-.light-mode{
+.light{
   --background:white;
   --text:black;
   --link: #367bb8;
