@@ -81,7 +81,7 @@ const eavToDatabase = (graphName,eav) => {
   return result
 }
 
-const databaseNewEntity = (database) => {
+const databaseNewEntity = () => {
   database.nextEntityId -= 1
   return database.nextEntityId + 1
 }
@@ -89,8 +89,8 @@ const databaseNewEntity = (database) => {
 
 // modify the database while maintaining indices, but without storing diff or calling listeners
 
-const databaseAddDatom = (database,entity,attribute,value) => {
-  database.nextEntityId = Math.min(database.nextEntityId,entity + 1)
+const databaseAdd = (entity,attribute,value) => {
+  database.nextEntityId = Math.min(database.nextEntityId,entity - 1)
   indexGet2(database.eav,entity,attribute).push(value)
   indexGet2(database.aev,attribute,entity).push(value)
 
@@ -99,8 +99,8 @@ const databaseAddDatom = (database,entity,attribute,value) => {
   }
 }
 
-const databaseSetDatom = (database,entity,attribute,value) => {
-  database.nextEntityId = Math.min(database.nextEntityId,entity + 1)
+const databaseSet = (entity,attribute,value) => {
+  database.nextEntityId = Math.min(database.nextEntityId,entity - 1)
   indexGet1(database.eav,entity)[attribute] = value
   indexGet1(database.aev,attribute)[entity] = value
 
@@ -109,7 +109,7 @@ const databaseSetDatom = (database,entity,attribute,value) => {
   }
 }
 
-const databaseSetAll = (database,entity,attribute,value) => {
+const databaseSetAll = (entity,attribute,value) => {
   const oldValues = database.eav[entity][attribute]
   database.aev[attribute][entity] = value
   database.eav[entity][attribute] = value
@@ -131,14 +131,14 @@ const databaseSetAll = (database,entity,attribute,value) => {
 
 // Modify the database while maintaining undo stack, calling listeners, and persisting changes.
 
-const databaseChange = (database,change,commitMain,commitWorker) => {
+const databaseChange = (change,commitMain,commitWorker) => {
   const [op,entity,attribute,value] = change
   if (op === "set") {
-    databaseSetDatom(database,entity,attribute,value)
+    databaseSet(entity,attribute,value)
   } else if (op === "add") {
-    databaseAddDatom(database,entity,attribute,value)
+    databaseAdd(entity,attribute,value)
   } else if (op === "setAll") {
-    databaseSetAll(database,entity,attribute,value)
+    databaseSetAll(entity,attribute,value)
   }
   if (op !== "add" && change.length > 5)
     change.push(database.eav[entity][attribute])
@@ -155,16 +155,16 @@ const databaseChange = (database,change,commitMain,commitWorker) => {
 }
 
 // no redo yet
-const databaseUndo = (database) => {
+const databaseUndo = () => {
   const changeSet = database.changeStack.pop()
   for (let i = changeSet.length - 1; i >= 0; i--) {
     const change = changeSet[i]
     if (op === "set") {
-      databaseSetDatom(database,change[1],change[2],change[4])
+      databaseSet(change[1],change[2],change[4])
     } else if (op === "add") {
-      databaseAddDatom(database,change[1],change[2],change[4])
+      databaseAdd(change[1],change[2],change[4])
     } else if (op === "setAll") {
-      databaseSetAll(database,change[1],change[2],change[4])
+      databaseSetAll(change[1],change[2],change[4])
     }
   }
   if (saveWorker !== undefined) {
@@ -175,7 +175,7 @@ const databaseUndo = (database) => {
 
 // Push / Pull : convert objects to rdf and back
 
-const databasePull = (database,entityId,includeId = false) => {
+const databasePull = (entityId,includeId = false) => {
   // Keep track of seen entities to capture recursive data structures
   const entityIdToObj = {}
   const pull = (entityId) => {
@@ -213,38 +213,38 @@ const databasePull = (database,entityId,includeId = false) => {
   return pull(entityId)
 }
 
-const databasePush = (database,obj,objId) => {
+const databasePush = (obj,objId) => {
   if (objId === undefined) objId = databaseNewEntity(database)
   const push = (obj,objId) => {
     for (let attribute in obj) {
       const value = obj[attribute]
       if (typeof value !== "object") {
-        databaseSetDatom(database,objId,attribute,value)
+        databaseSet(objId,attribute,value)
       } else if (value instanceof Array) {
         if (attribute === ":block/refs") {
           for (let x of value) {
-            databaseAddDatom(database,objId,attribute,x[":block/uid"])
+            databaseAdd(objId,attribute,x[":block/uid"])
           }
         } else if (attribute === "refs") {
           for (let x of value) {
-            databaseAddDatom(database,objId,attribute,x["uid"])
+            databaseAdd(objId,attribute,x["uid"])
           }
         } else {
           for (let setElement of value) {
             if (typeof setElement !== "object" || setElement instanceof Array) {
-              databaseAddDatom(database,objId,attribute,setElement)
+              databaseAdd(objId,attribute,setElement)
             } else {
               let elId = databaseNewEntity(database)
-              databaseAddDatom(database,objId,attribute,elId) // could pull attr check in here out of loop @to-perf
+              databaseAdd(objId,attribute,elId) // could pull attr check in here out of loop @to-perf
               push(setElement,elId)
             }
           }
         }
       } else if (attribute === ":create/user" || attribute === ":edit/user") {
-        databaseSetDatom(database,objId,attribute,value[":user/uid"])
+        databaseSet(objId,attribute,value[":user/uid"])
       } else {
         let valId = databaseNewEntity(database)
-        databaseSetDatom(database,objId,attribute,valId)
+        databaseSet(objId,attribute,valId)
         push(value,valId)
       }
     }
@@ -278,9 +278,9 @@ onmessage = (event) => {
   } else if (operation === "change") {
     console.log("change")
     for (let i = 0; i < data.length - 1; i++) {
-      databaseChange(database,data[i],false)
+      databaseChange(data[i],false)
     }
-    databaseChange(database,data[data.length - 1],false,true)
+    databaseChange(data[data.length - 1],false,true)
     saveDatabase()
   } else if (operation === "undo") {
     databaseUndo(database)
