@@ -3,6 +3,7 @@ const pageTemplate = document.getElementById("page").content.firstElementChild
 const blockTemplate = document.getElementById("block").content.firstElementChild
 const backrefsListTemplate = document.getElementById("backrefs-list").content.firstElementChild
 const blockFocusFrameTemplate = document.getElementById("block-focus-frame").content.firstElementChild
+const pageBreakTemplate = document.getElementById("page-break").content.firstElementChild
 
 // Singleton elements
 const pageFrame = document.getElementById("page-frame")
@@ -34,6 +35,7 @@ const gotoDailyNotes = () => {
     const daysNotes = database.vae[formatDate(oldestLoadedDailyNoteDate)]
     if (daysNotes && daysNotes.title) {
       renderPage(pageFrame,daysNotes.title[0])
+      pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
       numNotesLoaded += 1
       if (numNotesLoaded > 10) {
         break
@@ -116,7 +118,6 @@ const renderBlock = (parentNode,entityId) => {
 // Event listener functions that can't be written inline because multiple triggers / disconnect / reconnect
 
 const dailyNotesInfiniteScrollListener = (event) => {
-  console.log("scroll")
   const fromBottom =
     pageFrame.getBoundingClientRect().bottom - window.innerHeight
   if (fromBottom < 700) {
@@ -132,9 +133,8 @@ const dailyNotesInfiniteScrollListener = (event) => {
 const downloadHandler = () => {
   console.log("download")
   const result = []
-  console.log(database.aev.title)
   for (let pageId in database.aev.title) {
-    result.push(databasePull(database,pageId))
+    result.push(databasePull(pageId))
   }
   const json = JSON.stringify(result)
   const data = new Blob([json],{ type: 'text/json' })
@@ -312,7 +312,8 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   const file = event.target.files[0]
   graphName = file.name.substring(0,file.name.length - 5)
   file.text().then((text) => {
-    database = roamJsonToDatabase(graphName,JSON.parse(text))
+    console.log(`got json text`)
+    roamJsonToDatabase(graphName,JSON.parse(text))
     gotoDailyNotes()
     setTimeout(() => saveWorker.postMessage(["db",database]),0)
   })
