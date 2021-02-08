@@ -6,13 +6,14 @@ const blockFocusFrameTemplate = document.getElementById("block-focus-frame").con
 
 // Singleton elements
 const pageFrame = document.getElementById("page-frame")
+const pageFrameOuter = document.getElementById("page-frame-outer")
 const searchInput = document.getElementById("search-input")
 const downloadButton = document.getElementById("download-button")
 
 // App state transitions
 const gotoBlack = () => {
   oldestLoadedDailyNoteDate = null
-  document.removeEventListener("scroll",dailyNotesInfiniteScrollListener)
+  pageFrameOuter.removeEventListener("scroll",dailyNotesInfiniteScrollListener)
   pageFrame.textContent = ""
 }
 
@@ -26,7 +27,7 @@ const gotoPageTitle = (title) => {
 
 const gotoDailyNotes = () => {
   gotoBlack()
-  document.addEventListener("scroll",dailyNotesInfiniteScrollListener)
+  pageFrameOuter.addEventListener("scroll",dailyNotesInfiniteScrollListener)
   oldestLoadedDailyNoteDate = new Date(Date.now())
   let numNotesLoaded = 0
   for (let i = 0; i < 366; i++) {
@@ -284,7 +285,6 @@ document.addEventListener("keydown",(event) => {
   ) {
     if (event.key === "Enter") {
       gotoPageTitle(event.target.value)
-      searchElement.style.display = "none"
       event.preventDefault()
       return
     }
