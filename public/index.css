@@ -219,3 +219,12 @@ a:visited { color:var(--link) }
 .block-focus-frame{
   margin: 35px 0 0 60px;
 }
+
+
+.code{
+  font-family:'Inconsolata';
+  font-weight:600;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius: 5px;
+}
