@@ -133,9 +133,6 @@ const databaseSetAll = (database,entity,attribute,value) => {
 
 const databaseChange = (database,change,commitMain,commitWorker) => {
   const [op,entity,attribute,value] = change
-  if (change.length > 5)
-    change.push(database.eav[entity][attribute])
-  database.currentChanges.push(change)
   if (op === "set") {
     databaseSetDatom(database,entity,attribute,value)
   } else if (op === "add") {
@@ -143,6 +140,9 @@ const databaseChange = (database,change,commitMain,commitWorker) => {
   } else if (op === "setAll") {
     databaseSetAll(database,entity,attribute,value)
   }
+  if (op !== "add" && change.length > 5)
+    change.push(database.eav[entity][attribute])
+  database.currentChanges.push(change)
   if (commitMain) {
     saveWorker.postMessage(["change",database.currentChanges])
     database.changeStack.push(database.currentChanges)
@@ -151,6 +151,24 @@ const databaseChange = (database,change,commitMain,commitWorker) => {
   if (commitWorker) {
     database.changeStack.push(database.currentChanges)
     database.currentChanges = []
+  }
+}
+
+// no redo yet
+const databaseUndo = (database) => {
+  const changeSet = database.changeStack.pop()
+  for (let i = changeSet.length - 1; i >= 0; i--) {
+    const change = changeSet[i]
+    if (op === "set") {
+      databaseSetDatom(database,change[1],change[2],change[4])
+    } else if (op === "add") {
+      databaseAddDatom(database,change[1],change[2],change[4])
+    } else if (op === "setAll") {
+      databaseSetAll(database,change[1],change[2],change[4])
+    }
+  }
+  if (saveWorker !== undefined) {
+    saveWorker.postMessage(["undo",null]) // standard to send len 2 array. second will be ignored
   }
 }
 
@@ -254,15 +272,8 @@ onmessage = (event) => {
     console.log(data)
     database = data
   } else if (operation === "save") {
-    const transaction = idb.transaction(["graphs"],"readwrite")
-    const store = transaction.objectStore("graphs")
-    const req = store.put({ graphName: data.graphName,graph: JSON.stringify(data) })
-    req.onsuccess = () => console.log("success")
-
-    req.onerror = (event) => {
-      console.log("save error")
-      console.log(event)
-    }
+    database = data
+    saveDatabase()
 
   } else if (operation === "change") {
     console.log("change")
@@ -270,14 +281,21 @@ onmessage = (event) => {
       databaseChange(database,data[i],false)
     }
     databaseChange(database,data[data.length - 1],false,true)
-    const transaction = idb.transaction(["graphs"],"readwrite")
-    const store = transaction.objectStore("graphs")
-    const req = store.put({ graphName: database.graphName,graph: JSON.stringify(database) })
-    req.onsuccess = () => console.log("success")
+    saveDatabase()
+  } else if (operation === "undo") {
+    databaseUndo(database)
+    saveDatabase()
+  }
+}
 
-    req.onerror = (event) => {
-      console.log("save error")
-      console.log(event)
-    }
+const saveDatabase = () => {
+  const transaction = idb.transaction(["graphs"],"readwrite")
+  const store = transaction.objectStore("graphs")
+  const req = store.put({ graphName: database.graphName,graph: JSON.stringify(database) })
+  req.onsuccess = () => console.log("success")
+
+  req.onerror = (event) => {
+    console.log("save error")
+    console.log(event)
   }
 }

@@ -1,7 +1,7 @@
 // idk whether this is "random enough"
 // it is highly performance inneficient but i don't need to call this many times
 const chars64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
-const createUID = () => {
+const newUid = () => {
   result = ""
   for (let i = 0; i < 9; i++) {
     result += chars64[Math.floor(Math.random() * 64)]
