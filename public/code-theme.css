@@ -1,0 +1,36 @@
+/* vscode dark+ */
+.code__type{
+  color:#4EC9B0
+}
+
+.code__function{
+  color:#DCDCAA
+}
+
+.code__flow{
+  color:#C586C0
+}
+
+.code__var{
+  color:#9CDCFE;
+}
+
+.code__const{
+  color:#4FC1FF
+}
+
+.code__regex{
+  color:#CE9178
+}
+
+.code__op{
+  color:#C586C0
+}
+
+.code__string{
+  color:#ce9178
+}
+
+.code__number{
+  color:#b5cea8
+}

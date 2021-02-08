@@ -333,6 +333,13 @@ saveWorker.onmessage = (event) => {
   console.log(event)
 }
 
+
+if (eitherDataOrCodeLoaded) {
+  gotoDailyNotes()
+  setTimeout(() => saveWorker.postMessage(["db",database]),0)
+}
+eitherDataOrCodeLoaded = true
+
 // const t = performance.now()
 // for (let i = 0; i < 1000000; i++) {
 
