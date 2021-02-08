@@ -157,8 +157,7 @@ document.addEventListener("input",(event) => {
     let string = block.innerText
     if (block.innerText.length === position)
       string += " "
-    console.log(database.eav[id].string)
-    databaseChange(database,["set",id,"string",string],true)
+    databaseChange(["set",id,"string",string],true)
     console.log(`new string is ${database.eav[id].string}`)
     block.textContent = ""
     renderBlockBody(block,string,position)
@@ -237,10 +236,10 @@ document.addEventListener("keydown",(event) => {
         } else {
           const newBlockId = databaseNewEntity(database)
           const newBlockUid = newUid()
-          databaseChange(database,["add",closestBlock.dataset.id,"children",newBlockId])
-          databaseChange(database,["set",newBlockId,"uid",newBlockUid])
-          databaseChange(database,["set",newBlockId,"string",""])
-          databaseChange(database,["set",newBlockId,"refs",database.eav[closestBlock.dataset.id]["refs"]],true)
+          databaseChange(["add",closestBlock.dataset.id,"children",newBlockId])
+          databaseChange(["set",newBlockId,"uid",newBlockUid])
+          databaseChange(["set",newBlockId,"string",""])
+          databaseChange(["set",newBlockId,"refs",database.eav[closestBlock.dataset.id]["refs"]],true)
         }
         break
       case "Tab":
