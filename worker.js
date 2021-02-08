@@ -24,7 +24,7 @@ const indexHas2 = (index,key1,key2) => {
 // negative numbers are entity ids
 
 const roamJsonToDatabase = (graphName,roamJson) => {
-  const result = {
+  database = {
     nextEntityId: maxEntityId,
     graphName: graphName,
     eav: {},
@@ -34,13 +34,12 @@ const roamJsonToDatabase = (graphName,roamJson) => {
     currentChanges: []
   }
   for (let page of roamJson) {
-    databasePush(result,page)
+    databasePush(page)
   }
-  return result
 }
 
 const eavToDatabase = (graphName,eav) => {
-  const result = {
+  database = {
     nextEntityId: maxEntityId,
     graphName: graphName,
     eav: eav,
@@ -52,25 +51,25 @@ const eavToDatabase = (graphName,eav) => {
   for (let ke in eav) {
     const av = eav[ke]
     for (let ka in av) {
-      if (result.aev[ka] === undefined) {
-        result.aev[ka] = {}
+      if (database.aev[ka] === undefined) {
+        database.aev[ka] = {}
       }
       const v = av[ka]
-      result.aev[ka][ke] = v
+      database.aev[ka][ke] = v
       if (typeof v !== "object") {
-        if (result.vae[v] === undefined) {
-          result.vae[v] = {}
+        if (database.vae[v] === undefined) {
+          database.vae[v] = {}
         }
-        const ae = result.vae[v]
+        const ae = database.vae[v]
         if (ae[ka] === undefined)
           ae[ka] = []
         ae[ka].push(ke)
       } else if (v instanceof Array) {
         for (let sv of v) {
-          if (result.vae[sv] === undefined) {
-            result.vae[sv] = {}
+          if (database.vae[sv] === undefined) {
+            database.vae[sv] = {}
           }
-          const ae = result.vae[sv]
+          const ae = database.vae[sv]
           if (ae[ka] === undefined)
             ae[ka] = []
           ae[ka].push(ke)
@@ -78,7 +77,6 @@ const eavToDatabase = (graphName,eav) => {
       }
     }
   }
-  return result
 }
 
 const databaseNewEntity = () => {
@@ -191,17 +189,17 @@ const databasePull = (entityId,includeId = false) => {
         result[attribute] = value.map(uid => ({ "uid": uid }))
       } else if (attribute === ":create/user" || attribute === ":edit/user") {
         result[attribute] = { ":user/uid": value }
-      } else if (database.many[attribute]) {
+      } else if (manyAttributes[attribute]) {
         result[attribute] = []
         for (let v of value) {
-          if (typeof v === "number" && v <= DQ.maxEntityId) {
+          if (typeof v === "number" && v <= maxEntityId) {
             if (entityIdToObj[v])
               result[attribute].push(entityIdToObj[v])
             else result[attribute].push(pull(v))
           } else result[attribute].push(v)
         }
       } else {
-        if (typeof value === "number" && value <= DQ.maxEntityId) {
+        if (typeof value === "number" && value <= maxEntityId) {
           if (entityIdToObj[value])
             result[attribute] = entityIdToObj[value]
           else result[attribute] = pull(value)
