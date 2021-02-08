@@ -144,20 +144,22 @@ const downloadHandler = () => {
 }
 
 document.addEventListener("input",(event) => {
-  // reparse block and insert cursor into correct position while typing
   const block = event.target.closest(".block__body")
   if (block) {
+
+    // reparse block and insert cursor into correct position while typing
     const selection = window.getSelection()
     const focusNode = selection.focusNode
     let position = selection.focusOffset
     if (focusNode.startIdx) position += focusNode.startIdx
     let curIdx = 0
 
-    const id = block.dataset.id
+    const id = block.parentNode.dataset.id
     let string = block.innerText
     if (block.innerText.length === position)
       string += " "
-    databaseSetDatom(database,id,"string",string)
+    console.log(database.eav[id].string)
+    databaseChange(database,["set",id,"string",string],true)
     console.log(`new string is ${database.eav[id].string}`)
     block.textContent = ""
     renderBlockBody(block,string,position)
@@ -317,7 +319,6 @@ saveWorker.onmessage = (event) => {
   console.log("worker message")
   console.log(event)
 }
-
 
 // const t = performance.now()
 // for (let i = 0; i < 1000000; i++) {
