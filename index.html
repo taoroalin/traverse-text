@@ -1,7 +1,7 @@
 <script>
   let user = { user: "default user",theme: "light",graphName: "graphminer" }
   let database = null;
-  let editingBlock = null;
+  let listeners = {};
   let oldestLoadedDailyNoteDate = null;
 
   let idb = null
@@ -34,7 +34,8 @@
         if (event.target.result) {
           database = JSON.parse(event.target.result.graph)
           gotoDailyNotes()
-          setTimeout(saveWorker.postMessage(["db",database]),0)
+          setTimeout(() => saveWorker.postMessage(["db",database]),0)
+
         } else {
           console.log("no graph to load")
         }

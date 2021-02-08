@@ -146,8 +146,11 @@ a:visited { color:var(--link) }
 
 
 .block{
-  padding:4px 0;
   position:relative;
+}
+
+.block__body{
+  padding:4px 0;
 }
 
 .block__bullet{

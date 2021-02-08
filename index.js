@@ -9,7 +9,6 @@ const pageFrame = document.getElementById("page-frame")
 const searchInput = document.getElementById("search-input")
 const downloadButton = document.getElementById("download-button")
 
-
 // App state transitions
 const gotoBlack = () => {
   oldestLoadedDailyNoteDate = null
@@ -183,7 +182,9 @@ document.addEventListener("input",(event) => {
 
 document.addEventListener("keydown",(event) => {
   // Check for global shortcut keys
-  if (event.key === "d" && event.ctrlKey) {
+  if (event.key === "z" && event.ctrlKey && !event.shiftKey) {
+    // databaseUndo(database) // todo make listeners then turn this on
+  } else if (event.key === "d" && event.ctrlKey) {
     document.getElementById("upload-input").click()
     event.preventDefault()
     return
@@ -221,13 +222,26 @@ document.addEventListener("keydown",(event) => {
   }
 
   // Check for actions based on active element
-  if (
-    document.activeElement &&
-    document.activeElement.className === "block__body"
+  const closestBlock = document.activeElement.closest(".block")
+  if (event.ctrlKey && event.key === "o") {
+    return
+  }
+  if (closestBlock
   ) {
     let blocks
+    let newActiveBlock
     switch (event.key) {
       case "Enter":
+        if (event.shiftKey) {
+
+        } else {
+          const newBlockId = databaseNewEntity(database)
+          const newBlockUid = newUid()
+          databaseChange(database,["add",closestBlock.dataset.id,"children",newBlockId])
+          databaseChange(database,["set",newBlockId,"uid",newBlockUid])
+          databaseChange(database,["set",newBlockId,"string",""])
+          databaseChange(database,["set",newBlockId,"refs",database.eav[closestBlock.dataset.id]["refs"]],true)
+        }
         break
       case "Tab":
         if (event.shiftKey) {
@@ -236,34 +250,32 @@ document.addEventListener("keydown",(event) => {
         event.preventDefault()
         break
       case "ArrowDown":
-        blocks = (document.querySelectorAll(".block__body"))
-        const newActiveBlock = blocks[blocks.indexOf(event.target) + 1]
-        window.getSelection().collapse(newActiveBlock,0)
+        blocks = Array.from(document.querySelectorAll(".block"))
+        newActiveBlock = blocks[blocks.indexOf(closestBlock) + 1]
+        window.getSelection().collapse(newActiveBlock.children[1],0)
         break
       case "ArrowUp":
-        blocks = (document.querySelectorAll(".block__body"))
-        blocks[blocks.indexOf(event.target) - 1].focus()
+        blocks = Array.from(document.querySelectorAll(".block"))
+        newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
+        window.getSelection().collapse(newActiveBlock.children[1],0)
         break
       case "ArrowLeft":
         if (window.getSelection().focusOffset === 0) {
-          blocks = (document.querySelectorAll(".block__body"))
-          blocks[blocks.indexOf(document.activeElement) - 1].focus()
+          blocks = Array.from(document.querySelectorAll(".block"))
+          newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
+          window.getSelection().collapse(newActiveBlock.children[1],0)
+
           // TODO it only goes to second last, .collapse doesn't select after the last char
-          window
-            .getSelection()
-            .collapse(
-              document.activeElement.firstChild,
-              document.activeElement.innerText.length
-            )
         }
         break
       case "ArrowRight":
         if (
           window.getSelection().focusOffset ===
-          document.activeElement.innerText.length
+          closestBlock.children[1].innerText.length
         ) {
-          blocks = (document.querySelectorAll(".block__body"))
-          blocks[blocks.indexOf(document.activeElement) + 1].focus()
+          blocks = Array.from(document.querySelectorAll(".block"))
+          newActiveBlock = blocks[blocks.indexOf(closestBlock) + 1]
+          window.getSelection().collapse(newActiveBlock.children[1],0)
         }
         break
     }
@@ -303,6 +315,7 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   file.text().then((text) => {
     database = roamJsonToDatabase(graphName,JSON.parse(text))
     gotoDailyNotes()
+    setTimeout(() => saveWorker.postMessage(["db",database]),0)
   })
 })
 
