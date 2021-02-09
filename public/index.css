@@ -106,15 +106,16 @@ a:visited { color:var(--link) }
   background-color:var(--background);
 }
 
-#upload-button, #switch-graph-button, #download-button{
+#upload-button, #switch-graph-button, #download-button, #report-issue-button{
   padding: 14px 10px 10px;
   font-size:0.9em;
 }
 
-#download-button{
+#download-button, #report-issue-button{
   color:var(--text);
   display:block;
   cursor:pointer;
+  text-decoration: none;
 }
 
 #search-input{

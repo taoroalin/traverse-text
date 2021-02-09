@@ -11,6 +11,32 @@ const pageFrameOuter = document.getElementById("page-frame-outer")
 const searchInput = document.getElementById("search-input")
 const downloadButton = document.getElementById("download-button")
 
+// DOM util 
+
+const cursorPositionInBlock = () => {
+  const selection = getSelection()
+  const focusNode = selection.focusNode
+  let position = selection.focusOffset
+  if (focusNode.startIdx) position += focusNode.startIdx
+  return position
+}
+
+const blockLastChild = (block) => {
+  const childs = block.children[2].children
+  if (childs.length === 0) {
+    return block
+  }
+  return blockLastChild(childs[block])
+}
+
+const blockAbove = (block) => {
+  const older = block.previousSibling
+  if (older) {
+    return blockLastChild(older)
+  }
+  return null
+}
+
 // App state transitions
 const gotoBlack = () => {
   oldestLoadedDailyNoteDate = null
@@ -102,6 +128,7 @@ const renderBlock = (parentNode,entityId) => {
   const childrenContainer = element.children[2]
   element.setAttribute("data-id",entityId)
   childrenContainer.setAttribute("data-id",entityId)
+  body.setAttribute("data-id",entityId)
 
   const string = database.eav[entityId].string
   if (string) {
@@ -122,9 +149,9 @@ const renderBlock = (parentNode,entityId) => {
 
 // Event listener functions that can't be written inline because multiple triggers / disconnect / reconnect
 
-const dailyNotesInfiniteScrollListener = (event) => {
+const dailyNotesInfiniteScrollListener = () => {
   const fromBottom =
-    pageFrame.getBoundingClientRect().bottom - window.innerHeight
+    pageFrame.getBoundingClientRect().bottom - innerHeight
   if (fromBottom < 700) {
     oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1)
     const daysNotes =
@@ -143,7 +170,7 @@ const downloadHandler = () => {
   }
   const json = JSON.stringify(result)
   const data = new Blob([json],{ type: 'text/json' })
-  const url = window.URL.createObjectURL(data)
+  const url = URL.createObjectURL(data)
   downloadButton.setAttribute('href',url)
   downloadButton.setAttribute('download',"output.json")
 }
@@ -153,17 +180,14 @@ document.addEventListener("input",(event) => {
   if (block) {
 
     // reparse block and insert cursor into correct position while typing
-    const selection = window.getSelection()
-    const focusNode = selection.focusNode
-    let position = selection.focusOffset
-    if (focusNode.startIdx) position += focusNode.startIdx
+    const position = cursorPositionInBlock()
     let curIdx = 0
 
     const id = block.parentNode.dataset.id
     let string = block.innerText
     if (block.innerText.length === position)
       string += " "
-    databaseChange(["set",id,"string",string])
+    databaseChange(["set",id,"string",string]) // todo commit changes on word boundaries
     block.textContent = ""
     renderBlockBody(block,string,position)
 
@@ -171,7 +195,7 @@ document.addEventListener("input",(event) => {
       for (let el of element.childNodes) {
         if (el.nodeName === "#text") {
           if (position < curIdx + el.textContent.length) {
-            selection.collapse(el,position - curIdx)
+            getSelection().collapse(el,position - curIdx)
             return
           }
           curIdx += el.textContent.length
@@ -292,33 +316,42 @@ document.addEventListener("keydown",(event) => {
         }
         event.preventDefault()
         break
+      case "Backspace":
+        if (cursorPositionInBlock() === 0) {
+          databaseChange(["remove entity",closestBlock.dataset.id],true)
+          blocks = Array.from(document.querySelectorAll(".block"))
+          newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
+          getSelection().collapse(newActiveBlock.children[1],0)
+          closestBlock.remove()
+        }
+        break
       case "ArrowDown":
         blocks = Array.from(document.querySelectorAll(".block"))
         newActiveBlock = blocks[blocks.indexOf(closestBlock) + 1]
-        window.getSelection().collapse(newActiveBlock.children[1],0)
+        getSelection().collapse(newActiveBlock.children[1],0)
         break
       case "ArrowUp":
         blocks = Array.from(document.querySelectorAll(".block"))
         newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
-        window.getSelection().collapse(newActiveBlock.children[1],0)
+        getSelection().collapse(newActiveBlock.children[1],0)
         break
       case "ArrowLeft":
-        if (window.getSelection().focusOffset === 0) {
+        if (getSelection().focusOffset === 0) {
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
-          window.getSelection().collapse(newActiveBlock.children[1],0)
+          getSelection().collapse(newActiveBlock.children[1],0)
 
           // TODO it only goes to second last, .collapse doesn't select after the last char
         }
         break
       case "ArrowRight":
         if (
-          window.getSelection().focusOffset ===
+          getSelection().focusOffset ===
           closestBlock.children[1].innerText.length
         ) {
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(closestBlock) + 1]
-          window.getSelection().collapse(newActiveBlock.children[1],0)
+          getSelection().collapse(newActiveBlock.children[1],0)
         }
         break
     }
@@ -385,6 +418,6 @@ document.body.className = user.theme
 
 // const t = performance.now()
 // for (let i = 0; i < 1000000; i++) {
-
+//   getSelection()
 // }
 // console.log(`took ${performance.now() - t}`)

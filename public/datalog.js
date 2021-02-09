@@ -133,6 +133,25 @@ const databaseRemove = (entity,attribute,value) => {
   database.vae[value][attribute] = database.vae[value][attribute].filter(e => e !== entity)
 }
 
+const databaseRemoveEntity = (entity) => { // todo make this recursive, garbage collect disconnected entities
+  const obj = database.eav[entity]
+  for (let attribute in obj) {
+    const value = obj[attribute]
+    delete database.aev[attribute][entity]
+  }
+  const ae = database.vae[entity]
+  for (let attribute in ae) {
+    const e = ae[attribute]
+    if (manyAttributes[attribute]) {
+      database.eav[e][attribute] = database.eav[e][attribute].filter(x => x != entity)
+    } else {
+      delete database.eav[e][attribute]
+    }
+  }
+  delete database.eav[entity]
+  delete database.vae[entity]
+}
+
 
 // Modify the database while maintaining undo stack, calling listeners, and persisting changes.
 
@@ -146,6 +165,8 @@ const databaseChange = (change,commitMain,commitWorker) => {
     databaseSetAll(entity,attribute,value)
   } else if (op === "remove") {
     databaseRemove(entity,attribute,value)
+  } else if (op === "remove entity") {
+    databaseRemoveEntity(entity)
   }
   if (op !== "add" && change.length > 5)
     change.push(database.eav[entity][attribute])
