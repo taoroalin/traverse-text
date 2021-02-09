@@ -10,6 +10,7 @@ const pageFrame = document.getElementById("page-frame")
 const pageFrameOuter = document.getElementById("page-frame-outer")
 const searchInput = document.getElementById("search-input")
 const downloadButton = document.getElementById("download-button")
+const autocompleteList = document.getElementById("autocomplete-list")
 
 // DOM util 
 
@@ -177,8 +178,8 @@ const downloadHandler = () => {
 
 document.addEventListener("input",(event) => {
   const block = event.target.closest(".block__body")
-  if (block) {
 
+  if (block) {
     // reparse block and insert cursor into correct position while typing
     const position = cursorPositionInBlock()
     let curIdx = 0
@@ -188,6 +189,8 @@ document.addEventListener("input",(event) => {
     if (block.innerText.length === position)
       string += " "
     databaseChange(["set",id,"string",string]) // todo commit changes on word boundaries
+    clearTimeout(commitDebounce)
+    commitDebounce = setTimeout(() => databaseChange([null],true),1500)
     block.textContent = ""
     renderBlockBody(block,string,position)
 
@@ -205,6 +208,22 @@ document.addEventListener("input",(event) => {
       }
     }
     scanElement(block)
+
+
+  } else if (event.target.id === "search-input") {
+    const stime = performance.now()
+    const matchingTitles = titleExactFullTextSearch(event.target.value)
+    console.log(`took ${performance.now() - stime}`)
+    console.log(matchingTitles)
+    autocompleteList.textContent = ""
+    for (let match of matchingTitles) {
+      const suggestion = document.createElement("div")
+      suggestion.textContent = match
+      autocompleteList.appendChild(suggestion)
+    }
+    autocompleteList.style.display = "block"
+    autocompleteList.style.top = searchInput.getBoundingClientRect().bottom
+    autocompleteList.style.left = searchInput.getBoundingClientRect().left
   }
 })
 

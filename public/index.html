@@ -2,10 +2,7 @@
   const r = indexedDB.open("microroam",1);
   r.onsuccess = (e) => {
     idb = e.target.result
-    const t = idb.transaction(["graphs"],"readwrite")
-    const gs = t.objectStore("graphs")
-    const gr = gs.get(user.graphName)
-    gr.onsuccess = (e) => {
+    idb.transaction(["graphs"],"readwrite").objectStore("graphs").get(user.graphName).onsuccess = (e) => {
       if (e.target.result) {
         database = JSON.parse(e.target.result.graph)
         if (w) {
@@ -13,7 +10,6 @@
           setTimeout(() => saveWorker.postMessage(["db",database]),0)
         }
         w = !0;
-
       }
     }
   }
@@ -33,6 +29,7 @@
   let listeners = {};
   let oldestLoadedDailyNoteDate = null;
   let idb = null
+  let commitDebounce = null
 
   const localStorageUser = localStorage.getItem('user')
   if (localStorageUser) {
@@ -121,6 +118,7 @@
     <a class="url" target="_blank" contenteditable="false"></a>
   </template>
 
+
   <div id="app">
     <div id="top-bar">
       <a id="report-issue-button" href="mailto:taoroalin@gmail.com">
@@ -144,6 +142,8 @@
       </div>
     </div>
 
+    <div id="autocomplete-list" style="display:none">
+    </div>
   </div>
   <script src="utils.js"></script>
   <script src="parse.js"></script>
