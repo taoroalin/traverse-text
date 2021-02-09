@@ -37,7 +37,7 @@ const gotoDailyNotes = () => {
       renderPage(pageFrame,daysNotes.title[0])
       pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
       numNotesLoaded += 1
-      if (numNotesLoaded > 10) {
+      if (numNotesLoaded > 5) {
         break
       }
     }
@@ -316,29 +316,29 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
     roamJsonToDatabase(graphName,JSON.parse(text))
     gotoDailyNotes()
     setTimeout(() => saveWorker.postMessage(["db",database]),0)
+    setTimeout(() => saveWorker.postMessage(["save",database]),0)
   })
 })
 
 const changeUser = () => {
   document.body.className = user.theme
-  const transaction = idb.transaction(["user"],"readwrite")
-  const store = transaction.objectStore("user")
-  store.put(user)
+  localStorage.setItem("user",JSON.stringify(user))
 }
 
 const saveWorker = new Worker('/worker.js')
 
-saveWorker.onmessage = (event) => {
-  console.log("worker message")
-  console.log(event)
+const save = () => {
+  console.log("posting save message")
+  saveWorker.postMessage(["save",database])
 }
 
 
-if (eitherDataOrCodeLoaded) {
+if (w) {
   gotoDailyNotes()
   setTimeout(() => saveWorker.postMessage(["db",database]),0)
 }
-eitherDataOrCodeLoaded = true
+w = true
+document.body.className = user.theme
 
 // const t = performance.now()
 // for (let i = 0; i < 1000000; i++) {
