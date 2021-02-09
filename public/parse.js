@@ -6,7 +6,8 @@ const boldTemplate = document.getElementById("bold").content.firstElementChild
 
 const renderBlockBody = (parent,text) => {
   let stack = [parent]
-  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]+\)\))|(\*\*)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
+  // page-ref-open page-ref-close tag block-ref bold link highlight italic
+  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]+\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
   let idx = 0
   let stackTop = parent
   for (let match of matches) {
@@ -71,12 +72,12 @@ const renderBlockBody = (parent,text) => {
         stack.push(boldElement)
         stackTop = boldElement
       }
-    } else if (match[6]) {
+    } else if (match[8]) {
       const urlElement = urlTemplate.cloneNode(true)
-      const textNode = document.createTextNode(match[6])
+      const textNode = document.createTextNode(match[8])
       textNode.startIdx = idx
       urlElement.appendChild(textNode)
-      urlElement.href = match[6]
+      urlElement.href = match[8]
       stackTop.appendChild(urlElement)
     }
     idx = match.index + match[0].length
