@@ -13,32 +13,6 @@ const searchInput = document.getElementById("search-input")
 const downloadButton = document.getElementById("download-button")
 const autocompleteList = document.getElementById("autocomplete-list")
 
-// DOM util 
-
-const cursorPositionInBlock = () => {
-  const selection = getSelection()
-  const focusNode = selection.focusNode
-  let position = selection.focusOffset
-  if (focusNode.startIdx) position += focusNode.startIdx
-  return position
-}
-
-const blockLastChild = (block) => {
-  const childs = block.children[2].children
-  if (childs.length === 0) {
-    return block
-  }
-  return blockLastChild(childs[block])
-}
-
-const blockAbove = (block) => {
-  const older = block.previousSibling
-  if (older) {
-    return blockLastChild(older)
-  }
-  return null
-}
-
 // App state transitions
 const gotoBlack = () => {
   oldestLoadedDailyNoteDate = null
@@ -119,7 +93,6 @@ const renderPage = (parentNode,entityId) => {
       renderBlock(backrefsListElement.children[1],backref)
     }
   }
-
   parentNode.appendChild(element)
   return element
 }
@@ -261,6 +234,35 @@ document.addEventListener("input",(event) => {
   }
 })
 
+// DOM util                              -------------------------------------
+
+const cursorPositionInBlock = () => {
+  const selection = getSelection()
+  const focusNode = selection.focusNode
+  let position = selection.focusOffset
+  if (focusNode.startIdx) position += focusNode.startIdx
+  return position
+}
+
+// TODO make focusBlockStart ect get past the last 1 char
+const focusBlockEnd = (blockNode) => {
+  const body = blockNode.children[1]
+  const temp = document.createTextNode(" ")
+  body.appendChild(temp)
+  window.getSelection().collapse(temp,0)
+  // temp.innerText = ""
+}
+
+const focusBlockStart = (blockNode) => {
+  console.log("focus block start")
+  const body = blockNode.children[1]
+  const temp = document.createTextNode(" ")
+  body.insertBefore(temp,body.firstChild)
+  window.getSelection().collapse(temp,0)
+}
+
+// more event listeners                    ------------------------------------------
+
 document.addEventListener("keydown",(event) => {
   // Check for global shortcut keys
   if (event.key === "z" && event.ctrlKey && !event.shiftKey) {
@@ -374,37 +376,34 @@ document.addEventListener("keydown",(event) => {
           databaseChange(["remove entity",closestBlock.dataset.id],true)
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
-          getSelection().collapse(newActiveBlock.children[1],0)
-          closestBlock.remove()
+          focusBlockEnd(newActiveBlock)
         }
         break
       case "ArrowDown":
         blocks = Array.from(document.querySelectorAll(".block"))
         newActiveBlock = blocks[blocks.indexOf(closestBlock) + 1]
-        getSelection().collapse(newActiveBlock.children[1],0)
+        focusBlockStart(newActiveBlock)
         break
       case "ArrowUp":
         blocks = Array.from(document.querySelectorAll(".block"))
         newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
-        getSelection().collapse(newActiveBlock.children[1],0)
+        focusBlockEnd(newActiveBlock)
         break
       case "ArrowLeft":
-        if (getSelection().focusOffset === 0) {
+        if (cursorPositionInBlock() === 0) {
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
-          getSelection().collapse(newActiveBlock.children[1],0)
-
-          // TODO it only goes to second last, .collapse doesn't select after the last char
+          focusBlockEnd(newActiveBlock)
         }
         break
       case "ArrowRight":
         if (
-          getSelection().focusOffset ===
+          cursorPositionInBlock() ===
           closestBlock.children[1].innerText.length
         ) {
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(closestBlock) + 1]
-          getSelection().collapse(newActiveBlock.children[1],0)
+          focusBlockStart(newActiveBlock)
         }
         break
     }
@@ -450,6 +449,7 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   file.text().then((text) => {
     console.log(`got json text`)
     roamJsonToDatabase(graphName,JSON.parse(text))
+    graph = roamJsonToStore(text)
     gotoDailyNotes()
     setTimeout(() => saveWorker.postMessage(["db",database]),0)
     setTimeout(() => saveWorker.postMessage(["save",database]),0)

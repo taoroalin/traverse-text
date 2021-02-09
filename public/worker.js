@@ -321,7 +321,8 @@ onmessage = (event) => {
 const saveDatabase = () => {
   const transaction = idb.transaction(["graphs"],"readwrite")
   const store = transaction.objectStore("graphs")
-  const req = store.put({ graphName: database.graphName,graph: JSON.stringify(database) })
+  const str = JSON.stringify(database)
+  const req = store.put({ graphName: database.graphName,graph: str })
   req.onsuccess = () => console.log("success")
 
   req.onerror = (event) => {
