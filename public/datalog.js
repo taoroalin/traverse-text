@@ -209,7 +209,25 @@ const titleExactFullTextSearch = (string) => {
     const v = titles[e]
     if (regex.test(v)) {
       results.push(v)
+      if (results.length >= 10)
+        return results
     }
+  }
+  return results
+}
+
+const exactFullTextSearch = (string) => {
+  const regex = new RegExp(string,"i")
+  const results = []
+  const titles = database.aev["title"]
+  for (let e in titles) {
+    const v = titles[e]
+    if (regex.test(v)) results.push({ title: v })
+  }
+  const strings = database.aev["string"]
+  for (let e in strings) {
+    const v = strings[e]
+    if (regex.test(v)) results.push({ string: v })
   }
   return results
 }

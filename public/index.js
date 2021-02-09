@@ -4,6 +4,7 @@ const blockTemplate = document.getElementById("block").content.firstElementChild
 const backrefsListTemplate = document.getElementById("backrefs-list").content.firstElementChild
 const blockFocusFrameTemplate = document.getElementById("block-focus-frame").content.firstElementChild
 const pageBreakTemplate = document.getElementById("page-break").content.firstElementChild
+const suggestionTemplate = document.getElementById("autocomplete__suggestion").content.firstElementChild
 
 // Singleton elements
 const pageFrame = document.getElementById("page-frame")
@@ -199,7 +200,7 @@ document.addEventListener("input",(event) => {
         if (el.nodeName === "#text") {
           if (position < curIdx + el.textContent.length) {
             getSelection().collapse(el,position - curIdx)
-            return
+            return el
           }
           curIdx += el.textContent.length
         } else {
@@ -207,23 +208,56 @@ document.addEventListener("input",(event) => {
         }
       }
     }
-    scanElement(block)
+    const currentElement = scanElement(block).parentNode
+
+
+    // This doesn't work cause cursor placement doesn't work
+    const closestPageRef = currentElement.closest(".page-ref")
+    const closestTag = currentElement.closest(".tag")
+    let titleString = (closestTag && closestTag.innerText.substring(1)) || (closestPageRef && closestPageRef.children[1].innerText)
+    if (titleString) {
+      console.log(`title string ${titleString}`)
+      const matchingTitles = titleExactFullTextSearch(titleString)
+      if (matchingTitles.length > 0) {
+        autocompleteList.textContent = ""
+        for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
+          const suggestion = suggestionTemplate.cloneNode(true)
+          suggestion.setAttribute("data-title",matchingTitles[i])
+          suggestion.textContent = truncateElipsis(matchingTitles[i],50)
+          autocompleteList.appendChild(suggestion)
+        }
+        autocompleteList.style.display = "block"
+        autocompleteList.style.top = searchInput.getBoundingClientRect().bottom
+        autocompleteList.style.left = searchInput.getBoundingClientRect().left
+      } else {
+        autocompleteList.style.display = "none"
+      }
+    }
 
 
   } else if (event.target.id === "search-input") {
     const stime = performance.now()
-    const matchingTitles = titleExactFullTextSearch(event.target.value)
-    console.log(`took ${performance.now() - stime}`)
-    console.log(matchingTitles)
-    autocompleteList.textContent = ""
-    for (let match of matchingTitles) {
-      const suggestion = document.createElement("div")
-      suggestion.textContent = match
-      autocompleteList.appendChild(suggestion)
+    const matchingTitles = exactFullTextSearch(event.target.value)
+    console.log(`full text search took ${performance.now() - stime}`)
+    if (matchingTitles.length > 0) {
+      autocompleteList.textContent = ""
+      for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
+        const suggestion = suggestionTemplate.cloneNode(true)
+        if (matchingTitles[i].title) {
+          suggestion.setAttribute("data-title",matchingTitles[i].title)
+          suggestion.textContent = truncateElipsis(matchingTitles[i].title,50)
+        } else {
+          suggestion.setAttribute("data-string",matchingTitles[i].string)
+          suggestion.textContent = truncateElipsis(matchingTitles[i].string,50)
+        }
+        autocompleteList.appendChild(suggestion)
+      }
+      autocompleteList.style.display = "block"
+      autocompleteList.style.top = searchInput.getBoundingClientRect().bottom
+      autocompleteList.style.left = searchInput.getBoundingClientRect().left
+    } else {
+      autocompleteList.style.display = "none"
     }
-    autocompleteList.style.display = "block"
-    autocompleteList.style.top = searchInput.getBoundingClientRect().bottom
-    autocompleteList.style.left = searchInput.getBoundingClientRect().left
   }
 })
 
@@ -400,6 +434,13 @@ document.addEventListener("click",(event) => {
     downloadHandler()
   } else if (event.target.id === "upload-button") {
     document.getElementById("upload-input").click()
+  } else if (event.target.className === "autocomplete__suggestion") {
+    if (event.target.dataset.title) {
+      gotoPageTitle(event.target.dataset.title)
+    } else {
+      const blockId = database.vae[event.target.dataset.string]["string"][0]
+      gotoBlock(blockId)
+    }
   }
 })
 
