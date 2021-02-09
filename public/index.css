@@ -15,6 +15,8 @@
   --border:#afbeca;
   --break: #9ca9b4;
   --highlight:rgb(172, 147, 36);
+  --top:grey;
+  --click:darkgrey;
 }
 
 .light{
@@ -28,6 +30,8 @@
   --border:#585e64;
   --break:#a8b4be;
   --highlight:hsl(51,98%,81%);
+  --top:grey;
+  --click:darkgrey;
 }
 
 input, button, a{
@@ -128,6 +132,20 @@ a:visited { color:var(--link) }
   box-shadow:0 0 2px var(--border);
   border-radius:100px;
   flex-grow: 1;
+}
+
+#autocomplete-list{
+  position:absolute;
+  display:flex;
+  flex-direction: column;
+  background-color:var(--top);
+  font-size:1.3em;
+  border-radius:5px;
+  padding:10px;
+}
+
+#autocomplete-suggestion:hover{
+  background-color:var(--click);
 }
 
 

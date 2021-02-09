@@ -182,6 +182,7 @@ const databaseChange = (change,commitMain,commitWorker) => {
   }
 }
 
+// not working yet
 // no redo yet
 const databaseUndo = () => {
   const changeSet = database.changeStack.pop()
@@ -198,6 +199,19 @@ const databaseUndo = () => {
   if (saveWorker !== undefined) {
     saveWorker.postMessage(["undo",null]) // standard to send len 2 array. second will be ignored
   }
+}
+
+const titleExactFullTextSearch = (string) => {
+  const regex = new RegExp(string,"i")
+  const results = []
+  const titles = database.aev["title"]
+  for (let e in titles) {
+    const v = titles[e]
+    if (regex.test(v)) {
+      results.push(v)
+    }
+  }
+  return results
 }
 
 
