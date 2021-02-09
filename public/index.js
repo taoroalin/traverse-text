@@ -71,6 +71,8 @@ const renderPage = (parentNode,entityId) => {
   const element = pageTemplate.cloneNode(true)
   const title = element.firstElementChild
   const body = element.children[1]
+  body.setAttribute("data-id",entityId)
+  element.setAttribute("data-id",entityId)
 
   title.innerText = database.eav[entityId].title
 
@@ -91,6 +93,7 @@ const renderPage = (parentNode,entityId) => {
   }
 
   parentNode.appendChild(element)
+  return element
 }
 
 const renderBlock = (parentNode,entityId) => {
@@ -98,6 +101,7 @@ const renderBlock = (parentNode,entityId) => {
   const body = element.children[1]
   const childrenContainer = element.children[2]
   element.setAttribute("data-id",entityId)
+  childrenContainer.setAttribute("data-id",entityId)
 
   const string = database.eav[entityId].string
   if (string) {
@@ -111,6 +115,7 @@ const renderBlock = (parentNode,entityId) => {
     }
   }
   parentNode.appendChild(element)
+  return element
 }
 
 // Global event listeners that switch on active element, as a possibly more performant, simpler option than propagating through multiple event handlers
@@ -158,8 +163,7 @@ document.addEventListener("input",(event) => {
     let string = block.innerText
     if (block.innerText.length === position)
       string += " "
-    databaseChange(["set",id,"string",string],true)
-    console.log(`new string is ${database.eav[id].string}`)
+    databaseChange(["set",id,"string",string])
     block.textContent = ""
     renderBlockBody(block,string,position)
 
@@ -235,17 +239,56 @@ document.addEventListener("keydown",(event) => {
         if (event.shiftKey) {
 
         } else {
-          const newBlockId = databaseNewEntity(database)
+
+          // yikes. This is brittle code. How do I make it better?
+          const newBlockId = databaseNewEntity()
           const newBlockUid = newUid()
-          databaseChange(["add",closestBlock.dataset.id,"children",newBlockId])
+          const parent = closestBlock.parentNode
+          databaseChange(["add",parent.dataset.id,"children",newBlockId])
           databaseChange(["set",newBlockId,"uid",newBlockUid])
           databaseChange(["set",newBlockId,"string",""])
-          databaseChange(["set",newBlockId,"refs",database.eav[closestBlock.dataset.id]["refs"]],true)
+          const curRefs = database.eav[closestBlock.dataset.id]["refs"]
+          if (curRefs) {
+            databaseChange(["set",newBlockId,"refs",curRefs],true)
+          }
+          const newBlock = renderBlock(parent,newBlockId)
+
+          if (event.ctrlKey) {
+            parent.insertBefore(newBlock,closestBlock)
+          } else {
+            const youngerSibling = closestBlock.nextSibling
+            if (youngerSibling) {
+              parent.insertBefore(newBlock,youngerSibling)
+            }
+          }
+          newBlock.children[1].focus()
+
         }
         break
       case "Tab":
         if (event.shiftKey) {
+          const parent = closestBlock.parentNode.parentNode
+          if (parent) {
+            const grandparent = parent.parentNode.parentNode
+            const cousin = parent.nextSibling
+            if (grandparent) {
+              if (cousin) {
+                grandparent.insertBefore(closestBlock,cousin)
+              } else {
+                grandparent.appendChild(closestBlock)
+              }
+              databaseChange(["add",grandparent.dataset.id,"children",closestBlock.dataset.id])
+              databaseChange(["remove",closestBlock.parentNode.dataset.id,"children",closestBlock.dataset.id],true)
+            }
+          }
         } else {
+          const olderSibling = closestBlock.previousSibling
+          if (olderSibling) {
+            const Niece = olderSibling.children[2]
+            Niece.appendChild(closestBlock)
+            databaseChange(["add",Niece.dataset.id,"children",closestBlock.dataset.id])
+            databaseChange(["remove",closestBlock.parentNode.dataset.id,"children",closestBlock.dataset.id],true)
+          }
         }
         event.preventDefault()
         break

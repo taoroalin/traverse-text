@@ -3,6 +3,8 @@ const tagTemplate = document.getElementById("tag").content.firstElementChild
 const urlTemplate = document.getElementById("url").content.firstElementChild
 const blockRefTemplate = document.getElementById("block-ref").content.firstElementChild
 const boldTemplate = document.getElementById("bold").content.firstElementChild
+const italicTemplate = document.getElementById("italic").content.firstElementChild
+const highlightTemplate = document.getElementById("highlight").content.firstElementChild
 
 const renderBlockBody = (parent,text) => {
   let stack = [parent]
@@ -67,6 +69,38 @@ const renderBlockBody = (parent,text) => {
         const boldElement = boldTemplate.cloneNode(true)
         stackTop.appendChild(boldElement)
         const textNode = document.createTextNode("**")
+        textNode.startIdx = idx
+        boldElement.appendChild(textNode)
+        stack.push(boldElement)
+        stackTop = boldElement
+      }
+    } else if (match[6]) {
+      if (stackTop.className === "highlight") {
+        const textNode = document.createTextNode("^^")
+        textNode.startIdx = idx
+        stackTop.appendChild(textNode)
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const boldElement = highlightTemplate.cloneNode(true)
+        stackTop.appendChild(boldElement)
+        const textNode = document.createTextNode("^^")
+        textNode.startIdx = idx
+        boldElement.appendChild(textNode)
+        stack.push(boldElement)
+        stackTop = boldElement
+      }
+    } else if (match[7]) {
+      if (stackTop.className === "italic") {
+        const textNode = document.createTextNode("__")
+        textNode.startIdx = idx
+        stackTop.appendChild(textNode)
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const boldElement = italicTemplate.cloneNode(true)
+        stackTop.appendChild(boldElement)
+        const textNode = document.createTextNode("__")
         textNode.startIdx = idx
         boldElement.appendChild(textNode)
         stack.push(boldElement)

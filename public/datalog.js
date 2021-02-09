@@ -126,6 +126,13 @@ const databaseSetAll = (entity,attribute,value) => {
   }
 }
 
+const databaseRemove = (entity,attribute,value) => {
+  const filtered = database.eav[entity][attribute].filter(v => v !== value)
+  database.eav[entity][attribute] = filtered
+  database.aev[attribute][entity] = filtered
+  database.vae[value][attribute] = database.vae[value][attribute].filter(e => e !== entity)
+}
+
 
 // Modify the database while maintaining undo stack, calling listeners, and persisting changes.
 
@@ -137,6 +144,8 @@ const databaseChange = (change,commitMain,commitWorker) => {
     databaseAdd(entity,attribute,value)
   } else if (op === "setAll") {
     databaseSetAll(entity,attribute,value)
+  } else if (op === "remove") {
+    databaseRemove(entity,attribute,value)
   }
   if (op !== "add" && change.length > 5)
     change.push(database.eav[entity][attribute])
