@@ -26,6 +26,7 @@
   let w = !1; // either code or data loaded
   let user = { theme: "light",graphName: "graphminer" }
   let database = null;
+  let graph = null;
   let listeners = {};
   let oldestLoadedDailyNoteDate = null;
   let idb = null
@@ -38,6 +39,7 @@
     localStorage.setItem('user',JSON.stringify(user))
   }
 </script>
+<title>Micro Roam</title>
 <link rel="stylesheet" href="index.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
 
@@ -61,8 +63,8 @@
       <svg class="block__bullet" width="20" height="20">
         <circle cx="10" cy="10.5" r="3" fill="var(--bullet)" />
       </svg>
-      <div class="block__body" contenteditable="true" tabindex="-1">
-      </div>
+      <span class="block__body" contenteditable="true" tabindex="-1">
+      </span>
       <div class="block__children">
 
       </div>
@@ -152,5 +154,6 @@
   <script src="utils.js"></script>
   <script src="parse.js"></script>
   <script src="datalog.js"></script>
+  <script src="data-legit.js"></script>
   <script src="index.js"></script>
 </body>
