@@ -141,13 +141,17 @@ a:visited { color:var(--link) }
   background-color:var(--top);
   font-size:1.3em;
   border-radius:5px;
-  padding:10px;
 }
 
-#autocomplete-suggestion:hover{
+.autocomplete__suggestion:hover{
   background-color:var(--click);
 }
 
+.autocomplete__suggestion{
+  padding:7px;
+  cursor:pointer;
+  border-radius: 5px;
+}
 
 /* Page styles */
 
