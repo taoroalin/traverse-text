@@ -162,6 +162,7 @@ document.addEventListener("input",(event) => {
     if (block.innerText.length === position)
       string += " "
     store.blocks[id].string = string // todo commit changes on word boundaries
+    runCommand("writeBlock",id,string)
     block.textContent = ""
     renderBlockBody(block,string,position)
 
@@ -321,7 +322,7 @@ document.addEventListener("keydown",(event) => {
             idx += 1
           }
           const newBlockUid = newUid()
-          createBlock(newBlockUid,store.blocks[bid].parent,idx)
+          runCommand("createBlock",newBlockUid,store.blocks[bid].parent,idx)
           const newBlock = renderBlock(closestBlock.parentNode,newBlockUid,idx)
           newBlock.children[1].focus()
         }
@@ -342,8 +343,7 @@ document.addEventListener("keydown",(event) => {
               } else {
                 grandparentChildren.appendChild(closestBlock)
               }
-
-              moveBlock(bid,grandparentId,parent.dataset.childIdx)
+              runCommand("moveBlock",bid,grandparentId,parent.dataset.childIdx)
               window.getSelection().collapse(focusNode,focusOffset)
             }
           }
@@ -352,8 +352,7 @@ document.addEventListener("keydown",(event) => {
           if (olderSibling && olderSibling.dataset && olderSibling.dataset.id) {
             const focusNode = window.getSelection().focusNode
             const focusOffset = window.getSelection().focusOffset
-            console.log(olderSibling)
-            moveBlock(bid,olderSibling.dataset.id)
+            runCommand("moveBlock",bid,olderSibling.dataset.id)
             olderSibling.children[2].appendChild(closestBlock)
             window.getSelection().collapse(focusNode,focusOffset)
           }
@@ -366,7 +365,7 @@ document.addEventListener("keydown",(event) => {
           newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
           focusBlockEnd(newActiveBlock)
           closestBlock.remove()
-          deleteBlock(bid)
+          runCommand("deleteBlock",bid)
         }
         break
       case "ArrowDown":
