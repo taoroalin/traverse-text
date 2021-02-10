@@ -26,6 +26,7 @@ const gotoPageTitle = (title) => {
   if (existingPage === undefined) {
     existingPage = newUid()
     runCommand("createPage",existingPage,title)
+    console.log("creating page")
   }
   gotoBlack()
   renderPage(pageFrame,existingPage)
@@ -79,10 +80,11 @@ const renderPage = (parentNode,uid) => {
 
   title.innerText = page.title
 
-  const children = page.children
+  let children = page.children
   if (!children || children.length === 0) { // todo set standards for when lists can be empty to reduce ambiguity
     const newBlockId = newUid()
     runCommand("createBlock",newBlockId,uid,0)
+    children = page.children
   }
   for (let child of children) {
     renderBlock(body,child)
