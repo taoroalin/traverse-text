@@ -21,11 +21,14 @@ const gotoBlack = () => {
 }
 
 const gotoPageTitle = (title) => {
-  const existingPage = store.pagesByTitle[title]
-  if (existingPage) {
-    gotoBlack()
-    renderPage(pageFrame,existingPage)
+  autocompleteList.style.display = "none"
+  let existingPage = store.pagesByTitle[title]
+  if (existingPage === undefined) {
+    existingPage = newUid()
+    runCommand("createPage",existingPage,title)
   }
+  gotoBlack()
+  renderPage(pageFrame,existingPage)
 }
 
 const gotoDailyNotes = () => {
@@ -77,10 +80,12 @@ const renderPage = (parentNode,uid) => {
   title.innerText = page.title
 
   const children = page.children
-  if (children) {
-    for (let child of children) {
-      renderBlock(body,child)
-    }
+  if (!children || children.length === 0) { // todo set standards for when lists can be empty to reduce ambiguity
+    const newBlockId = newUid()
+    runCommand("createBlock",newBlockId,uid,0)
+  }
+  for (let child of children) {
+    renderBlock(body,child)
   }
 
   if (page.backRefs.length > 0) {
@@ -146,7 +151,7 @@ const downloadHandler = () => {
   const data = new Blob([json],{ type: 'text/json' })
   const url = URL.createObjectURL(data)
   downloadButton.setAttribute('href',url)
-  downloadButton.setAttribute('download',"output.json")
+  downloadButton.setAttribute('download',`${store.graphName}-micro-roam.json`)
 }
 
 document.addEventListener("input",(event) => {
@@ -300,6 +305,16 @@ document.addEventListener("keydown",(event) => {
     searchInput.focus()
     event.preventDefault()
     return
+  }
+
+  if (event.ctrlKey && event.key === "o") {
+    const closestPageRef = getSelection().focusNode.parentNode.closest(".page-ref")
+    if (closestPageRef) {
+      gotoPageTitle(closestPageRef.children[1].innerText)
+      event.preventDefault()
+      return
+    }
+    event.preventDefault()
   }
 
   // Check for actions based on active element
