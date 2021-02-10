@@ -275,7 +275,7 @@ document.addEventListener("keydown",(event) => {
     return
   }
   if (event.key === "s" && event.ctrlKey) {
-    save()
+    saveWorker.postMessage(["save",store])
     event.preventDefault()
     return
   }
@@ -330,42 +330,32 @@ document.addEventListener("keydown",(event) => {
         if (event.shiftKey) {
           const parent = closestBlock.parentNode.parentNode
           if (parent) {
+            const grandparentChildren = parent.parentNode
             const grandparent = parent.parentNode.parentNode
+            const grandparentId = grandparent.dataset.id
             const cousin = parent.nextSibling
-            if (grandparent) {
+            if (grandparentId) {
+              const focusNode = window.getSelection().focusNode
+              const focusOffset = window.getSelection().focusOffset
               if (cousin) {
-                grandparent.insertBefore(closestBlock,cousin)
+                grandparentChildren.insertBefore(closestBlock,cousin)
               } else {
-                grandparent.appendChild(closestBlock)
+                grandparentChildren.appendChild(closestBlock)
               }
-              const grandparentBlock = store.blocks[grandparent.dataset.id]
-              const grandparentPage = store.pages[grandparent.dataset.id]
-              if (grandparentBlock) {
-                grandparentBlock.children.push(closestBlock.dataset.id)
-              } else if (grandparentPage) {
-                grandparentPage.children.push(closestBlock.dataset.id)
-              } else {
-                console.log(grandparent)
-                throw new Error(`wrong type of block grandparent`)
-              }
-              const parentBlock = store.blocks[parent.dataset.id]
-              parentBlock.children = parentBlock.children.filter(x => x !== closestBlock.dataset.id)
+
+              moveBlock(bid,grandparentId,parent.dataset.childIdx)
+              window.getSelection().collapse(focusNode,focusOffset)
             }
           }
         } else {
           const olderSibling = closestBlock.previousSibling
-          if (olderSibling) {
-            const Niece = olderSibling.children[2]
-            Niece.appendChild(closestBlock)
-            const nieceBlock = store.blocks[Niece.dataset.id] // bug here
-            nieceBlock.children.push(closestBlock.dataset.id)
-            const parentBlock = store.blocks[closestBlock.parentNode.dataset.id]
-            const parentPage = store.pages[closestBlock.parentNode.dataset.id]
-            if (parentBlock) {
-              parentBlock.children = parentBlock.children.filter(x => x !== closestBlock.dataset.id)
-            } else if (parentPage) {
-              parentPage.children = parentPage.children.filter(x => x !== closestBlock.dataset.id)
-            }
+          if (olderSibling && olderSibling.dataset && olderSibling.dataset.id) {
+            const focusNode = window.getSelection().focusNode
+            const focusOffset = window.getSelection().focusOffset
+            console.log(olderSibling)
+            moveBlock(bid,olderSibling.dataset.id)
+            olderSibling.children[2].appendChild(closestBlock)
+            window.getSelection().collapse(focusNode,focusOffset)
           }
         }
         event.preventDefault()
@@ -375,7 +365,7 @@ document.addEventListener("keydown",(event) => {
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
           focusBlockEnd(newActiveBlock)
-
+          closestBlock.remove()
           deleteBlock(bid)
         }
         break
@@ -461,8 +451,9 @@ const saveWorker = new Worker('/worker.js')
 if (w) {
   gotoDailyNotes()
   setTimeout(() => saveWorker.postMessage(["save",store]),0)
+} else {
+  w = true
 }
-w = true
 document.body.className = user.theme
 
 // const t = performance.now()

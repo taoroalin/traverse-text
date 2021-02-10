@@ -133,10 +133,14 @@ const insertBlock = (blockId,newParentId,idx) => {
   block.parent = newParentId
   const newParent = blockOrPageFromId(newParentId)
   const newParentOldChildren = newParent.children
-  newParent.children = newParent.children.slice(0,idx)
-  newParent.children.push(blockId)
-  newParent.children.push(...newParentOldChildren.slice(idx))
-
+  newParent.children = newParent.children || []
+  if (idx !== undefined) {
+    newParent.children = newParent.children.slice(0,idx)
+    newParent.children.push(blockId)
+    newParent.children.push(...newParentOldChildren.slice(idx))
+  } else {
+    newParent.children.push(blockId)
+  }
   // todo make this not duplicate refs
   const curRefs = store.blocks[blockId].refs
   if (curRefs) store.blocks[blockId].refs = curRefs.map(x => x) // make sure to copy because these are mutable!!!!
@@ -146,14 +150,19 @@ const insertBlock = (blockId,newParentId,idx) => {
 const deleteBlock = (blockId) => {
   const backRefs = store.blocks[blockId].backRefs
   for (let ref in backRefs) {
-    store.blocks[ref].refs = store.blocks[ref].refs.filter(x => x !== blockId)
-    store.blocks[ref][":block/refs"] = store.blocks[ref][":block/refs"].filter(x => x !== blockId)
+    if (store.blocks[ref].refs)
+      store.blocks[ref].refs = store.blocks[ref].refs.filter(x => x !== blockId)
+    if (store.blocks[ref][":block/refs"])
+      store.blocks[ref][":block/refs"] = store.blocks[ref][":block/refs"].filter(x => x !== blockId)
   }
-  store.blocks[blockId].parent.children = store.blocks[blockId].parent.children.filter(x => x !== blockId)
+  if (store.blocks[blockId].parent.children) {
+    store.blocks[blockId].parent.children = store.blocks[blockId].parent.children.filter(x => x !== blockId)
+  }
   delete store.blocks[blockId]
 }
 
 const moveBlock = (blockId,newParentId,idx) => {
+  const block = store.blocks[blockId]
   const parent = blockOrPageFromId(block.parent)
   parent.children = parent.children.filter(x => x != blockId)
   insertBlock(blockId,newParentId,idx)
