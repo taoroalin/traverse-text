@@ -21,7 +21,7 @@ const gotoBlack = () => {
 }
 
 const gotoPageTitle = (title) => {
-  const existingPage = database.vae[title].title[0]
+  const existingPage = store.pagesByTitle[title]
   if (existingPage) {
     gotoBlack()
     renderPage(pageFrame,existingPage)
@@ -34,12 +34,12 @@ const gotoDailyNotes = () => {
   oldestLoadedDailyNoteDate = new Date(Date.now())
   let numNotesLoaded = 0
   for (let i = 0; i < 366; i++) {
-    const daysNotes = database.vae[formatDate(oldestLoadedDailyNoteDate)]
-    if (daysNotes && daysNotes.title) {
-      renderPage(pageFrame,daysNotes.title[0])
+    const daysNotes = store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)]
+    if (daysNotes) {
+      renderPage(pageFrame,daysNotes)
       pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
       numNotesLoaded += 1
-      if (numNotesLoaded > 5) {
+      if (numNotesLoaded > 3) {
         break
       }
     }
@@ -50,73 +50,78 @@ const gotoDailyNotes = () => {
 }
 
 // todo make this page look ok
-const gotoBlock = (blockId) => {
+const gotoBlock = (uid) => {
   gotoBlack()
   const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
   pageFrame.appendChild(blockFocusFrame)
-  renderBlock(blockFocusFrame,blockId)
-
-  if (database.vae[blockId]) {
-    const backrefs = database.vae[blockId][":block/refs"]
-    if (backrefs) {
-      const backrefsListElement = backrefsListTemplate.cloneNode(true)
-      blockFocusFrame.appendChild(backrefsListElement)
-      for (let backref of backrefs) {
-        renderBlock(backrefsListElement.children[1],backref)
-      }
+  renderBlock(blockFocusFrame,uid)
+  const backRefs = store.blocks[uid].backRefs
+  if (backRefs) {
+    const backrefsListElement = backrefsListTemplate.cloneNode(true)
+    blockFocusFrame.appendChild(backrefsListElement)
+    for (let backref of backRefs) {
+      renderBlock(backrefsListElement.children[1],backref)
     }
   }
 }
 
 // Rendering
-const renderPage = (parentNode,entityId) => {
+const renderPage = (parentNode,uid) => {
+  const page = store.pages[uid]
   const element = pageTemplate.cloneNode(true)
   const title = element.firstElementChild
   const body = element.children[1]
-  body.setAttribute("data-id",entityId)
-  element.setAttribute("data-id",entityId)
+  body.dataset.id = uid
+  element.dataset.id = uid
 
-  title.innerText = database.eav[entityId].title
+  title.innerText = page.title
 
-  const children = database.eav[entityId].children
+  const children = page.children
   if (children) {
     for (let child of children) {
       renderBlock(body,child)
     }
   }
-  const uid = database.eav[entityId].uid
-  const backrefs = database.vae[uid][":block/refs"]
-  if (backrefs) {
+
+  if (page.backRefs.length > 0) {
     const backrefsListElement = backrefsListTemplate.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
-    for (let backref of backrefs) {
+    for (let backref of page.backRefs) {
       renderBlock(backrefsListElement.children[1],backref)
     }
   }
+
   parentNode.appendChild(element)
   return element
 }
 
-const renderBlock = (parentNode,entityId) => {
+const renderBlock = (parentNode,uid,idx) => {
   const element = blockTemplate.cloneNode(true)
   const body = element.children[1]
   const childrenContainer = element.children[2]
-  element.setAttribute("data-id",entityId)
-  childrenContainer.setAttribute("data-id",entityId)
-  body.setAttribute("data-id",entityId)
+  element.dataset.id = uid
+  childrenContainer.dataset.id = uid
+  body.dataset.id = uid
+  element.dataset.childIdx = idx || parentNode.children.length
 
-  const string = database.eav[entityId].string
+  const string = store.blocks[uid].string
   if (string) {
     renderBlockBody(body,string)
   }
 
-  const children = database.eav[entityId].children
+  const children = store.blocks[uid].children
   if (children) {
     for (let child of children) {
       renderBlock(childrenContainer,child)
     }
   }
-  parentNode.appendChild(element)
+
+  if (idx !== undefined) {
+    console.log(parentNode)
+    parentNode.insertBefore(element,parentNode.children[idx])
+  } else {
+    parentNode.appendChild(element)
+  }
   return element
 }
 
@@ -129,21 +134,15 @@ const dailyNotesInfiniteScrollListener = () => {
     pageFrame.getBoundingClientRect().bottom - innerHeight
   if (fromBottom < 700) {
     oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1)
-    const daysNotes =
-      database.vae[formatDate(oldestLoadedDailyNoteDate)].title
-    if (daysNotes) {
-      renderPage(pageFrame,(daysNotes)[0])
-    }
+    const daysNotes = store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)]
+    if (daysNotes)
+      renderPage(pageFrame,daysNotes)
   }
 }
 
 const downloadHandler = () => {
   console.log("download")
-  const result = []
-  for (let pageId in database.aev.title) {
-    result.push(databasePull(pageId))
-  }
-  const json = JSON.stringify(result)
+  const json = storeToRoamJSON(store)
   const data = new Blob([json],{ type: 'text/json' })
   const url = URL.createObjectURL(data)
   downloadButton.setAttribute('href',url)
@@ -162,9 +161,7 @@ document.addEventListener("input",(event) => {
     let string = block.innerText
     if (block.innerText.length === position)
       string += " "
-    databaseChange(["set",id,"string",string]) // todo commit changes on word boundaries
-    clearTimeout(commitDebounce)
-    commitDebounce = setTimeout(() => databaseChange([null],true),1500)
+    store.blocks[id].string = string // todo commit changes on word boundaries
     block.textContent = ""
     renderBlockBody(block,string,position)
 
@@ -195,7 +192,7 @@ document.addEventListener("input",(event) => {
         autocompleteList.textContent = ""
         for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
           const suggestion = suggestionTemplate.cloneNode(true)
-          suggestion.setAttribute("data-title",matchingTitles[i])
+          suggestion.dataset.title = matchingTitles[i]
           suggestion.textContent = truncateElipsis(matchingTitles[i],50)
           autocompleteList.appendChild(suggestion)
         }
@@ -217,10 +214,10 @@ document.addEventListener("input",(event) => {
       for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
         const suggestion = suggestionTemplate.cloneNode(true)
         if (matchingTitles[i].title) {
-          suggestion.setAttribute("data-title",matchingTitles[i].title)
+          suggestion.dataset.title = matchingTitles[i].title
           suggestion.textContent = truncateElipsis(matchingTitles[i].title,50)
         } else {
-          suggestion.setAttribute("data-string",matchingTitles[i].string)
+          suggestion.dataset.string = matchingTitles[i].string
           suggestion.textContent = truncateElipsis(matchingTitles[i].string,50)
         }
         autocompleteList.appendChild(suggestion)
@@ -285,10 +282,10 @@ document.addEventListener("keydown",(event) => {
   if (event.key === "m" && event.ctrlKey) {
     if (document.body.className === "light") {
       user.theme = "dark"
-      changeUser()
+      saveUser()
     } else {
       user.theme = "light"
-      changeUser()
+      saveUser()
     }
     event.preventDefault()
     return
@@ -313,35 +310,20 @@ document.addEventListener("keydown",(event) => {
   ) {
     let blocks
     let newActiveBlock
+    const bid = closestBlock.dataset.id
     switch (event.key) {
       case "Enter":
         if (event.shiftKey) {
 
         } else {
-
-          // yikes. This is brittle code. How do I make it better?
-          const newBlockId = databaseNewEntity()
+          let idx = parseInt(closestBlock.dataset.childIdx)
+          if (!event.ctrlKey) {
+            idx += 1
+          }
           const newBlockUid = newUid()
-          const parent = closestBlock.parentNode
-          databaseChange(["add",parent.dataset.id,"children",newBlockId])
-          databaseChange(["set",newBlockId,"uid",newBlockUid])
-          databaseChange(["set",newBlockId,"string",""])
-          const curRefs = database.eav[closestBlock.dataset.id]["refs"]
-          if (curRefs) {
-            databaseChange(["set",newBlockId,"refs",curRefs],true)
-          }
-          const newBlock = renderBlock(parent,newBlockId)
-
-          if (event.ctrlKey) {
-            parent.insertBefore(newBlock,closestBlock)
-          } else {
-            const youngerSibling = closestBlock.nextSibling
-            if (youngerSibling) {
-              parent.insertBefore(newBlock,youngerSibling)
-            }
-          }
+          createBlock(newBlockUid,store.blocks[bid].parent,idx)
+          const newBlock = renderBlock(closestBlock.parentNode,newBlockUid,idx)
           newBlock.children[1].focus()
-
         }
         break
       case "Tab":
@@ -356,8 +338,18 @@ document.addEventListener("keydown",(event) => {
               } else {
                 grandparent.appendChild(closestBlock)
               }
-              databaseChange(["add",grandparent.dataset.id,"children",closestBlock.dataset.id])
-              databaseChange(["remove",closestBlock.parentNode.dataset.id,"children",closestBlock.dataset.id],true)
+              const grandparentBlock = store.blocks[grandparent.dataset.id]
+              const grandparentPage = store.pages[grandparent.dataset.id]
+              if (grandparentBlock) {
+                grandparentBlock.children.push(closestBlock.dataset.id)
+              } else if (grandparentPage) {
+                grandparentPage.children.push(closestBlock.dataset.id)
+              } else {
+                console.log(grandparent)
+                throw new Error(`wrong type of block grandparent`)
+              }
+              const parentBlock = store.blocks[parent.dataset.id]
+              parentBlock.children = parentBlock.children.filter(x => x !== closestBlock.dataset.id)
             }
           }
         } else {
@@ -365,18 +357,26 @@ document.addEventListener("keydown",(event) => {
           if (olderSibling) {
             const Niece = olderSibling.children[2]
             Niece.appendChild(closestBlock)
-            databaseChange(["add",Niece.dataset.id,"children",closestBlock.dataset.id])
-            databaseChange(["remove",closestBlock.parentNode.dataset.id,"children",closestBlock.dataset.id],true)
+            const nieceBlock = store.blocks[Niece.dataset.id] // bug here
+            nieceBlock.children.push(closestBlock.dataset.id)
+            const parentBlock = store.blocks[closestBlock.parentNode.dataset.id]
+            const parentPage = store.pages[closestBlock.parentNode.dataset.id]
+            if (parentBlock) {
+              parentBlock.children = parentBlock.children.filter(x => x !== closestBlock.dataset.id)
+            } else if (parentPage) {
+              parentPage.children = parentPage.children.filter(x => x !== closestBlock.dataset.id)
+            }
           }
         }
         event.preventDefault()
         break
       case "Backspace":
         if (cursorPositionInBlock() === 0) {
-          databaseChange(["remove entity",closestBlock.dataset.id],true)
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
           focusBlockEnd(newActiveBlock)
+
+          deleteBlock(bid)
         }
         break
       case "ArrowDown":
@@ -437,8 +437,9 @@ document.addEventListener("click",(event) => {
     if (event.target.dataset.title) {
       gotoPageTitle(event.target.dataset.title)
     } else {
-      const blockId = database.vae[event.target.dataset.string]["string"][0]
-      gotoBlock(blockId)
+      // // todo make suggestion return uid
+      // const blockId = database.vae[event.target.dataset.string]["string"][0]
+      // gotoBlock(blockId)
     }
   }
 })
@@ -448,30 +449,18 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   graphName = file.name.substring(0,file.name.length - 5)
   file.text().then((text) => {
     console.log(`got json text`)
-    roamJsonToDatabase(graphName,JSON.parse(text))
-    graph = roamJsonToStore(text)
+    store = roamJsonToStore(graphName,text)
     gotoDailyNotes()
-    setTimeout(() => saveWorker.postMessage(["db",database]),0)
-    setTimeout(() => saveWorker.postMessage(["save",database]),0)
+    setTimeout(() => saveWorker.postMessage(["save",store]),0)
   })
 })
 
-const changeUser = () => {
-  document.body.className = user.theme
-  localStorage.setItem("user",JSON.stringify(user))
-}
-
 const saveWorker = new Worker('/worker.js')
-
-const save = () => {
-  console.log("posting save message")
-  saveWorker.postMessage(["save",database])
-}
 
 
 if (w) {
   gotoDailyNotes()
-  setTimeout(() => saveWorker.postMessage(["db",database]),0)
+  setTimeout(() => saveWorker.postMessage(["save",store]),0)
 }
 w = true
 document.body.className = user.theme

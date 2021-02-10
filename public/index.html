@@ -1,49 +1,57 @@
 <script>
   const r = indexedDB.open("microroam",1);
-  r.onsuccess = (e) => {
-    idb = e.target.result
-    idb.transaction(["graphs"],"readwrite").objectStore("graphs").get(user.graphName).onsuccess = (e) => {
-      if (e.target.result) {
-        database = JSON.parse(e.target.result.graph)
-        if (w) {
-          gotoDailyNotes()
-          setTimeout(() => saveWorker.postMessage(["db",database]),0)
-        }
-        w = !0;
-      }
-    }
-  }
-  r.onerror = (event) => {
-    alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
-    You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
-  }
-  r.onupgradeneeded = (event) => {
-    const db = r.result
-    console.log(db)
-    db.createObjectStore("graphs",{ keyPath: "graphName" })
-  }
-
-  let w = !1; // either code or data loaded
-  let user = { theme: "light",graphName: "graphminer" }
-  let database = null;
-  let graph = null;
-  let listeners = {};
-  let oldestLoadedDailyNoteDate = null;
-  let idb = null
-  let commitDebounce = null
-
-  const localStorageUser = localStorage.getItem('user')
-  if (localStorageUser) {
-    user = JSON.parse(localStorageUser)
-  } else {
-    localStorage.setItem('user',JSON.stringify(user))
-  }
 </script>
-<title>Micro Roam</title>
-<link rel="stylesheet" href="index.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
 
 <body class="light">
+  <script>
+    r.onsuccess = (e) => {
+      idb = e.target.result
+      idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
+        if (e.target.result) {
+          store = JSON.parse(e.target.result.store)
+          if (w) {
+            gotoDailyNotes()
+            setTimeout(() => saveWorker.postMessage(["save",store]),0)
+          }
+          w = !0;
+        } else {
+          store = { blocks: {},pages: {},pagesByTitle: {} }
+        }
+      }
+    }
+    const saveUser = () => {
+      document.body.className = user.theme
+      localStorage.setItem("user",JSON.stringify(user))
+    }
+    let user = { theme: "light",graphName: "graphminer" }
+    const localStorageUser = localStorage.getItem('user')
+    if (localStorageUser) {
+      user = JSON.parse(localStorageUser)
+      saveUser()
+    } else {
+      localStorage.setItem('user',JSON.stringify(user))
+    }
+
+    r.onupgradeneeded = (event) => {
+      const db = r.result
+      db.createObjectStore("stores",{ keyPath: "graphName" })
+    }
+    r.onerror = (event) => {
+      alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
+    You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
+    }
+
+    let w = !1; // either code or data loaded
+    let store = null;
+    let oldestLoadedDailyNoteDate = null;
+    let idb = null
+    let commitDebounce = null
+
+  </script>
+  <title>Micro Roam</title>
+  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
+
 
   <template id="page">
     <div class="page">
@@ -63,8 +71,8 @@
       <svg class="block__bullet" width="20" height="20">
         <circle cx="10" cy="10.5" r="3" fill="var(--bullet)" />
       </svg>
-      <span class="block__body" contenteditable="true" tabindex="-1">
-      </span>
+      <div class="block__body" contenteditable="true" tabindex="-1">
+      </div>
       <div class="block__children">
 
       </div>
@@ -151,9 +159,9 @@
     <div id="autocomplete-list" style="display:none">
     </div>
   </div>
+
+  <script src="data-legit.js"></script>
   <script src="utils.js"></script>
   <script src="parse.js"></script>
-  <script src="datalog.js"></script>
-  <script src="data-legit.js"></script>
   <script src="index.js"></script>
 </body>

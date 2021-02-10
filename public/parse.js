@@ -43,20 +43,17 @@ const renderBlockBody = (parent,text) => {
       stackTop.appendChild(tagElement)
     } else if (match[4]) {
       // @query would use a query here if I had them
-      const ae = database.vae[match[4].substring(2,match[4].length - 2)]
-      if (ae) {
-        const blockIds = ae.uid // todo find out why I get two results for uid
-        if (blockIds) {
-          const blockId = blockIds[0]
-          const blockRefElement = blockRefTemplate.cloneNode(true)
-          blockRefElement.innerText = database.eav[blockId].string
-          blockRefElement.setAttribute("data-id",blockId)
-          stackTop.appendChild(blockRefElement)
-        } else {
-          const textNode = document.createTextNode(match[0])
-          textNode["data-index"] = idx
-          stackTop.appendChild(textNode)
-        }
+      const blockId = match[4].substring(2,match[4].length - 2)
+      const block = store.blocks[blockId]
+      if (block) {
+        const blockRefElement = blockRefTemplate.cloneNode(true)
+        blockRefElement.innerText = block.string
+        blockRefElement.dataset.id = blockId
+        stackTop.appendChild(blockRefElement)
+      } else {
+        const textNode = document.createTextNode(match[0])
+        textNode["data-index"] = idx
+        stackTop.appendChild(textNode)
       }
     } else if (match[5]) {
       if (stackTop.className === "bold") {
