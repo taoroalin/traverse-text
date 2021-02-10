@@ -98,8 +98,8 @@ const titleExactFullTextSearch = (string) => {
   const results = []
   for (let title in store.pagesByTitle) {
     const id = store.pagesByTitle[title]
-    if (regex.test(title)) {
-      results.push(title)
+    if (regex.test({ title,id })) {
+      results.push({ title,id })
       if (results.length >= 10)
         return results
     }
@@ -111,70 +111,12 @@ const exactFullTextSearch = (string) => {
   const regex = new RegExp(string,"i")
   const results = []
   for (let title in store.pagesByTitle) {
-    const uid = store.pagesByTitle[title]
-    if (regex.test(title)) results.push({ title: title,uid })
+    const id = store.pagesByTitle[title]
+    if (regex.test(title)) results.push({ title: title,id })
   }
   for (let blockUid in store.blocks) {
     const block = store.blocks[blockUid]
-    if (regex.test(block.string)) results.push({ string: block.string,uid: blockUid })
+    if (regex.test(block.string)) results.push({ string: block.string,id: blockUid })
   }
   return results
 }
-
-
-// Data Operations
-
-const blockOrPageFromId = (id) => {
-  return store.blocks[id] || store.pages[id]
-}
-
-const insertBlock = (blockId,newParentId,idx) => {
-  const block = store.blocks[blockId]
-  block.parent = newParentId
-  const newParent = blockOrPageFromId(newParentId)
-  const newParentOldChildren = newParent.children
-  newParent.children = newParent.children || []
-  if (idx !== undefined) {
-    newParent.children = newParent.children.slice(0,idx)
-    newParent.children.push(blockId)
-    newParent.children.push(...newParentOldChildren.slice(idx))
-  } else {
-    newParent.children.push(blockId)
-  }
-  // todo make this not duplicate refs
-  const curRefs = store.blocks[blockId].refs
-  if (curRefs) store.blocks[blockId].refs = curRefs.map(x => x) // make sure to copy because these are mutable!!!!
-}
-
-
-const deleteBlock = (blockId) => {
-  const backRefs = store.blocks[blockId].backRefs
-  for (let ref in backRefs) {
-    if (store.blocks[ref].refs)
-      store.blocks[ref].refs = store.blocks[ref].refs.filter(x => x !== blockId)
-    if (store.blocks[ref][":block/refs"])
-      store.blocks[ref][":block/refs"] = store.blocks[ref][":block/refs"].filter(x => x !== blockId)
-  }
-  if (store.blocks[blockId].parent.children) {
-    store.blocks[blockId].parent.children = store.blocks[blockId].parent.children.filter(x => x !== blockId)
-  }
-  delete store.blocks[blockId]
-}
-
-const moveBlock = (blockId,newParentId,idx) => {
-  const block = store.blocks[blockId]
-  const parent = blockOrPageFromId(block.parent)
-  parent.children = parent.children.filter(x => x != blockId)
-  insertBlock(blockId,newParentId,idx)
-}
-
-const writeBlock = (blockId,string) => {
-  store.blocks[blockId].string = string
-}
-
-// gonna add more fields later
-// the new id is in the change so it can be serialized deterministically
-const createBlock = (blockId,parentId,idx) => {
-  store.blocks[blockId] = { string: "",parent: parentId }
-  insertBlock(blockId,parentId,idx)
-} 
