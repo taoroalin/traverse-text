@@ -63,7 +63,7 @@ const roamJsonToStore = (graphName,text) => {
         } else if (pages[ref] !== undefined) {
           pages[ref].backRefs.push(blockUid)
         } else {
-          throw new Error(`bad ref ${ref}`)
+          //throw new Error(`bad ref ${ref}`)
         }
       })
     }
@@ -74,7 +74,7 @@ const roamJsonToStore = (graphName,text) => {
         } else if (pages[ref] !== undefined) {
           pages[ref].backRefs.push(blockUid)
         } else {
-          throw new Error(`bad ref ${ref}`)
+          //throw new Error(`bad ref ${ref}`)
         }
       })
     }

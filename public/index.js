@@ -37,13 +37,17 @@ const gotoDailyNotes = () => {
   pageFrameOuter.addEventListener("scroll",dailyNotesInfiniteScrollListener)
   oldestLoadedDailyNoteDate = new Date(Date.now())
   let numNotesLoaded = 0
+  if (store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)] === undefined) {
+    const newPageId = newUid()
+    runCommand("createPage",newPageId,formatDate(oldestLoadedDailyNoteDate))
+  }
   for (let i = 0; i < 366; i++) {
     const daysNotes = store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)]
     if (daysNotes) {
       renderPage(pageFrame,daysNotes)
       pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
       numNotesLoaded += 1
-      if (numNotesLoaded > 3) {
+      if (numNotesLoaded > 4) {
         break
       }
     }
@@ -439,6 +443,8 @@ document.addEventListener("click",(event) => {
     downloadHandler()
   } else if (event.target.id === "upload-button") {
     document.getElementById("upload-input").click()
+  } else if (event.target.id === "daily-notes-button") {
+    gotoDailyNotes()
   } else if (event.target.className === "autocomplete__suggestion") {
     if (event.target.dataset.title) {
       gotoPageTitle(event.target.dataset.title)
@@ -456,6 +462,8 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   file.text().then((text) => {
     console.log(`got json text`)
     store = roamJsonToStore(graphName,text)
+    user.graphName = graphName
+    saveUser()
     gotoDailyNotes()
     setTimeout(() => saveWorker.postMessage(["save",store]),0)
   })
