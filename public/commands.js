@@ -50,12 +50,12 @@ const commands = {
   // gonna add more fields later
   // the new id is in the change so it can be serialized deterministically
   createBlock: (blockId,parentId,idx) => {
-    store.blocks[blockId] = { string: "",parent: parentId }
+    store.blocks[blockId] = { string: "",parent: parentId,":create/time": Date.now() }
     insertBlock(blockId,parentId,idx)
   },
 
   createPage: (pageId,pageTitle) => {
-    store.pages[pageId] = { title: pageTitle }
+    store.pages[pageId] = { title: pageTitle,children: [],":create/time": Date.now() }
     store.pagesByTitle[pageTitle] = pageId
   }
 }

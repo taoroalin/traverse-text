@@ -7,9 +7,8 @@
 .dark{
   --background:#161616;
   --text: white;
-  --link: #367bb8;
+  --link: #3f84c0;
   --brackets:#A7B6C2;
-  --tag:#A7B6C2;
   --block-ref:rgb(63, 63, 63);
   --bullet:#758897;
   --border:#afbeca;
@@ -17,6 +16,7 @@
   --highlight:rgb(172, 147, 36);
   --top:grey;
   --click:darkgrey;
+  --page-ref:#4aad59;
 }
 
 .light{
@@ -24,7 +24,6 @@
   --text:black;
   --link: #367bb8;
   --brackets:#A7B6C2;
-  --tag:#A7B6C2;
   --block-ref:lightgrey;
   --bullet:#394B59;
   --border:#585e64;
@@ -32,6 +31,7 @@
   --highlight:hsl(51,98%,81%);
   --top:grey;
   --click:darkgrey;
+  --page-ref:#49C55B;
 }
 
 input, button, a{
@@ -163,7 +163,7 @@ a:visited { color:var(--link) }
 
 .page__title{
   font-size: 36px;
-  margin: 30px 0 10px 0;
+  margin: 40px 0 20px 0;
 }
 
 .page__body, .backrefs-list__body{
@@ -216,7 +216,8 @@ a:visited { color:var(--link) }
 }
 
 .page-ref__body{
-  color:var(--link);
+  color:var(--page-ref);
+  font-weight: 800;
 }
 
 .page-ref__body:hover{
@@ -225,7 +226,8 @@ a:visited { color:var(--link) }
 }
 
 .tag{
-  color:var(--tag);
+  color:var(--page-ref);
+  font-weight: 800;
 }
 
 .tag:hover{
