@@ -5,9 +5,8 @@ let store = null
 let saveTimeout = null
 
 const dbReq = indexedDB.open("microroam",1)
-dbReq.onsuccess = (event) => {
-  idb = event.target.result
-}
+dbReq.onsuccess = (event) => idb = event.target.result
+
 
 onmessage = (event) => {
   const operation = event.data[0]

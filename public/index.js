@@ -15,13 +15,18 @@ const autocompleteList = document.getElementById("autocomplete-list")
 
 // App state transitions
 const gotoBlack = () => {
+  autocompleteList.style.display = "none"
   oldestLoadedDailyNoteDate = null
   pageFrameOuter.removeEventListener("scroll",dailyNotesInfiniteScrollListener)
-  pageFrame.textContent = ""
+  const asdf = performance.now()
+  // for (let c of pageFrame.childNodes) {
+  //   c.remove()
+  // }
+  pageFrame.innerHTML = ""
+  console.log(`goto black took ${performance.now() - asdf}`)
 }
 
 const gotoPageTitle = (title) => {
-  autocompleteList.style.display = "none"
   let existingPage = store.pagesByTitle[title]
   if (existingPage === undefined) {
     existingPage = newUid()
@@ -166,7 +171,6 @@ document.addEventListener("input",(event) => {
   if (block) {
     // reparse block and insert cursor into correct position while typing
     const position = cursorPositionInBlock()
-    let curIdx = 0
 
     const id = block.parentNode.dataset.id
     let string = block.innerText
@@ -174,17 +178,21 @@ document.addEventListener("input",(event) => {
       string += " "
     store.blocks[id].string = string // todo commit changes on word boundaries
     runCommand("writeBlock",id,string)
-    block.textContent = ""
+    block.innerHTML = ""
     renderBlockBody(block,string,position)
 
+    let curIdx = 0
     const scanElement = (element) => {
+      console.log(element)
+      console.log(`scan idx: ${curIdx} text: ${element.innerText}`)
       for (let el of element.childNodes) {
         if (el.nodeName === "#text") {
-          if (position < curIdx + el.textContent.length) {
+          if (el.textContent && position < curIdx + el.textContent.length) {
             getSelection().collapse(el,position - curIdx)
             return el
           }
-          curIdx += el.textContent.length
+          if (el.textContent)
+            curIdx += el.textContent.length
         } else {
           scanElement(el)
         }
@@ -201,11 +209,11 @@ document.addEventListener("input",(event) => {
       console.log(`title string ${titleString}`)
       const matchingTitles = titleExactFullTextSearch(titleString)
       if (matchingTitles.length > 0) {
-        autocompleteList.textContent = ""
+        autocompleteList.innerHTML = ""
         for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
           const suggestion = suggestionTemplate.cloneNode(true)
           suggestion.dataset.title = matchingTitles[i]
-          suggestion.textContent = truncateElipsis(matchingTitles[i],50)
+          suggestion.innerText = truncateElipsis(matchingTitles[i],50)
           autocompleteList.appendChild(suggestion)
         }
         autocompleteList.style.display = "block"
@@ -222,15 +230,16 @@ document.addEventListener("input",(event) => {
     const matchingTitles = exactFullTextSearch(event.target.value)
     console.log(`full text search took ${performance.now() - stime}`)
     if (matchingTitles.length > 0) {
-      autocompleteList.textContent = ""
+      autocompleteList.innerHTML = ""
       for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
         const suggestion = suggestionTemplate.cloneNode(true)
         if (matchingTitles[i].title) {
           suggestion.dataset.title = matchingTitles[i].title
-          suggestion.textContent = truncateElipsis(matchingTitles[i].title,50)
+          suggestion.innerText = truncateElipsis(matchingTitles[i].title,50)
         } else {
           suggestion.dataset.string = matchingTitles[i].string
-          suggestion.textContent = truncateElipsis(matchingTitles[i].string,50)
+          suggestion.dataset.id = matchingTitles[i].id
+          suggestion.innerText = truncateElipsis(matchingTitles[i].string,50)
         }
         autocompleteList.appendChild(suggestion)
       }
@@ -445,12 +454,10 @@ document.addEventListener("click",(event) => {
   } else if (event.target.id === "daily-notes-button") {
     gotoDailyNotes()
   } else if (event.target.className === "autocomplete__suggestion") {
-    if (event.target.dataset.title) {
+    if (event.target.dataset.title)
       gotoPageTitle(event.target.dataset.title)
-    } else {
-      // // todo make suggestion return uid
-      // gotoBlock(blockId)
-    }
+    else
+      gotoBlock(event.target.dataset.id)
   }
 })
 
