@@ -50,9 +50,9 @@
 
     /* This is some nasty concurrency stuff. It's all about starting the critical path of loading (loading graph) as quickly as possible.
     What happens is:
-    Script 1: Database Open request sent. This script is one line to reduce the script compile time before the request is sent.
-    Script 2: Add onsuccess listener to request (if the request somehow succeeds before then, it fails). Then get user settings fro localstorage, which tells you which graph to get out of indexeddb once the idb request succeeds (if request succeeds first, it loads default graph). Then set body class to user's color theme (which is why this script is in the html body) quickly so they don't see white flash. Then add upgradeneeded, onerror listeners, then initialize global variables
-    Onsuccess handler: sets store, then checks whether last script has finished loading, if it has, start rendering. That script also checks whether data loded, so if it loads last it will trigger render
+    Script 1: IndexedDB Open request sent. This script is one line to reduce the script compile time before the request is sent.
+    Script 2: Add onsuccess listener to request (if the request somehow succeeds before then, it fails). Then get user settings from localstorage, which tells you which graph to get out of indexeddb once the idb request succeeds (if request succeeds first, it loads default graph). Then set body class to user's color theme (which is why this script is in the html body) quickly so they don't see the screen flash the wrong color. Then add upgradeneeded, onerror listeners, then initialize global variables
+    Onsuccess handler: sets store, then checks whether last script has finished loading, if it has, start rendering. That script also checks whether data loded, and triggers render if data is loaded
     */
   </script>
   <title>Micro Roam</title>
@@ -142,7 +142,7 @@
 
   <div id="app">
     <div id="top-bar">
-      <a id="report-issue-button" href="mailto:taoroalin@gmail.com">
+      <a id="report-issue-button" href="mailto:taoroalin@gmail.com?subject=You Made Micro Roam Wrong!">
         Report Issue
       </a>
       <button style="display:none" id="switch-graph-button">
