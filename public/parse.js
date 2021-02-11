@@ -8,7 +8,8 @@ const highlightTemplate = document.getElementById("highlight").content.firstElem
 
 const renderBlockBody = (parent,text) => {
   let stack = [parent]
-  // page-ref-open page-ref-close tag block-ref bold link highlight italic
+  // 1             2              3   4         5    6         7      8
+  // page-ref-open page-ref-close tag block-ref bold highlight italic link
   const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]{8,10}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
   let idx = 0
   let stackTop = parent
@@ -39,7 +40,9 @@ const renderBlockBody = (parent,text) => {
       }
     } else if (match[3]) {
       const tagElement = tagTemplate.cloneNode(true)
-      tagElement.innerText = match[3]
+      const textNode = document.createTextNode(match[3])
+      textNode.startIdx = idx
+      tagElement.appendChild(textNode)
       stackTop.appendChild(tagElement)
     } else if (match[4]) {
       // @query would use a query here if I had them

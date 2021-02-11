@@ -184,15 +184,14 @@ document.addEventListener("input",(event) => {
     let curIdx = 0
     const scanElement = (element) => {
       console.log(element)
-      console.log(`scan idx: ${curIdx} text: ${element.innerText}`)
+      console.log(`position: ${position} scan idx: ${curIdx} text: ${element.innerText}`)
       for (let el of element.childNodes) {
+        console.log(`el ${el.textContent} start ${el.startIdx}`)
         if (el.nodeName === "#text") {
-          if (el.textContent && position < curIdx + el.textContent.length) {
-            getSelection().collapse(el,position - curIdx)
+          if (el.textContent && position < el.startIdx + el.textContent.length) {
+            getSelection().collapse(el,position - el.startIdx)
             return el
           }
-          if (el.textContent)
-            curIdx += el.textContent.length
         } else {
           scanElement(el)
         }

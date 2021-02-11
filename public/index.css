@@ -111,7 +111,7 @@ a:visited { color:var(--link) }
 }
 
 #top-bar a, #top-bar button{
-  padding: 14px 10px 10px;
+  padding: 13px 10px 10px;
   font-size:0.9em;
 }
 
@@ -126,7 +126,7 @@ a:visited { color:var(--link) }
   background-color:var(--background);
   color:var(--text);
   padding:3px 13px;
-  margin: 5px 5px;
+  margin: 7px 5px 5px;
   display:block;
   font-size:1.2em;
   box-shadow:0 0 2px var(--border);
