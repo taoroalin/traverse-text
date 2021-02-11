@@ -18,12 +18,9 @@ const gotoBlack = () => {
   autocompleteList.style.display = "none"
   oldestLoadedDailyNoteDate = null
   pageFrameOuter.removeEventListener("scroll",dailyNotesInfiniteScrollListener)
-  const asdf = performance.now()
-  // for (let c of pageFrame.childNodes) {
-  //   c.remove()
-  // }
+  pageFrameOuter.scrollTop = 0
   pageFrame.innerHTML = ""
-  console.log(`goto black took ${performance.now() - asdf}`)
+  searchInput.value = ""
 }
 
 const gotoPageTitle = (title) => {
@@ -31,7 +28,6 @@ const gotoPageTitle = (title) => {
   if (existingPage === undefined) {
     existingPage = newUid()
     runCommand("createPage",existingPage,title)
-    console.log("creating page")
   }
   gotoBlack()
   renderPage(pageFrame,existingPage)
@@ -77,6 +73,14 @@ const gotoBlock = (uid) => {
     }
   }
 }
+
+const gotoSuggestion = (suggestionNode) => {
+  if (suggestionNode.dataset.title)
+    gotoPageTitle(suggestionNode.dataset.title)
+  else
+    gotoBlock(suggestionNode.dataset.id)
+}
+
 
 // Rendering
 const renderPage = (parentNode,uid) => {
@@ -133,7 +137,6 @@ const renderBlock = (parentNode,uid,idx) => {
   }
 
   if (idx !== undefined) {
-    console.log(parentNode)
     parentNode.insertBefore(element,parentNode.children[idx])
   } else {
     parentNode.appendChild(element)
@@ -166,27 +169,24 @@ const downloadHandler = () => {
 }
 
 document.addEventListener("input",(event) => {
-  const block = event.target.closest(".block__body")
+  const blockBody = event.target.closest(".block__body")
 
-  if (block) {
+  if (blockBody) {
     // reparse block and insert cursor into correct position while typing
     const position = cursorPositionInBlock()
 
-    const id = block.parentNode.dataset.id
-    let string = block.innerText
-    if (block.innerText.length === position)
+    const id = blockBody.parentNode.dataset.id
+    let string = blockBody.innerText
+
+    if (blockBody.innerText.length === position)
       string += " "
     store.blocks[id].string = string // todo commit changes on word boundaries
     runCommand("writeBlock",id,string)
-    block.innerHTML = ""
-    renderBlockBody(block,string,position)
+    blockBody.innerHTML = ""
+    renderBlockBody(blockBody,string,position)
 
-    let curIdx = 0
     const scanElement = (element) => {
-      console.log(element)
-      console.log(`position: ${position} scan idx: ${curIdx} text: ${element.innerText}`)
       for (let el of element.childNodes) {
-        console.log(`el ${el.textContent} start ${el.startIdx}`)
         if (el.nodeName === "#text") {
           if (el.textContent && position < el.startIdx + el.textContent.length) {
             getSelection().collapse(el,position - el.startIdx)
@@ -197,10 +197,10 @@ document.addEventListener("input",(event) => {
         }
       }
     }
-    const currentElement = scanElement(block).parentNode
+    const currentElement = scanElement(blockBody).parentNode
 
 
-    // This doesn't work cause cursor placement doesn't work
+    // Autocomplete
     const closestPageRef = currentElement.closest(".page-ref")
     const closestTag = currentElement.closest(".tag")
     let titleString = (closestTag && closestTag.innerText.substring(1)) || (closestPageRef && closestPageRef.children[1].innerText)
@@ -225,13 +225,16 @@ document.addEventListener("input",(event) => {
 
 
   } else if (event.target.id === "search-input") {
-    const stime = performance.now()
+
     const matchingTitles = exactFullTextSearch(event.target.value)
-    console.log(`full text search took ${performance.now() - stime}`)
+
     if (matchingTitles.length > 0) {
       autocompleteList.innerHTML = ""
       for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
         const suggestion = suggestionTemplate.cloneNode(true)
+        if (i === 0) {
+          suggestion.dataset.selected = "true"
+        }
         if (matchingTitles[i].title) {
           suggestion.dataset.title = matchingTitles[i].title
           suggestion.innerText = truncateElipsis(matchingTitles[i].title,50)
@@ -271,7 +274,6 @@ const focusBlockEnd = (blockNode) => {
 }
 
 const focusBlockStart = (blockNode) => {
-  console.log("focus block start")
   const body = blockNode.children[1]
   const temp = document.createTextNode(" ")
   body.insertBefore(temp,body.firstChild)
@@ -281,6 +283,7 @@ const focusBlockStart = (blockNode) => {
 // more event listeners                    ------------------------------------------
 
 document.addEventListener("keydown",(event) => {
+  console.log("ke")
   // Check for global shortcut keys
   if (event.key === "z" && event.ctrlKey && !event.shiftKey) {
   } else if (event.key === "d" && event.ctrlKey) {
@@ -322,19 +325,28 @@ document.addEventListener("keydown",(event) => {
 
   if (event.ctrlKey && event.key === "o") {
     const closestPageRef = getSelection().focusNode.parentNode.closest(".page-ref")
-    if (closestPageRef) {
+    if (closestPageRef)
       gotoPageTitle(closestPageRef.children[1].innerText)
-      event.preventDefault()
-      return
-    }
+    const closestTag = getSelection().focusNode.parentNode.closest(".tag")
+    if (closestTag)
+      gotoPageTitle(closestTag.innerText.substring(1))
     event.preventDefault()
-  }
-
-  // Check for actions based on active element
-  const closestBlock = document.activeElement.closest(".block")
-  if (event.ctrlKey && event.key === "o") {
     return
   }
+  if (autocompleteList.style.display !== "none") {
+    const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
+    if (selected) {
+      const newSelected = (event.key === "ArrowUp" && selected.previousSibling) || (event.key === "ArrowDown" && selected.nextSibling)
+      if (newSelected) {
+        newSelected.dataset.selected = "true"
+        delete selected.dataset.selected
+        event.preventDefault()
+        return
+      }
+    }
+  }
+  // Check for actions based on active element
+  const closestBlock = document.activeElement.closest(".block")
   if (closestBlock
   ) {
     let blocks
@@ -432,6 +444,13 @@ document.addEventListener("keydown",(event) => {
       gotoPageTitle(event.target.value)
       event.preventDefault()
       return
+    } else if (event.key === "Tab") {
+      console.log("goto suggestion")
+      const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
+      if (selected) {
+        gotoSuggestion(selected)
+        return
+      }
     }
   }
 })
@@ -453,10 +472,12 @@ document.addEventListener("click",(event) => {
   } else if (event.target.id === "daily-notes-button") {
     gotoDailyNotes()
   } else if (event.target.className === "autocomplete__suggestion") {
-    if (event.target.dataset.title)
-      gotoPageTitle(event.target.dataset.title)
-    else
-      gotoBlock(event.target.dataset.id)
+    gotoSuggestion(event.target)
+  } else if (event.target.className === "url") { // using spans with event handlers as links because they play nice with contenteditable
+    const link = document.createElement("a")
+    link.target = "_blank"
+    link.href = event.target.innerText
+    link.click()
   }
 })
 
@@ -464,7 +485,6 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   const file = event.target.files[0]
   graphName = file.name.substring(0,file.name.length - 5)
   file.text().then((text) => {
-    console.log(`got json text`)
     store = roamJsonToStore(graphName,text)
     user.graphName = graphName
     saveUser()
@@ -482,10 +502,15 @@ if (w) {
 } else {
   w = true
 }
-document.body.className = user.theme
 
 // const t = performance.now()
 // for (let i = 0; i < 1000000; i++) {
 //   getSelection()
 // }
 // console.log(`took ${performance.now() - t}`)
+
+const test = () => {
+  const testScriptNode = document.createElement("script")
+  testScriptNode.src = "test.js"
+  document.body.appendChild(testScriptNode)
+}
