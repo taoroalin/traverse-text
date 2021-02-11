@@ -38,7 +38,7 @@ const gotoDailyNotes = () => {
   oldestLoadedDailyNoteDate = new Date(Date.now())
   let numNotesLoaded = 0
   if (store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)] === undefined) {
-    const newPageId = newUid()
+    const newPageId = `${oldestLoadedDailyNoteDate.getMonth()}-${oldestLoadedDailyNoteDate.getDate()}-${oldestLoadedDailyNoteDate.getFullYear()}`
     runCommand("createPage",newPageId,formatDate(oldestLoadedDailyNoteDate))
   }
   for (let i = 0; i < 366; i++) {
@@ -275,7 +275,6 @@ const focusBlockStart = (blockNode) => {
 document.addEventListener("keydown",(event) => {
   // Check for global shortcut keys
   if (event.key === "z" && event.ctrlKey && !event.shiftKey) {
-    // databaseUndo(database) // todo make listeners then turn this on
   } else if (event.key === "d" && event.ctrlKey) {
     document.getElementById("upload-input").click()
     event.preventDefault()
@@ -450,7 +449,6 @@ document.addEventListener("click",(event) => {
       gotoPageTitle(event.target.dataset.title)
     } else {
       // // todo make suggestion return uid
-      // const blockId = database.vae[event.target.dataset.string]["string"][0]
       // gotoBlock(blockId)
     }
   }
