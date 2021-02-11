@@ -7,16 +7,19 @@ const roamJsonToStore = (graphName,text) => {
   const blocks = {}
   const pagesByTitle = {}
 
+  const ownerRoamId = obj[0][":edit/user"][":user/uid"] // todo interface with roam user ids well
+
   const addBlock = (block,parent) => {
     blocks[block.uid] = block
     block.parent = parent
 
     // discard edit/user if it's the same as create/user to save space
-    if (block[":create/user"])
+    if (block[":create/user"] && block[":create/user"][":user/uid"] !== ownerRoamId)
       block[":create/user"] = block[":create/user"][":user/uid"]
-    if (block[":edit/user"])
+    else delete block[":create/user"]
+    if (block[":edit/user"] && block[":edit/user"][":user/uid"] !== ownerRoamId)
       block[":edit/user"] = block[":edit/user"][":user/uid"]
-    if (block[":create/user"] === block[":edit/user"])
+    else
       delete block[":edit/user"]
 
     if (block.children) {
@@ -35,11 +38,12 @@ const roamJsonToStore = (graphName,text) => {
   for (let page of obj) {
     pagesByTitle[page.title] = page.uid
     pages[page.uid] = page
-    if (page[":create/user"])
+    if (page[":create/user"] && page[":create/user"][":user/uid"] !== ownerRoamId)
       page[":create/user"] = page[":create/user"][":user/uid"]
-    if (page[":edit/user"])
+    else delete page[":create/user"]
+    if (page[":edit/user"] && page[":edit/user"][":user/uid"] !== ownerRoamId)
       page[":edit/user"] = page[":edit/user"][":user/uid"]
-    if (page[":create/user"] === page[":edit/user"])
+    else
       delete page[":edit/user"]
 
     if (page.children !== undefined) {
@@ -80,7 +84,7 @@ const roamJsonToStore = (graphName,text) => {
     }
   }
 
-  const store = { graphName,pages,blocks,pagesByTitle }
+  const store = { graphName,pages,blocks,pagesByTitle,ownerRoamId }
   console.log(`roamJsonToStore took ${performance.now() - stime}`)
   console.log(store)
   // console.log(JSON.stringify(store))
@@ -98,13 +102,12 @@ const storeToRoamJSON = (store) => {
 
     if (block.children) result.children = block.children.map(blockIdToJSON)
 
-    if (block[":create/user"]) {
+    result[":create/user"] = { ":user/uid": store.ownerRoamId }
+    result[":edit/user"] = { ":user/uid": store.ownerRoamId }
+    if (block[":create/user"])
       result[":create/user"] = { ":user/uid": block[":create/user"] }
-      result[":edit/user"] = { ":user/uid": block[":create/user"] }
-    }
-    if (block[":edit/user"]) {
+    if (block[":edit/user"])
       result[":edit/user"] = { ":user/uid": block[":edit/user"] }
-    }
 
     if (block.refs) result.refs = block.refs.map(x => ({ uid: x }))
     if (block[":block/refs"]) result[":block/refs"] = block[":block/refs"].map(x => ({ ":block/uid": x }))
@@ -123,18 +126,18 @@ const storeToRoamJSON = (store) => {
     if (page.children) {
       jsonPage.children = page.children.map(blockIdToJSON)
     }
-    if (page[":create/user"]) {
+    jsonPage[":create/user"] = { ":user/uid": store.ownerRoamId }
+    jsonPage[":edit/user"] = { ":user/uid": store.ownerRoamId }
+    if (page[":create/user"])
       jsonPage[":create/user"] = { ":user/uid": page[":create/user"] }
-      jsonPage[":edit/user"] = { ":user/uid": page[":create/user"] }
-    }
-    if (page[":edit/user"]) {
+    if (page[":edit/user"])
       jsonPage[":edit/user"] = { ":user/uid": page[":edit/user"] }
-    }
   }
   console.log(roamJSON)
 
   return JSON.stringify(roamJSON)
 }
+
 
 const titleExactFullTextSearch = (string) => {
   const regex = new RegExp(string,"i")
