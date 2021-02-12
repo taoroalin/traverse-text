@@ -1,52 +1,53 @@
-<script>
-  let w = false; // flag for whether either code or data loaded
-  let store = null;
-  let idb = null
-  let user = { theme: "light",graphName: "default" }
-  const r = indexedDB.open("microroam",1);
-  r.onsuccess = (e1) => {
-    idb = e1.target.result
-    console.log(user.graphName)
-    idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
-      console.log("target")
-      console.log(e.target)
-      if (e.target.result) {
-        store = JSON.parse(e.target.result.store)
-      } else {
-        console.log("adding default graph")
-        store = { graphName: "default",ownerRoamId: "default",blocks: {},pages: {},pagesByTitle: {} }
-        user.graphName = "default"
-      }
-      if (w) {
-        gotoDailyNotes()
-        setTimeout(() => saveWorker.postMessage(["save",store]),0)
-      } else
-        w = true;
-    }
-  }
-  r.onupgradeneeded = (event) => {
-    const db = r.result
-    db.createObjectStore("stores",{ keyPath: "graphName" })
-  }
-  r.onerror = (event) => {
-    alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
-    You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
-  }
-</script>
-
-<body class="light">
+<body>
   <script>
+    const r = indexedDB.open("microroam",1);
+    let user = { theme: "light",graphName: "default" }
+    const storedUser = localStorage.getItem("user")
+    // if (storedUser) user = storedUser
+    let w = false; // flag for whether either code or data loaded
+    let store = null;
+    let idb = null
+    r.onsuccess = (e1) => {
+      idb = e1.target.result
+      console.log(user.graphName)
+      idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
+        console.log("target")
+        console.log(e.target)
+        if (e.target.result) {
+          store = JSON.parse(e.target.result.store)
+          if (w) {
+            gotoDailyNotes()
+            setTimeout(() => saveWorker.postMessage(["save",store]),0)
+          } else
+            w = true;
+        } else {
+          console.log("adding default graph")
+          fetch("./default-store.json").then(text => text.json().then(json => {
+            // store = { graphName: "default",ownerRoamId: "default",blocks: {},pages: {},pagesByTitle: {} }
+            store = json
+            user.graphName = json.graphName
+            if (w) {
+              gotoPageTitle("Welcome to Micro Roam")
+              setTimeout(() => saveWorker.postMessage(["save",store]),0)
+            } else
+              w = true;
+          }))
+        }
+      }
+    }
+    r.onupgradeneeded = (event) => {
+      const db = r.result
+      db.createObjectStore("stores",{ keyPath: "graphName" })
+    }
+    r.onerror = (event) => {
+      alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
+    You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
+    }
     const saveUser = () => {
       document.body.className = user.theme
       localStorage.setItem("user",JSON.stringify(user))
     }
-    const localStorageUser = localStorage.getItem('user')
-    if (localStorageUser) {
-      user = JSON.parse(localStorageUser)
-      saveUser()
-    } else {
-      localStorage.setItem('user',JSON.stringify(user))
-    }
+    saveUser()
 
 
     let oldestLoadedDailyNoteDate = null;
@@ -59,6 +60,7 @@
     Onsuccess handler: sets store, then checks whether last script has finished loading, if it has, start rendering. That script also checks whether data loded, and triggers render if data is loaded
     */
   </script>
+
   <title>Micro Roam</title>
   <link rel="stylesheet" href="index.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
