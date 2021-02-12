@@ -195,88 +195,7 @@ const renderBlockBodyWithCursor = (blockBody,string,position) => {
 }
 
 document.addEventListener("input",(event) => {
-  const blockBody = event.target.closest(".block__body")
-
-  if (blockBody) {
-    const id = blockBody.parentNode.dataset.id
-    if (blockBody.innerText === " " || blockBody.innerText === "") {
-      runCommand("writeBlock",id,"")
-      return
-    }
-    // reparse block and insert cursor into correct position while typing
-
-    const originalString = store.blocks[id].string
-    let string = originalString
-
-    const scanElement = (element) => {
-      for (let el of element.childNodes) {
-        if (el.nodeName === "#text") {
-          if (el.startIdx !== undefined) {
-            if (el.textContent.length !== el.endIdx - el.startIdx) {
-              console.log(`start ${el.startIdx} end ${el.endIdx}`)
-              console.log(el)
-              return originalString.slice(0,el.startIdx) + el.textContent + originalString.slice(el.endIdx)
-            }
-          } else {
-
-            console.log(el)
-            throw new Error(el)
-          }
-        } else {
-          const x = scanElement(el)
-          if (x) return x
-        }
-      }
-    }
-    string = scanElement(blockBody)
-
-    store.blocks[id].string = string // todo commit changes on word boundaries
-    runCommand("writeBlock",id,string)
-
-    const position = cursorPositionInBlock()
-
-    if (blockBody.innerText.length === position)
-      string += " "
-
-    const currentElement = renderBlockBodyWithCursor(blockBody,string,position).parentNode
-
-
-    // Autocomplete
-    // could do this here, or in scanElement, or in renderBlockBody
-    const closestPageRef = currentElement.closest(".page-ref")
-    const closestTag = currentElement.closest(".tag")
-    let titleString = (closestTag && closestTag.innerText.substring(1)) || (closestPageRef && closestPageRef.children[1].innerText)
-    if (titleString) {
-      const matchingTitles = titleExactFullTextSearch(titleString)
-      if (matchingTitles.length > 0) {
-        autocompleteList.innerHTML = ""
-        for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
-          const suggestion = suggestionTemplate.cloneNode(true)
-          if (i === 0) {
-            suggestion.dataset.selected = "true"
-          }
-          if (matchingTitles[i].title) {
-            suggestion.dataset.id = matchingTitles[i].id
-            suggestion.dataset.title = matchingTitles[i].title
-            suggestion.innerText = truncateElipsis(matchingTitles[i].title,50)
-          }
-          else {
-            suggestion.dataset.id = matchingTitles[i].id
-            suggestion.dataset.string = matchingTitles[i].string
-            suggestion.innerText = truncateElipsis(matchingTitles[i].string,50)
-          }
-          autocompleteList.appendChild(suggestion)
-        }
-        autocompleteList.style.display = "block"
-        autocompleteList.style.top = (closestPageRef || closestTag).getBoundingClientRect().bottom
-        autocompleteList.style.left = (closestPageRef || closestTag).getBoundingClientRect().left
-      } else {
-        autocompleteList.style.display = "none"
-      }
-    }
-
-
-  } else if (event.target.id === "search-input") {
+  if (event.target.id === "search-input") {
 
     const matchingTitles = exactFullTextSearch(event.target.value)
 
@@ -335,6 +254,11 @@ const focusBlockStart = (blockNode) => {
 // more event listeners                    ------------------------------------------
 
 document.addEventListener("keydown",(event) => {
+
+  if (getSelection().focusNode.endIdx !== undefined) { // on click and keydown, set block position
+    blockPosition = getSelection().focusNode.startIdx + getSelection().focusOffset
+  }
+
   // Check for global shortcut keys
   if (event.key === "z" && event.ctrlKey && !event.shiftKey) {
   } else if (event.key === "d" && event.ctrlKey) {
@@ -342,12 +266,8 @@ document.addEventListener("keydown",(event) => {
     event.preventDefault()
     return
   }
-  if (event.key === "s" && event.ctrlKey && event.shiftKey) {
-    downloadHandler()
-    event.preventDefault()
-    return
-  }
   if (event.key === "s" && event.ctrlKey) {
+    downloadHandler()
     saveWorker.postMessage(["save",store])
     event.preventDefault()
     return
@@ -427,7 +347,7 @@ document.addEventListener("keydown",(event) => {
           const origString = store.blocks[bid].string
           const focusNode = getSelection().focusNode
           if (closestTag) {
-            if (/[^\/a-zA-Z0-9_-]/.test(selected.dataset.title)) { // this is exact inverse of regex test for tag token, to see if this must be a tag
+            if (/[^\/a-zA-Z0-9_-]/.test(selected.dataset.title)) { // this is exact inverse of regex test for tag token, to see if this is a valid a tag
               const string = origString.slice(0,focusNode.startIdx) + "[[" + selected.dataset.title + "]]" + origString.slice(focusNode.endIdx)
               runCommand("writeBlock",bid,string)
               renderBlockBodyWithCursor(closestBlock.children[1],string,focusNode.startIdx + getSelection().focusOffset)
@@ -481,6 +401,10 @@ document.addEventListener("keydown",(event) => {
           focusBlockEnd(newActiveBlock)
           closestBlock.remove()
           runCommand("deleteBlock",bid)
+        } else {
+          const oldString = store.blocks[bid].string
+          const newString = oldString.substring(0,blockPosition - 1) + oldString.substring(blockPosition)
+          renderBlockBodyWithCursor(closestBlock.children[1],newString,)
         }
         break
       case "ArrowDown":
@@ -510,6 +434,57 @@ document.addEventListener("keydown",(event) => {
           focusBlockStart(newActiveBlock)
         }
         break
+      default:
+
+        const originalString = store.blocks[id].string
+
+
+        store.blocks[id].string = string // todo commit changes on word boundaries
+        runCommand("writeBlock",id,string)
+
+        const position = cursorPositionInBlock()
+
+        if (blockBody.innerText.length === position)
+          string += " "
+
+        const currentElement = renderBlockBodyWithCursor(blockBody,string,position).parentNode
+
+
+        // Autocomplete
+        // could do this here, or in scanElement, or in renderBlockBody
+        const closestPageRef = currentElement.closest(".page-ref")
+        const closestTag = currentElement.closest(".tag")
+        let titleString = (closestTag && closestTag.innerText.substring(1)) || (closestPageRef && closestPageRef.children[1].innerText)
+        if (titleString) {
+          const matchingTitles = titleExactFullTextSearch(titleString)
+          if (matchingTitles.length > 0) {
+            autocompleteList.innerHTML = ""
+            for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
+              const suggestion = suggestionTemplate.cloneNode(true)
+              if (i === 0) {
+                suggestion.dataset.selected = "true"
+              }
+              if (matchingTitles[i].title) {
+                suggestion.dataset.id = matchingTitles[i].id
+                suggestion.dataset.title = matchingTitles[i].title
+                suggestion.innerText = truncateElipsis(matchingTitles[i].title,50)
+              }
+              else {
+                suggestion.dataset.id = matchingTitles[i].id
+                suggestion.dataset.string = matchingTitles[i].string
+                suggestion.innerText = truncateElipsis(matchingTitles[i].string,50)
+              }
+              autocompleteList.appendChild(suggestion)
+            }
+            autocompleteList.style.display = "block"
+            autocompleteList.style.top = (closestPageRef || closestTag).getBoundingClientRect().bottom
+            autocompleteList.style.left = (closestPageRef || closestTag).getBoundingClientRect().left
+          } else {
+            autocompleteList.style.display = "none"
+          }
+        }
+
+
     }
   } else if (
     document.activeElement &&
@@ -530,6 +505,11 @@ document.addEventListener("keydown",(event) => {
 })
 
 document.addEventListener("click",(event) => {
+
+  if (getSelection().focusNode.endIdx !== undefined) { // on click and keydown, set block position
+    blockPosition = getSelection().focusNode.startIdx + getSelection().focusOffset
+  }
+
   const closestBullet = event.target.closest(".block__bullet")
   if (event.target.className === "page-ref__body") {
     gotoPageTitle(event.target.innerText)
