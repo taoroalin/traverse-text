@@ -20,10 +20,10 @@ const renderBlockBody = (parent,text) => {
     return result
   }
   for (let match of matches) {
-    if (match.index > idx) {
-      stackTop.appendChild(newTextNode(text.substring(idx,match.index)))
-      idx = match.index
-    }
+
+    stackTop.appendChild(newTextNode(text.substring(idx,match.index)))
+    idx = match.index
+
     if (match[1]) {
       const pageRefElement = pageRefTemplate.cloneNode(true)
       stackTop.appendChild(pageRefElement)
@@ -35,6 +35,8 @@ const renderBlockBody = (parent,text) => {
         stackTop.parentNode.children[2].appendChild(newTextNode("]]"))
         stack.pop()
         stackTop = stack[stack.length - 1]
+      } else {
+        stackTop.appendChild(newTextNode("]]"))
       }
     } else if (match[3]) {
       const tagElement = tagTemplate.cloneNode(true)
@@ -96,9 +98,9 @@ const renderBlockBody = (parent,text) => {
     }
     idx = match.index + match[0].length
   }
-  if (idx < text.length) {
-    stack[stack.length - 1].appendChild(newTextNode(text.substring(idx)))
-  }
+
+  stack[stack.length - 1].appendChild(newTextNode(text.substring(idx)))
+
   /**
    * PARSING REVELATION!!!!
    * Instead of backtracking and deleting when a block doesn't close, I can just erase the className of the block. Then it's still part of the tree but looks like it's gone! No performance cost!!

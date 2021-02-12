@@ -209,7 +209,7 @@ document.addEventListener("input",(event) => {
     const originalString = store.blocks[id].string
     const curTextNode = getSelection().focusNode
     console.log(`start ${curTextNode.startIdx} end ${curTextNode.endIdx}`)
-    let string = originalString.slice(0,curTextNode.startIdx) + curTextNode.textContent + originalString.slice(curTextNode.endIdx)
+    let string = blockBody.innerText
     store.blocks[id].string = string // todo commit changes on word boundaries
     runCommand("writeBlock",id,string)
 
@@ -315,7 +315,15 @@ const focusBlockStart = (blockNode) => {
 
 document.addEventListener("keydown",(event) => {
   // Check for global shortcut keys
+
+  if (event.key === "Escape") {
+    autocompleteList.style.display = "none"
+    event.preventDefault()
+    return
+  }
+
   if (event.key === "z" && event.ctrlKey && !event.shiftKey) {
+
   } else if (event.key === "d" && event.ctrlKey) {
     document.getElementById("upload-input").click()
     event.preventDefault()
