@@ -1,13 +1,13 @@
 <body>
   <script>
-    const r = indexedDB.open("microroam",1);
+    const r = indexedDB.open("microroam",1)
     let user = { theme: "light",graphName: "default" }
     const storedUser = localStorage.getItem("user")
     if (storedUser) {
       user = JSON.parse(storedUser)
     }
-    let w = false; // flag for whether either code or data loaded
-    let store = null;
+    let w = false // flag for whether either code or data loaded
+    let store = null
     let idb = null
     r.onsuccess = (e1) => {
       idb = e1.target.result
@@ -20,7 +20,7 @@
             gotoDailyNotes()
             setTimeout(() => saveWorker.postMessage(["save",store]),0)
           } else
-            w = true;
+            w = true
         } else {
           console.log("adding default graph")
           fetch("./default-store.json").then(text => text.json().then(json => {
@@ -31,7 +31,7 @@
               gotoPageTitle("Welcome to Micro Roam")
               setTimeout(() => saveWorker.postMessage(["save",store]),0)
             } else
-              w = true;
+              w = true
           }))
         }
       }
@@ -51,9 +51,8 @@
     saveUser()
 
 
-    let oldestLoadedDailyNoteDate = null;
-    let commitDebounce = null
-
+    let oldestLoadedDailyNoteDate = null
+    let blockPosition = undefined
     /* This is some nasty concurrency stuff. It's all about starting the critical path of loading (loading graph) as quickly as possible.
     What happens is:
     Script 1: IndexedDB Open request sent. This script is one line to reduce the script compile time before the request is sent.
