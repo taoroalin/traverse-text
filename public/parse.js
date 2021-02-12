@@ -20,10 +20,12 @@ const renderBlockBody = (parent,text) => {
     return result
   }
   for (let match of matches) {
+
     if (match.index > idx) {
       stackTop.appendChild(newTextNode(text.substring(idx,match.index)))
       idx = match.index
     }
+
     if (match[1]) {
       const pageRefElement = pageRefTemplate.cloneNode(true)
       stackTop.appendChild(pageRefElement)
@@ -94,8 +96,11 @@ const renderBlockBody = (parent,text) => {
       urlElement.href = match[8]
       stackTop.appendChild(urlElement)
     }
+
     idx = match.index + match[0].length
+
   }
+
   if (idx < text.length) {
     stack[stack.length - 1].appendChild(newTextNode(text.substring(idx)))
   }

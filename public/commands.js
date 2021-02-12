@@ -6,7 +6,6 @@ const insertBlock = (blockId,newParentId,idx) => {
   const block = store.blocks[blockId]
   block.parent = newParentId
   const newParent = blockOrPageFromId(newParentId)
-  console.log(newParent)
   newParent.children = newParent.children || []
   const newParentOldChildren = newParent.children
   if (idx !== undefined) {
