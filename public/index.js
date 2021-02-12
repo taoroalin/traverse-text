@@ -176,7 +176,7 @@ const renderBlockBodyWithCursor = (blockBody,string,position) => {
     for (let el of element.childNodes) {
       if (el.nodeName === "#text") {
         if (el.textContent && position >= el.startIdx && position < el.startIdx + el.textContent.length) {
-          console.log(`pos ${position} si ${el.startIdx}`)
+          // console.log(`pos ${position} si ${el.startIdx}`)
           scanResult = el
           try {
             getSelection().collapse(el,position - el.startIdx) // this does the thing correctly, but then throws an error, which I catch? todo investigate
@@ -204,14 +204,36 @@ document.addEventListener("input",(event) => {
       return
     }
     // reparse block and insert cursor into correct position while typing
-    const position = cursorPositionInBlock()
 
     const originalString = store.blocks[id].string
-    const curTextNode = getSelection().focusNode
-    console.log(`start ${curTextNode.startIdx} end ${curTextNode.endIdx}`)
-    let string = originalString.slice(0,curTextNode.startIdx) + curTextNode.textContent + originalString.slice(curTextNode.endIdx)
+    let string = originalString
+
+    const scanElement = (element) => {
+      for (let el of element.childNodes) {
+        if (el.nodeName === "#text") {
+          if (el.startIdx !== undefined) {
+            if (el.textContent.length !== el.endIdx - el.startIdx) {
+              console.log(`start ${el.startIdx} end ${el.endIdx}`)
+              console.log(el)
+              return originalString.slice(0,el.startIdx) + el.textContent + originalString.slice(el.endIdx)
+            }
+          } else {
+
+            console.log(el)
+            throw new Error(el)
+          }
+        } else {
+          const x = scanElement(el)
+          if (x) return x
+        }
+      }
+    }
+    string = scanElement(blockBody)
+
     store.blocks[id].string = string // todo commit changes on word boundaries
     runCommand("writeBlock",id,string)
+
+    const position = cursorPositionInBlock()
 
     if (blockBody.innerText.length === position)
       string += " "
@@ -226,7 +248,6 @@ document.addEventListener("input",(event) => {
     let titleString = (closestTag && closestTag.innerText.substring(1)) || (closestPageRef && closestPageRef.children[1].innerText)
     if (titleString) {
       const matchingTitles = titleExactFullTextSearch(titleString)
-      console.log(matchingTitles)
       if (matchingTitles.length > 0) {
         autocompleteList.innerHTML = ""
         for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
@@ -499,7 +520,6 @@ document.addEventListener("keydown",(event) => {
       event.preventDefault()
       return
     } else if (event.key === "Tab") {
-      console.log("goto suggestion")
       const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
       if (selected) {
         gotoSuggestion(selected)
