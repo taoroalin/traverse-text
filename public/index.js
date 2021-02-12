@@ -168,43 +168,54 @@ const downloadHandler = () => {
   downloadButton.setAttribute('download',`${store.graphName}-micro-roam.json`)
 }
 
+const renderBlockBodyWithCursor = (blockBody,string,position) => {
+  blockBody.innerHTML = ""
+  renderBlockBody(blockBody,string)
+
+  const scanElement = (element) => {
+    for (let el of element.childNodes) {
+      if (el.nodeName === "#text") {
+        if (el.textContent && position >= el.startIdx && position < el.startIdx + el.textContent.length) {
+          console.log(`pos ${position} si ${el.startIdx}`)
+          scanResult = el
+          try {
+            getSelection().collapse(el,position - el.startIdx) // this does the thing correctly, but then throws an error, which I catch? todo investigate
+            return el
+          } catch (error) {
+            return el
+          }
+        }
+      } else {
+        const z = scanElement(el)
+        if (z) return z
+      }
+    }
+  }
+  return scanElement(blockBody)
+}
+
 document.addEventListener("input",(event) => {
   const blockBody = event.target.closest(".block__body")
 
   if (blockBody) {
+    const id = blockBody.parentNode.dataset.id
+    if (blockBody.innerText === " " || blockBody.innerText === "") {
+      runCommand("writeBlock",id,"")
+      return
+    }
     // reparse block and insert cursor into correct position while typing
     const position = cursorPositionInBlock()
 
-    const id = blockBody.parentNode.dataset.id
-    let string = blockBody.innerText
+    const originalString = store.blocks[id].string
+    const curTextNode = getSelection().focusNode
+    let string = originalString.slice(0,curTextNode.startIdx) + curTextNode.textContent + originalString.slice(curTextNode.endIdx)
+    store.blocks[id].string = string // todo commit changes on word boundaries
+    runCommand("writeBlock",id,string)
 
     if (blockBody.innerText.length === position)
       string += " "
-    store.blocks[id].string = string // todo commit changes on word boundaries
-    runCommand("writeBlock",id,string)
-    blockBody.innerHTML = ""
-    renderBlockBody(blockBody,string,position)
 
-    const scanElement = (element) => {
-      for (let el of element.childNodes) {
-        if (el.nodeName === "#text") {
-          if (el.textContent && position >= el.startIdx && position < el.startIdx + el.textContent.length) {
-            console.log(`pos ${position} si ${el.startIdx}`)
-            scanResult = el
-            try {
-              getSelection().collapse(el,position - el.startIdx) // this does the thing correctly, but then throws an error, which I catch? todo investigate
-              return el
-            } catch (error) {
-              return el
-            }
-          }
-        } else {
-          const z = scanElement(el)
-          if (z) return z
-        }
-      }
-    }
-    const currentElement = scanElement(blockBody).parentNode
+    const currentElement = renderBlockBodyWithCursor(blockBody,string,position).parentNode
 
 
     // Autocomplete
@@ -302,7 +313,6 @@ const focusBlockStart = (blockNode) => {
 // more event listeners                    ------------------------------------------
 
 document.addEventListener("keydown",(event) => {
-  console.log("ke")
   // Check for global shortcut keys
   if (event.key === "z" && event.ctrlKey && !event.shiftKey) {
   } else if (event.key === "d" && event.ctrlKey) {
@@ -389,19 +399,26 @@ document.addEventListener("keydown",(event) => {
       case "Tab":
         const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
         if (autocompleteList.style.display !== "none" && selected) {
+          console.log("completing")
           const closestTag = getSelection().focusNode.parentNode.closest(".tag")
           const closestPageRef = getSelection().focusNode.parentNode.closest(".page-ref__body")
+          const origString = store.blocks[bid].string
+          const focusNode = getSelection().focusNode
           if (closestTag) {
             if (/[^\/a-zA-Z0-9_-]/.test(selected.dataset.title)) { // this is exact inverse of regex test for tag token, to see if this must be a tag
-              console.log("tag to ref coming soon")
+              const string = origString.slice(0,focusNode.startIdx) + "[[" + selected.dataset.title + "]]" + origString.slice(focusNode.endIdx)
+              runCommand("writeBlock",bid,string)
+              renderBlockBodyWithCursor(closestBlock.children[1],string,focusNode.startIdx + getSelection().focusOffset)
             } else {
-              closestTag.innerText = "#" + selected.dataset.title
+              const string = origString.slice(0,focusNode.startIdx) + "#" + selected.dataset.title + origString.slice(focusNode.endIdx)
+              runCommand("writeBlock",bid,string)
+              renderBlockBodyWithCursor(closestBlock.children[1],string,focusNode.startIdx + getSelection().focusOffset)
             }
             event.preventDefault()
-            runCommand("writeBlock",bid,closestBlock.innerText)
           } else if (closestPageRef) {
-            getSelection().focusNode.textContent = selected.dataset.title
-            runCommand("writeBlock",bid,closestBlock.innerText)
+            const string = origString.slice(0,focusNode.startIdx) + selected.dataset.title + origString.slice(focusNode.endIdx)
+            runCommand("writeBlock",bid,string)
+            renderBlockBodyWithCursor(closestBlock.children[1],string,focusNode.startIdx + getSelection().focusOffset)
             event.preventDefault()
           }
         } else if (event.shiftKey) {

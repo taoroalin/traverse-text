@@ -13,36 +13,32 @@ const renderBlockBody = (parent,text) => {
   const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]{8,10}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
   let idx = 0
   let stackTop = parent
+  const newTextNode = (string) => {
+    const result = document.createTextNode(string)
+    result.startIdx = idx
+    result.endIdx = idx + string.length
+    return result
+  }
   for (let match of matches) {
     if (match.index > idx) {
-      const textNode = document.createTextNode(
-        text.substring(idx,match.index)
-      )
-      textNode.startIdx = idx
-      stackTop.appendChild(textNode)
+      stackTop.appendChild(newTextNode(text.substring(idx,match.index)))
       idx = match.index
     }
     if (match[1]) {
       const pageRefElement = pageRefTemplate.cloneNode(true)
       stackTop.appendChild(pageRefElement)
-      const textNode = document.createTextNode("[[")
-      textNode.startIdx = idx
-      pageRefElement.children[0].appendChild(textNode)
+      pageRefElement.children[0].appendChild(newTextNode("[["))
       stack.push(pageRefElement.children[1])
       stackTop = stack[stack.length - 1]
     } else if (match[2]) {
       if (stackTop.className === "page-ref__body") {
-        const textNode = document.createTextNode("]]")
-        textNode.startIdx = idx
-        stackTop.parentNode.children[2].appendChild(textNode)
+        stackTop.parentNode.children[2].appendChild(newTextNode("]]"))
         stack.pop()
         stackTop = stack[stack.length - 1]
       }
     } else if (match[3]) {
       const tagElement = tagTemplate.cloneNode(true)
-      const textNode = document.createTextNode(match[3])
-      textNode.startIdx = idx
-      tagElement.appendChild(textNode)
+      tagElement.appendChild(newTextNode(match[3]))
       stackTop.appendChild(tagElement)
     } else if (match[4]) {
       // @query would use a query here if I had them
@@ -54,72 +50,54 @@ const renderBlockBody = (parent,text) => {
         blockRefElement.dataset.id = blockId
         stackTop.appendChild(blockRefElement)
       } else {
-        const textNode = document.createTextNode(match[0])
-        textNode["data-index"] = idx
-        stackTop.appendChild(textNode)
+        stackTop.appendChild(newTextNode(match[0]))
       }
     } else if (match[5]) {
       if (stackTop.className === "bold") {
-        const textNode = document.createTextNode("**")
-        textNode.startIdx = idx
-        stackTop.appendChild(textNode)
+        stackTop.appendChild(newTextNode("**"))
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
         const boldElement = boldTemplate.cloneNode(true)
         stackTop.appendChild(boldElement)
-        const textNode = document.createTextNode("**")
-        textNode.startIdx = idx
-        boldElement.appendChild(textNode)
+        boldElement.appendChild(newTextNode("**"))
         stack.push(boldElement)
         stackTop = boldElement
       }
     } else if (match[6]) {
       if (stackTop.className === "highlight") {
-        const textNode = document.createTextNode("^^")
-        textNode.startIdx = idx
-        stackTop.appendChild(textNode)
+        stackTop.appendChild(newTextNode("^^"))
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
         const boldElement = highlightTemplate.cloneNode(true)
         stackTop.appendChild(boldElement)
-        const textNode = document.createTextNode("^^")
-        textNode.startIdx = idx
-        boldElement.appendChild(textNode)
+        boldElement.appendChild(newTextNode("^^"))
         stack.push(boldElement)
         stackTop = boldElement
       }
     } else if (match[7]) {
       if (stackTop.className === "italic") {
-        const textNode = document.createTextNode("__")
-        textNode.startIdx = idx
-        stackTop.appendChild(textNode)
+        stackTop.appendChild(newTextNode("__"))
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
         const boldElement = italicTemplate.cloneNode(true)
         stackTop.appendChild(boldElement)
-        const textNode = document.createTextNode("__")
-        textNode.startIdx = idx
-        boldElement.appendChild(textNode)
+        boldElement.appendChild(newTextNode("__"))
         stack.push(boldElement)
         stackTop = boldElement
       }
     } else if (match[8]) {
       const urlElement = urlTemplate.cloneNode(true)
-      const textNode = document.createTextNode(match[8])
-      textNode.startIdx = idx
-      urlElement.appendChild(textNode)
+      urlElement.appendChild(newTextNode(match[8]))
       urlElement.href = match[8]
       stackTop.appendChild(urlElement)
     }
     idx = match.index + match[0].length
   }
   if (idx < text.length) {
-    const textNode = document.createTextNode(text.substring(idx))
-    textNode.startIdx = idx
-    stack[stack.length - 1].appendChild(textNode)
+    stack[stack.length - 1].appendChild(newTextNode(text.substring(idx)))
   }
   /**
    * PARSING REVELATION!!!!
