@@ -152,7 +152,7 @@ const storeToRoamJSON = (store) => {
 
 
 const titleExactFullTextSearch = (string) => {
-  const regex = new RegExp(string,"i")
+  const regex = new RegExp(escapeRegex(string),"i")
   const results = []
   for (let title in store.pagesByTitle) {
     const id = store.pagesByTitle[title]
@@ -166,7 +166,7 @@ const titleExactFullTextSearch = (string) => {
 }
 
 const exactFullTextSearch = (string) => {
-  const regex = new RegExp(string,"i")
+  const regex = new RegExp(escapeRegex(string),"i")
   const results = []
   for (let title in store.pagesByTitle) {
     const id = store.pagesByTitle[title]

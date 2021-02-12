@@ -22,6 +22,7 @@ const insertBlock = (blockId,newParentId,idx) => {
 }
 
 // Commands
+// this is real const, don't edit in runtime
 const commands = {
   deleteBlock: (blockId) => {
     const backRefs = store.blocks[blockId].backRefs

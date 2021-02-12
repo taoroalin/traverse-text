@@ -6,11 +6,14 @@ const boldTemplate = document.getElementById("bold").content.firstElementChild
 const italicTemplate = document.getElementById("italic").content.firstElementChild
 const highlightTemplate = document.getElementById("highlight").content.firstElementChild
 
+const regexes = ["(\[\[)","(\]\])","(#[\/a-zA-Z0-9_-]*)","(\(\([a-zA-Z0-9\-_]{8,10}\)\))","(\*\*)","(\^\^)","(__)","((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))"]
+
+
 const renderBlockBody = (parent,text) => {
   let stack = [parent]
   // 1             2              3   4         5    6         7      8
   // page-ref-open page-ref-close tag block-ref bold highlight italic link
-  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]{8,10}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
+  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]*)|(\(\([a-zA-Z0-9\-_]{8,10}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
   let idx = 0
   let stackTop = parent
   const newTextNode = (string) => {

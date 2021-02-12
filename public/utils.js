@@ -47,3 +47,9 @@ const truncateElipsis = (text,limit = 40) => {
   }
   return text
 }
+
+const escapeRegex = (string) => {
+  const result = string.replace(/[\[\]\(\)\{\}]/,"\\$1")
+  console.log(result)
+  return result
+}
