@@ -1,24 +1,41 @@
 <script>
+  let w = false; // flag for whether either code or data loaded
+  let store = null;
+  let idb = null
+  let user = { theme: "light",graphName: "default" }
   const r = indexedDB.open("microroam",1);
+  r.onsuccess = (e1) => {
+    idb = e1.target.result
+    console.log(user.graphName)
+    idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
+      console.log("target")
+      console.log(e.target)
+      if (e.target.result) {
+        store = JSON.parse(e.target.result.store)
+      } else {
+        console.log("adding default graph")
+        store = { graphName: "default",ownerRoamId: "default",blocks: {},pages: {},pagesByTitle: {} }
+        user.graphName = "default"
+      }
+      if (w) {
+        gotoDailyNotes()
+        setTimeout(() => saveWorker.postMessage(["save",store]),0)
+      } else
+        w = true;
+    }
+  }
+  r.onupgradeneeded = (event) => {
+    const db = r.result
+    db.createObjectStore("stores",{ keyPath: "graphName" })
+  }
+  r.onerror = (event) => {
+    alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
+    You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
+  }
 </script>
 
 <body class="light">
   <script>
-    r.onsuccess = (e) => {
-      idb = e.target.result
-      idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
-        if (e.target.result) {
-          store = JSON.parse(e.target.result.store)
-          if (w) {
-            gotoDailyNotes()
-            setTimeout(() => saveWorker.postMessage(["save",store]),0)
-          } else
-            w = !0;
-        } else
-          store = { blocks: {},pages: {},pagesByTitle: {} }
-      }
-    }
-    let user = { theme: "light",graphName: "graphminer" }
     const saveUser = () => {
       document.body.className = user.theme
       localStorage.setItem("user",JSON.stringify(user))
@@ -31,19 +48,8 @@
       localStorage.setItem('user',JSON.stringify(user))
     }
 
-    r.onupgradeneeded = (event) => {
-      const db = r.result
-      db.createObjectStore("stores",{ keyPath: "graphName" })
-    }
-    r.onerror = (event) => {
-      alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
-    You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
-    }
 
-    let w = !1; // flag for whether either code or data loaded
-    let store = null;
     let oldestLoadedDailyNoteDate = null;
-    let idb = null
     let commitDebounce = null
 
     /* This is some nasty concurrency stuff. It's all about starting the critical path of loading (loading graph) as quickly as possible.
