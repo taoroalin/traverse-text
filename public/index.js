@@ -188,12 +188,19 @@ document.addEventListener("input",(event) => {
     const scanElement = (element) => {
       for (let el of element.childNodes) {
         if (el.nodeName === "#text") {
-          if (el.textContent && position < el.startIdx + el.textContent.length) {
-            getSelection().collapse(el,position - el.startIdx)
-            return el
+          if (el.textContent && position >= el.startIdx && position < el.startIdx + el.textContent.length) {
+            console.log(`pos ${position} si ${el.startIdx}`)
+            scanResult = el
+            try {
+              getSelection().collapse(el,position - el.startIdx) // this does the thing correctly, but then throws an error, which I catch? todo investigate
+              return el
+            } catch (error) {
+              return el
+            }
           }
         } else {
-          scanElement(el)
+          const z = scanElement(el)
+          if (z) return z
         }
       }
     }
@@ -201,23 +208,35 @@ document.addEventListener("input",(event) => {
 
 
     // Autocomplete
+    // could do this here, or in scanElement, or in renderBlockBody
     const closestPageRef = currentElement.closest(".page-ref")
     const closestTag = currentElement.closest(".tag")
     let titleString = (closestTag && closestTag.innerText.substring(1)) || (closestPageRef && closestPageRef.children[1].innerText)
     if (titleString) {
-      console.log(`title string ${titleString}`)
       const matchingTitles = titleExactFullTextSearch(titleString)
+      console.log(matchingTitles)
       if (matchingTitles.length > 0) {
         autocompleteList.innerHTML = ""
         for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
           const suggestion = suggestionTemplate.cloneNode(true)
-          suggestion.dataset.title = matchingTitles[i]
-          suggestion.innerText = truncateElipsis(matchingTitles[i],50)
+          if (i === 0) {
+            suggestion.dataset.selected = "true"
+          }
+          if (matchingTitles[i].title) {
+            suggestion.dataset.id = matchingTitles[i].id
+            suggestion.dataset.title = matchingTitles[i].title
+            suggestion.innerText = truncateElipsis(matchingTitles[i].title,50)
+          }
+          else {
+            suggestion.dataset.id = matchingTitles[i].id
+            suggestion.dataset.string = matchingTitles[i].string
+            suggestion.innerText = truncateElipsis(matchingTitles[i].string,50)
+          }
           autocompleteList.appendChild(suggestion)
         }
         autocompleteList.style.display = "block"
-        autocompleteList.style.top = searchInput.getBoundingClientRect().bottom
-        autocompleteList.style.left = searchInput.getBoundingClientRect().left
+        autocompleteList.style.top = (closestPageRef || closestTag).getBoundingClientRect().bottom
+        autocompleteList.style.left = (closestPageRef || closestTag).getBoundingClientRect().left
       } else {
         autocompleteList.style.display = "none"
       }
@@ -368,7 +387,24 @@ document.addEventListener("keydown",(event) => {
         }
         break
       case "Tab":
-        if (event.shiftKey) {
+        const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
+        if (autocompleteList.style.display !== "none" && selected) {
+          const closestTag = getSelection().focusNode.parentNode.closest(".tag")
+          const closestPageRef = getSelection().focusNode.parentNode.closest(".page-ref__body")
+          if (closestTag) {
+            if (/[^\/a-zA-Z0-9_-]/.test(selected.dataset.title)) { // this is exact inverse of regex test for tag token, to see if this must be a tag
+              console.log("tag to ref coming soon")
+            } else {
+              closestTag.innerText = "#" + selected.dataset.title
+            }
+            event.preventDefault()
+            runCommand("writeBlock",bid,closestBlock.innerText)
+          } else if (closestPageRef) {
+            getSelection().focusNode.textContent = selected.dataset.title
+            runCommand("writeBlock",bid,closestBlock.innerText)
+            event.preventDefault()
+          }
+        } else if (event.shiftKey) {
           const parent = closestBlock.parentNode.parentNode
           if (parent) {
             const grandparentChildren = parent.parentNode
@@ -383,7 +419,7 @@ document.addEventListener("keydown",(event) => {
               } else {
                 grandparentChildren.appendChild(closestBlock)
               }
-              runCommand("moveBlock",bid,grandparentId,parent.dataset.childIdx)
+              runCommand("moveBlock",bid,grandparentId,parent.dataset.childIdx + 1)
               window.getSelection().collapse(focusNode,focusOffset)
             }
           }
