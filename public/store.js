@@ -144,7 +144,7 @@ const titleExactFullTextSearch = (string) => {
   const results = []
   for (let title in store.pagesByTitle) {
     const id = store.pagesByTitle[title]
-    if (regex.test({ title,id })) {
+    if (regex.test(title)) {
       results.push({ title,id })
       if (results.length >= 10)
         return results
