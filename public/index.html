@@ -12,12 +12,10 @@
           if (w) {
             gotoDailyNotes()
             setTimeout(() => saveWorker.postMessage(["save",store]),0)
-          } else {
+          } else
             w = !0;
-          }
-        } else {
+        } else
           store = { blocks: {},pages: {},pagesByTitle: {} }
-        }
       }
     }
     let user = { theme: "light",graphName: "graphminer" }
