@@ -216,15 +216,29 @@ document.addEventListener("input",(event) => {
     if (blockBody.innerText.length === position)
       string += " "
 
-    const currentElement = renderBlockBodyWithCursor(blockBody,string,position).parentNode
+    renderBlockBodyWithCursor(blockBody,string,position).parentNode
 
 
     // Autocomplete
     // could do this here, or in scanElement, or in renderBlockBody
-    const closestPageRef = currentElement.closest(".page-ref")
-    const closestTag = currentElement.closest(".tag")
-    let titleString = (closestTag && closestTag.innerText.substring(1)) || (closestPageRef && closestPageRef.children[1].innerText)
+    const pageRefs = blockBody.querySelectorAll(".page-ref")
+    const tags = blockBody.querySelectorAll(".tag")
+    let titleString = null
+    let alignElement = null
+    for (let tag of tags) {
+      if (tag.childNodes[0].endIdx >= position && tag.childNodes[0].startIdx < position) {
+        titleString = tag.innerText.substring(1)
+        alignElement = tag
+      }
+    }
+    for (let ref of pageRefs) {
+      if (ref.children[1].childNodes[0].endIdx >= position && ref.children[1].childNodes[0].startIdx < position) {
+        titleString = ref.children[1].innerText
+        alignElement = ref
+      }
+    }
     if (titleString) {
+      console.log(`found title string ${titleString}`)
       const matchingTitles = titleExactFullTextSearch(titleString)
       console.log(matchingTitles)
       if (matchingTitles.length > 0) {
@@ -247,8 +261,8 @@ document.addEventListener("input",(event) => {
           autocompleteList.appendChild(suggestion)
         }
         autocompleteList.style.display = "block"
-        autocompleteList.style.top = (closestPageRef || closestTag).getBoundingClientRect().bottom
-        autocompleteList.style.left = (closestPageRef || closestTag).getBoundingClientRect().left
+        autocompleteList.style.top = alignElement.getBoundingClientRect().bottom
+        autocompleteList.style.left = alignElement.getBoundingClientRect().left
       } else {
         autocompleteList.style.display = "none"
       }
