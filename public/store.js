@@ -33,6 +33,18 @@ const roamJsonToStore = (graphName,text) => {
       block[":block/refs"] = block[":block/refs"].map(ref => ref[":block/uid"])
     delete block.uid
     block.backRefs = []
+
+    // Round points in drawings to nearest pixel to save 600K on my json
+    if (block[":block/props"] && block[":block/props"][":drawing/lines"]) {
+      for (let line of block[":block/props"][":drawing/lines"]) {
+        line[":points"] = line[":points"].map(p => ([Math.round(p[0]),Math.round(p[1])]))
+      }
+    }
+    if (block.props && block.props.lines) {
+      for (let line of block.props.lines) {
+        line.points = line.points.map(p => ([Math.round(p[0]),Math.round(p[1])]))
+      }
+    }
   }
 
   for (let page of obj) {
