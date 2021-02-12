@@ -208,6 +208,7 @@ document.addEventListener("input",(event) => {
 
     const originalString = store.blocks[id].string
     const curTextNode = getSelection().focusNode
+    console.log(`start ${curTextNode.startIdx} end ${curTextNode.endIdx}`)
     let string = originalString.slice(0,curTextNode.startIdx) + curTextNode.textContent + originalString.slice(curTextNode.endIdx)
     store.blocks[id].string = string // todo commit changes on word boundaries
     runCommand("writeBlock",id,string)

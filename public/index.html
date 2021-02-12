@@ -3,13 +3,14 @@
     const r = indexedDB.open("microroam",1);
     let user = { theme: "light",graphName: "default" }
     const storedUser = localStorage.getItem("user")
-    // if (storedUser) user = storedUser
+    if (storedUser) {
+      user = JSON.parse(storedUser)
+    }
     let w = false; // flag for whether either code or data loaded
     let store = null;
     let idb = null
     r.onsuccess = (e1) => {
       idb = e1.target.result
-      console.log(user.graphName)
       idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
         console.log("target")
         console.log(e.target)
