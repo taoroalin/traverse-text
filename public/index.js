@@ -265,7 +265,6 @@ const focusBlockStart = (blockNode) => {
 }
 
 const autocomplete = () => {
-  console.log("autocompleting")
   const bid = focusedBlock.dataset.id
   const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
   const origString = store.blocks[bid].string
@@ -623,7 +622,6 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
 const saveWorker = new Worker('/worker.js')
 
 saveWorker.postMessage(["user",user])
-
 
 if (w) {
   gotoReplaceHistory("dailyNotes")
