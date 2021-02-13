@@ -14,72 +14,80 @@ const downloadButton = document.getElementById("download-button")
 const autocompleteList = document.getElementById("autocomplete-list")
 
 // App state transitions
-const gotoBlack = () => {
+const gotoMethods = {
+  pageTitle: (title) => {
+    let existingPage = store.pagesByTitle[title]
+    if (existingPage === undefined) {
+      existingPage = newUid()
+      runCommand("createPage",existingPage,title)
+    }
+    renderPage(pageFrame,existingPage)
+  },
+  block: (uid) => {
+    const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
+    pageFrame.appendChild(blockFocusFrame)
+    renderBlock(blockFocusFrame,uid)
+    const backRefs = store.blocks[uid].backRefs
+    if (backRefs) {
+      const backrefsListElement = backrefsListTemplate.cloneNode(true)
+      blockFocusFrame.appendChild(backrefsListElement)
+      for (let backref of backRefs) {
+        renderBlock(backrefsListElement.children[1],backref)
+      }
+    }
+  },
+  dailyNotes: () => {
+    pageFrameOuter.addEventListener("scroll",dailyNotesInfiniteScrollListener)
+    oldestLoadedDailyNoteDate = new Date(Date.now())
+    let numNotesLoaded = 0
+    if (store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)] === undefined) {
+      const newPageId = `${oldestLoadedDailyNoteDate.getMonth()}-${oldestLoadedDailyNoteDate.getDate()}-${oldestLoadedDailyNoteDate.getFullYear()}`
+      runCommand("createPage",newPageId,formatDate(oldestLoadedDailyNoteDate))
+    }
+    for (let i = 0; i < 366; i++) {
+      const daysNotes = store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)]
+      if (daysNotes) {
+        renderPage(pageFrame,daysNotes)
+        pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
+        numNotesLoaded += 1
+        if (numNotesLoaded > 4) {
+          break
+        }
+      }
+      oldestLoadedDailyNoteDate.setDate(
+        oldestLoadedDailyNoteDate.getDate() - 1
+      )
+    }
+  },
+  suggestion: (suggestionNode) => {
+    if (suggestionNode.dataset.title)
+      gotoPageTitle(suggestionNode.dataset.title)
+    else
+      gotoBlock(suggestionNode.dataset.id)
+  }
+}
+
+const goto = (...command) => { // no this is not an instruction pointer goto. This just switches the current page
+  history.pushState(command,"State") // todo make title change
+  gotoNoHistory(...command)
+}
+
+const gotoNoHistory = (...command) => {
+  // clear screen
   autocompleteList.style.display = "none"
   oldestLoadedDailyNoteDate = null
   pageFrameOuter.removeEventListener("scroll",dailyNotesInfiniteScrollListener)
   pageFrameOuter.scrollTop = 0
   pageFrame.innerHTML = ""
   searchInput.value = ""
+
+  gotoMethods[command[0]](command.slice(1))
 }
 
-const gotoPageTitle = (title) => {
-  let existingPage = store.pagesByTitle[title]
-  if (existingPage === undefined) {
-    existingPage = newUid()
-    runCommand("createPage",existingPage,title)
-  }
-  gotoBlack()
-  renderPage(pageFrame,existingPage)
-}
-
-const gotoDailyNotes = () => {
-  gotoBlack()
-  pageFrameOuter.addEventListener("scroll",dailyNotesInfiniteScrollListener)
-  oldestLoadedDailyNoteDate = new Date(Date.now())
-  let numNotesLoaded = 0
-  if (store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)] === undefined) {
-    const newPageId = `${oldestLoadedDailyNoteDate.getMonth()}-${oldestLoadedDailyNoteDate.getDate()}-${oldestLoadedDailyNoteDate.getFullYear()}`
-    runCommand("createPage",newPageId,formatDate(oldestLoadedDailyNoteDate))
-  }
-  for (let i = 0; i < 366; i++) {
-    const daysNotes = store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)]
-    if (daysNotes) {
-      renderPage(pageFrame,daysNotes)
-      pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
-      numNotesLoaded += 1
-      if (numNotesLoaded > 4) {
-        break
-      }
-    }
-    oldestLoadedDailyNoteDate.setDate(
-      oldestLoadedDailyNoteDate.getDate() - 1
-    )
-  }
-}
-
-// todo make this page look ok
-const gotoBlock = (uid) => {
-  gotoBlack()
-  const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
-  pageFrame.appendChild(blockFocusFrame)
-  renderBlock(blockFocusFrame,uid)
-  const backRefs = store.blocks[uid].backRefs
-  if (backRefs) {
-    const backrefsListElement = backrefsListTemplate.cloneNode(true)
-    blockFocusFrame.appendChild(backrefsListElement)
-    for (let backref of backRefs) {
-      renderBlock(backrefsListElement.children[1],backref)
-    }
-  }
-}
-
-const gotoSuggestion = (suggestionNode) => {
-  if (suggestionNode.dataset.title)
-    gotoPageTitle(suggestionNode.dataset.title)
-  else
-    gotoBlock(suggestionNode.dataset.id)
-}
+window.addEventListener("popstate",(event) => {
+  console.log(event.state)
+  gotoNoHistory(...event.state)
+})
 
 
 // Rendering
@@ -393,16 +401,16 @@ document.addEventListener("keydown",(event) => {
     }
     event.preventDefault()
   } else if (event.key === "d" && event.altKey) {
-    gotoDailyNotes()
+    goto("dailyNotes")
     event.preventDefault()
   } else if (event.ctrlKey && event.key === "u") {
     searchInput.focus()
     event.preventDefault()
   } else if (event.ctrlKey && event.key === "o") {
     if (editingLink && editingLink.className === "page-ref")
-      gotoPageTitle(editingLink.children[1].innerText)
+      goto("pageTitle",editingLink.children[1].innerText)
     if (editingLink && editingLink.className === "tag")
-      gotoPageTitle(editingLink.innerText.substring(1))
+      goto("pageTitle",editingLink.innerText.substring(1))
     event.preventDefault()
   } else if (autocompleteList.style.display !== "none") {
     const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
@@ -506,14 +514,14 @@ document.addEventListener("keydown",(event) => {
     document.activeElement.id === "search-input"
   ) {
     if (event.key === "Enter") {
-      gotoPageTitle(event.target.value)
+      goto("pageTitle",event.target.value)
       event.preventDefault()
       return
     } else if (event.key === "Tab") {
       console.log("goto suggestion")
       const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
       if (selected) {
-        gotoSuggestion(selected)
+        goto("suggestion",selected)
         return
       }
     }
@@ -526,22 +534,22 @@ document.addEventListener("click",(event) => {
 
   const closestBullet = event.target.closest(".block__bullet")
   if (event.target.className === "page-ref__body") {
-    gotoPageTitle(event.target.innerText)
+    goto("pageTitle",event.target.innerText)
   } else if (closestBullet) {
-    gotoBlock(closestBullet.parentNode.dataset.id)
+    goto("block",closestBullet.parentNode.dataset.id)
   } else if (event.target.className === "block-ref") {
-    gotoBlock(event.target.dataset.id)
+    goto("block",event.target.dataset.id)
   } else if (event.target.closest(".tag")) {
-    gotoPageTitle(event.target.closest(".tag").innerText.substring(1))
+    goto("pageTitle",event.target.closest(".tag").innerText.substring(1))
   } else if (event.target.id === "download-button") {
     downloadHandler()
   } else if (event.target.id === "upload-button") {
     document.getElementById("upload-input").click()
   } else if (event.target.id === "daily-notes-button") {
-    gotoDailyNotes()
+    goto("dailyNotes")
   } else if (event.target.className === "autocomplete__suggestion") {
     if (focusNode.parentNode === searchInput) { // todo actually know what user is doing globally
-      gotoSuggestion(event.target)
+      goto("suggestion",event.target)
     } else {
       autocomplete()
     }
@@ -560,14 +568,9 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
     store = roamJsonToStore(graphName,text)
     user.graphName = graphName
     saveUser()
-    gotoDailyNotes()
+    goto("dailyNotes")
     setTimeout(() => saveWorker.postMessage(["save",store]),0)
   })
-})
-
-document.addEventListener("popstate",(event) => {
-  console.log(event)
-  console.log(`pop state ${JSON.stringify(event)}`)
 })
 
 // Finally starting the program after everything's compiled
@@ -578,7 +581,7 @@ saveWorker.postMessage(["user",user])
 
 
 if (w) {
-  gotoDailyNotes()
+  gotoNoHistory("dailyNotes")
   setTimeout(() => saveWorker.postMessage(["save",store]),0)
 } else {
   w = true

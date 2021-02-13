@@ -3,9 +3,7 @@
     const r = indexedDB.open("microroam",1);
     let user = { theme: "light",graphName: "default",logging: false,spellcheck: false,prettyUntilFocused: false }
     const storedUser = localStorage.getItem("user")
-    if (storedUser) {
-      user = JSON.parse(storedUser)
-    }
+    if (storedUser) user = JSON.parse(storedUser)
     let w = false; // flag for whether either code or data loaded
     let store = null;
     let idb = null
@@ -17,7 +15,7 @@
         if (e.target.result) {
           store = JSON.parse(e.target.result.store)
           if (w) {
-            gotoDailyNotes()
+            gotoNoHistory("dailyNotes")
             setTimeout(() => saveWorker.postMessage(["save",store]),0)
           } else
             w = true;
@@ -28,7 +26,7 @@
             store = json
             user.graphName = json.graphName
             if (w) {
-              gotoPageTitle("Welcome to Micro Roam")
+              gotoNoHistory("pageTitle","Welcome to Micro Roam")
               setTimeout(() => saveWorker.postMessage(["save",store]),0)
             } else
               w = true;
