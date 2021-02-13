@@ -84,13 +84,18 @@ const gotoNoHistory = (...command) => {
   gotoMethods[command[0]](command.slice(1))
 }
 
+const gotoReplaceHistory = (...command) => {
+  gotoNoHistory(...command)
+  history.replaceState(command,"State")
+}
+
 window.addEventListener("popstate",(event) => {
   console.log(event.state)
-  gotoNoHistory(...event.state)
+  if (event.state) gotoNoHistory(...event.state)
 })
 
+// Rendering ----------------------------------------------------------------------------------------------------------
 
-// Rendering
 const renderPage = (parentNode,uid) => {
   const page = store.pages[uid]
   const element = pageTemplate.cloneNode(true)
@@ -581,7 +586,7 @@ saveWorker.postMessage(["user",user])
 
 
 if (w) {
-  gotoNoHistory("dailyNotes")
+  gotoReplaceHistory("dailyNotes")
   setTimeout(() => saveWorker.postMessage(["save",store]),0)
 } else {
   w = true
