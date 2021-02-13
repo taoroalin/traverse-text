@@ -24,15 +24,21 @@ const insertBlock = (blockId,newParentId,idx) => {
 // this is real const, don't edit in runtime
 const commands = {
   deleteBlock: (blockId) => {
-    const backRefs = store.blocks[blockId].backRefs
+    const block = store.blocks[blockId]
+    const backRefs = block.backRefs
     for (let ref in backRefs) {
       if (store.blocks[ref].refs)
         store.blocks[ref].refs = store.blocks[ref].refs.filter(x => x !== blockId)
       if (store.blocks[ref][":block/refs"])
         store.blocks[ref][":block/refs"] = store.blocks[ref][":block/refs"].filter(x => x !== blockId)
     }
-    if (store.blocks[blockId].parent.children) {
-      store.blocks[blockId].parent.children = store.blocks[blockId].parent.children.filter(x => x !== blockId)
+    const parentBlock = store.blocks[block.parent]
+    if (parentBlock) {
+      parentBlock.children = parentBlock.children.filter(x => x !== blockId)
+    }
+    const parentPage = store.pages[block.parent]
+    if (parentPage) {
+      parentPage.children = parentPage.children.filter(x => x !== blockId)
     }
     delete store.blocks[blockId]
   },
