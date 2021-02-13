@@ -72,17 +72,19 @@ const roamJsonToStore = (graphName,text) => {
 
   for (let blockUid in blocks) {
     const block = blocks[blockUid]
-    if (block.refs) {
-      block.refs.forEach(ref => {
-        if (blocks[ref] !== undefined) {
-          blocks[ref].backRefs.push(blockUid)
-        } else if (pages[ref] !== undefined) {
-          pages[ref].backRefs.push(blockUid)
-        } else {
-          //throw new Error(`bad ref ${ref}`)
-        }
-      })
-    }
+
+    // if (block.refs) {
+    //   block.refs.forEach(ref => {
+    //     if (blocks[ref] !== undefined) {
+    //       blocks[ref].backRefs.push(blockUid)
+    //     } else if (pages[ref] !== undefined) {
+    //       pages[ref].backRefs.push(blockUid)
+    //     } else {
+    //       //throw new Error(`bad ref ${ref}`)
+    //     }
+    //   })
+    // }
+
     if (block[":block/refs"]) {
       block[":block/refs"].forEach(ref => {
         if (blocks[ref] !== undefined) {
@@ -152,29 +154,32 @@ const storeToRoamJSON = (store) => {
 
 
 const titleExactFullTextSearch = (string) => {
-  const regex = new RegExp(string,"i")
+  const regex = new RegExp(escapeRegex(string),"i")
   const results = []
   for (let title in store.pagesByTitle) {
     const id = store.pagesByTitle[title]
-    if (regex.test(title)) {
-      results.push({ title,id })
-      if (results.length >= 10)
-        return results
+    const match = title.match(regex)
+    if (match) {
+      results.push({ title,id,idx: match.index })
     }
   }
-  return results
+  console.log(results)
+  return results.sort((a,b) => a.idx - b.idx).slice(0,10)
 }
 
 const exactFullTextSearch = (string) => {
-  const regex = new RegExp(string,"i")
+  const regex = new RegExp(escapeRegex(string),"i")
   const results = []
   for (let title in store.pagesByTitle) {
     const id = store.pagesByTitle[title]
-    if (regex.test(title)) results.push({ title: title,id })
+    const match = title.match(regex)
+    if (match) results.push({ title: title,id,idx: match.index })
   }
   for (let blockUid in store.blocks) {
     const block = store.blocks[blockUid]
-    if (regex.test(block.string)) results.push({ string: block.string,id: blockUid })
+    const match = block.string.match(regex)
+    // weight blocks 1 lower than titles 
+    if (match) results.push({ string: block.string,id: blockUid,idx: match.index + 1 })
   }
-  return results
+  return results.sort((a,b) => a.idx - b.idx).slice(0,10)
 }
