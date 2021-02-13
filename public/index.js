@@ -399,12 +399,10 @@ document.addEventListener("keydown",(event) => {
     searchInput.focus()
     event.preventDefault()
   } else if (event.ctrlKey && event.key === "o") {
-    const closestPageRef = focusNode.parentNode.closest(".page-ref")
-    if (closestPageRef)
-      gotoPageTitle(closestPageRef.children[1].innerText)
-    const closestTag = focusNode.parentNode.closest(".tag")
-    if (closestTag)
-      gotoPageTitle(closestTag.innerText.substring(1))
+    if (editingLink && editingLink.className === "page-ref")
+      gotoPageTitle(editingLink.children[1].innerText)
+    if (editingLink && editingLink.className === "tag")
+      gotoPageTitle(editingLink.innerText.substring(1))
     event.preventDefault()
   } else if (autocompleteList.style.display !== "none") {
     const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
