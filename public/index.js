@@ -150,7 +150,7 @@ const renderBlock = (parentNode,uid,idx) => {
 const updateCursorInfo = () => {
   focusedNode = getSelection().focusNode
   focusOffset = getSelection().focusOffset
-  focusedBlock = focusedNode.parentNode.closest(".block")
+  focusedBlock = focusedNode && focusedNode.parentNode.closest(".block")
   focusedBlockBody = focusedBlock && focusedBlock.children[1]
   cursorPositionInBlock = focusedBlock && getCursorPositionInBlock()
   editingLink = focusedBlock && getCurrentLink()
@@ -465,8 +465,8 @@ document.addEventListener("keydown",(event) => {
         if (cursorPositionInBlock === 0) {
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
-          focusBlockEnd(newActiveBlock)
           focusedBlock.remove()
+          focusBlockEnd(newActiveBlock)
           runCommand("deleteBlock",bid)
         }
         break
