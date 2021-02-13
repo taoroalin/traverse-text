@@ -68,7 +68,7 @@ const gotoMethods = {
 }
 
 const goto = (...command) => { // no this is not an instruction pointer goto. This just switches the current page
-  history.pushState(command,"State") // todo make title change
+  history.pushState(command,"Micro Roam") // todo make title change
   gotoNoHistory(...command)
 }
 
@@ -86,7 +86,7 @@ const gotoNoHistory = (...command) => {
 
 const gotoReplaceHistory = (...command) => {
   gotoNoHistory(...command)
-  history.replaceState(command,"State")
+  history.replaceState(command,"Micro Roam")
 }
 
 window.addEventListener("popstate",(event) => {
@@ -486,16 +486,42 @@ document.addEventListener("keydown",(event) => {
         }
         break
       case "ArrowDown":
-        blocks = Array.from(document.querySelectorAll(".block"))
-        newActiveBlock = blocks[blocks.indexOf(focusedBlock) + 1]
-        focusBlockStart(newActiveBlock)
-        event.preventDefault()
+        if (event.altKey && event.shiftKey) {
+          const parentId = store.blocks[bid].parent
+          const parentElement = focusedBlock.parentNode
+          const currentIdx = blockOrPageFromId(parentId).children.indexOf(bid)
+          if (focusedBlock.nextSibling) {
+            runCommand("moveBlock",bid,parentId,currentIdx + 1)
+            if (focusedBlock.nextSibling.nextSibling) {
+              parentElement.insertBefore(focusedBlock,focusedBlock.nextSibling.nextSibling)
+            } else parentElement.appendChild(focusedBlock)
+            getSelection().collapse(focusedNode,focusOffset)
+            event.preventDefault()
+          }
+        } else if (!event.shiftKey && !event.altKey) {
+          blocks = Array.from(document.querySelectorAll(".block"))
+          newActiveBlock = blocks[blocks.indexOf(focusedBlock) + 1]
+          focusBlockStart(newActiveBlock)
+          event.preventDefault()
+        }
         break
       case "ArrowUp":
-        blocks = Array.from(document.querySelectorAll(".block"))
-        newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
-        focusBlockEnd(newActiveBlock)
-        event.preventDefault()
+        if (event.altKey && event.shiftKey) {
+          const parentId = store.blocks[bid].parent
+          const parentElement = focusedBlock.parentNode
+          const currentIdx = blockOrPageFromId(parentId).children.indexOf(bid)
+          if (focusedBlock.previousSibling) {
+            runCommand("moveBlock",bid,parentId,currentIdx - 1)
+            parentElement.insertBefore(focusedBlock,focusedBlock.previousSibling)
+            getSelection().collapse(focusedNode,focusOffset)
+            event.preventDefault()
+          }
+        } else if (!event.shiftKey && !event.altKey) {
+          blocks = Array.from(document.querySelectorAll(".block"))
+          newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
+          focusBlockEnd(newActiveBlock)
+          event.preventDefault()
+        }
         break
       case "ArrowLeft":
         if (cursorPositionInBlock === 0) {
