@@ -195,6 +195,7 @@ const downloadHandler = () => {
 }
 
 const renderBlockBodyWithCursor = (blockBody,string,position) => {
+  if (position >= string.length) string += " "
   blockBody.innerHTML = ""
   renderBlockBody(blockBody,string)
 
@@ -287,9 +288,6 @@ document.addEventListener("input",(event) => {
     let string = blockBody.innerText
     store.blocks[id].string = string // todo commit changes on word boundaries
     runCommand("writeBlock",id,string)
-
-    if (blockBody.innerText.length === cursorPositionInBlock)
-      string += " "
 
     renderBlockBodyWithCursor(blockBody,string,cursorPositionInBlock).parentNode
 
