@@ -15,7 +15,7 @@
         if (e.target.result) {
           store = JSON.parse(e.target.result.store)
           if (w) {
-            gotoNoHistory("dailyNotes")
+            gotoReplaceHistory("dailyNotes")
             setTimeout(() => saveWorker.postMessage(["save",store]),0)
           } else
             w = true;
@@ -26,7 +26,7 @@
             store = json
             user.graphName = json.graphName
             if (w) {
-              gotoNoHistory("pageTitle","Welcome to Micro Roam")
+              gotoReplaceHistory("pageTitle","Welcome to Micro Roam")
               setTimeout(() => saveWorker.postMessage(["save",store]),0)
             } else
               w = true;
