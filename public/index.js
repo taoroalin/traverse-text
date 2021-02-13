@@ -144,9 +144,35 @@ const renderBlock = (parentNode,uid,idx) => {
   return element
 }
 
-// Global event listeners that switch on active element, as a possibly more performant, simpler option than propagating through multiple event handlers
 
-// Event listener functions that can't be written inline because multiple triggers / disconnect / reconnect
+// Event Listener Helpers -----------------------------------------------------------------------------------------------
+
+const updateCursorInfo = () => {
+  focusedNode = getSelection().focusNode
+  focusOffset = getSelection().focusOffset
+  focusedBlock = focusedNode.parentNode.closest(".block")
+  focusedBlockBody = focusedBlock && focusedBlock.children[1]
+  cursorPositionInBlock = focusedBlock && getCursorPositionInBlock()
+  editingLink = focusedBlock && getCurrentLink()
+  editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
+}
+
+const getCurrentLink = () => {
+  const pageRefs = focusedBlockBody.querySelectorAll(".page-ref")
+  const tags = focusedBlockBody.querySelectorAll(".tag")
+  let result = null
+  for (let tag of tags) {
+    if (tag.childNodes[0].endIdx >= cursorPositionInBlock && tag.childNodes[0].startIdx < cursorPositionInBlock) {
+      result = tag
+    }
+  }
+  for (let ref of pageRefs) {
+    if (ref.children[1].childNodes[0].endIdx >= cursorPositionInBlock && ref.children[1].childNodes[0].startIdx < cursorPositionInBlock) {
+      result = ref
+    }
+  }
+  return result
+}
 
 const dailyNotesInfiniteScrollListener = () => {
   const fromBottom =
@@ -176,7 +202,6 @@ const renderBlockBodyWithCursor = (blockBody,string,position) => {
     for (let el of element.childNodes) {
       if (el.nodeName === "#text") {
         if (el.textContent && position >= el.startIdx && position < el.startIdx + el.textContent.length) {
-          console.log(`pos ${position} si ${el.startIdx}`)
           scanResult = el
           try {
             getSelection().collapse(el,position - el.startIdx) // this does the thing correctly, but then throws an error, which I catch? todo investigate
@@ -194,53 +219,87 @@ const renderBlockBodyWithCursor = (blockBody,string,position) => {
   return scanElement(blockBody)
 }
 
-document.addEventListener("input",(event) => {
-  const blockBody = event.target.closest(".block__body")
 
-  if (blockBody) {
+const getCursorPositionInBlock = () => {
+  const selection = getSelection()
+  const focusNode = selection.focusNode
+  let position = selection.focusOffset
+  if (focusNode.startIdx) position += focusNode.startIdx
+  return position
+}
+
+// TODO make focusBlockStart ect get past the last 1 char
+const focusBlockEnd = (blockNode) => {
+  const body = blockNode.children[1]
+  const temp = document.createTextNode(" ")
+  body.appendChild(temp)
+  getSelection().collapse(temp,0)
+  // temp.innerText = ""
+}
+
+const focusBlockStart = (blockNode) => {
+  const body = blockNode.children[1]
+  const temp = document.createTextNode(" ")
+  body.insertBefore(temp,body.firstChild)
+  getSelection().collapse(temp,0)
+}
+
+const autocomplete = () => {
+  console.log("autocompleting")
+  const bid = focusedBlock.dataset.id
+  const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
+  const origString = store.blocks[bid].string
+  if (editingLink.className === "tag") {
+    const textNode = editingLink.childNodes[0]
+    if (/[^\/a-zA-Z0-9_-]/.test(selected.dataset.title)) { // this is exact inverse of regex test for tag token, to see if this must be a tag
+      const string = origString.slice(0,textNode.startIdx) + "[[" + selected.dataset.title + "]]" + origString.slice(textNode.endIdx)
+      runCommand("writeBlock",bid,string)
+      renderBlockBodyWithCursor(focusedBlockBody,string,textNode.startIdx + selected.dataset.title.length + 4)
+    } else {
+      const string = origString.slice(0,textNode.startIdx) + "#" + selected.dataset.title + origString.slice(textNode.endIdx)
+      runCommand("writeBlock",bid,string)
+      renderBlockBodyWithCursor(focusedBlockBody,string,textNode.startIdx + selected.dataset.title.length + 1)
+    }
+  } else {
+    const textNode = editingLink.children[1].childNodes[0]
+    const string = origString.slice(0,textNode.startIdx) + selected.dataset.title + origString.slice(textNode.endIdx)
+    runCommand("writeBlock",bid,string)
+    renderBlockBodyWithCursor(focusedBlockBody,string,textNode.startIdx + selected.dataset.title.length + 2)
+  }
+  autocompleteList.style.display = "none"
+}
+
+// Global event listeners that switch on active element, as a possibly more performant, simpler option than propagating through multiple event handlers
+
+// Event listener functions that can't be written inline because multiple triggers / disconnect / reconnect
+
+document.addEventListener("input",(event) => {
+  updateCursorInfo()
+  if (focusedBlock) {
+    const blockBody = focusedBlockBody
     const id = blockBody.parentNode.dataset.id
     if (blockBody.innerText === " " || blockBody.innerText === "") {
       runCommand("writeBlock",id,"")
       return
     }
     // reparse block and insert cursor into correct position while typing
-    const position = cursorPositionInBlock()
 
-    const originalString = store.blocks[id].string
-    const curTextNode = getSelection().focusNode
-    console.log(`start ${curTextNode.startIdx} end ${curTextNode.endIdx}`)
     let string = blockBody.innerText
     store.blocks[id].string = string // todo commit changes on word boundaries
     runCommand("writeBlock",id,string)
 
-    if (blockBody.innerText.length === position)
+    if (blockBody.innerText.length === cursorPositionInBlock)
       string += " "
 
-    renderBlockBodyWithCursor(blockBody,string,position).parentNode
+    renderBlockBodyWithCursor(blockBody,string,cursorPositionInBlock).parentNode
 
+    updateCursorInfo()
 
     // Autocomplete
     // could do this here, or in scanElement, or in renderBlockBody
-    const pageRefs = blockBody.querySelectorAll(".page-ref")
-    const tags = blockBody.querySelectorAll(".tag")
-    let titleString = null
-    let alignElement = null
-    for (let tag of tags) {
-      if (tag.childNodes[0].endIdx >= position && tag.childNodes[0].startIdx < position) {
-        titleString = tag.innerText.substring(1)
-        alignElement = tag
-      }
-    }
-    for (let ref of pageRefs) {
-      if (ref.children[1].childNodes[0].endIdx >= position && ref.children[1].childNodes[0].startIdx < position) {
-        titleString = ref.children[1].innerText
-        alignElement = ref
-      }
-    }
-    if (titleString) {
-      console.log(`found title string ${titleString}`)
-      const matchingTitles = titleExactFullTextSearch(titleString)
-      console.log(matchingTitles)
+    if (editingTitle) {
+      console.log(`found title string ${editingTitle}`)
+      const matchingTitles = titleExactFullTextSearch(editingTitle)
       if (matchingTitles.length > 0) {
         autocompleteList.innerHTML = ""
         for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
@@ -261,8 +320,9 @@ document.addEventListener("input",(event) => {
           autocompleteList.appendChild(suggestion)
         }
         autocompleteList.style.display = "block"
-        autocompleteList.style.top = alignElement.getBoundingClientRect().bottom
-        autocompleteList.style.left = alignElement.getBoundingClientRect().left
+        console.log(editingLink)
+        autocompleteList.style.top = editingLink.getBoundingClientRect().bottom
+        autocompleteList.style.left = editingLink.getBoundingClientRect().left
       } else {
         autocompleteList.style.display = "none"
       }
@@ -299,61 +359,29 @@ document.addEventListener("input",(event) => {
   }
 })
 
-// DOM util                              -------------------------------------
-
-const cursorPositionInBlock = () => {
-  const selection = getSelection()
-  const focusNode = selection.focusNode
-  let position = selection.focusOffset
-  if (focusNode.startIdx) position += focusNode.startIdx
-  return position
-}
-
-// TODO make focusBlockStart ect get past the last 1 char
-const focusBlockEnd = (blockNode) => {
-  const body = blockNode.children[1]
-  const temp = document.createTextNode(" ")
-  body.appendChild(temp)
-  window.getSelection().collapse(temp,0)
-  // temp.innerText = ""
-}
-
-const focusBlockStart = (blockNode) => {
-  const body = blockNode.children[1]
-  const temp = document.createTextNode(" ")
-  body.insertBefore(temp,body.firstChild)
-  window.getSelection().collapse(temp,0)
-}
-
-// more event listeners                    ------------------------------------------
-
 document.addEventListener("keydown",(event) => {
-  // Check for global shortcut keys
+  updateCursorInfo()
 
-  if (event.key === "Escape") {
+  if (event.key === "Tab" && autocompleteList.style.display !== "none" && focusedBlock) {
+    console.log("tab")
+    autocomplete()
+    event.preventDefault()
+    // Check for global shortcut keys
+  } else if (event.key === "Escape") {
     autocompleteList.style.display = "none"
     event.preventDefault()
-    return
-  }
-
-  if (event.key === "z" && event.ctrlKey && !event.shiftKey) {
+  } else if (event.key === "z" && event.ctrlKey && !event.shiftKey) {
 
   } else if (event.key === "d" && event.ctrlKey) {
     document.getElementById("upload-input").click()
     event.preventDefault()
-    return
-  }
-  if (event.key === "s" && event.ctrlKey && event.shiftKey) {
+  } else if (event.key === "s" && event.ctrlKey && event.shiftKey) {
     downloadHandler()
     event.preventDefault()
-    return
-  }
-  if (event.key === "s" && event.ctrlKey) {
+  } else if (event.key === "s" && event.ctrlKey) {
     saveWorker.postMessage(["save",store])
     event.preventDefault()
-    return
-  }
-  if (event.key === "m" && event.ctrlKey) {
+  } else if (event.key === "m" && event.ctrlKey) {
     if (document.body.className === "light") {
       user.theme = "dark"
       saveUser()
@@ -362,30 +390,21 @@ document.addEventListener("keydown",(event) => {
       saveUser()
     }
     event.preventDefault()
-    return
-  }
-  if (event.key === "d" && event.altKey) {
+  } else if (event.key === "d" && event.altKey) {
     gotoDailyNotes()
     event.preventDefault()
-    return
-  }
-  if (event.ctrlKey && event.key === "u") {
+  } else if (event.ctrlKey && event.key === "u") {
     searchInput.focus()
     event.preventDefault()
-    return
-  }
-
-  if (event.ctrlKey && event.key === "o") {
-    const closestPageRef = getSelection().focusNode.parentNode.closest(".page-ref")
+  } else if (event.ctrlKey && event.key === "o") {
+    const closestPageRef = focusNode.parentNode.closest(".page-ref")
     if (closestPageRef)
       gotoPageTitle(closestPageRef.children[1].innerText)
-    const closestTag = getSelection().focusNode.parentNode.closest(".tag")
+    const closestTag = focusNode.parentNode.closest(".tag")
     if (closestTag)
       gotoPageTitle(closestTag.innerText.substring(1))
     event.preventDefault()
-    return
-  }
-  if (autocompleteList.style.display !== "none") {
+  } else if (autocompleteList.style.display !== "none") {
     const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
     if (selected) {
       const newSelected = (event.key === "ArrowUp" && selected.previousSibling) || (event.key === "ArrowDown" && selected.nextSibling)
@@ -393,121 +412,90 @@ document.addEventListener("keydown",(event) => {
         newSelected.dataset.selected = "true"
         delete selected.dataset.selected
         event.preventDefault()
-        return
       }
     }
-  }
-  // Check for actions based on active element
-  const closestBlock = document.activeElement.closest(".block")
-  if (closestBlock
-  ) {
+    // Check for actions based on active element
+  } else if (focusedBlock) {
     let blocks
     let newActiveBlock
-    const bid = closestBlock.dataset.id
+    const bid = focusedBlock.dataset.id
     switch (event.key) {
       case "Enter":
         if (event.shiftKey) {
 
         } else {
-          let idx = parseInt(closestBlock.dataset.childIdx)
+          let idx = parseInt(focusedBlock.dataset.childIdx)
           if (!event.ctrlKey) {
             idx += 1
           }
           const newBlockUid = newUid()
           runCommand("createBlock",newBlockUid,store.blocks[bid].parent,idx)
-          const newBlock = renderBlock(closestBlock.parentNode,newBlockUid,idx)
+          const newBlock = renderBlock(focusedBlock.parentNode,newBlockUid,idx)
           newBlock.children[1].focus()
         }
         break
       case "Tab":
-        const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
-        if (autocompleteList.style.display !== "none" && selected) {
-          console.log("completing")
-          const closestTag = getSelection().focusNode.parentNode.closest(".tag")
-          const closestPageRef = getSelection().focusNode.parentNode.closest(".page-ref__body")
-          const origString = store.blocks[bid].string
-          const focusNode = getSelection().focusNode
-          if (closestTag) {
-            if (/[^\/a-zA-Z0-9_-]/.test(selected.dataset.title)) { // this is exact inverse of regex test for tag token, to see if this must be a tag
-              const string = origString.slice(0,focusNode.startIdx) + "[[" + selected.dataset.title + "]]" + origString.slice(focusNode.endIdx)
-              runCommand("writeBlock",bid,string)
-              renderBlockBodyWithCursor(closestBlock.children[1],string,focusNode.startIdx + getSelection().focusOffset)
-            } else {
-              const string = origString.slice(0,focusNode.startIdx) + "#" + selected.dataset.title + origString.slice(focusNode.endIdx)
-              runCommand("writeBlock",bid,string)
-              renderBlockBodyWithCursor(closestBlock.children[1],string,focusNode.startIdx + getSelection().focusOffset)
-            }
-            event.preventDefault()
-          } else if (closestPageRef) {
-            const string = origString.slice(0,focusNode.startIdx) + selected.dataset.title + origString.slice(focusNode.endIdx)
-            runCommand("writeBlock",bid,string)
-            renderBlockBodyWithCursor(closestBlock.children[1],string,focusNode.startIdx + getSelection().focusOffset)
-            event.preventDefault()
-          }
-        } else if (event.shiftKey) {
-          const parent = closestBlock.parentNode.parentNode
+        if (event.shiftKey) {
+          const parent = focusedBlock.parentNode.parentNode
           if (parent) {
             const grandparentChildren = parent.parentNode
             const grandparent = parent.parentNode.parentNode
             const grandparentId = grandparent.dataset.id
             const cousin = parent.nextSibling
             if (grandparentId) {
-              const focusNode = window.getSelection().focusNode
-              const focusOffset = window.getSelection().focusOffset
               if (cousin) {
-                grandparentChildren.insertBefore(closestBlock,cousin)
+                grandparentChildren.insertBefore(focusedBlock,cousin)
               } else {
-                grandparentChildren.appendChild(closestBlock)
+                grandparentChildren.appendChild(focusedBlock)
               }
               runCommand("moveBlock",bid,grandparentId,parent.dataset.childIdx + 1)
-              window.getSelection().collapse(focusNode,focusOffset)
+              getSelection().collapse(focusedNode,focusOffset)
             }
           }
         } else {
-          const olderSibling = closestBlock.previousSibling
+          const olderSibling = focusedBlock.previousSibling
           if (olderSibling && olderSibling.dataset && olderSibling.dataset.id) {
-            const focusNode = window.getSelection().focusNode
-            const focusOffset = window.getSelection().focusOffset
             runCommand("moveBlock",bid,olderSibling.dataset.id)
-            olderSibling.children[2].appendChild(closestBlock)
-            window.getSelection().collapse(focusNode,focusOffset)
+            olderSibling.children[2].appendChild(focusedBlock)
+            getSelection().collapse(focusedNode,focusOffset)
           }
         }
+        console.log("gonna prevent default")
         event.preventDefault()
         break
       case "Backspace":
-        if (cursorPositionInBlock() === 0) {
+        if (cursorPositionInBlock === 0) {
           blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
+          newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
           focusBlockEnd(newActiveBlock)
-          closestBlock.remove()
+          focusedBlock.remove()
           runCommand("deleteBlock",bid)
         }
         break
       case "ArrowDown":
         blocks = Array.from(document.querySelectorAll(".block"))
-        newActiveBlock = blocks[blocks.indexOf(closestBlock) + 1]
+        newActiveBlock = blocks[blocks.indexOf(focusedBlock) + 1]
         focusBlockStart(newActiveBlock)
         break
       case "ArrowUp":
         blocks = Array.from(document.querySelectorAll(".block"))
-        newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
+        newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
         focusBlockEnd(newActiveBlock)
         break
       case "ArrowLeft":
-        if (cursorPositionInBlock() === 0) {
+        if (cursorPositionInBlock === 0) {
           blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(closestBlock) - 1]
+          newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
           focusBlockEnd(newActiveBlock)
         }
         break
       case "ArrowRight":
         if (
-          cursorPositionInBlock() ===
-          closestBlock.children[1].innerText.length
+          cursorPositionInBlock ===
+          focusedBlockBody.innerText.length
         ) {
           blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(closestBlock) + 1]
+          newActiveBlock = blocks[blocks.indexOf(focusedBlock) + 1]
           focusBlockStart(newActiveBlock)
         }
         break
@@ -532,6 +520,9 @@ document.addEventListener("keydown",(event) => {
 })
 
 document.addEventListener("click",(event) => {
+
+  updateCursorInfo()
+
   const closestBullet = event.target.closest(".block__bullet")
   if (event.target.className === "page-ref__body") {
     gotoPageTitle(event.target.innerText)
@@ -548,7 +539,11 @@ document.addEventListener("click",(event) => {
   } else if (event.target.id === "daily-notes-button") {
     gotoDailyNotes()
   } else if (event.target.className === "autocomplete__suggestion") {
-    gotoSuggestion(event.target)
+    if (focusNode.parentNode === searchInput) { // todo actually know what user is doing globally
+      gotoSuggestion(event.target)
+    } else {
+      autocomplete()
+    }
   } else if (event.target.className === "url") { // using spans with event handlers as links because they play nice with contenteditable
     const link = document.createElement("a")
     link.target = "_blank"
@@ -569,7 +564,11 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   })
 })
 
+// Finally starting the program after everything's compiled
+
 const saveWorker = new Worker('/worker.js')
+
+saveWorker.postMessage(["user",user])
 
 
 if (w) {

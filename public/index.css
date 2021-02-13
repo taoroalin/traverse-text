@@ -14,7 +14,6 @@
   --border:#afbeca;
   --break: #838e97;
   --highlight:rgb(201, 145, 42);
-  --top:grey;
   --click:darkgrey;
   --page-ref:#2bcc5b;
 }
@@ -29,8 +28,7 @@
   --border:#585e64;
   --break:#a8b4be;
   --highlight:hsl(51,98%,81%);
-  --top:grey;
-  --click:darkgrey;
+  --click:rgb(197, 197, 197);
   --page-ref:#49C55B;
 }
 
@@ -138,9 +136,10 @@ a:visited { color:var(--link) }
   position:absolute;
   display:flex;
   flex-direction: column;
-  background-color:var(--top);
+  background-color:var(--background);
   font-size:1.3em;
   border-radius:5px;
+  box-shadow: 0 0 8px var(--border);
 }
 
 .autocomplete__suggestion[data-selected="true"]{

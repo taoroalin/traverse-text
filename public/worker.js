@@ -1,8 +1,9 @@
-importScripts("commands.js") // dumb special API for importing scripts from web worker, but at least it works
+importScripts("main-worker-shared.js") // dumb special API for importing scripts from web worker, but at least it works
 
 let idb = null
 let store = null
 let saveTimeout = null
+let user = null
 
 const dbReq = indexedDB.open("microroam",1)
 dbReq.onsuccess = (event) => idb = event.target.result
@@ -11,15 +12,17 @@ dbReq.onsuccess = (event) => idb = event.target.result
 onmessage = (event) => {
   const operation = event.data[0]
   const data = event.data[1]
-  if (operation === "save") {
+  if (operation === "user") {
+    user = data
+  } else if (operation === "save") {
     store = data
     debouncedSaveStore()
   } else if (operation === "command") {
     commands[data[0]](...data.slice(1))
     debouncedSaveStore()
-    console.log(`ran command ${JSON.stringify(data)}`)
+    print(`ran command ${JSON.stringify(data)}`)
   } else {
-    console.log(`saveWorker got weird operation: ${operation}`)
+    print(`saveWorker got weird operation: ${operation}`)
   }
 }
 
@@ -34,11 +37,9 @@ const saveStore = () => {
   const str = JSON.stringify(store)
   const req = storeStore.put({ graphName: store.graphName,store: str })
   req.onsuccess = () => {
-    console.log("saved")
-    console.log(store)
+    print("saved")
   }
   req.onerror = (event) => {
-    console.log("save error")
-    console.log(event)
+    print("save error")
   }
 }
