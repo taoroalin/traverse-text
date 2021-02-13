@@ -1,7 +1,7 @@
 <body>
   <script>
     const r = indexedDB.open("microroam",1);
-    let user = { theme: "light",graphName: "default" }
+    let user = { theme: "light",graphName: "default",logging: false,spellcheck: false,prettyUntilFocused: false }
     const storedUser = localStorage.getItem("user")
     if (storedUser) {
       user = JSON.parse(storedUser)
@@ -51,8 +51,17 @@
     saveUser()
 
 
-    let oldestLoadedDailyNoteDate = null;
+    let oldestLoadedDailyNoteDate = null
     let commitDebounce = null
+
+    let editingLink = null
+    let editingTitle = null
+    let focusedBlock = null
+    let cursorPositionInBlock = null
+    let focusedNode = null
+    let focusOffset = null
+    // editingLink, focusedBlock, cursorPositionInBlock are all about where the cursor is. They are all set at the beginning of each event handler
+
 
     /* This is some nasty concurrency stuff. It's all about starting the critical path of loading (loading graph) as quickly as possible.
     What happens is:
@@ -110,8 +119,8 @@
   </template>
 
   <template id="page-ref">
-    <span class="page-ref" spellcheck="false"><span class="page-ref__brackets"></span><span
-        class="page-ref__body"></span><span class="page-ref__brackets"></span></span>
+    <span class="page-ref"><span class="page-ref__brackets"></span><span class="page-ref__body"></span><span
+        class="page-ref__brackets"></span></span>
   </template>
 
   <template id="tag">
@@ -150,21 +159,22 @@
   <div id="app">
 
     <div id="top-bar">
-      <a id="report-issue-button" target="_blank" href="mailto:taoroalin@gmail.com?subject=You Made Micro Roam Wrong">
+      <a id="report-issue-button" target="_blank" href="mailto:taoroalin@gmail.com?subject=You Made Micro Roam Wrong"
+        tabindex="-1">
         Report Issue
       </a>
-      <button style="display:none" id="switch-graph-button">
+      <button style="display:none" id="switch-graph-button" tabindex="-1">
         Switch Graph
       </button>
-      <button id="daily-notes-button">
+      <button id="daily-notes-button" tabindex="-1">
         Daily Notes
       </button>
-      <input id="search-input" placeholder="search">
-      <button id="upload-button">
+      <input id="search-input" placeholder="search" tabindex="-1">
+      <button id="upload-button" tabindex="-1">
         <input style="display:none" type="file" id="upload-input">
         Upload JSON
       </button>
-      <a id="download-button">
+      <a id="download-button" tabindex="-1">
         Download JSON
       </a>
     </div>
@@ -180,7 +190,7 @@
   </div>
 
   <script src="store.js"></script>
-  <script src="commands.js"></script>
+  <script src="main-worker-shared.js"></script>
   <script src="utils.js"></script>
   <script src="parse.js"></script>
   <script src="index.js"></script>

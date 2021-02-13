@@ -49,7 +49,7 @@ const truncateElipsis = (text,limit = 40) => {
 }
 
 const escapeRegex = (string) => {
-  const result = string.replace(/[\[\]\(\)\{\}]/,"\\$1")
+  const result = string.replaceAll(/(?<=^|[^`])([\[\]\(\)\{\}])/g,"\\$1").replace("`","")
   console.log(result)
   return result
 }

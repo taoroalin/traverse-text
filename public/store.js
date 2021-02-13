@@ -72,17 +72,19 @@ const roamJsonToStore = (graphName,text) => {
 
   for (let blockUid in blocks) {
     const block = blocks[blockUid]
-    if (block.refs) {
-      block.refs.forEach(ref => {
-        if (blocks[ref] !== undefined) {
-          blocks[ref].backRefs.push(blockUid)
-        } else if (pages[ref] !== undefined) {
-          pages[ref].backRefs.push(blockUid)
-        } else {
-          //throw new Error(`bad ref ${ref}`)
-        }
-      })
-    }
+
+    // if (block.refs) {
+    //   block.refs.forEach(ref => {
+    //     if (blocks[ref] !== undefined) {
+    //       blocks[ref].backRefs.push(blockUid)
+    //     } else if (pages[ref] !== undefined) {
+    //       pages[ref].backRefs.push(blockUid)
+    //     } else {
+    //       //throw new Error(`bad ref ${ref}`)
+    //     }
+    //   })
+    // }
+
     if (block[":block/refs"]) {
       block[":block/refs"].forEach(ref => {
         if (blocks[ref] !== undefined) {
@@ -94,6 +96,7 @@ const roamJsonToStore = (graphName,text) => {
         }
       })
     }
+
   }
 
   const store = { graphName,pages,blocks,pagesByTitle,ownerRoamId }
