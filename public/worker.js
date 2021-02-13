@@ -12,7 +12,7 @@ dbReq.onsuccess = (event) => idb = event.target.result
 onmessage = (event) => {
   const operation = event.data[0]
   const data = event.data[1]
-  if (operation === "user") {
+  if (operation === "user") { // getting user for logging settings
     user = data
   } else if (operation === "save") {
     store = data

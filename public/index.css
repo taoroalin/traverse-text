@@ -13,7 +13,7 @@
   --bullet:#758897;
   --border:#afbeca;
   --break: #838e97;
-  --highlight:rgb(201, 145, 42);
+  --highlight:rgb(110, 93, 16);
   --click:darkgrey;
   --page-ref:#2bcc5b;
 }
@@ -27,7 +27,7 @@
   --bullet:#394B59;
   --border:#585e64;
   --break:#a8b4be;
-  --highlight:hsl(51,98%,81%);
+  --highlight:rgb(255, 239, 146);
   --click:rgb(197, 197, 197);
   --page-ref:#49C55B;
 }

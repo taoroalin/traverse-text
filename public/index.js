@@ -157,6 +157,19 @@ const updateCursorInfo = () => {
   editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
 }
 
+const getCursorPositionInBlock = () => {
+  const selection = getSelection()
+  const focusNode = selection.focusNode
+  if (focusNode.className === "block__body") {
+    const jankReturn = focusedBlock.innerText.length * (focusOffset !== 0) // todo make this less jank
+    return jankReturn
+  } else {
+    let position = selection.focusOffset
+    if (focusNode.startIdx) position += focusNode.startIdx
+    return position
+  }
+}
+
 const getCurrentLink = () => {
   const pageRefs = focusedBlockBody.querySelectorAll(".page-ref")
   const tags = focusedBlockBody.querySelectorAll(".tag")
@@ -221,21 +234,13 @@ const renderBlockBodyWithCursor = (blockBody,string,position) => {
 }
 
 
-const getCursorPositionInBlock = () => {
-  const selection = getSelection()
-  const focusNode = selection.focusNode
-  let position = selection.focusOffset
-  if (focusNode.startIdx) position += focusNode.startIdx
-  return position
-}
-
 // TODO make focusBlockStart ect get past the last 1 char
 const focusBlockEnd = (blockNode) => {
   const body = blockNode.children[1]
   const temp = document.createTextNode(" ")
   body.appendChild(temp)
   getSelection().collapse(temp,0)
-  // temp.innerText = ""
+  temp.remove()
 }
 
 const focusBlockStart = (blockNode) => {
@@ -243,6 +248,7 @@ const focusBlockStart = (blockNode) => {
   const temp = document.createTextNode(" ")
   body.insertBefore(temp,body.firstChild)
   getSelection().collapse(temp,0)
+  temp.remove()
 }
 
 const autocomplete = () => {
@@ -318,7 +324,6 @@ document.addEventListener("input",(event) => {
           autocompleteList.appendChild(suggestion)
         }
         autocompleteList.style.display = "block"
-        console.log(editingLink)
         autocompleteList.style.top = editingLink.getBoundingClientRect().bottom
         autocompleteList.style.left = editingLink.getBoundingClientRect().left
       } else {
@@ -361,7 +366,6 @@ document.addEventListener("keydown",(event) => {
   updateCursorInfo()
 
   if (event.key === "Tab" && autocompleteList.style.display !== "none" && focusedBlock) {
-    console.log("tab")
     autocomplete()
     event.preventDefault()
     // Check for global shortcut keys
@@ -458,7 +462,6 @@ document.addEventListener("keydown",(event) => {
             getSelection().collapse(focusedNode,focusOffset)
           }
         }
-        console.log("gonna prevent default")
         event.preventDefault()
         break
       case "Backspace":
@@ -468,33 +471,35 @@ document.addEventListener("keydown",(event) => {
           focusedBlock.remove()
           focusBlockEnd(newActiveBlock)
           runCommand("deleteBlock",bid)
+          event.preventDefault()
         }
         break
       case "ArrowDown":
         blocks = Array.from(document.querySelectorAll(".block"))
         newActiveBlock = blocks[blocks.indexOf(focusedBlock) + 1]
         focusBlockStart(newActiveBlock)
+        event.preventDefault()
         break
       case "ArrowUp":
         blocks = Array.from(document.querySelectorAll(".block"))
         newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
         focusBlockEnd(newActiveBlock)
+        event.preventDefault()
         break
       case "ArrowLeft":
         if (cursorPositionInBlock === 0) {
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
-          focusBlockEnd(newActiveBlock)
+          if (newActiveBlock) focusBlockEnd(newActiveBlock)
+          event.preventDefault()
         }
         break
       case "ArrowRight":
-        if (
-          cursorPositionInBlock ===
-          focusedBlockBody.innerText.length
-        ) {
+        if (cursorPositionInBlock === focusedBlockBody.innerText.length) {
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(focusedBlock) + 1]
-          focusBlockStart(newActiveBlock)
+          if (newActiveBlock) focusBlockStart(newActiveBlock)
+          event.preventDefault()
         }
         break
     }
@@ -562,6 +567,11 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   })
 })
 
+document.addEventListener("popstate",(event) => {
+  console.log(event)
+  console.log(`pop state ${JSON.stringify(event)}`)
+})
+
 // Finally starting the program after everything's compiled
 
 const saveWorker = new Worker('/worker.js')
@@ -586,4 +596,10 @@ const test = () => {
   const testScriptNode = document.createElement("script")
   testScriptNode.src = "test.js"
   document.body.appendChild(testScriptNode)
+}
+
+const reset = () => {
+  const r = indexedDB.deleteDatabase("microroam")
+  localStorage.removeItem("user")
+  window.location.href = window.location.href
 }
