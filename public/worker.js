@@ -35,8 +35,10 @@ const saveStore = () => {
   const req = storeStore.put({ graphName: store.graphName,store: str })
   req.onsuccess = () => {
     console.log("saved")
+    console.log(store)
   }
   req.onerror = (event) => {
     console.log("save error")
+    console.log(event)
   }
 }
