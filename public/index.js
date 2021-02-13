@@ -289,6 +289,36 @@ const autocomplete = () => {
   autocompleteList.style.display = "none"
 }
 
+const indentFocusedBlock = () => {
+  const bid = focusedBlock.dataset.id
+  const olderSibling = focusedBlock.previousSibling
+  if (olderSibling && olderSibling.dataset && olderSibling.dataset.id) {
+    runCommand("moveBlock",bid,olderSibling.dataset.id)
+    olderSibling.children[2].appendChild(focusedBlock)
+    getSelection().collapse(focusedNode,focusOffset)
+  }
+}
+
+const dedentFocusedBlock = () => {
+  const bid = focusedBlock.dataset.id
+  const parent = focusedBlock.parentNode.parentNode
+  if (parent) {
+    const grandparentChildren = parent.parentNode
+    const grandparent = parent.parentNode.parentNode
+    const grandparentId = grandparent.dataset.id
+    const cousin = parent.nextSibling
+    if (grandparentId) {
+      if (cousin) {
+        grandparentChildren.insertBefore(focusedBlock,cousin)
+      } else {
+        grandparentChildren.appendChild(focusedBlock)
+      }
+      runCommand("moveBlock",bid,grandparentId,parent.dataset.childIdx + 1)
+      getSelection().collapse(focusedNode,focusOffset)
+    }
+  }
+}
+
 // Global event listeners that switch on active element, as a possibly more performant, simpler option than propagating through multiple event handlers
 
 // Event listener functions that can't be written inline because multiple triggers / disconnect / reconnect
@@ -449,29 +479,9 @@ document.addEventListener("keydown",(event) => {
         break
       case "Tab":
         if (event.shiftKey) {
-          const parent = focusedBlock.parentNode.parentNode
-          if (parent) {
-            const grandparentChildren = parent.parentNode
-            const grandparent = parent.parentNode.parentNode
-            const grandparentId = grandparent.dataset.id
-            const cousin = parent.nextSibling
-            if (grandparentId) {
-              if (cousin) {
-                grandparentChildren.insertBefore(focusedBlock,cousin)
-              } else {
-                grandparentChildren.appendChild(focusedBlock)
-              }
-              runCommand("moveBlock",bid,grandparentId,parent.dataset.childIdx + 1)
-              getSelection().collapse(focusedNode,focusOffset)
-            }
-          }
+          dedentFocusedBlock()
         } else {
-          const olderSibling = focusedBlock.previousSibling
-          if (olderSibling && olderSibling.dataset && olderSibling.dataset.id) {
-            runCommand("moveBlock",bid,olderSibling.dataset.id)
-            olderSibling.children[2].appendChild(focusedBlock)
-            getSelection().collapse(focusedNode,focusOffset)
-          }
+          indentFocusedBlock()
         }
         event.preventDefault()
         break
@@ -524,7 +534,9 @@ document.addEventListener("keydown",(event) => {
         }
         break
       case "ArrowLeft":
-        if (cursorPositionInBlock === 0) {
+        if (event.shiftKey && event.altKey) {
+          dedentFocusedBlock()
+        } else if (cursorPositionInBlock === 0) {
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
           if (newActiveBlock) focusBlockEnd(newActiveBlock)
@@ -532,7 +544,9 @@ document.addEventListener("keydown",(event) => {
         }
         break
       case "ArrowRight":
-        if (cursorPositionInBlock === focusedBlockBody.innerText.length) {
+        if (event.shiftKey && event.altKey) {
+          indentFocusedBlock()
+        } else if (cursorPositionInBlock === focusedBlockBody.innerText.length) {
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(focusedBlock) + 1]
           if (newActiveBlock) focusBlockStart(newActiveBlock)
