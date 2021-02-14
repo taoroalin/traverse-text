@@ -12,6 +12,7 @@ const pageFrameOuter = document.getElementById("page-frame-outer")
 const searchInput = document.getElementById("search-input")
 const downloadButton = document.getElementById("download-button")
 const autocompleteList = document.getElementById("autocomplete-list")
+const terminalElement = document.getElementById("terminal")
 
 // App state transitions
 const gotoMethods = {
@@ -456,6 +457,15 @@ document.addEventListener("keydown",(event) => {
         event.preventDefault()
       }
     }
+  } else if (event.key === "i" && event.ctrlKey && event.altKey) {
+    if (terminalElement.style.display === "none") {
+      terminalElement.style.display = "block"
+      terminalElement.focus()
+      event.preventDefault()
+    } else {
+      terminalElement.style.display = "none"
+    }
+
     // Check for actions based on active element
   } else if (focusedBlock) {
     let blocks
@@ -466,14 +476,15 @@ document.addEventListener("keydown",(event) => {
         if (event.shiftKey) {
 
         } else {
-          let idx = parseInt(focusedBlock.dataset.childIdx)
+          const parent = blockOrPageFromId(store.blocks[bid].parent)
+          let idx = parent.children.indexOf(bid)
           if (!event.ctrlKey) {
             idx += 1
           }
           const newBlockUid = newUid()
           runCommand("createBlock",newBlockUid,store.blocks[bid].parent,idx)
           const newBlock = renderBlock(focusedBlock.parentNode,newBlockUid,idx)
-          newBlock.children[1].focus()
+          getSelection().collapse(focusedNode,focusOffset)
         }
         break
       case "Tab":
@@ -567,6 +578,14 @@ document.addEventListener("keydown",(event) => {
       if (selected) {
         goto("suggestion",selected)
         return
+      }
+    }
+  } else if (terminalElement.style.display !== "none") {
+    if (event.key === "Enter" && event.ctrlKey) {
+      eval(event.target.innerText)
+      if (!event.shiftKey) {
+        terminalElement.style.display = "none"
+        terminalElement.innerHTML = ""
       }
     }
   }

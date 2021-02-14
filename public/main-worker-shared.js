@@ -57,6 +57,7 @@ const commands = {
   // gonna add more fields later
   // the new id is in the change so it can be serialized deterministically
   createBlock: (blockId,parentId,idx) => {
+    // todo make date guaranteed same between main and worker thread
     store.blocks[blockId] = { string: "",parent: parentId,":create/time": Date.now(),children: [],backRefs: [] }
     insertBlock(blockId,parentId,idx)
   },
