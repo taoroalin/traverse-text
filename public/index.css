@@ -266,6 +266,14 @@ a:visited { color:var(--link) }
   cursor:pointer;
 }
 
+#terminal{
+  font-family:'Inconsolata';
+  width:100%;
+  padding:8px;
+  background-color: black;
+  color:white;
+}
+
 
 .code{
   font-family:'Inconsolata';
