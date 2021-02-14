@@ -16,6 +16,7 @@
   --highlight:rgb(110, 93, 16);
   --click:darkgrey;
   --page-ref:#2bcc5b;
+  --shadow:black;
 }
 
 .light{
@@ -26,6 +27,7 @@
   --block-ref:lightgrey;
   --bullet:#394B59;
   --border:#585e64;
+  --shadow:#585e64;
   --break:#a8b4be;
   --highlight:rgb(255, 239, 146);
   --click:rgb(197, 197, 197);
@@ -127,7 +129,7 @@ a:visited { color:var(--link) }
   margin: 7px 5px 5px;
   display:block;
   font-size:1.2em;
-  box-shadow:0 0 2px var(--border);
+  box-shadow:0 0 2px var(--shadow);
   border-radius:100px;
   flex-grow: 1;
 }
@@ -139,7 +141,7 @@ a:visited { color:var(--link) }
   background-color:var(--background);
   font-size:1.3em;
   border-radius:5px;
-  box-shadow: 0 0 8px var(--border);
+  box-shadow: 0 0 8px var(--shadow);
 }
 
 .autocomplete__suggestion[data-selected="true"]{

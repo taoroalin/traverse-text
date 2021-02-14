@@ -50,8 +50,34 @@ const commands = {
     insertBlock(blockId,newParentId,idx)
   },
 
-  writeBlock: (blockId,string) => {
-    store.blocks[blockId].string = string
+  // writeBlock takes link title list to avoid recomputation. couples this with renderBlockBody
+  writeBlock: (blockId,string,refTitles) => {
+    console.log(refTitles)
+
+    const block = store.blocks[blockId]
+    block.string = string
+
+    const oldRefs = block[":block/refs"]
+    if (oldRefs) {
+      for (let ref of oldRefs) {
+        blockOrPageFromId(ref).backRefs = blockOrPageFromId(ref).backRefs.filter(x => x !== blockId)
+      }
+    }
+
+    block[":block/refs"] = []
+    for (let title of refTitles) {
+      console.log(`title ${title}`)
+      let pageId = store.pagesByTitle[title]
+      if (pageId === undefined) {
+        // need to save this generated ID into command for worker / server
+        pageId = newUid()
+        commands.createPage(pageId,title)
+      }
+      block[":block/refs"].push(pageId)
+      store.pages[pageId].backRefs.push(blockId)
+      console.log("page")
+      console.log(store.pages[pageId])
+    }
   },
 
   // gonna add more fields later

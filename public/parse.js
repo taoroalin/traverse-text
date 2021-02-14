@@ -6,22 +6,26 @@ const boldTemplate = document.getElementById("bold").content.firstElementChild
 const italicTemplate = document.getElementById("italic").content.firstElementChild
 const highlightTemplate = document.getElementById("highlight").content.firstElementChild
 
-const regexes = ["(\[\[)","(\]\])","(#[\/a-zA-Z0-9_-]*)","(\(\([a-zA-Z0-9\-_]{8,10}\)\))","(\*\*)","(\^\^)","(__)","((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))"]
+const regexes = ["(\[\[)","(\]\])","(#[\/a-zA-Z0-9_-]+)","(\(\([a-zA-Z0-9\-_]{8,10}\)\))","(\*\*)","(\^\^)","(__)","((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))"]
 
 
 const renderBlockBody = (parent,text) => {
   let stack = [parent]
   // 1             2              3   4         5    6         7      8
   // page-ref-open page-ref-close tag block-ref bold highlight italic link
-  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]*)|(\(\([a-zA-Z0-9\-_]{8,10}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
+  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]{8,10}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
   let idx = 0
   let stackTop = parent
+
   const newTextNode = (string) => {
     const result = document.createTextNode(string)
     result.startIdx = idx
     result.endIdx = idx + string.length
     return result
   }
+
+  const refTitles = []
+
   for (let match of matches) {
 
     stackTop.appendChild(newTextNode(text.substring(idx,match.index)))
@@ -36,12 +40,14 @@ const renderBlockBody = (parent,text) => {
     } else if (match[2]) {
       if (stackTop.className === "page-ref__body") {
         stackTop.parentNode.children[2].appendChild(newTextNode("]]"))
+        refTitles.push(stackTop.innerText)
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
         stackTop.appendChild(newTextNode("]]"))
       }
     } else if (match[3]) {
+      refTitles.push(match[3].substring(1))
       const tagElement = tagTemplate.cloneNode(true)
       tagElement.appendChild(newTextNode(match[3]))
       stackTop.appendChild(tagElement)
@@ -114,4 +120,7 @@ const renderBlockBody = (parent,text) => {
     stackTop.className = ""
     stackTop = stackTop.parentNode
   }
+  console.log("refTitles")
+  console.log(refTitles)
+  return refTitles
 }

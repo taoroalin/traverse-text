@@ -1,5 +1,6 @@
-importScripts("main-worker-shared.js") // dumb special API for importing scripts from web worker, but at least it works
-
+// dumb special API for importing scripts from web worker, but at least it works
+importScripts("main-worker-shared.js")
+importScripts("utils.js")
 let idb = null
 let store = null
 let saveTimeout = null
