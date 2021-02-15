@@ -99,6 +99,15 @@ const roamJsonToStore = (graphName,text) => {
 
   }
 
+  // remove empty pages
+  for (let pageId in pages) {
+    const page = pages[pageId]
+    if ((!page.children || page.children.length === 0) && page.backRefs.length === 0) {
+      delete pagesByTitle[page.title]
+      delete pages[pageId]
+    }
+  }
+
   const store = { graphName,pages,blocks,pagesByTitle,ownerRoamId }
   console.log(`roamJsonToStore took ${performance.now() - stime}`)
   console.log(store)
@@ -153,16 +162,6 @@ const storeToRoamJSON = (store) => {
   return JSON.stringify(roamJSON)
 }
 
-const deleteOrphanPages = () => {
-  for (let pageId in store.pages) {
-    const page = store.pages[pageId]
-    if ((!page.children || page.children.length === 0) && page.backRefs.length === 0) {
-      delete store.pagesByTitle[page.title]
-      delete store.pages[pageId]
-    }
-  }
-}
-
 
 const escapeRegex = (string) => {
   return string.replaceAll(/(?<=^|[^`])([\[\]\(\)])/g,"\\$1").replaceAll("`","")
@@ -178,7 +177,6 @@ const titleExactFullTextSearch = (string) => {
       results.push({ title,id,idx: match.index })
     }
   }
-  console.log(results)
   return results.sort((a,b) => a.idx - b.idx).slice(0,10)
 }
 
