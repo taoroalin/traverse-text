@@ -580,9 +580,9 @@ document.addEventListener("keydown",(event) => {
       }
     }
   } else if (terminalElement.style.display !== "none") {
-    if (event.key === "Enter" && event.ctrlKey) {
+    if (event.key === "Enter" && !event.ctrlKey && !event.shiftKey && !event.altKey) {
       eval(event.target.innerText)
-      if (!event.shiftKey) {
+      if (!event.ctrlKey) {
         terminalElement.style.display = "none"
         terminalElement.innerHTML = ""
       }

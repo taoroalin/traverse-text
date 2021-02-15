@@ -86,9 +86,6 @@ const commands = {
       return pageId
     })
 
-    console.log(oldRefs)
-    console.log(newRefs)
-
     // add string, edit time
     edits.write.push(["blocks",blockId,"string",string],
       ["blocks",blockId,":edit/time",time],
@@ -99,13 +96,12 @@ const commands = {
     if (oldRefs) {
       for (let oldRef of oldRefs) {
         if (!newRefs.includes(oldRef)) {
-          edits.subtract.push([parentThingey(oldRef),oldRef,"backRefs",blockId])
-          if (parentThingey(oldRef) === "page") {
-            const page = store.pages[oldRef]
-            if ((page.children === undefined || page.children.length === 0) && (page.backRefs === undefined || page.backRefs.length == 0)) {
-              edits.delete.push(["pagesByTitle",page.title])
-              edits.delete.push(["pages",oldRef])
-            }
+          const page = store.pages[oldRef]
+          if (parentThingey(oldRef) === "pages" && (page.children === undefined || page.children.length === 0) && (page.backRefs === undefined || page.backRefs.length <= 1)) {
+            edits.delete.push(["pagesByTitle",page.title])
+            edits.delete.push(["pages",oldRef])
+          } else {
+            edits.subtract.push([parentThingey(oldRef),oldRef,"backRefs",blockId])
           }
         }
       }

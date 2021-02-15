@@ -22,7 +22,7 @@ onmessage = (event) => {
     debouncedSaveStore()
     print(`ran command ${JSON.stringify(data)}`)
   } else if (operation === "edits") {
-    console.log(data)
+    print(data)
     doEdits(data)
     debouncedSaveStore()
   } else {
