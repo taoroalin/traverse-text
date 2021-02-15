@@ -202,10 +202,14 @@ const dailyNotesInfiniteScrollListener = () => {
   const fromBottom =
     pageFrame.getBoundingClientRect().bottom - innerHeight
   if (fromBottom < 700) {
-    oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1)
-    const daysNotes = store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)]
-    if (daysNotes)
-      renderPage(pageFrame,daysNotes)
+    for (let i = 0; i < 100; i++) {
+      oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1)
+      const daysNotes = store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)]
+      if (daysNotes) {
+        renderPage(pageFrame,daysNotes)
+        break
+      }
+    }
   }
 }
 
