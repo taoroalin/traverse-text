@@ -1,6 +1,5 @@
 // dumb special API for importing scripts from web worker, but at least it works
 importScripts("main-worker-shared.js")
-importScripts("utils.js")
 let idb = null
 let store = null
 let saveTimeout = null
@@ -22,6 +21,10 @@ onmessage = (event) => {
     commands[data[0]](...data.slice(1))
     debouncedSaveStore()
     print(`ran command ${JSON.stringify(data)}`)
+  } else if (operation === "edits") {
+    console.log(data)
+    doEdits(data)
+    debouncedSaveStore()
   } else {
     print(`saveWorker got weird operation: ${operation}`)
   }

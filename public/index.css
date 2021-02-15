@@ -16,13 +16,13 @@
   --highlight:rgb(110, 93, 16);
   --click:darkgrey;
   --page-ref:#2bcc5b;
-  --shadow:black;
+  --shadow:rgb(98, 98, 98);
 }
 
 .light{
   --background:white;
   --text:black;
-  --link: #367bb8;
+  --link: rgb(54, 123, 184);
   --brackets:#A7B6C2;
   --block-ref:lightgrey;
   --bullet:#394B59;
@@ -31,7 +31,7 @@
   --break:#a8b4be;
   --highlight:rgb(255, 239, 146);
   --click:rgb(197, 197, 197);
-  --page-ref:#49C55B;
+  --page-ref:rgb(73, 197, 91);
 }
 
 input, button, a{

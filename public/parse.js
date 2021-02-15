@@ -120,7 +120,5 @@ const renderBlockBody = (parent,text) => {
     stackTop.className = ""
     stackTop = stackTop.parentNode
   }
-  console.log("refTitles")
-  console.log(refTitles)
   return refTitles
 }
