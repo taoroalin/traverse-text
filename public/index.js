@@ -19,8 +19,7 @@ const gotoMethods = {
   pageTitle: (title) => {
     let existingPage = store.pagesByTitle[title]
     if (existingPage === undefined) {
-      existingPage = newUid()
-      runCommand("createPage",existingPage,title)
+      existingPage = runCommand("createPage",title)
     }
     renderPage(pageFrame,existingPage)
   },
@@ -42,8 +41,7 @@ const gotoMethods = {
     oldestLoadedDailyNoteDate = new Date(Date.now())
     let numNotesLoaded = 0
     if (store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)] === undefined) {
-      const newPageId = `${oldestLoadedDailyNoteDate.getMonth()}-${oldestLoadedDailyNoteDate.getDate()}-${oldestLoadedDailyNoteDate.getFullYear()}`
-      runCommand("createPage",newPageId,formatDate(oldestLoadedDailyNoteDate))
+      runCommand("createPage",formatDate(oldestLoadedDailyNoteDate))
     }
     for (let i = 0; i < 366; i++) {
       const daysNotes = store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)]
@@ -109,8 +107,7 @@ const renderPage = (parentNode,uid) => {
 
   let children = page.children
   if (!children || children.length === 0) { // todo set standards for when lists can be empty to reduce ambiguity
-    const newBlockId = newUid()
-    runCommand("createBlock",newBlockId,uid,0)
+    runCommand("createBlock",uid,0)
     children = page.children
   }
   for (let child of children) {
@@ -484,9 +481,8 @@ document.addEventListener("keydown",(event) => {
           if (!event.ctrlKey) {
             idx += 1
           }
-          const newBlockUid = newUid()
-          runCommand("createBlock",newBlockUid,store.blocks[bid].parent,idx)
-          const newBlock = renderBlock(focusedBlock.parentNode,newBlockUid,idx)
+          const newBlockUid = runCommand("createBlock",store.blocks[bid].parent,idx)
+          renderBlock(focusedBlock.parentNode,newBlockUid,idx)
           getSelection().collapse(focusedNode,focusOffset)
         }
         break
@@ -632,6 +628,7 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   graphName = file.name.substring(0,file.name.length - 5)
   file.text().then((text) => {
     store = roamJsonToStore(graphName,text)
+    deleteOrphanPages()
     user.graphName = graphName
     saveUser()
     goto("dailyNotes")
@@ -654,7 +651,7 @@ if (w) {
 
 // const t = performance.now()
 // for (let i = 0; i < 1000000; i++) {
-
+//   true || (1 === undefined)
 // }
 // console.log(`took ${performance.now() - t}`)
 
