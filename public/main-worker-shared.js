@@ -3,15 +3,6 @@
 const doEdits = (edits) => {
 
   // it's important that subtract comes first, you can subtract something then insert it somewhere else
-  if (edits.delete) {
-    for (let op of edits.delete) {
-      let cur = store
-      for (let i = 0; i < op.length - 1; i++) {
-        cur = cur[op[i]]
-      }
-      delete cur[op[op.length - 1]]
-    }
-  }
   if (edits.subtract) {
     for (let op of edits.subtract) {
       let cur = store
@@ -22,7 +13,6 @@ const doEdits = (edits) => {
       cur[key] = cur[key].filter(x => (x != op[op.length - 1]))
     }
   }
-
 
   if (edits.write) {
     for (let op of edits.write) {
@@ -55,6 +45,15 @@ const doEdits = (edits) => {
       cur[key] = old.slice(0,idx)
       cur[key].push(val)
       cur[key].push(...old.slice(idx))
+    }
+  }
+  if (edits.delete) {
+    for (let op of edits.delete) {
+      let cur = store
+      for (let i = 0; i < op.length - 1; i++) {
+        cur = cur[op[i]]
+      }
+      delete cur[op[op.length - 1]]
     }
   }
 }
