@@ -343,7 +343,6 @@ document.addEventListener("input",(event) => {
     // Autocomplete
     // could do this here, or in scanElement, or in renderBlockBody
     if (editingTitle) {
-      console.log(`found title string ${editingTitle}`)
       const matchingTitles = titleExactFullTextSearch(editingTitle)
       if (matchingTitles.length > 0) {
         autocompleteList.innerHTML = ""
@@ -628,7 +627,6 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
   graphName = file.name.substring(0,file.name.length - 5)
   file.text().then((text) => {
     store = roamJsonToStore(graphName,text)
-    deleteOrphanPages()
     user.graphName = graphName
     saveUser()
     goto("dailyNotes")
