@@ -1,103 +1,64 @@
-const blockOrPageFromId = (id) => {
-  return store.blocks[id] || store.pages[id]
-}
+// Edit format: {delete:[[...keys]],write:[[...keys,value]], add:[[...keys, value]], subtract:[[...keys, value]], insert: [[...keys, value, idx]]}
 
-const insertBlock = (blockId,newParentId,idx) => {
-  const block = store.blocks[blockId]
-  block.parent = newParentId
-  const newParent = blockOrPageFromId(newParentId)
-  newParent.children = newParent.children || []
-  const newParentOldChildren = newParent.children
-  if (idx !== undefined) {
-    newParent.children = newParentOldChildren.slice(0,idx)
-    newParent.children.push(blockId)
-    newParent.children.push(...newParentOldChildren.slice(idx))
-  } else {
-    newParent.children.push(blockId)
+const doEdits = (edits) => {
+
+  // it's important that subtract comes first, you can subtract something then insert it somewhere else
+  if (edits.delete) {
+    for (let op of edits.delete) {
+      let cur = store
+      for (let i = 0; i < op.length - 1; i++) {
+        cur = cur[op[i]]
+      }
+      delete cur[op[op.length - 1]]
+    }
   }
-  // todo make this not duplicate refs
-  const curRefs = store.blocks[blockId].refs
-  if (curRefs) store.blocks[blockId].refs = curRefs.map(x => x) // make sure to copy because these are mutable!!!!
-}
-
-// Commands
-// this is real const, don't edit in runtime
-const commands = {
-  deleteBlock: (blockId) => {
-    const block = store.blocks[blockId]
-    const backRefs = block.backRefs
-    for (let ref in backRefs) {
-      if (store.blocks[ref].refs)
-        store.blocks[ref].refs = store.blocks[ref].refs.filter(x => x !== blockId)
-      if (store.blocks[ref][":block/refs"])
-        store.blocks[ref][":block/refs"] = store.blocks[ref][":block/refs"].filter(x => x !== blockId)
-    }
-    const parentBlock = store.blocks[block.parent]
-    if (parentBlock) {
-      parentBlock.children = parentBlock.children.filter(x => x !== blockId)
-    }
-    const parentPage = store.pages[block.parent]
-    if (parentPage) {
-      parentPage.children = parentPage.children.filter(x => x !== blockId)
-    }
-    delete store.blocks[blockId]
-  },
-
-  moveBlock: (blockId,newParentId,idx) => {
-    const block = store.blocks[blockId]
-    const parent = blockOrPageFromId(block.parent)
-    parent.children = parent.children.filter(x => x != blockId)
-    insertBlock(blockId,newParentId,idx)
-  },
-
-  // writeBlock takes link title list to avoid recomputation. couples this with renderBlockBody
-  writeBlock: (blockId,string,refTitles) => {
-    console.log(refTitles)
-
-    const block = store.blocks[blockId]
-    block.string = string
-
-    const oldRefs = block[":block/refs"]
-    if (oldRefs) {
-      for (let ref of oldRefs) {
-        blockOrPageFromId(ref).backRefs = blockOrPageFromId(ref).backRefs.filter(x => x !== blockId)
+  if (edits.subtract) {
+    for (let op of edits.subtract) {
+      let cur = store
+      for (let i = 0; i < op.length - 2; i++) {
+        cur = cur[op[i]]
       }
+      const key = op[op.length - 2]
+      cur[key] = cur[key].filter(x => (x != op[op.length - 1]))
     }
+  }
 
-    block[":block/refs"] = []
-    for (let title of refTitles) {
-      console.log(`title ${title}`)
-      let pageId = store.pagesByTitle[title]
-      if (pageId === undefined) {
-        // need to save this generated ID into command for worker / server
-        pageId = newUid()
-        commands.createPage(pageId,title)
+
+  if (edits.write) {
+    for (let op of edits.write) {
+      let cur = store
+      for (let i = 0; i < op.length - 2; i++) {
+        cur = cur[op[i]]
       }
-      block[":block/refs"].push(pageId)
-      store.pages[pageId].backRefs.push(blockId)
-      console.log("page")
-      console.log(store.pages[pageId])
+      cur[op[op.length - 2]] = op[op.length - 1]
     }
-  },
-
-  // gonna add more fields later
-  // the new id is in the change so it can be serialized deterministically
-  createBlock: (blockId,parentId,idx) => {
-    // todo make date guaranteed same between main and worker thread
-    store.blocks[blockId] = { string: "",parent: parentId,":create/time": Date.now(),children: [],backRefs: [] }
-    insertBlock(blockId,parentId,idx)
-  },
-
-  createPage: (pageId,pageTitle) => {
-    store.pages[pageId] = { title: pageTitle,children: [],":create/time": Date.now(),backRefs: [] }
-    store.pagesByTitle[pageTitle] = pageId
+  }
+  if (edits.add) {
+    for (let op of edits.add) {
+      let cur = store
+      for (let i = 0; i < op.length - 2; i++) {
+        cur = cur[op[i]]
+      }
+      cur[op[op.length - 2]].push(op[op.length - 1])
+    }
+  }
+  if (edits.insert) {
+    for (let op of edits.insert) {
+      let cur = store
+      for (let i = 0; i < op.length - 3; i++) {
+        cur = cur[op[i]]
+      }
+      const key = op[op.length - 3]
+      const val = op[op.length - 2]
+      const idx = op[op.length - 1]
+      const old = cur[key]
+      cur[key] = old.slice(0,idx)
+      cur[key].push(val)
+      cur[key].push(...old.slice(idx))
+    }
   }
 }
 
-const runCommand = (...command) => {
-  saveWorker.postMessage(["command",command])
-  commands[command[0]](...command.slice(1))
-}
 
 const print = (text) => {
   if (user.logging) {

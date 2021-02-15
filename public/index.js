@@ -654,7 +654,7 @@ if (w) {
 
 // const t = performance.now()
 // for (let i = 0; i < 1000000; i++) {
-//   getSelection()
+
 // }
 // console.log(`took ${performance.now() - t}`)
 
