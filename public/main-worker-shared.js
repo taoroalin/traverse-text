@@ -1,3 +1,14 @@
+const getIn = (arr,skip) => {
+  let result = store
+  for (let i = 0; i < arr.length - skip; i++) {
+    if (result[arr[i]] === undefined) {
+      result[arr[i]] = {}
+    }
+    result = result[arr[i]]
+  }
+  return result
+}
+
 // Edit format: {delete:[[...keys]],write:[[...keys,value]], add:[[...keys, value]], subtract:[[...keys, value]], insert: [[...keys, value, idx]]}
 
 const doEdits = (edits) => {
@@ -5,55 +16,49 @@ const doEdits = (edits) => {
   // it's important that subtract comes first, you can subtract something then insert it somewhere else
   if (edits.subtract) {
     for (let op of edits.subtract) {
-      let cur = store
-      for (let i = 0; i < op.length - 2; i++) {
-        cur = cur[op[i]]
-      }
+      const obj = getIn(op,2)
       const key = op[op.length - 2]
-      cur[key] = cur[key].filter(x => (x != op[op.length - 1]))
+      obj[key] = obj[key].filter(x => (x != op[op.length - 1]))
     }
   }
 
   if (edits.write) {
     for (let op of edits.write) {
-      let cur = store
-      for (let i = 0; i < op.length - 2; i++) {
-        cur = cur[op[i]]
-      }
-      cur[op[op.length - 2]] = op[op.length - 1]
+      const obj = getIn(op,2)
+      obj[op[op.length - 2]] = op[op.length - 1]
     }
   }
   if (edits.add) {
     for (let op of edits.add) {
-      let cur = store
-      for (let i = 0; i < op.length - 2; i++) {
-        cur = cur[op[i]]
-      }
-      cur[op[op.length - 2]].push(op[op.length - 1])
+      const obj = getIn(op,2)
+      obj[op[op.length - 2]].push(op[op.length - 1])
     }
   }
   if (edits.insert) {
     for (let op of edits.insert) {
-      let cur = store
-      for (let i = 0; i < op.length - 3; i++) {
-        cur = cur[op[i]]
-      }
+      const obj = getIn(op,3)
       const key = op[op.length - 3]
       const val = op[op.length - 2]
       const idx = op[op.length - 1]
-      const old = cur[key]
-      cur[key] = old.slice(0,idx)
-      cur[key].push(val)
-      cur[key].push(...old.slice(idx))
+      let old = obj[key]
+      if (old === undefined) {
+        old = [val]
+        obj[key] = old
+      } else if (old.length < idx) {
+        console.log(old)
+        console.log(key)
+        throw new Error(`tried to insert past end of list`)
+      } else {
+        obj[key] = old.slice(0,idx)
+        obj[key].push(val)
+        obj[key].push(...old.slice(idx))
+      }
     }
   }
   if (edits.delete) {
     for (let op of edits.delete) {
-      let cur = store
-      for (let i = 0; i < op.length - 1; i++) {
-        cur = cur[op[i]]
-      }
-      delete cur[op[op.length - 1]]
+      const obj = getIn(op,1)
+      delete obj[op[op.length - 1]]
     }
   }
 }

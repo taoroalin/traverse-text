@@ -7,7 +7,8 @@ const roamJsonToStore = (graphName,text) => {
   const blocks = {}
   const pagesByTitle = {}
 
-  const ownerRoamId = obj[0][":edit/user"][":user/uid"] // todo interface with roam user ids well
+  let ownerRoamId = null
+  if (obj[0][":edit/user"]) ownerRoamId = obj[0][":edit/user"][":user/uid"] // todo interface with roam user ids well
 
   const addBlock = (block,parent) => {
     blocks[block.uid] = block
@@ -70,6 +71,7 @@ const roamJsonToStore = (graphName,text) => {
     page.backRefs = []
   }
 
+  // add backrefs
   for (let blockUid in blocks) {
     const block = blocks[blockUid]
 
