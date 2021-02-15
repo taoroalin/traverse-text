@@ -153,6 +153,16 @@ const storeToRoamJSON = (store) => {
   return JSON.stringify(roamJSON)
 }
 
+const deleteOrphanPages = () => {
+  for (let pageId in store.pages) {
+    const page = store.pages[pageId]
+    if ((!page.children || page.children.length === 0) && page.backRefs.length === 0) {
+      delete store.pagesByTitle[page.title]
+      delete store.pages[pageId]
+    }
+  }
+}
+
 
 const escapeRegex = (string) => {
   return string.replaceAll(/(?<=^|[^`])([\[\]\(\)])/g,"\\$1").replaceAll("`","")

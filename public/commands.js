@@ -50,33 +50,65 @@ const commands = {
 
   // writeBlock takes link title list to avoid recomputation. couples this with renderBlockBody
   writeBlock: (blockId,string,refTitles,time) => {
+    /**
+     * This does a lot. It
+     * 
+     * writes string
+     * writes :edit/time
+     * writes :block/refs
+     * writes corresponding backRefs
+     * removes old backRefs
+     * 
+     */
+
+    const block = store.blocks[blockId]
+    const oldRefs = block[":block/refs"]
+
     const edits = {
-      write: [["blocks",blockId,"string",string],
-      ["blocks",blockId,":edit/time",time]],
+      write: [],
       subtract: [],
       add: [],
       delete: []
     }
 
-    const block = store.blocks[blockId]
-    const oldRefs = block[":block/refs"]
-
-    for (let oldRef of oldRefs) {
-      edits.subtracts.push([parentThingey(oldRef),oldRef,"backRefs",blockId])
-    }
-
-    for (let title of refTitles) {
+    // add refs
+    const newRefs = refTitles.map(title => {
       let pageId = store.pagesByTitle[title]
-      if (!pageId) {
-        pageId = newUid()
-        edits.write.push(["pages",pageId,{ title: title,children: [],":create/time": time,backRefs: [blockId] }])
-        edits.write.push(["pagesByTitle",title,pageId])
-      } else {
-        edits.add.push(["pages",pageId,"backRefs",blockId])
+      if (pageId !== undefined) {
+        if (!oldRefs.includes(pageId)) {
+          edits.add.push(["pages",pageId,"backRefs",blockId])
+        }
+        return pageId
       }
+      pageId = newUid()
+      edits.write.push(["pages",pageId,{ title: title,children: [],":create/time": time,backRefs: [blockId] }])
+      edits.write.push(["pagesByTitle",title,pageId])
+      return pageId
+    })
 
-      edits.add.push(["blocks",blockId,":block/refs",pageId])
-      edits.add.push(["blocks",blockId,"refs",pageId]) // todo add ref propagation to children
+    console.log(oldRefs)
+    console.log(newRefs)
+
+    // add string, edit time
+    edits.write.push(["blocks",blockId,"string",string],
+      ["blocks",blockId,":edit/time",time],
+      ["blocks",blockId,":block/refs",newRefs])
+
+
+    // subtract old refs
+    if (oldRefs) {
+      for (let oldRef of oldRefs) {
+        if (!newRefs.includes(oldRef)) {
+          edits.subtract.push([parentThingey(oldRef),oldRef,"backRefs",blockId])
+          if (parentThingey(oldRef) === "page") {
+            const page = store.pages[oldRef]
+            if ((page.children === undefined || page.children.length === 0) && (page.backRefs === undefined || page.backRefs.length == 0)) {
+              edits.delete.push(["pagesByTitle",page.title])
+              edits.delete.push(["pages",oldRef])
+            }
+          }
+        }
+      }
     }
 
     return { edits }
