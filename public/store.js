@@ -1,3 +1,11 @@
+const blankStore = () => ({
+  graphName: "default",
+  ownerRoamId: "default",
+  blocks: {},
+  pages: {},
+  pagesByTitle: {}
+})
+
 const roamJsonToStore = (graphName,text) => {
   const stime = performance.now()
 
