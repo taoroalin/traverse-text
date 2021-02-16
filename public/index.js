@@ -41,12 +41,6 @@ const gotoMethods = {
         oldestLoadedDailyNoteDate.getDate() - 1
       )
     }
-  },
-  suggestion: (suggestionNode) => {
-    if (suggestionNode.dataset.title)
-      gotoPageTitle(suggestionNode.dataset.title)
-    else
-      gotoBlock(suggestionNode.dataset.id)
   }
 }
 
