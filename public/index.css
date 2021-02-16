@@ -154,6 +154,28 @@ a:visited { color:var(--link) }
   border-radius: 5px;
 }
 
+
+#search-result-list{
+  position:absolute;
+  display:flex;
+  flex-direction: column;
+  background-color:var(--background);
+  font-size:1.3em;
+  border-radius:5px;
+  box-shadow: 0 0 8px var(--shadow);
+}
+
+.search-result[data-selected="true"]{
+  background-color:var(--click);
+}
+
+.search-result{
+  padding:7px;
+  cursor:pointer;
+  border-radius: 5px;
+}
+
+
 /* Page styles */
 
 .page{
