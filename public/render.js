@@ -59,9 +59,6 @@ const renderBlock = (parentNode,uid,idx) => {
 }
 
 
-const regexes = ["(\[\[)","(\]\])","(#[\/a-zA-Z0-9_-]+)","(\(\([a-zA-Z0-9\-_]{8,10}\)\))","(\*\*)","(\^\^)","(__)","((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))"]
-
-
 const renderBlockBody = (parent,text) => {
   let stack = [parent]
   // 1             2              3   4         5    6         7      8
@@ -165,7 +162,7 @@ const renderBlockBody = (parent,text) => {
 
   /**
    * PARSING REVELATION!!!!
-   * Instead of backtracking and deleting when a block doesn't close, I can just erase the className of the block. Then it's still part of the tree but looks like it's gone! No performance cost!!
+   * Instead of backtracking and deleting when a block doesn't close, I can just erase the className of the block. Then it's still part of the tree but looks like it's gone! much less performance cost than backtracking!!
    */
   while (stackTop.className !== "block__body") {
     if (stackTop.className === "page-ref")
