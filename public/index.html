@@ -33,7 +33,10 @@
     }
     r.onupgradeneeded = (event) => {
       const db = r.result
-      db.createObjectStore("stores",{ keyPath: "graphName" })
+      if (event.oldVersion >= 0) {
+      } else {
+        db.createObjectStore("stores",{ keyPath: "graphName" })
+      }
     }
     r.onerror = (event) => {
       alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
@@ -44,7 +47,6 @@
       localStorage.setItem("user",JSON.stringify(user))
     }
     saveUser()
-
 
     let oldestLoadedDailyNoteDate = null
     let commitDebounce = null
@@ -193,6 +195,7 @@
   </div>
 
   <script src="utils.js"></script>
+  <script src="save-between-versions.js"></script>
   <script src="main-worker-shared.js"></script>
   <script src="commands.js"></script>
   <script src="store.js"></script>

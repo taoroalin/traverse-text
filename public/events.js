@@ -110,7 +110,9 @@ const indentFocusedBlock = () => {
   const bid = focusedBlock.dataset.id
   const olderSibling = focusedBlock.previousSibling
   if (olderSibling && olderSibling.dataset && olderSibling.dataset.id) {
-    runCommand("moveBlock",bid,olderSibling.dataset.id)
+    const newParentId = olderSibling.dataset.id
+    const idx = blockOrPageFromId(newParentId).children.length
+    runCommand("moveBlock",bid,newParentId,idx)
     olderSibling.children[2].appendChild(focusedBlock)
     getSelection().collapse(focusedNode,focusOffset)
   }
@@ -130,7 +132,8 @@ const dedentFocusedBlock = () => {
       } else {
         grandparentChildren.appendChild(focusedBlock)
       }
-      runCommand("moveBlock",bid,grandparentId,parent.dataset.childIdx + 1)
+      const idx = blockOrPageFromId(grandparentId).children.indexOf(bid)
+      runCommand("moveBlock",bid,grandparentId,idx + 1)
       getSelection().collapse(focusedNode,focusOffset)
     }
   }
@@ -308,8 +311,9 @@ document.addEventListener("keydown",(event) => {
             idx += 1
           }
           const newBlockUid = runCommand("createBlock",store.blocks[bid].parent,idx)
-          renderBlock(focusedBlock.parentNode,newBlockUid,idx)
-          getSelection().collapse(focusedNode,focusOffset)
+          const newBlockElement = renderBlock(focusedBlock.parentNode,newBlockUid,idx)
+          newBlockElement.children[1].focus()
+          event.preventDefault()
         }
         break
       case "Tab":
