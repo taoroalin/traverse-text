@@ -36,7 +36,6 @@ const renderBlock = (parentNode,uid,idx) => {
   element.dataset.id = uid
   childrenContainer.dataset.id = uid
   body.dataset.id = uid
-  element.dataset.childIdx = idx || parentNode.children.length
 
   const string = store.blocks[uid].string
   if (string) {

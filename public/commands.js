@@ -37,13 +37,12 @@ const commands = {
     return { edits }
   },
 
-  moveBlock: (blockId,parentId,idx) => {
-    const parentThingey = !!store.pages[parentId] ? "pages" : "blocks"
-    const oldParentThingey = !!store.pages[store.blocks[blockId].parent] ? "pages" : "blocks"
+  moveBlock: (blockId,parentId,idx,time) => {
+    const oldParent = store.blocks[blockId].parent
     const edits = {
       write: [["blocks",blockId,"parent",parentId]],
-      insert: [[parentThingey,parentId,"children",blockId,idx]],
-      subtract: [[oldParentThingey,store.blocks[blockId].parent,"children",blockId]]
+      insert: [[parentThingey(parentId),parentId,"children",blockId,idx]],
+      subtract: [[parentThingey(oldParent),oldParent,"children",blockId]]
     }
     return { edits,returns: undefined }
   },

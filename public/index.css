@@ -110,10 +110,16 @@ a:visited { color:var(--link) }
   background-color:var(--background);
 }
 
-#top-bar a, #top-bar button{
+/* these have different paddings, but look the same because weird stuff. todo investigate */
+#top-bar a{
   padding: 14px 10px 10px;
   font-size:0.9em;
 }
+#top-bar button{
+  padding: 12px 10px 10px;
+  font-size:0.9em;
+}
+
 
 #download-button, #report-issue-button {
   color:var(--text);
