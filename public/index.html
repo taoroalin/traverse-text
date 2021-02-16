@@ -155,6 +155,10 @@
     <div class="autocomplete__suggestion"></div>
   </template>
 
+  <template id="search-result">
+    <div class="search-result"></div>
+  </template>
+
   <div id="app">
 
     <div id="top-bar">
@@ -173,23 +177,6 @@
       <a id="download-button" tabindex="-1">
         Download JSON
       </a>
-      <div STYLE="display:none">
-        <svg id="icon-download" x="0px" y="0px" width="30px" height="25px" viewBox="0 0 268.832 268.832">
-          <path
-            d="M223.255,167.493c-4.881-4.882-12.797-4.882-17.678,0l-58.661,58.661V12.5c0-6.903-5.598-12.5-12.5-12.5
-          c-6.904,0-12.5,5.597-12.5,12.5v213.654l-58.661-58.659c-4.883-4.881-12.797-4.881-17.678,0c-4.883,4.882-4.883,12.796,0,17.678
-          l80,79.998c2.439,2.44,5.64,3.661,8.839,3.661s6.397-1.221,8.839-3.661l80-80C228.137,180.289,228.137,172.375,223.255,167.493z" />
-        </svg>
-        <DIV>JSON
-        </DIV>
-        <svg id="icon-upload" x="0px" y="0px" width="30px" height="25px" preserveAspectRatio="none"
-          viewBox="0 0 268.832 268.832">
-          <path d="M223.255,83.659l-80-79.998c-4.881-4.881-12.797-4.881-17.678,0l-80,80c-4.883,4.882-4.883,12.796,0,17.678
-        c2.439,2.44,5.64,3.661,8.839,3.661s6.397-1.221,8.839-3.661l58.661-58.661v213.654c0,6.903,5.597,12.5,12.5,12.5
-        c6.901,0,12.5-5.597,12.5-12.5V42.677l58.661,58.659c4.883,4.881,12.797,4.881,17.678,0
-        C228.137,96.455,228.137,88.541,223.255,83.659z" />
-        </svg>
-      </div>
     </div>
 
     <div id="terminal" contenteditable="true" style="display:none">
@@ -202,6 +189,7 @@
     </div>
 
     <div id="autocomplete-list" style="display:none"></div>
+    <div id="search-result-list" style="display:none"></div>
 
   </div>
 

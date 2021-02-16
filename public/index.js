@@ -5,6 +5,7 @@ const backrefsListTemplate = document.getElementById("backrefs-list").content.fi
 const blockFocusFrameTemplate = document.getElementById("block-focus-frame").content.firstElementChild
 const pageBreakTemplate = document.getElementById("page-break").content.firstElementChild
 const suggestionTemplate = document.getElementById("autocomplete__suggestion").content.firstElementChild
+const searchResultTemplate = document.getElementById("search-result").content.firstElementChild
 
 // Singleton elements
 const pageFrame = document.getElementById("page-frame")
@@ -13,6 +14,7 @@ const searchInput = document.getElementById("search-input")
 const downloadButton = document.getElementById("download-button")
 const autocompleteList = document.getElementById("autocomplete-list")
 const terminalElement = document.getElementById("terminal")
+const searchResultList = document.getElementById("search-result-list")
 
 // App state transitions
 const gotoMethods = {
@@ -74,6 +76,7 @@ const goto = (...command) => { // no this is not an instruction pointer goto. Th
 const gotoNoHistory = (...command) => {
   // clear screen
   autocompleteList.style.display = "none"
+  searchResultList.style.display = "none"
   oldestLoadedDailyNoteDate = null
   pageFrameOuter.removeEventListener("scroll",dailyNotesInfiniteScrollListener)
   pageFrameOuter.scrollTop = 0
@@ -383,27 +386,27 @@ document.addEventListener("input",(event) => {
     const matchingTitles = exactFullTextSearch(event.target.value)
 
     if (matchingTitles.length > 0) {
-      autocompleteList.innerHTML = ""
+      searchResultList.innerHTML = ""
       for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
-        const suggestion = suggestionTemplate.cloneNode(true)
+        const result = searchResultTemplate.cloneNode(true)
         if (i === 0) {
-          suggestion.dataset.selected = "true"
+          result.dataset.selected = "true"
         }
         if (matchingTitles[i].title) {
-          suggestion.dataset.title = matchingTitles[i].title
-          suggestion.innerText = truncateElipsis(matchingTitles[i].title,50)
+          result.dataset.title = matchingTitles[i].title
+          result.innerText = truncateElipsis(matchingTitles[i].title,50)
         } else {
-          suggestion.dataset.string = matchingTitles[i].string
-          suggestion.dataset.id = matchingTitles[i].id
-          suggestion.innerText = truncateElipsis(matchingTitles[i].string,50)
+          result.dataset.string = matchingTitles[i].string
+          result.dataset.id = matchingTitles[i].id
+          result.innerText = truncateElipsis(matchingTitles[i].string,50)
         }
-        autocompleteList.appendChild(suggestion)
+        searchResultList.appendChild(result)
       }
-      autocompleteList.style.display = "block"
-      autocompleteList.style.top = searchInput.getBoundingClientRect().bottom
-      autocompleteList.style.left = searchInput.getBoundingClientRect().left
+      searchResultList.style.display = "block"
+      searchResultList.style.top = searchInput.getBoundingClientRect().bottom
+      searchResultList.style.left = searchInput.getBoundingClientRect().left
     } else {
-      autocompleteList.style.display = "none"
+      searchResultList.style.display = "none"
     }
   }
 })
@@ -576,9 +579,13 @@ document.addEventListener("keydown",(event) => {
       return
     } else if (event.key === "Tab") {
       console.log("goto suggestion")
-      const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
+      const selected = searchResultList.querySelector(`.search-result[data-selected="true"]`)
       if (selected) {
-        goto("suggestion",selected)
+        if (selected.dataset.title) {
+          goto("pageTitle",selected.dataset.title)
+        } else {
+          goto("block",selected.dataset.id)
+        }
         return
       }
     }
@@ -613,10 +620,12 @@ document.addEventListener("click",(event) => {
   } else if (event.target.id === "daily-notes-button") {
     goto("dailyNotes")
   } else if (event.target.className === "autocomplete__suggestion") {
-    if (focusNode.parentNode === searchInput) { // todo actually know what user is doing globally
-      goto("suggestion",event.target)
+    autocomplete()
+  } else if (event.target.className === "search-result") {
+    if (event.target.dataset.title) {
+      goto("pageTitle",event.target.dataset.title)
     } else {
-      autocomplete()
+      goto("block",event.target.dataset.id)
     }
   } else if (event.target.className === "url") { // using spans with event handlers as links because they play nice with contenteditable
     const link = document.createElement("a")
