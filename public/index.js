@@ -270,9 +270,9 @@ const focusBlockStart = (blockNode) => {
   temp.remove()
 }
 
-const autocomplete = () => {
+const autocomplete = (selected) => {
   const bid = focusedBlock.dataset.id
-  const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
+  if (selected === undefined) selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
   const origString = store.blocks[bid].string
   if (editingLink.className === "tag") {
     const textNode = editingLink.childNodes[0]
@@ -602,7 +602,6 @@ document.addEventListener("keydown",(event) => {
 
 document.addEventListener("click",(event) => {
 
-  updateCursorInfo()
 
   const closestBullet = event.target.closest(".block__bullet")
   if (event.target.className === "page-ref__body") {
@@ -620,7 +619,7 @@ document.addEventListener("click",(event) => {
   } else if (event.target.id === "daily-notes-button") {
     goto("dailyNotes")
   } else if (event.target.className === "autocomplete__suggestion") {
-    autocomplete()
+    autocomplete(event.target)
   } else if (event.target.className === "search-result") {
     if (event.target.dataset.title) {
       goto("pageTitle",event.target.dataset.title)
@@ -633,6 +632,10 @@ document.addEventListener("click",(event) => {
     link.href = event.target.innerText
     link.click()
   }
+
+  // this is at the bottom so that autocomplete suggestion click handler still knows where the link is. 
+  // todo have better tracking of active block
+  updateCursorInfo()
 })
 
 document.getElementById('upload-input').addEventListener('change',(event) => {
