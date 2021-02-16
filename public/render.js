@@ -172,3 +172,38 @@ const renderBlockBody = (parent,text) => {
   }
   return refTitles
 }
+
+const renderBlockBodyWithCursor = (blockBody,string,position) => {
+  if (position >= string.length) string += " "
+  blockBody.innerHTML = ""
+
+  // remove block body from dom while editing, ugly hack to avoid recalcuate style during dom generation
+  const blockElement = blockBody.parentNode
+  const blockBodyNextSibling = blockBody.nextSibling
+  blockBody.remove()
+
+  const refTitles = renderBlockBody(blockBody,string)
+
+  blockElement.insertBefore(blockBody,blockBodyNextSibling)
+
+  const scanElement = (element) => {
+    for (let el of element.childNodes) {
+      if (el.nodeName === "#text") {
+        if (el.textContent && position >= el.startIdx && position < el.startIdx + el.textContent.length) {
+          scanResult = el
+          try {
+            getSelection().collapse(el,position - el.startIdx) // this does the thing correctly, but then throws an error, which I catch? todo investigate
+            return el
+          } catch (error) {
+            return el
+          }
+        }
+      } else {
+        const z = scanElement(el)
+        if (z) return z
+      }
+    }
+  }
+  scanElement(blockBody)
+  return refTitles
+}

@@ -64,33 +64,6 @@ const downloadHandler = () => {
   downloadButton.setAttribute('download',`${store.graphName}-micro-roam.json`)
 }
 
-const renderBlockBodyWithCursor = (blockBody,string,position) => {
-  if (position >= string.length) string += " "
-  blockBody.innerHTML = ""
-  const refTitles = renderBlockBody(blockBody,string)
-
-  const scanElement = (element) => {
-    for (let el of element.childNodes) {
-      if (el.nodeName === "#text") {
-        if (el.textContent && position >= el.startIdx && position < el.startIdx + el.textContent.length) {
-          scanResult = el
-          try {
-            getSelection().collapse(el,position - el.startIdx) // this does the thing correctly, but then throws an error, which I catch? todo investigate
-            return el
-          } catch (error) {
-            return el
-          }
-        }
-      } else {
-        const z = scanElement(el)
-        if (z) return z
-      }
-    }
-  }
-  scanElement(blockBody)
-  return refTitles
-}
-
 
 // TODO make focusBlockStart ect get past the last 1 char
 const focusBlockEnd = (blockNode) => {
@@ -163,6 +136,57 @@ const dedentFocusedBlock = () => {
   }
 }
 
+const updateBlock = () => {
+  const blockBody = focusedBlockBody
+  const id = blockBody.parentNode.dataset.id
+  if (blockBody.innerText === " " || blockBody.innerText === "") {
+    runCommand("writeBlock",id,"",[])
+    return
+  }
+  // reparse block and insert cursor into correct position while typing
+
+  let string = blockBody.innerText
+  store.blocks[id].string = string // todo commit changes on word boundaries
+
+  const refTitles = renderBlockBodyWithCursor(blockBody,string,cursorPositionInBlock)
+  runCommand("writeBlock",id,string,refTitles)
+
+  updateCursorInfo()
+
+  // Autocomplete
+  // could do this here, or in scanElement, or in renderBlockBody
+  if (editingTitle) {
+    const matchingTitles = titleExactFullTextSearch(editingTitle)
+    if (matchingTitles.length > 0) {
+      autocompleteList.innerHTML = ""
+      for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
+        const suggestion = suggestionTemplate.cloneNode(true)
+        if (i === 0) {
+          suggestion.dataset.selected = "true"
+        }
+        if (matchingTitles[i].title) {
+          suggestion.dataset.id = matchingTitles[i].id
+          suggestion.dataset.title = matchingTitles[i].title
+          suggestion.innerText = truncateElipsis(matchingTitles[i].title,50)
+        }
+        else {
+          suggestion.dataset.id = matchingTitles[i].id
+          suggestion.dataset.string = matchingTitles[i].string
+          suggestion.innerText = truncateElipsis(matchingTitles[i].string,50)
+        }
+        autocompleteList.appendChild(suggestion)
+      }
+      autocompleteList.style.display = "block"
+      autocompleteList.style.top = editingLink.getBoundingClientRect().bottom
+      autocompleteList.style.left = editingLink.getBoundingClientRect().left
+    } else {
+      autocompleteList.style.display = "none"
+    }
+  } else {
+    autocompleteList.style.display = "none"
+  }
+}
+
 // Global event listeners that switch on active element, as a possibly more performant, simpler option than propagating through multiple event handlers
 
 // Event listener functions that can't be written inline because multiple triggers / disconnect / reconnect
@@ -170,54 +194,7 @@ const dedentFocusedBlock = () => {
 document.addEventListener("input",(event) => {
   updateCursorInfo()
   if (focusedBlock) {
-    const blockBody = focusedBlockBody
-    const id = blockBody.parentNode.dataset.id
-    if (blockBody.innerText === " " || blockBody.innerText === "") {
-      runCommand("writeBlock",id,"",[])
-      return
-    }
-    // reparse block and insert cursor into correct position while typing
-
-    let string = blockBody.innerText
-    store.blocks[id].string = string // todo commit changes on word boundaries
-
-    const refTitles = renderBlockBodyWithCursor(blockBody,string,cursorPositionInBlock)
-    runCommand("writeBlock",id,string,refTitles)
-
-    updateCursorInfo()
-
-    // Autocomplete
-    // could do this here, or in scanElement, or in renderBlockBody
-    if (editingTitle) {
-      const matchingTitles = titleExactFullTextSearch(editingTitle)
-      if (matchingTitles.length > 0) {
-        autocompleteList.innerHTML = ""
-        for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
-          const suggestion = suggestionTemplate.cloneNode(true)
-          if (i === 0) {
-            suggestion.dataset.selected = "true"
-          }
-          if (matchingTitles[i].title) {
-            suggestion.dataset.id = matchingTitles[i].id
-            suggestion.dataset.title = matchingTitles[i].title
-            suggestion.innerText = truncateElipsis(matchingTitles[i].title,50)
-          }
-          else {
-            suggestion.dataset.id = matchingTitles[i].id
-            suggestion.dataset.string = matchingTitles[i].string
-            suggestion.innerText = truncateElipsis(matchingTitles[i].string,50)
-          }
-          autocompleteList.appendChild(suggestion)
-        }
-        autocompleteList.style.display = "block"
-        autocompleteList.style.top = editingLink.getBoundingClientRect().bottom
-        autocompleteList.style.left = editingLink.getBoundingClientRect().left
-      } else {
-        autocompleteList.style.display = "none"
-      }
-    } else {
-      autocompleteList.style.display = "none"
-    }
+    requestAnimationFrame(updateBlock)
 
   } else if (event.target.id === "search-input") {
 
