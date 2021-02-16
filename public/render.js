@@ -1,10 +1,63 @@
-const pageRefTemplate = document.getElementById("page-ref").content.firstElementChild
-const tagTemplate = document.getElementById("tag").content.firstElementChild
-const urlTemplate = document.getElementById("url").content.firstElementChild
-const blockRefTemplate = document.getElementById("block-ref").content.firstElementChild
-const boldTemplate = document.getElementById("bold").content.firstElementChild
-const italicTemplate = document.getElementById("italic").content.firstElementChild
-const highlightTemplate = document.getElementById("highlight").content.firstElementChild
+const renderPage = (parentNode,uid) => {
+  const page = store.pages[uid]
+  const element = pageTemplate.cloneNode(true)
+  const title = element.firstElementChild
+  const body = element.children[1]
+  body.dataset.id = uid
+  element.dataset.id = uid
+
+  title.innerText = page.title
+
+  let children = page.children
+  if (!children || children.length === 0) { // todo set standards for when lists can be empty to reduce ambiguity
+    runCommand("createBlock",uid,0)
+    children = page.children
+  }
+  for (let child of children) {
+    renderBlock(body,child)
+  }
+
+  if (page.backRefs.length > 0) {
+    const backrefsListElement = backrefsListTemplate.cloneNode(true)
+    element.children[2].appendChild(backrefsListElement)
+    for (let backref of page.backRefs) {
+      renderBlock(backrefsListElement.children[1],backref)
+    }
+  }
+
+  parentNode.appendChild(element)
+  return element
+}
+
+const renderBlock = (parentNode,uid,idx) => {
+  const element = blockTemplate.cloneNode(true)
+  const body = element.children[1]
+  const childrenContainer = element.children[2]
+  element.dataset.id = uid
+  childrenContainer.dataset.id = uid
+  body.dataset.id = uid
+  element.dataset.childIdx = idx || parentNode.children.length
+
+  const string = store.blocks[uid].string
+  if (string) {
+    renderBlockBody(body,string)
+  }
+
+  const children = store.blocks[uid].children
+  if (children) {
+    for (let child of children) {
+      renderBlock(childrenContainer,child)
+    }
+  }
+
+  if (idx !== undefined) {
+    parentNode.insertBefore(element,parentNode.children[idx])
+  } else {
+    parentNode.appendChild(element)
+  }
+  return element
+}
+
 
 const regexes = ["(\[\[)","(\]\])","(#[\/a-zA-Z0-9_-]+)","(\(\([a-zA-Z0-9\-_]{8,10}\)\))","(\*\*)","(\^\^)","(__)","((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))"]
 
