@@ -10,8 +10,6 @@
     r.onsuccess = (e1) => {
       idb = e1.target.result
       idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
-        console.log("target")
-        console.log(e.target)
         if (e.target.result) {
           store = JSON.parse(e.target.result.store)
           if (w) {

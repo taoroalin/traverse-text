@@ -219,7 +219,6 @@ document.addEventListener("input",(event) => {
       autocompleteList.style.display = "none"
     }
 
-
   } else if (event.target.id === "search-input") {
 
     const matchingTitles = exactFullTextSearch(event.target.value)
@@ -247,6 +246,11 @@ document.addEventListener("input",(event) => {
     } else {
       searchResultList.style.display = "none"
     }
+
+  } else if (event.target.className === "page__title") {
+    console.log("edit title")
+    const pageId = event.target.parentNode.dataset.id
+    runCommand("writePageTitle",pageId,event.target.innerText)
   }
 })
 

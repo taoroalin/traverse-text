@@ -131,7 +131,29 @@ const commands = {
       ["pagesByTitle",pageTitle,pageId]]
     }
     return { edits,returns: pageId }
+  },
+
+  writePageTitle: (pageId,title,time) => {
+    const page = store.pages[pageId]
+    const oldTitle = page.title
+    const edits = {
+      write: [["pages",pageId,"title",title],
+      ["pages",pageId,":edit/time",time],
+      ["pagesByTitle",title,pageId]],
+      delete: [["pagesByTitle",oldTitle]]
+    }
+    if (page.backRefs) {
+      for (let backRef of page.backRefs) {
+        const block = store.blocks[backRef]
+        let string = block.string
+
+        // this replaces all other instances of that word, not just linked ones. This is a feature decision I made because it's easy
+        edits.write.push(["blocks",backRef,"string",string.replaceAll(oldTitle,title)])
+      }
+    }
+    return { edits }
   }
+
 }
 
 const runCommand = (...command) => {
