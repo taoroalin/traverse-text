@@ -13,3 +13,15 @@ const nolog = () => {
   saveUser()
   saveWorker.postMessage(["user",user])
 }
+
+const test = () => {
+  const testScriptNode = document.createElement("script")
+  testScriptNode.src = "test.js"
+  document.body.appendChild(testScriptNode)
+}
+
+const reset = () => {
+  const r = indexedDB.deleteDatabase("microroam")
+  localStorage.removeItem("user")
+  window.location.href = window.location.href
+}
