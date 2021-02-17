@@ -49,7 +49,7 @@ const renderBlock = (parentNode,uid,idx) => {
     }
   }
 
-  if (idx !== undefined) {
+  if (idx !== undefined && parentNode.children.length >= idx) {
     parentNode.insertBefore(element,parentNode.children[idx])
   } else {
     parentNode.appendChild(element)

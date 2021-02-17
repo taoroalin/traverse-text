@@ -139,57 +139,6 @@ const dedentFocusedBlock = () => {
   }
 }
 
-const updateBlock = () => {
-  const blockBody = focusedBlockBody
-  const id = blockBody.parentNode.dataset.id
-  if (blockBody.innerText === " " || blockBody.innerText === "") {
-    runCommand("writeBlock",id,"",[])
-    return
-  }
-  // reparse block and insert cursor into correct position while typing
-
-  let string = blockBody.innerText
-  store.blocks[id].string = string // todo commit changes on word boundaries
-
-  const refTitles = renderBlockBodyWithCursor(blockBody,string,cursorPositionInBlock)
-  runCommand("writeBlock",id,string,refTitles)
-
-  updateCursorInfo()
-
-  // Autocomplete
-  // could do this here, or in scanElement, or in renderBlockBody
-  if (editingTitle) {
-    const matchingTitles = titleExactFullTextSearch(editingTitle)
-    if (matchingTitles.length > 0) {
-      autocompleteList.innerHTML = ""
-      for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
-        const suggestion = suggestionTemplate.cloneNode(true)
-        if (i === 0) {
-          suggestion.dataset.selected = "true"
-        }
-        if (matchingTitles[i].title) {
-          suggestion.dataset.id = matchingTitles[i].id
-          suggestion.dataset.title = matchingTitles[i].title
-          suggestion.innerText = truncateElipsis(matchingTitles[i].title,50)
-        }
-        else {
-          suggestion.dataset.id = matchingTitles[i].id
-          suggestion.dataset.string = matchingTitles[i].string
-          suggestion.innerText = truncateElipsis(matchingTitles[i].string,50)
-        }
-        autocompleteList.appendChild(suggestion)
-      }
-      autocompleteList.style.display = "block"
-      autocompleteList.style.top = editingLink.getBoundingClientRect().bottom
-      autocompleteList.style.left = editingLink.getBoundingClientRect().left
-    } else {
-      autocompleteList.style.display = "none"
-    }
-  } else {
-    autocompleteList.style.display = "none"
-  }
-}
-
 // Global event listeners that switch on active element, as a possibly more performant, simpler option than propagating through multiple event handlers
 
 // Event listener functions that can't be written inline because multiple triggers / disconnect / reconnect
@@ -197,7 +146,54 @@ const updateBlock = () => {
 document.addEventListener("input",(event) => {
   updateCursorInfo()
   if (focusedBlock) {
-    requestAnimationFrame(updateBlock)
+    const blockBody = focusedBlockBody
+    const id = blockBody.parentNode.dataset.id
+    if (blockBody.innerText === " " || blockBody.innerText === "") {
+      runCommand("writeBlock",id,"",[])
+      return
+    }
+    // reparse block and insert cursor into correct position while typing
+
+    let string = blockBody.innerText
+    store.blocks[id].string = string // todo commit changes on word boundaries
+
+    const refTitles = renderBlockBodyWithCursor(blockBody,string,cursorPositionInBlock)
+    runCommand("writeBlock",id,string,refTitles)
+
+    updateCursorInfo()
+
+    // Autocomplete
+    // could do this here, or in scanElement, or in renderBlockBody
+    if (editingTitle) {
+      const matchingTitles = titleExactFullTextSearch(editingTitle)
+      if (matchingTitles.length > 0) {
+        autocompleteList.innerHTML = ""
+        for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
+          const suggestion = suggestionTemplate.cloneNode(true)
+          if (i === 0) {
+            suggestion.dataset.selected = "true"
+          }
+          if (matchingTitles[i].title) {
+            suggestion.dataset.id = matchingTitles[i].id
+            suggestion.dataset.title = matchingTitles[i].title
+            suggestion.innerText = truncateElipsis(matchingTitles[i].title,50)
+          }
+          else {
+            suggestion.dataset.id = matchingTitles[i].id
+            suggestion.dataset.string = matchingTitles[i].string
+            suggestion.innerText = truncateElipsis(matchingTitles[i].string,50)
+          }
+          autocompleteList.appendChild(suggestion)
+        }
+        autocompleteList.style.display = "block"
+        autocompleteList.style.top = editingLink.getBoundingClientRect().bottom
+        autocompleteList.style.left = editingLink.getBoundingClientRect().left
+      } else {
+        autocompleteList.style.display = "none"
+      }
+    } else {
+      autocompleteList.style.display = "none"
+    }
 
   } else if (event.target.id === "search-input") {
 
@@ -237,7 +233,9 @@ document.addEventListener("input",(event) => {
 document.addEventListener("keydown",(event) => {
   updateCursorInfo()
 
-  if (event.key === "Tab" && autocompleteList.style.display !== "none" && focusedBlock) {
+  if (event.key === "b" && event.ctrlKey && !event.shiftKey && !event.altKey) {
+    topBar.style.display = topBar.style.display === "flex" ? "none" : "flex"
+  } else if (event.key === "Tab" && autocompleteList.style.display !== "none" && focusedBlock) {
     autocomplete()
     event.preventDefault()
     // Check for global shortcut keys
@@ -268,6 +266,7 @@ document.addEventListener("keydown",(event) => {
     goto("dailyNotes")
     event.preventDefault()
   } else if (event.ctrlKey && event.key === "u") {
+    if (topBar.style.display === "none") topBar.style.display = "flex"
     searchInput.focus()
     event.preventDefault()
   } else if (event.ctrlKey && event.key === "o") {
