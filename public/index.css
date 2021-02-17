@@ -108,6 +108,7 @@ a:visited { color:var(--link) }
   flex-direction: row;
   align-content: space-between;
   background-color:var(--background);
+  transition:margin-top 0.1s;
 }
 
 /* these have different paddings, but look the same because weird stuff. todo investigate */
@@ -302,13 +303,4 @@ a:visited { color:var(--link) }
   padding:8px;
   background-color: black;
   color:white;
-}
-
-
-.code{
-  font-family:'Inconsolata';
-  font-weight:600;
-  padding:8px;
-  border:1px solid var(--border);
-  border-radius: 5px;
 }

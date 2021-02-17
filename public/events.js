@@ -234,7 +234,9 @@ document.addEventListener("keydown",(event) => {
   updateCursorInfo()
 
   if (event.key === "b" && event.ctrlKey && !event.shiftKey && !event.altKey) {
-    topBar.style.display = topBar.style.display === "flex" ? "none" : "flex"
+    console.log(topBar.style.marginTop === "0px")
+    if (topBar.style.marginTop === "0px") hideTopBar()
+    else showTopBar()
   } else if (event.key === "Tab" && autocompleteList.style.display !== "none" && focusedBlock) {
     autocomplete()
     event.preventDefault()
@@ -266,7 +268,7 @@ document.addEventListener("keydown",(event) => {
     goto("dailyNotes")
     event.preventDefault()
   } else if (event.ctrlKey && event.key === "u") {
-    if (topBar.style.display === "none") topBar.style.display = "flex"
+    if (topBar.style.marginTop !== "0px") topBar.style.marginTop = "0px"
     searchInput.focus()
     event.preventDefault()
   } else if (event.ctrlKey && event.key === "o") {
@@ -472,3 +474,16 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
     setTimeout(() => saveWorker.postMessage(["save",store]),0)
   })
 })
+
+topBarHiddenHitbox.addEventListener("mouseover",() => {
+  showTopBar()
+})
+
+const showTopBar = () => {
+  topBar.style.marginTop = "0px"
+  topBarHiddenHitbox.style.display = "none"
+}
+const hideTopBar = () => {
+  topBar.style.marginTop = "-46px"
+  topBarHiddenHitbox.style.display = "block"
+}
