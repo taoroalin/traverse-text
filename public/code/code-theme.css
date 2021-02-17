@@ -1,3 +1,11 @@
+.code{
+  font-family:'Inconsolata';
+  font-weight:600;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius: 5px;
+}
+
 /* vscode dark+ */
 .code__type{
   color:#4EC9B0
