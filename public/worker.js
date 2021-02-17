@@ -5,7 +5,7 @@ let store = null
 let saveTimeout = null
 let user = null
 
-const dbReq = indexedDB.open("microroam",1)
+const dbReq = indexedDB.open("microroam",4) // @copypaste this needs to be the exact same as in index.html, I don't want to have to load another file before accessing indexeddb in index.html, so will have to remain a copypaste sync
 dbReq.onsuccess = (event) => idb = event.target.result
 
 
@@ -32,7 +32,7 @@ onmessage = (event) => {
 
 const debouncedSaveStore = () => {
   clearTimeout(saveTimeout)
-  saveTimeout = setTimeout(saveStore,500)
+  saveTimeout = setTimeout(saveStore,100)
 }
 
 const saveStore = () => {

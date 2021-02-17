@@ -1,6 +1,6 @@
 <body>
   <script>
-    const r = indexedDB.open("microroam",1);
+    const r = indexedDB.open("microroam",4);
     let user = { theme: "light",graphName: "default",logging: false,spellcheck: false,prettyUntilFocused: false }
     const storedUser = localStorage.getItem("user")
     if (storedUser) user = JSON.parse(storedUser)
@@ -33,10 +33,9 @@
     }
     r.onupgradeneeded = (event) => {
       const db = r.result
-      if (event.oldVersion >= 0) {
-      } else {
+      const stores = Array.from(db.objectStoreNames)
+      if (!stores.includes("stores"))
         db.createObjectStore("stores",{ keyPath: "graphName" })
-      }
     }
     r.onerror = (event) => {
       alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
@@ -162,7 +161,7 @@
 
   <div id="app">
 
-    <div id="top-bar">
+    <div id="top-bar" style="display:flex">
       <a id="report-issue-button" target="_blank" href="mailto:taoroalin@gmail.com?subject=You Made Micro Roam Wrong"
         tabindex="-1">
         Report Issue
