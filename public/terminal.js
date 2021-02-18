@@ -33,6 +33,18 @@ const blank = () => {
   goto("dailyNotes")
 }
 
+let pingstime
+const ping = () => {
+  pingstime = performance.now()
+  saveWorker.postMessage(["ping",{ hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: "hello" } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } }])
+}
+
+saveWorker.onmessage = (event) => {
+  console.log(`ping took ${performance.now() - pingstime}`)
+  console.log(event.target)
+
+}
+
 const terminalCommands = {
   blank,reset,test,log,page,nolog
 }
