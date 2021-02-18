@@ -132,12 +132,20 @@ const mergeStore = (otherStore) => {
 
   const idTranslation = {}
 
-
   const getNewId = (id) => {
     if (store.blocks[id] !== undefined || store.pages[id] !== undefined)
       return idTranslation[id] || newUid()
     return id
   }
+
+  for (let blockId in otherStore.blocks) {
+    getNewId(blockId)
+  }
+
+  for (let pageId in otherStore.pages) {
+    getNewId(pageId)
+  }
+
 
   const transferBlock = (blockId,newBlockId,parentId) => {
     const block = otherStore.blocks[blockId]
@@ -150,6 +158,12 @@ const mergeStore = (otherStore) => {
         let newChildId = getNewId(childId)
         transferBlock(childId,newChildId,newBlockId)
         newBlock.children.push(newChildId)
+      }
+    }
+    for (let listName of ["refs",":block/refs","backRefs"]) {
+      let list = block[listName]
+      if (list) {
+        newBlock[listName] = list.map(getNewId)
       }
     }
   }
@@ -170,6 +184,14 @@ const mergeStore = (otherStore) => {
           newPage.children.push(newBlockId)
         }
       }
+
+      for (let listName of ["refs",":block/refs","backRefs"]) {
+        let list = page[listName]
+        if (list) {
+          newPage[listName] = list.map(getNewId)
+        }
+      }
+
     } else {
       const existingPage = store.pages[existingPageId]
       if (page.children) {
@@ -178,6 +200,14 @@ const mergeStore = (otherStore) => {
           const newChildId = getNewId(childId)
           transferBlock(childId,newChildId,existingPageId)
           existingPage.children.push(newChildId)
+        }
+      }
+      for (let listName of ["refs",":block/refs","backRefs"]) {
+        if (page[listName]) {
+          if (existingPage[listName] === undefined) existingPage[listName] = []
+          for (let name of page[listName]) {
+            existingPage[listName].push(getNewId(name))
+          }
         }
       }
     }
