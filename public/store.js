@@ -215,6 +215,17 @@ const mergeStore = (otherStore) => {
 
 }
 
+// gc for when I leak data by accident
+const gcBlocks = () => {
+  for (let blockId of Array.from(store.blocks)) {
+    const block = store.blocks[blockId]
+    if (store.pages[block.parent] === undefined && store.blocks[block.parent] === undefined) {
+      delete store.blocks[blockId]
+    }
+  }
+}
+
+
 // search
 
 const escapeRegex = (string) => {
