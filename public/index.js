@@ -84,6 +84,15 @@ const saveWorker = new Worker('/worker.js')
 
 saveWorker.postMessage(["user",user])
 
+saveWorker.onmessage = (event) => {
+  const data = event.data[1]
+  const operation = event.data[0]
+  if (operation === "ping") {
+    console.log(`ping took ${performance.now() - pingstime}`)
+  }
+
+}
+
 
 // Finally starting the program after everything's compiled
 if (w) {
