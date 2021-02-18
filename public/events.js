@@ -49,6 +49,7 @@ const dailyNotesInfiniteScrollListener = () => {
       const daysNotes = store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)]
       if (daysNotes) {
         renderPage(pageFrame,daysNotes)
+        pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
         break
       }
     }
