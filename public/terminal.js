@@ -33,6 +33,10 @@ const blank = () => {
   goto("dailyNotes")
 }
 
+const pr = () => {
+  console.log(JSON.stringify(store))
+}
+
 let pingstime
 const ping = () => {
   pingstime = performance.now()
@@ -40,5 +44,5 @@ const ping = () => {
 }
 
 const terminalCommands = {
-  blank,reset,test,log,page,nolog,ping
+  blank,reset,test,log,page,nolog,ping,pr
 }
