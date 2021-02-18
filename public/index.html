@@ -84,12 +84,13 @@
 
     let editingLink = null
     let editingTitle = null
-    let focusedBlock = null
-    let cursorPositionInBlock = null
     let focusedNode = null
     let focusOffset = null
 
-    let sessionState = { pageFrame: {} }
+    let focusedBlock = null
+    let cursorPositionInBlock = null
+
+    let sessionState = { pageFrame: { type: "dailyNotes",scroll: 0,focusedBlock: null,position: null } }
 
     const topBar = document.getElementById("top-bar")
     const topBarHiddenHitbox = document.getElementById("top-bar-hidden-hitbox")
