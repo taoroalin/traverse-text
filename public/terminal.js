@@ -25,3 +25,14 @@ const reset = () => {
   localStorage.removeItem("user")
   window.location.href = window.location.href
 }
+
+const blank = () => {
+  store = blankStore()
+  user = blankUser
+  saveUser()
+  goto("dailyNotes")
+}
+
+const terminalCommands = {
+  blank,reset,test,log,page,nolog
+}

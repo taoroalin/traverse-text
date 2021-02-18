@@ -1,7 +1,41 @@
 <body>
+  <div id="app">
+    <div id="top-bar" style="margin-top:0px">
+      <a id="report-issue-button" target="_blank" href="mailto:taoroalin@gmail.com?subject=You Made Micro Roam Wrong"
+        tabindex="-1">
+        Report Issue
+      </a>
+      <button id="daily-notes-button" tabindex="-1">
+        Daily Notes
+      </button>
+      <input id="search-input" placeholder="search" tabindex="-1">
+      <button id="upload-button" tabindex="-1">
+        <input style="display:none" type="file" id="upload-input">
+        Upload JSON
+      </button>
+      <a id="download-button" tabindex="-1">
+        Download JSON
+      </a>
+    </div>
+
+    <div id="top-bar-hidden-hitbox" style="position:fixed;height:15px;width:100%"></div>
+
+    <div id="terminal" contenteditable="true" style="display:none"></div>
+
+    <div id="page-frame-outer">
+      <div id="page-frame">
+
+      </div>
+    </div>
+
+    <div id="autocomplete-list" style="display:none"></div>
+    <div id="search-result-list" style="display:none"></div>
+
+  </div>
   <script>
     const r = indexedDB.open("microroam",4);
-    let user = { theme: "light",graphName: "default",logging: false,spellcheck: false,prettyUntilFocused: false }
+    const blankUser = { graphName: "default",theme: "light",topBar: "visible",logging: false,spellcheck: false }
+    let user = blankUser
     const storedUser = localStorage.getItem("user")
     if (storedUser) user = JSON.parse(storedUser)
     let w = false; // flag for whether either code or data loaded
@@ -41,11 +75,6 @@
       alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
     You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
     }
-    const saveUser = () => {
-      document.body.className = user.theme
-      localStorage.setItem("user",JSON.stringify(user))
-    }
-    saveUser()
 
     let oldestLoadedDailyNoteDate = null
     let commitDebounce = null
@@ -56,6 +85,25 @@
     let cursorPositionInBlock = null
     let focusedNode = null
     let focusOffset = null
+
+    const topBar = document.getElementById("top-bar")
+    const topBarHiddenHitbox = document.getElementById("top-bar-hidden-hitbox")
+
+    const showTopBar = () => {
+      topBar.style.marginTop = "0px"
+      topBarHiddenHitbox.style.display = "none"
+    }
+    const hideTopBar = () => {
+      topBar.style.marginTop = "-46px"
+      topBarHiddenHitbox.style.display = "block"
+    }
+    const saveUser = () => {
+      document.body.className = user.theme
+      if (user.topBar === "visible") showTopBar()
+      else hideTopBar()
+      localStorage.setItem("user",JSON.stringify(user))
+    }
+    saveUser()
     // editingLink, focusedBlock, cursorPositionInBlock are all about where the cursor is. They are all set at the beginning of each event handler
 
 
@@ -158,44 +206,6 @@
   <template id="search-result">
     <div class="search-result"></div>
   </template>
-
-  <div id="app">
-
-    <div id="top-bar" style="margin-top:0px">
-      <a id="report-issue-button" target="_blank" href="mailto:taoroalin@gmail.com?subject=You Made Micro Roam Wrong"
-        tabindex="-1">
-        Report Issue
-      </a>
-      <button id="daily-notes-button" tabindex="-1">
-        Daily Notes
-      </button>
-      <input id="search-input" placeholder="search" tabindex="-1">
-      <button id="upload-button" tabindex="-1">
-        <input style="display:none" type="file" id="upload-input">
-        Upload JSON
-      </button>
-      <a id="download-button" tabindex="-1">
-        Download JSON
-      </a>
-    </div>
-
-    <div id="top-bar-hidden-hitbox" style="position:fixed;height:15px;width:100%">
-
-    </div>
-
-    <div id="terminal" contenteditable="true" style="display:none">
-    </div>
-
-    <div id="page-frame-outer">
-      <div id="page-frame">
-
-      </div>
-    </div>
-
-    <div id="autocomplete-list" style="display:none"></div>
-    <div id="search-result-list" style="display:none"></div>
-
-  </div>
 
   <script src="utils.js"></script>
   <script src="save-between-versions.js"></script>

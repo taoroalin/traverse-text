@@ -1,13 +1,19 @@
+/*
+{activePage:{title:pageTitle, focusedBlock:blockId, cursorPosition:position}}
+when I add embeds, they will be an extra prop in active page, for instance {focusedBlock:blockId, embeddedFocusedBlock:{id,position}}
+
+*/
+
 // App state transitions
 const gotoMethods = {
-  pageTitle: (title) => {
+  pageTitle: ([title]) => {
     let existingPage = store.pagesByTitle[title]
     if (existingPage === undefined) {
       existingPage = runCommand("createPage",title)
     }
     renderPage(pageFrame,existingPage)
   },
-  block: (uid) => {
+  block: ([uid]) => {
     const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
     pageFrame.appendChild(blockFocusFrame)
     renderBlock(blockFocusFrame,uid)

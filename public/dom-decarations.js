@@ -26,5 +26,4 @@ const downloadButton = document.getElementById("download-button")
 const autocompleteList = document.getElementById("autocomplete-list")
 const terminalElement = document.getElementById("terminal")
 const searchResultList = document.getElementById("search-result-list")
-const topBar = document.getElementById("top-bar")
-const topBarHiddenHitbox = document.getElementById("top-bar-hidden-hitbox")
+
