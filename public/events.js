@@ -1,45 +1,5 @@
 // Event Listener Helpers -----------------------------------------------------------------------------------------------
 
-const updateCursorInfo = () => {
-  focusedNode = getSelection().focusNode
-  focusOffset = getSelection().focusOffset
-  focusedBlock = focusedNode && focusedNode.parentNode.closest(".block")
-  focusedBlockBody = focusedBlock && focusedBlock.children[1]
-  cursorPositionInBlock = focusedBlock && getCursorPositionInBlock()
-  editingLink = focusedBlock && getCurrentLink()
-  editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
-}
-
-const getCursorPositionInBlock = () => {
-  const selection = getSelection()
-  const focusNode = selection.focusNode
-  if (focusNode.className === "block__body") {
-    const jankReturn = focusedBlock.innerText.length * (focusOffset !== 0) // todo make this less jank
-    return jankReturn
-  } else {
-    let position = selection.focusOffset
-    if (focusNode.startIdx) position += focusNode.startIdx
-    return position
-  }
-}
-
-const getCurrentLink = () => {
-  const pageRefs = focusedBlockBody.querySelectorAll(".page-ref")
-  const tags = focusedBlockBody.querySelectorAll(".tag")
-  let result = null
-  for (let tag of tags) {
-    if (tag.childNodes[0].endIdx >= cursorPositionInBlock && tag.childNodes[0].startIdx < cursorPositionInBlock) {
-      result = tag
-    }
-  }
-  for (let ref of pageRefs) {
-    if (ref.children[1].childNodes[0].endIdx >= cursorPositionInBlock && ref.children[1].childNodes[0].startIdx < cursorPositionInBlock) {
-      result = ref
-    }
-  }
-  return result
-}
-
 const dailyNotesInfiniteScrollListener = () => {
   const fromBottom =
     pageFrame.getBoundingClientRect().bottom - innerHeight
