@@ -134,57 +134,27 @@ const mergeStore = (otherStore) => {
 
   const transferBlock = (blockId,newBlockId,parentId) => {
     const block = otherStore.blocks[blockId]
-    const newBlock = { ...block }
-    newBlock.parent = parentId
-    store.blocks[newBlockId] = newBlock
+    store.blocks[newBlockId] = block
+    block.parent = parentId
     if (block.children) {
-      const oldChildren = block.children
-      block.children = []
-      for (let childId of oldChildren) {
-        let newChildId = blockId
-        // if (store.blocks[childId] !== undefined) {
-        //   newChildId = newUid()
-        //   idTranslation[childId] = newBlockId
-        //   block.children.push(newBlockId)
-        // }
-        block.children.push(newChildId)
-        transferBlock(childId,newChildId,newBlockId)
+      for (let childId of block.children) {
+        transferBlock(childId,childId,newBlockId)
       }
     }
-    console.log(newBlock)
-
-    // for (let listName of ["refs",":block/refs","backRefs"]) {
-    //   if (block[listName]) {
-    //     block[listName] = block[listName].map(name => idTranslation[name] || name)
-    //   }
-    // }
   }
 
   for (let pageId in otherStore.pages) {
     const page = otherStore.pages[pageId]
     if (store.pagesByTitle[page.title] === undefined) {
-      const newPage = { ...page }
-      store.pages[pageId] = newPage
+      store.pages[pageId] = page
       store.pagesByTitle[page.title] = pageId
       if (page.children) {
-        newPage.children = []
         for (let blockId of page.children) {
-          let newBlockId = blockId
-          // if (store.blocks[blockId] !== undefined) {
-          //   newBlockId = newUid()
-          //   idTranslation[blockId] = newBlockId
-          // }
-          newPage.children.push(newBlockId)
-          transferBlock(blockId,newBlockId,pageId)
+          transferBlock(blockId,blockId,pageId)
         }
       }
-      console.log(store.pages[pageId])
-    } else {
-      // console.log(`same page ${page.title}`)
     }
   }
-
-  console.log(idTranslation)
 }
 
 // search
