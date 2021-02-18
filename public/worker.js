@@ -26,7 +26,7 @@ onmessage = (event) => {
     doEdits(data)
     debouncedSaveStore()
   } else if (operation === "ping") {
-    postMessage("ping")
+    postMessage(["ping",undefined])
   } {
     print(`saveWorker got weird operation: ${operation}`)
   }
