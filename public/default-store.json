@@ -162,7 +162,9 @@
       ":create/time": 1613254747377,
       "children": [
         "e5qwu46yQ",
-        "rJEwNT4jg"
+        "rJEwNT4jg",
+        "_OBgldEe6",
+        "ElFkVecKE"
       ],
       "backRefs": [],
       ":block/refs": [
@@ -301,13 +303,15 @@
       ":edit/time": 1613446175673
     },
     "3LNqSCuXJ": {
-      "string": "Ctrl + B : Hide / show top bar. __warning: you may forget how to show top bar again!__",
+      "string": "Ctrl + B : Hide / show top bar. ",
       "parent": "NJS9MN73y",
       ":create/time": 1613589447969,
-      "children": [],
+      "children": [
+        "yXFLmHK4V"
+      ],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613589482990
+      ":edit/time": 1613630820786
     },
     "rYnhtABNH": {
       "string": "",
@@ -317,6 +321,120 @@
       "backRefs": [],
       ":block/refs": [],
       ":edit/time": 1613590675503
+    },
+    "ElFkVecKE": {
+      "string": "[[What you might miss from Roam Research]]",
+      "parent": "dw_X4KIEJ",
+      ":create/time": 1613629682061,
+      "children": [
+        "BtagfFPz_",
+        "cyjJC3-Sn"
+      ],
+      "backRefs": [],
+      ":block/refs": [
+        "RUBKg0Y_J"
+      ],
+      ":edit/time": 1613630111440
+    },
+    "cyjJC3-Sn": {
+      "string": "Micro Roam treats ambiguous markup differently. Roam Research often picks the 'highest priority' out of multiple overlapping pieces of markup, whereas Micro treats them both as invalid. For instance, Roam Research sees ** bold text [[ Page Link? ** ]] as a link with no bold, whereas Micro Roam sees nothing.",
+      "parent": "ElFkVecKE",
+      ":create/time": 1613629701044,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      ":edit/time": 1613630261488
+    },
+    "BtagfFPz_": {
+      "string": "Roam Research has many features Micro Roam doesn't, like kanban boards, a date picker, tables, queries, and many more. I plan on implementing some of these in the future. If you want any feature, please ask. ",
+      "parent": "ElFkVecKE",
+      ":create/time": 1613630063467,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      ":edit/time": 1613630247739
+    },
+    "_OBgldEe6": {
+      "string": "[[Advantages of Micro Roam]]",
+      "parent": "dw_X4KIEJ",
+      ":create/time": 1613630352655,
+      "children": [
+        "FF0MFrIM6",
+        "pD1EMDIy5",
+        "bocwhcpyC"
+      ],
+      "backRefs": [],
+      ":block/refs": [
+        "E7j9h_h-z"
+      ],
+      ":edit/time": 1613630360505
+    },
+    "FF0MFrIM6": {
+      "string": "Performance. ",
+      "parent": "_OBgldEe6",
+      ":create/time": 1613630361294,
+      "children": [
+        "IouwnhnEq",
+        "DngAMhVNx",
+        "ExF_LjRwN"
+      ],
+      "backRefs": [],
+      ":block/refs": [],
+      ":edit/time": 1613630582460
+    },
+    "bocwhcpyC": {
+      "string": "More features, like real-time cross graph linking, coming soon",
+      "parent": "_OBgldEe6",
+      ":create/time": 1613630522510,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      ":edit/time": 1613630756800
+    },
+    "pD1EMDIy5": {
+      "string": "See markup __while you edit__. That means blocks don't move when you click on them, so you can edit faster.",
+      "parent": "_OBgldEe6",
+      ":create/time": 1613630548105,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      ":edit/time": 1613630733374
+    },
+    "IouwnhnEq": {
+      "string": "Micro Roam commits to loading 100% in under 1 second, always. It often loads my graph (100k+ words) in 0.2 to 0.4 seconds. This allows you to write wherever you want, whenever you want, without disrupting your flow. ",
+      "parent": "FF0MFrIM6",
+      ":create/time": 1613630583210,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      ":edit/time": 1613630584033
+    },
+    "DngAMhVNx": {
+      "string": "Search all your pages and blocks in under 0.05 second",
+      "parent": "FF0MFrIM6",
+      ":create/time": 1613630585160,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      ":edit/time": 1613630611001
+    },
+    "ExF_LjRwN": {
+      "string": "Open 60 links per second (assuming you could click that fast)",
+      "parent": "FF0MFrIM6",
+      ":create/time": 1613630615126,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      ":edit/time": 1613630644984
+    },
+    "yXFLmHK4V": {
+      "string": "Hover over the top of the screen to show the top bar again",
+      "parent": "3LNqSCuXJ",
+      ":create/time": 1613630824493,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      ":edit/time": 1613630858390
     }
   },
   "pages": {
@@ -413,6 +531,22 @@
       "backRefs": [
         "bmyDeXcMa"
       ]
+    },
+    "RUBKg0Y_J": {
+      "title": "What you might miss from Roam Research",
+      "children": [],
+      ":create/time": 1613630111440,
+      "backRefs": [
+        "ElFkVecKE"
+      ]
+    },
+    "E7j9h_h-z": {
+      "title": "Advantages of Micro Roam",
+      "children": [],
+      ":create/time": 1613630360505,
+      "backRefs": [
+        "_OBgldEe6"
+      ]
     }
   },
   "pagesByTitle": {
@@ -426,6 +560,8 @@
     "Keyboard Shortcuts": "h8zNE0iXD",
     "Roam Research": "Fdb44w1Hx",
     "Hashtags": "ReT_V51ix",
-    "Welcome to Micro Roam": "I7swK7y1x"
+    "Welcome to Micro Roam": "I7swK7y1x",
+    "What you might miss from Roam Research": "RUBKg0Y_J",
+    "Advantages of Micro Roam": "E7j9h_h-z"
   }
 }

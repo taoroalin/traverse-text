@@ -4,6 +4,8 @@ when I add embeds, they will be an extra prop in active page, for instance {focu
 
 */
 
+const initialDailyNotes = 5
+
 // App state transitions
 const gotoMethods = {
   pageTitle: ([title]) => {
@@ -33,13 +35,13 @@ const gotoMethods = {
     if (store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)] === undefined) {
       runCommand("createPage",formatDate(oldestLoadedDailyNoteDate))
     }
-    for (let i = 0; i < 366; i++) {
+    for (let i = 0; i < 1000; i++) {
       const daysNotes = store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)]
       if (daysNotes) {
         renderPage(pageFrame,daysNotes)
         pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
         numNotesLoaded += 1
-        if (numNotesLoaded > 4) {
+        if (numNotesLoaded >= initialDailyNotes) {
           break
         }
       }
@@ -47,7 +49,7 @@ const gotoMethods = {
         oldestLoadedDailyNoteDate.getDate() - 1
       )
     }
-    pageFrame.lastChild.remove()
+    if (numNotesLoaded < initialDailyNotes) pageFrame.lastChild.remove()
   }
 }
 
