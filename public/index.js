@@ -1,25 +1,30 @@
 /*
 {activePage:{title:pageTitle, focusedBlock:blockId, cursorPosition:position}}
 when I add embeds, they will be an extra prop in active page, for instance {focusedBlock:blockId, embeddedFocusedBlock:{id,position}}
-
 */
 
 const initialDailyNotes = 5
 
-// App state transitions
-const gotoMethods = {
-  pageTitle: ([title]) => {
-    let existingPage = store.pagesByTitle[title]
+/**
+What if I set the session state directly & rendered session state instead of functions?
+goto({pageFrame:{type:"pageTitle", title:"Welcome to Micro Roam"}})?
+ */
+const renderersPageFrame = {
+
+  // each one of these takes a terse command and a session state, and expands that command 
+
+  pageTitle: (pageFrameState) => {
+    let existingPage = store.pagesByTitle[pageFrameState.title]
     if (existingPage === undefined) {
-      existingPage = runCommand("createPage",title)
+      existingPage = runCommand("createPage",pageFrameState.title)
     }
     renderPage(pageFrame,existingPage)
   },
-  block: ([uid]) => {
+  block: (pageFrameState) => {
     const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
     pageFrame.appendChild(blockFocusFrame)
-    renderBlock(blockFocusFrame,uid)
-    const backRefs = store.blocks[uid].backRefs
+    renderBlock(blockFocusFrame,pageFrameState.id)
+    const backRefs = store.blocks[pageFrameState.id].backRefs
     if (backRefs) {
       const backrefsListElement = backrefsListTemplate.cloneNode(true)
       blockFocusFrame.appendChild(backrefsListElement)
@@ -53,12 +58,19 @@ const gotoMethods = {
   }
 }
 
-const goto = (...command) => { // no this is not an instruction pointer goto. This just switches the current page
-  history.pushState(command,"Micro Roam") // todo make title change
-  gotoNoHistory(...command)
+const sessionStateCommands = {
+  dailyNotes: () => {
+    sessionState.pageFrame = { type: "dailyNotes" }
+  },
+  pageTitle: (title) => {
+    sessionState.pageFrame = { type: "pageTitle",title }
+  },
+  block: (id) => {
+    sessionState.pageFrame = { type: "block",id }
+  }
 }
 
-const gotoNoHistory = (...command) => {
+const renderSessionState = () => {
   // clear screen
   autocompleteList.style.display = "none"
   searchResultList.style.display = "none"
@@ -68,18 +80,85 @@ const gotoNoHistory = (...command) => {
   pageFrame.innerHTML = ""
   searchInput.value = ""
 
-  gotoMethods[command[0]](command.slice(1))
+  // render state
+  renderersPageFrame[sessionState.pageFrame.type](sessionState.pageFrame)
+}
+
+const gotoNoHistory = (...command) => {
+
+  updateCursorInfo()
+
+  // expand command into state
+  sessionStateCommands[command[0]](...command.slice(1))
+
+  renderSessionState()
+
+  // change history after render
+}
+
+const goto = (...command) => {
+  const oldSessionState = JSON.parse(JSON.stringify(sessionState))
+  gotoNoHistory(...command)
+  setTimeout(() => {
+    history.replaceState(oldSessionState,"Micro Roam")
+    // todo use page title, in more places than just this because apparently it's not often supported
+    history.pushState(sessionState,"Micro Roam")
+  },0)
 }
 
 const gotoReplaceHistory = (...command) => {
   gotoNoHistory(...command)
-  history.replaceState(command,"Micro Roam")
+  history.replaceState(sessionState,"Micro Roam")
 }
 
 window.addEventListener("popstate",(event) => {
   console.log(event.state)
-  if (event.state) gotoNoHistory(...event.state)
+  if (event.state) {
+    sessionState = event.state
+    renderSessionState()
+  }
 })
+
+
+const updateCursorInfo = () => {
+  focusedNode = getSelection().focusNode
+  focusOffset = getSelection().focusOffset
+  focusedBlock = focusedNode && focusedNode.parentNode.closest(".block")
+  focusedBlockBody = focusedBlock && focusedBlock.children[1]
+  cursorPositionInBlock = focusedBlock && getCursorPositionInBlock()
+  editingLink = focusedBlock && getCurrentLink()
+  editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
+}
+
+const getCursorPositionInBlock = () => {
+  const selection = getSelection()
+  const focusNode = selection.focusNode
+  if (focusNode.className === "block__body") {
+    const jankReturn = focusedBlock.innerText.length * (focusOffset !== 0) // todo make this less jank
+    return jankReturn
+  } else {
+    let position = selection.focusOffset
+    if (focusNode.startIdx) position += focusNode.startIdx
+    return position
+  }
+}
+
+const getCurrentLink = () => {
+  const pageRefs = focusedBlockBody.querySelectorAll(".page-ref")
+  const tags = focusedBlockBody.querySelectorAll(".tag")
+  let result = null
+  for (let tag of tags) {
+    if (tag.childNodes[0].endIdx >= cursorPositionInBlock && tag.childNodes[0].startIdx < cursorPositionInBlock) {
+      result = tag
+    }
+  }
+  for (let ref of pageRefs) {
+    if (ref.children[1].childNodes[0].endIdx >= cursorPositionInBlock && ref.children[1].childNodes[0].startIdx < cursorPositionInBlock) {
+      result = ref
+    }
+  }
+  return result
+}
 
 
 // start the save worker
