@@ -244,8 +244,10 @@ document.addEventListener("keydown",(event) => {
   } else if (event.key === "Escape") {
     autocompleteList.style.display = "none"
     event.preventDefault()
-  } else if (event.key === "z" && event.ctrlKey && !event.shiftKey) {
-
+  } else if (event.key === "z" && event.ctrlKey && !event.shiftKey && !event.altKey) {
+    // todo undo
+  } else if (event.key === "z" && event.ctrlKey && event.shiftKey && !event.altKey) {
+    // todo redo
   } else if (event.key === "d" && event.ctrlKey) {
     document.getElementById("upload-input").click()
     event.preventDefault()
@@ -459,6 +461,8 @@ document.addEventListener("click",(event) => {
     link.target = "_blank"
     link.href = event.target.innerText
     link.click()
+  } else if (event.target.id === "help-button") {
+    goto("pageTitle","Welcome to Micro Roam")
   }
 
   // this is at the bottom so that autocomplete suggestion click handler still knows where the link is. 
