@@ -232,11 +232,11 @@ document.addEventListener("input",(event) => {
 
 document.addEventListener("keydown",(event) => {
   updateCursorInfo()
-
   if (event.key === "b" && event.ctrlKey && !event.shiftKey && !event.altKey) {
-    console.log(topBar.style.marginTop === "0px")
-    if (topBar.style.marginTop === "0px") hideTopBar()
-    else showTopBar()
+    if (topBar.style.marginTop === "0px") user.topBar = "hidden"
+    else user.topBar = "visible"
+    saveUser()
+    event.preventDefault()
   } else if (event.key === "Tab" && autocompleteList.style.display !== "none" && focusedBlock) {
     autocomplete()
     event.preventDefault()
@@ -399,6 +399,7 @@ document.addEventListener("keydown",(event) => {
     document.activeElement.id === "search-input"
   ) {
     if (event.key === "Enter") {
+      console.log(event.target.value)
       goto("pageTitle",event.target.value)
       event.preventDefault()
       return
@@ -416,7 +417,9 @@ document.addEventListener("keydown",(event) => {
     }
   } else if (terminalElement.style.display !== "none") {
     if (event.key === "Enter" && !event.ctrlKey && !event.shiftKey && !event.altKey) {
-      eval(event.target.innerText)
+      const tc = terminalCommands[event.target.innerText]
+      if (tc) tc()
+      else eval(event.target.innerText)
       if (!event.ctrlKey) {
         terminalElement.style.display = "none"
         terminalElement.innerHTML = ""
@@ -427,8 +430,8 @@ document.addEventListener("keydown",(event) => {
 
 document.addEventListener("click",(event) => {
 
-
   const closestBullet = event.target.closest(".block__bullet")
+
   if (event.target.className === "page-ref__body") {
     goto("pageTitle",event.target.innerText)
   } else if (closestBullet) {
@@ -470,20 +473,16 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
     store = roamJsonToStore(graphName,text)
     user.graphName = graphName
     saveUser()
-    goto("dailyNotes")
-    setTimeout(() => saveWorker.postMessage(["save",store]),0)
+    fetch("./default-store.json").then(text => text.json().then(json => {
+      mergeStore(json)
+      // gotoReplaceHistory("pageTitle","Welcome to Micro Roam")
+      gotoReplaceHistory("dailyNotes")
+      setTimeout(() => saveWorker.postMessage(["save",store]),0)
+    }))
   })
 })
 
 topBarHiddenHitbox.addEventListener("mouseover",() => {
-  showTopBar()
+  user.topBar = "visible"
+  saveUser()
 })
-
-const showTopBar = () => {
-  topBar.style.marginTop = "0px"
-  topBarHiddenHitbox.style.display = "none"
-}
-const hideTopBar = () => {
-  topBar.style.marginTop = "-46px"
-  topBarHiddenHitbox.style.display = "block"
-}
