@@ -297,6 +297,11 @@ a:visited { color:var(--link) }
   cursor:pointer;
 }
 
+.literal{
+  font-family:'Inconsolata';
+  font-size:1.15em;
+}
+
 #terminal{
   font-family:'Inconsolata';
   width:100%;

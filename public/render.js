@@ -59,10 +59,11 @@ const renderBlock = (parentNode,uid,idx) => {
 
 
 const renderBlockBody = (parent,text) => {
-  let stack = [parent]
-  // 1             2              3   4         5    6         7      8
-  // page-ref-open page-ref-close tag block-ref bold highlight italic link
-  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]{8,10}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))/g)
+  const stack = [parent]
+  // 1             2              3   4         5    6         7      8    9
+  // page-ref-open page-ref-close tag block-ref bold highlight italic link literal
+  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]{8,50}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`/g)
+
   let idx = 0
   let stackTop = parent
 
@@ -153,6 +154,10 @@ const renderBlockBody = (parent,text) => {
       urlElement.appendChild(newTextNode(match[8]))
       urlElement.href = match[8]
       stackTop.appendChild(urlElement)
+    } else if (match[9]) {
+      const literalElement = literalTemplate.cloneNode(true)
+      literalElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(literalElement)
     }
     idx = match.index + match[0].length
   }
