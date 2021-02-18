@@ -401,13 +401,15 @@
       ":edit/time": 1613630733374
     },
     "IouwnhnEq": {
-      "string": "Micro Roam commits to loading 100% in under 1 second, always. It often loads my graph (100k+ words) in 0.2 to 0.4 seconds. This allows you to write wherever you want, whenever you want, without disrupting your flow. ",
+      "string": "Micro Roam commits to loading 100% in under 1 second, always. It loads my graph (100k+ words) in 0.2 to 0.4 seconds. This allows you to write wherever you want, whenever you want, without disrupting your flow. ",
       "parent": "FF0MFrIM6",
       ":create/time": 1613630583210,
-      "children": [],
+      "children": [
+        "YJnyqMJ7d"
+      ],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613630584033
+      ":edit/time": 1613631130348
     },
     "DngAMhVNx": {
       "string": "Search all your pages and blocks in under 0.05 second",
@@ -435,6 +437,15 @@
       "backRefs": [],
       ":block/refs": [],
       ":edit/time": 1613630858390
+    },
+    "YJnyqMJ7d": {
+      "string": "__browser extensions can slow down page load by up to 0.7 seconds. if you find the website slow even without browser extensions, please report an issue__ ",
+      "parent": "IouwnhnEq",
+      ":create/time": 1613630983873,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      ":edit/time": 1613631119341
     }
   },
   "pages": {

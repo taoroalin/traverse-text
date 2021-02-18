@@ -98,7 +98,7 @@ a:visited { color:var(--link) }
 }
 
 #page-frame{
-  margin: 0 auto;
+  margin: 0 auto 20px;
   max-width: min(900px, 100%);
 }
 
