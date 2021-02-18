@@ -17,6 +17,7 @@ const blockRefTemplate = getTemp("block-ref")
 const boldTemplate = getTemp("bold")
 const italicTemplate = getTemp("italic")
 const highlightTemplate = getTemp("highlight")
+const literalTemplate = getTemp("literal")
 
 // Singleton elements
 const pageFrame = document.getElementById("page-frame")

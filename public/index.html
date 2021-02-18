@@ -89,6 +89,8 @@
     let focusedNode = null
     let focusOffset = null
 
+    let sessionState = { pageFrame: {} }
+
     const topBar = document.getElementById("top-bar")
     const topBarHiddenHitbox = document.getElementById("top-bar-hidden-hitbox")
 
@@ -195,6 +197,10 @@
 
   <template id="highlight">
     <span class="highlight"></span>
+  </template>
+
+  <template id="literal">
+    <span class="literal"></span>
   </template>
 
   <!--using spans with event handlers as links because they play nice with contenteditable-->
