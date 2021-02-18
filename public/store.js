@@ -144,8 +144,9 @@ const mergeStore = (otherStore) => {
   }
 
   for (let pageId in otherStore.pages) {
-    const page = otherStore.pages[pageId]
-    if (store.pagesByTitle[page.title] === undefined) {
+    let page = otherStore.pages[pageId]
+    const existingPageId = store.pagesByTitle[page.title]
+    if (existingPageId === undefined) {
       store.pages[pageId] = page
       store.pagesByTitle[page.title] = pageId
       if (page.children) {
@@ -153,8 +154,19 @@ const mergeStore = (otherStore) => {
           transferBlock(blockId,blockId,pageId)
         }
       }
+    } else {
+      const existingPage = store.pages[existingPageId]
+      if (page.children) {
+        if (existingPage.children === undefined) existingPage.children = []
+        for (let childId of page.children) {
+          transferBlock(childId,childId,existingPageId)
+          console.log(existingPageId)
+          existingPage.children.push(childId)
+        }
+      }
     }
   }
+
 }
 
 // search
