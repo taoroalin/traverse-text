@@ -132,13 +132,24 @@ const mergeStore = (otherStore) => {
 
   const idTranslation = {}
 
+
+  const getNewId = (id) => {
+    if (store.blocks[id] !== undefined || store.pages[id] !== undefined)
+      return idTranslation[id] || newUid()
+    return id
+  }
+
   const transferBlock = (blockId,newBlockId,parentId) => {
     const block = otherStore.blocks[blockId]
-    store.blocks[newBlockId] = block
+    const newBlock = { ...block }
+    store.blocks[newBlockId] = newBlock
     block.parent = parentId
     if (block.children) {
+      newBlock.children = []
       for (let childId of block.children) {
-        transferBlock(childId,childId,newBlockId)
+        let newChildId = getNewId(childId)
+        transferBlock(childId,newChildId,newBlockId)
+        newBlock.children.push(newChildId)
       }
     }
   }
@@ -147,11 +158,16 @@ const mergeStore = (otherStore) => {
     let page = otherStore.pages[pageId]
     const existingPageId = store.pagesByTitle[page.title]
     if (existingPageId === undefined) {
-      store.pages[pageId] = page
-      store.pagesByTitle[page.title] = pageId
+      const newPageId = getNewId(pageId)
+      const newPage = { ...page }
+      store.pages[newPageId] = newPage
+      store.pagesByTitle[page.title] = newPageId
       if (page.children) {
+        newPage.children = []
         for (let blockId of page.children) {
-          transferBlock(blockId,blockId,pageId)
+          const newBlockId = getNewId(blockId)
+          transferBlock(blockId,newBlockId,pageId)
+          newPage.children.push(newBlockId)
         }
       }
     } else {
@@ -159,9 +175,9 @@ const mergeStore = (otherStore) => {
       if (page.children) {
         if (existingPage.children === undefined) existingPage.children = []
         for (let childId of page.children) {
-          transferBlock(childId,childId,existingPageId)
-          console.log(existingPageId)
-          existingPage.children.push(childId)
+          const newChildId = getNewId(childId)
+          transferBlock(childId,newChildId,existingPageId)
+          existingPage.children.push(newChildId)
         }
       }
     }
