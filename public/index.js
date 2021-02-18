@@ -47,6 +47,7 @@ const gotoMethods = {
         oldestLoadedDailyNoteDate.getDate() - 1
       )
     }
+    pageFrame.lastChild.remove()
   }
 }
 
