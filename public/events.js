@@ -51,17 +51,20 @@ const autocomplete = (selected) => {
     const textNode = editingLink.childNodes[0]
     if (/[^\/a-zA-Z0-9_-]/.test(selected.dataset.title)) { // this is exact inverse of regex test for tag token, to see if this must be a tag
       const string = origString.slice(0,textNode.startIdx) + "[[" + selected.dataset.title + "]]" + origString.slice(textNode.endIdx)
-      const refTitles = renderBlockBodyWithCursor(focusedBlockBody,string,textNode.startIdx + selected.dataset.title.length + 4)
+      sessionState.position = textNode.startIdx + selected.dataset.title.length + 4
+      const refTitles = renderBlockBodyWithCursor(string)
       runCommand("writeBlock",bid,string,refTitles)
     } else {
       const string = origString.slice(0,textNode.startIdx) + "#" + selected.dataset.title + origString.slice(textNode.endIdx)
-      const refTitles = renderBlockBodyWithCursor(focusedBlockBody,string,textNode.startIdx + selected.dataset.title.length + 1)
+      sessionState.position = textNode.startIdx + selected.dataset.title.length + 1
+      renderBlockBodyWithCursor(string)
       runCommand("writeBlock",bid,string,refTitles)
     }
   } else {
     const textNode = editingLink.children[1].childNodes[0]
     const string = origString.slice(0,textNode.startIdx) + selected.dataset.title + origString.slice(textNode.endIdx)
-    const refTitles = renderBlockBodyWithCursor(focusedBlockBody,string,textNode.startIdx + selected.dataset.title.length + 2)
+    sessionState.position = textNode.startIdx + selected.dataset.title.length + 2
+    const refTitles = renderBlockBodyWithCursor(string)
     runCommand("writeBlock",bid,string,refTitles)
   }
   autocompleteList.style.display = "none"
@@ -118,7 +121,7 @@ document.addEventListener("input",(event) => {
     let string = blockBody.innerText
     store.blocks[id].string = string // todo commit changes on word boundaries
 
-    const refTitles = renderBlockBodyWithCursor(blockBody,string,cursorPositionInBlock)
+    const refTitles = renderBlockBodyWithCursor(string)
     runCommand("writeBlock",id,string,refTitles)
 
     updateCursorInfo()

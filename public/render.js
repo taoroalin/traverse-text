@@ -59,6 +59,7 @@ const renderBlock = (parentNode,uid,idx) => {
 
 
 const renderBlockBody = (parent,text) => {
+  if (text[text.length - 1] !== " ") text += " " // add space because of getSelection.collapse() weirdness with end of contenteditable
   const stack = [parent]
   // 1             2              3   4         5    6         7      8    9
   // page-ref-open page-ref-close tag block-ref bold highlight italic link literal
@@ -174,40 +175,5 @@ const renderBlockBody = (parent,text) => {
     stackTop.className = ""
     stackTop = stackTop.parentNode
   }
-  return refTitles
-}
-
-const renderBlockBodyWithCursor = (blockBody,string,position) => {
-  if (position >= string.length) string += " "
-  blockBody.innerHTML = ""
-
-  // remove block body from dom while editing, ugly hack to avoid recalcuate style during dom generation
-  const blockElement = blockBody.parentNode
-  const blockBodyNextSibling = blockBody.nextSibling
-  blockBody.remove()
-
-  const refTitles = renderBlockBody(blockBody,string)
-
-  blockElement.insertBefore(blockBody,blockBodyNextSibling)
-
-  const scanElement = (element) => {
-    for (let el of element.childNodes) {
-      if (el.nodeName === "#text") {
-        if (el.textContent && position >= el.startIdx && position < el.startIdx + el.textContent.length) {
-          scanResult = el
-          try {
-            getSelection().collapse(el,position - el.startIdx) // this does the thing correctly, but then throws an error, which I catch? todo investigate
-            return el
-          } catch (error) {
-            return el
-          }
-        }
-      } else {
-        const z = scanElement(el)
-        if (z) return z
-      }
-    }
-  }
-  scanElement(blockBody)
   return refTitles
 }
