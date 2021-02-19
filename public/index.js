@@ -1,5 +1,9 @@
 /*
-{activePage:{title:pageTitle, focusedBlock:blockId, cursorPosition:position}}
+
+where can the cursor be?
+MainFrame
+Sidebar
+
 when I add embeds, they will be an extra prop in active page, for instance {focusedBlock:blockId, embeddedFocusedBlock:{id,position}}
 */
 
@@ -13,18 +17,18 @@ const renderersPageFrame = {
 
   // each one of these takes a terse command and a session state, and expands that command 
 
-  pageTitle: (pageFrameState) => {
-    let existingPage = store.pagesByTitle[pageFrameState.title]
+  pageTitle: () => {
+    let existingPage = store.pagesByTitle[sessionState.pageFrameTitle]
     if (existingPage === undefined) {
-      existingPage = runCommand("createPage",pageFrameState.title)
+      existingPage = runCommand("createPage",sessionState.title)
     }
     renderPage(pageFrame,existingPage)
   },
-  block: (pageFrameState) => {
+  block: () => {
     const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
     pageFrame.appendChild(blockFocusFrame)
-    renderBlock(blockFocusFrame,pageFrameState.id)
-    const backRefs = store.blocks[pageFrameState.id].backRefs
+    renderBlock(blockFocusFrame,sessionState.pageFrameId)
+    const backRefs = store.blocks[sessionState.pageFrameId].backRefs
     if (backRefs) {
       const backrefsListElement = backrefsListTemplate.cloneNode(true)
       blockFocusFrame.appendChild(backrefsListElement)
@@ -60,13 +64,15 @@ const renderersPageFrame = {
 
 const sessionStateCommands = {
   dailyNotes: () => {
-    sessionState.pageFrame = { type: "dailyNotes" }
+    sessionState.pageFrame = "dailyNotes"
   },
   pageTitle: (title) => {
-    sessionState.pageFrame = { type: "pageTitle",title }
+    sessionState.pageFrame = "pageTitle"
+    sessionState.pageFrameTitle = title
   },
   block: (id) => {
-    sessionState.pageFrame = { type: "block",id }
+    sessionState.pageFrame = "block"
+    sessionState.pageFrameId = id
   }
 }
 
@@ -81,22 +87,28 @@ const renderSessionState = () => {
   searchInput.value = ""
 
   // render state
-  renderersPageFrame[sessionState.pageFrame.type](sessionState.pageFrame)
+  renderersPageFrame[sessionState.pageFrame]()
+
+  if (sessionState.isFocused) {
+    focusIdPosition()
+  }
+
+  pageFrameOuter.scrollTop = sessionState.scroll
 }
 
 const gotoNoHistory = (...command) => {
 
   updateCursorInfo()
 
-  // expand command into state
   sessionStateCommands[command[0]](...command.slice(1))
 
   renderSessionState()
 
-  // change history after render
+  pageFrameOuter.scrollTop = 0
 }
 
 const goto = (...command) => {
+  sessionState.scroll = pageFrameOuter.scrollTop
   const oldSessionState = JSON.parse(JSON.stringify(sessionState))
   gotoNoHistory(...command)
   setTimeout(() => {
@@ -119,15 +131,59 @@ window.addEventListener("popstate",(event) => {
   }
 })
 
+const focusIdPosition = () => {
+  focusedBlockBody = document.querySelector(`.block[data-id="${sessionState.focusId}"]>.block__body`)
+
+  const scanElement = (element) => {
+    for (let el of element.childNodes) {
+      if (el.nodeName === "#text") {
+        if (el.textContent && sessionState.position >= el.startIdx && sessionState.position < el.startIdx + el.textContent.length) {
+          scanResult = el
+          try {
+            getSelection().collapse(el,sessionState.position - el.startIdx) // this does the thing correctly, but then throws an error, which I catch? todo investigate
+            return el
+          } catch (error) {
+            return el
+          }
+        }
+      } else {
+        const z = scanElement(el)
+        if (z) return z
+      }
+    }
+  }
+  scanElement(focusedBlockBody)
+}
+
+const renderBlockBodyWithCursor = (string) => {
+  focusedBlockBody.innerHTML = ""
+  focusedBlockBody.style.display = "none"
+  const result = renderBlockBody(focusedBlockBody,string)
+  focusedBlockBody.style.display = "block"
+  focusIdPosition()
+  return result
+}
 
 const updateCursorInfo = () => {
   focusedNode = getSelection().focusNode
   focusOffset = getSelection().focusOffset
-  focusedBlock = focusedNode && focusedNode.parentNode.closest(".block")
-  focusedBlockBody = focusedBlock && focusedBlock.children[1]
-  cursorPositionInBlock = focusedBlock && getCursorPositionInBlock()
-  editingLink = focusedBlock && getCurrentLink()
-  editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
+  if (focusedNode) {
+    focusedBlock = focusedNode.parentNode.closest(".block")
+    if (focusedBlock) {
+
+      sessionState.isFocused = true
+      sessionState.position = getCursorPositionInBlock()
+      sessionState.focusId = focusedNode.parentNode.closest(".block").dataset.id
+
+      focusedBlockBody = focusedBlock.children[1]
+      editingLink = focusedBlock && getCurrentLink()
+      editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
+    } else {
+      sessionState.isFocused = false
+    }
+  } else {
+    sessionState.isFocused = false
+  }
 }
 
 const getCursorPositionInBlock = () => {
