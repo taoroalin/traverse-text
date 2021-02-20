@@ -18,10 +18,13 @@ const renderPage = (parentNode,uid) => {
   }
 
   if (page.backRefs.length > 0) {
-    const backrefsListElement = backrefsListTemplate.cloneNode(true)
+    const backrefsListElement = backrefListTemplate.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
     for (let backref of page.backRefs) {
-      renderBlock(backrefsListElement.children[1],backref)
+      const backrefFrame = backrefFrameTemplate.cloneNode(true)
+      renderBreadcrumb(backrefFrame.children[0],backref)
+      renderBlock(backrefFrame.children[1],backref)
+      backrefsListElement.children[1].appendChild(backrefFrame)
     }
   }
 
@@ -190,7 +193,9 @@ const renderBreadcrumb = (parent,blockId) => {
   }
   console.log(list)
   const node = breadcrumbPageTemplate.cloneNode(true)
-  renderBlockBody(node,list[list.length - 1].title)
+  const title = list[list.length - 1].title
+  renderBlockBody(node,title)
+  node.dataset.title = title
   parent.appendChild(node)
   for (let i = list.length - 2; i >= 0; i--) {
     const node = breadcrumbBlockTemplate.cloneNode(true)

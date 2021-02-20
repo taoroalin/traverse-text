@@ -410,6 +410,8 @@ document.addEventListener("click",(event) => {
     searchResultList.style.display = "none"
   }
 
+  const closestBreadcrumbPage = event.target.closest(".breadcrumb-page")
+  const closestBreadcrumbBlock = event.target.closest(".breadcrumb-block")
   if (event.target.className === "page-ref__body") {
     goto("pageTitle",event.target.innerText)
   } else if (closestBullet) {
@@ -435,6 +437,10 @@ document.addEventListener("click",(event) => {
     link.click()
   } else if (event.target.id === "help-button") {
     goto("pageTitle","Welcome to Micro Roam")
+  } else if (closestBreadcrumbPage) {
+    goto("pageTitle",closestBreadcrumbPage.dataset.title)
+  } else if (closestBreadcrumbBlock) {
+    goto("block",closestBreadcrumbBlock.dataset.id)
   }
 
   // this is at the bottom so that autocomplete suggestion click handler still knows where the link is. 
