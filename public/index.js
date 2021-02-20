@@ -21,11 +21,12 @@ const renderSessionState = () => {
     case "block":
       const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
       pageFrame.appendChild(blockFocusFrame)
-      renderBlock(blockFocusFrame,sessionState.pageFrameId)
+      renderBreadcrumb(blockFocusFrame.children[0],sessionState.pageFrameId)
+      renderBlock(blockFocusFrame.children[1],sessionState.pageFrameId)
       const backRefs = store.blocks[sessionState.pageFrameId].backRefs
       if (backRefs) {
         const backrefsListElement = backrefsListTemplate.cloneNode(true)
-        blockFocusFrame.appendChild(backrefsListElement)
+        blockFocusFrame.children[2].appendChild(backrefsListElement)
         for (let backref of backRefs) {
           renderBlock(backrefsListElement.children[1],backref)
         }
@@ -141,7 +142,9 @@ const setFocusedBlockString = (string) => {
   runCommand("writeBlock",sessionState.focusId,string,refTitles)
 }
 
+// todo call this less. right now it's called twice as much as necessary, costing 0.3ms per keystroke and making code ugly
 const updateCursorInfo = () => {
+  console.log("update cursor info")
   sessionState.scroll = pageFrameOuter.scrollTop
 
   focusNode = getSelection().focusNode
@@ -166,8 +169,6 @@ const updateCursorInfo = () => {
         editingLink = undefined
         const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
         const tags = focusBlockBody.querySelectorAll(".tag")
-        console.log(pageRefs)
-        console.log(tags)
         for (let tag of tags) {
           if (tag.childNodes[0].endIdx >= sessionState.position && tag.childNodes[0].startIdx < sessionState.position) {
             editingLink = tag
