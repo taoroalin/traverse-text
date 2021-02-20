@@ -20,6 +20,7 @@ const renderPage = (parentNode,uid) => {
   if (page.backRefs.length > 0) {
     const backrefsListElement = backrefListTemplate.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
+    page.backRefs.sort((a,b) => store.blocks[b]["edit-time"] - store.blocks[a]["edit-time"])
     for (let backref of page.backRefs) {
       const backrefFrame = backrefFrameTemplate.cloneNode(true)
       renderBreadcrumb(backrefFrame.children[0],backref)
@@ -191,7 +192,6 @@ const renderBreadcrumb = (parent,blockId) => {
       break
     }
   }
-  console.log(list)
   const node = breadcrumbPageTemplate.cloneNode(true)
   const title = list[list.length - 1].title
   renderBlockBody(node,title)

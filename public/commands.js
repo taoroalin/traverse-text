@@ -85,7 +85,7 @@ const commands = {
 
     // add string, edit time
     edits.write.push(["blocks",blockId,"string",string],
-      ["blocks",blockId,":edit/time",time],
+      ["blocks",blockId,"edit-time",time],
       ["blocks",blockId,":block/refs",newRefs])
 
 
@@ -132,7 +132,7 @@ const commands = {
     const oldTitle = page.title
     const edits = {
       write: [["pages",pageId,"title",title],
-      ["pages",pageId,":edit/time",time],
+      ["pages",pageId,"edit-time",time],
       ["pagesByTitle",title,pageId]],
       delete: [["pagesByTitle",oldTitle]]
     }

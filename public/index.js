@@ -5,7 +5,6 @@ const renderSessionState = () => {
   // clear screen
   searchResultList.style.display = "none"
   pageFrameOuter.removeEventListener("scroll",dailyNotesInfiniteScrollListener)
-  pageFrameOuter.scrollTop = 0
   pageFrame.innerHTML = ""
   searchInput.value = ""
 
@@ -25,6 +24,7 @@ const renderSessionState = () => {
       renderBlock(blockFocusFrame.children[1],sessionState.pageFrameId)
       const backRefs = store.blocks[sessionState.pageFrameId].backRefs
       if (backRefs) {
+        backRefs.sort((a,b) => store.blocks[b]["edit-time"] - store.blocks[a]["edit-time"])
         const backrefsListElement = backrefListTemplate.cloneNode(true)
         blockFocusFrame.children[2].appendChild(backrefsListElement)
         for (let backref of backRefs) {
@@ -85,9 +85,11 @@ const gotoNoHistory = (commandName,...command) => {
 }
 
 const goto = (...command) => {
-  updateCursorInfo()
+  sessionState.scroll = pageFrameOuter.scrollTop // used to have updatecursorinfo here, think I don't need it?
+
   const oldSessionState = JSON.parse(JSON.stringify(sessionState))
 
+  sessionState.scroll = 0
   gotoNoHistory(...command)
   setTimeout(() => {
     history.replaceState(oldSessionState,"Micro Roam")
