@@ -182,7 +182,7 @@ const focusBlockStart = (blockNode) => {
 const globalHotkeys = {
   "hide top bar": {
     key: "b",
-    ctrl: true,
+    control: true,
     fn: () => {
       if (topBar.style.marginTop === "0px") user.topBar = "hidden"
       else user.topBar = "visible"
@@ -469,9 +469,9 @@ topBarHiddenHitbox.addEventListener("mouseover",() => {
   saveUser()
 })
 
-document.addEventListener("beforeinput",(event) => {
-  updateCursorInfo()
-  console.log(focusBlockBody.innerText)
-  console.log(event)
-}
-)
+// document.addEventListener("beforeinput",(event) => {
+//   updateCursorInfo()
+//   console.log(focusBlockBody.innerText)
+//   console.log(event)
+// }
+// )
