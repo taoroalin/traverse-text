@@ -25,7 +25,7 @@ const renderSessionState = () => {
       renderBlock(blockFocusFrame.children[1],sessionState.pageFrameId)
       const backRefs = store.blocks[sessionState.pageFrameId].backRefs
       if (backRefs) {
-        const backrefsListElement = backrefsListTemplate.cloneNode(true)
+        const backrefsListElement = backrefListTemplate.cloneNode(true)
         blockFocusFrame.children[2].appendChild(backrefsListElement)
         for (let backref of backRefs) {
           renderBlock(backrefsListElement.children[1],backref)

@@ -3,13 +3,14 @@ const getTemp = (str) => document.getElementById(str).content.firstElementChild
 // Templates
 const pageTemplate = getTemp("page")
 const blockTemplate = getTemp("block")
-const backrefsListTemplate = getTemp("backrefs-list")
+const backrefListTemplate = getTemp("backref-list")
 const blockFocusFrameTemplate = getTemp("block-focus-frame")
 const pageBreakTemplate = getTemp("page-break")
 const suggestionTemplate = getTemp("autocomplete__suggestion")
 const searchResultTemplate = getTemp("search-result")
 const breadcrumbBlockTemplate = getTemp("breadcrumb-block")
 const breadcrumbPageTemplate = getTemp("breadcrumb-page")
+const backrefFrameTemplate = getTemp("backref-frame")
 
 // Block parsing Templates
 const pageRefTemplate = getTemp("page-ref")
