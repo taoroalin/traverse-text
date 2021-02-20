@@ -1,12 +1,11 @@
 // Event Listener Helpers -----------------------------------------------------------------------------------------------
-
 const dailyNotesInfiniteScrollListener = () => {
   const fromBottom =
     pageFrame.getBoundingClientRect().bottom - innerHeight
   if (fromBottom < 700) {
     for (let i = 0; i < 100; i++) {
-      oldestLoadedDailyNoteDate.setDate(oldestLoadedDailyNoteDate.getDate() - 1)
-      const daysNotes = store.pagesByTitle[formatDate(oldestLoadedDailyNoteDate)]
+      sessionState.oldestDate.setDate(sessionState.oldestDate.getDate() - 1)
+      const daysNotes = store.pagesByTitle[formatDate(sessionState.oldestDate)]
       if (daysNotes) {
         renderPage(pageFrame,daysNotes)
         pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
@@ -26,65 +25,44 @@ const downloadHandler = () => {
 }
 
 
-// TODO make focusBlockStart ect get past the last 1 char
-const focusBlockEnd = (blockNode) => {
-  const body = blockNode.children[1]
-  const temp = document.createTextNode(" ")
-  body.appendChild(temp)
-  getSelection().collapse(temp,0)
-  temp.remove()
-}
-
-const focusBlockStart = (blockNode) => {
-  const body = blockNode.children[1]
-  const temp = document.createTextNode(" ")
-  body.insertBefore(temp,body.firstChild)
-  getSelection().collapse(temp,0)
-  temp.remove()
-}
-
-const autocomplete = (selected) => {
-  const bid = focusedBlock.dataset.id
-  if (selected === undefined) selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
-  const origString = store.blocks[bid].string
+const autocomplete = () => {
+  const origString = store.blocks[sessionState.focusId].string
   if (editingLink.className === "tag") {
     const textNode = editingLink.childNodes[0]
-    if (/[^\/a-zA-Z0-9_-]/.test(selected.dataset.title)) { // this is exact inverse of regex test for tag token, to see if this must be a tag
-      const string = origString.slice(0,textNode.startIdx) + "[[" + selected.dataset.title + "]]" + origString.slice(textNode.endIdx)
-      sessionState.position = textNode.startIdx + selected.dataset.title.length + 4
-      const refTitles = renderBlockBodyWithCursor(string)
-      runCommand("writeBlock",bid,string,refTitles)
+    // check for the exact inverse of regex test to see if this would be a valid tag, otherwise make it a ref
+    if (/[^\/a-zA-Z0-9_-]/.test(focusSuggestion.dataset.title)) {
+      const string = origString.slice(0,textNode.startIdx) + "[[" + focusSuggestion.dataset.title + "]]" + origString.slice(textNode.endIdx)
+      sessionState.position = textNode.startIdx + focusSuggestion.dataset.title.length + 4
+      setFocusedBlockString(string)
     } else {
-      const string = origString.slice(0,textNode.startIdx) + "#" + selected.dataset.title + origString.slice(textNode.endIdx)
-      sessionState.position = textNode.startIdx + selected.dataset.title.length + 1
-      renderBlockBodyWithCursor(string)
-      runCommand("writeBlock",bid,string,refTitles)
+      const string = origString.slice(0,textNode.startIdx) + "#" + focusSuggestion.dataset.title + origString.slice(textNode.endIdx)
+      sessionState.position = textNode.startIdx + focusSuggestion.dataset.title.length + 1
+      setFocusedBlockString(string)
     }
   } else {
     const textNode = editingLink.children[1].childNodes[0]
-    const string = origString.slice(0,textNode.startIdx) + selected.dataset.title + origString.slice(textNode.endIdx)
-    sessionState.position = textNode.startIdx + selected.dataset.title.length + 2
-    const refTitles = renderBlockBodyWithCursor(string)
-    runCommand("writeBlock",bid,string,refTitles)
+    const string = origString.slice(0,textNode.startIdx) + focusSuggestion.dataset.title + origString.slice(textNode.endIdx)
+    sessionState.position = textNode.startIdx + focusSuggestion.dataset.title.length + 2
+    setFocusedBlockString(string)
   }
   autocompleteList.style.display = "none"
 }
 
 const indentFocusedBlock = () => {
-  const bid = focusedBlock.dataset.id
-  const olderSibling = focusedBlock.previousSibling
+  const bid = sessionState.focusId
+  const olderSibling = focusBlock.previousSibling
   if (olderSibling && olderSibling.dataset && olderSibling.dataset.id) {
     const newParentId = olderSibling.dataset.id
     const idx = blockOrPageFromId(newParentId).children.length
     runCommand("moveBlock",bid,newParentId,idx)
-    olderSibling.children[2].appendChild(focusedBlock)
-    getSelection().collapse(focusedNode,focusOffset)
+    olderSibling.children[2].appendChild(focusBlock)
+    getSelection().collapse(focusNode,focusOffset)
   }
 }
 
 const dedentFocusedBlock = () => {
-  const bid = focusedBlock.dataset.id
-  const parent = focusedBlock.parentNode.parentNode
+  const bid = sessionState.focusId
+  const parent = focusBlock.parentNode.parentNode
   if (parent) {
     const grandparentChildren = parent.parentNode
     const grandparent = parent.parentNode.parentNode
@@ -92,13 +70,13 @@ const dedentFocusedBlock = () => {
     const cousin = parent.nextSibling
     if (grandparentId) {
       if (cousin) {
-        grandparentChildren.insertBefore(focusedBlock,cousin)
+        grandparentChildren.insertBefore(focusBlock,cousin)
       } else {
-        grandparentChildren.appendChild(focusedBlock)
+        grandparentChildren.appendChild(focusBlock)
       }
       const idx = blockOrPageFromId(grandparentId).children.indexOf(bid)
       runCommand("moveBlock",bid,grandparentId,idx + 1)
-      getSelection().collapse(focusedNode,focusOffset)
+      getSelection().collapse(focusNode,focusOffset)
     }
   }
 }
@@ -109,60 +87,52 @@ const dedentFocusedBlock = () => {
 
 document.addEventListener("input",(event) => {
   updateCursorInfo()
-  if (focusedBlock) {
-    const blockBody = focusedBlockBody
-    const id = blockBody.parentNode.dataset.id
-    if (blockBody.innerText === " " || blockBody.innerText === "") {
-      runCommand("writeBlock",id,"",[])
+  if (sessionState.isFocused) {
+
+    if (focusBlockBody.innerText === " " || focusBlockBody.innerText === "") {
+      runCommand("writeBlock",sessionState.focusId,"",[])
       return
     }
+
     // reparse block and insert cursor into correct position while typing
 
-    let string = blockBody.innerText
-    store.blocks[id].string = string // todo commit changes on word boundaries
+    let string = focusBlockBody.innerText
+    store.blocks[sessionState.focusId].string = string // todo commit changes on word boundaries
 
-    const refTitles = renderBlockBodyWithCursor(string)
-    runCommand("writeBlock",id,string,refTitles)
+    setFocusedBlockString(string)
 
-    updateCursorInfo()
-
-    // Autocomplete
-    // could do this here, or in scanElement, or in renderBlockBody
+    autocompleteList.style.display = "none"
     if (editingTitle) {
+      console.log("have title")
       const matchingTitles = titleExactFullTextSearch(editingTitle)
       if (matchingTitles.length > 0) {
         autocompleteList.innerHTML = ""
-        for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
+        autocompleteList.style.display = "block"
+        const rect = editingLink.getBoundingClientRect()
+        autocompleteList.style.top = rect.bottom
+        autocompleteList.style.left = rect.left
+
+        for (let i = 0; i < matchingTitles.length; i++) {
+          matchingTitle = matchingTitles[i]
           const suggestion = suggestionTemplate.cloneNode(true)
-          if (i === 0) {
-            suggestion.dataset.selected = "true"
-          }
-          if (matchingTitles[i].title) {
-            suggestion.dataset.id = matchingTitles[i].id
-            suggestion.dataset.title = matchingTitles[i].title
-            suggestion.innerText = truncateElipsis(matchingTitles[i].title,50)
-          }
-          else {
-            suggestion.dataset.id = matchingTitles[i].id
-            suggestion.dataset.string = matchingTitles[i].string
-            suggestion.innerText = truncateElipsis(matchingTitles[i].string,50)
+          if (i === 0) suggestion.dataset.selected = "true"
+          suggestion.dataset.id = matchingTitle.id
+
+          if (matchingTitle.title) {
+            suggestion.dataset.title = matchingTitle.title
+            suggestion.innerText = truncateElipsis(matchingTitle.title,50)
+          } else {
+            suggestion.dataset.string = matchingTitle.string
+            suggestion.innerText = truncateElipsis(matchingTitle.string,50)
           }
           autocompleteList.appendChild(suggestion)
         }
-        autocompleteList.style.display = "block"
-        autocompleteList.style.top = editingLink.getBoundingClientRect().bottom
-        autocompleteList.style.left = editingLink.getBoundingClientRect().left
-      } else {
-        autocompleteList.style.display = "none"
       }
-    } else {
-      autocompleteList.style.display = "none"
     }
 
+
   } else if (event.target.id === "search-input") {
-
     const matchingTitles = exactFullTextSearch(event.target.value)
-
     if (matchingTitles.length > 0) {
       searchResultList.innerHTML = ""
       for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
@@ -194,79 +164,95 @@ document.addEventListener("input",(event) => {
   }
 })
 
-document.addEventListener("keydown",(event) => {
-  updateCursorInfo()
-  if (event.key === "b" && event.ctrlKey && !event.shiftKey && !event.altKey) {
-    if (topBar.style.marginTop === "0px") user.topBar = "hidden"
-    else user.topBar = "visible"
-    saveUser()
-    event.preventDefault()
-  } else if (event.key === "Tab" && autocompleteList.style.display !== "none" && focusedBlock) {
-    autocomplete()
-    event.preventDefault()
-    // Check for global shortcut keys
-  } else if (event.key === "Escape") {
-    autocompleteList.style.display = "none"
-    event.preventDefault()
-  } else if (event.key === "z" && event.ctrlKey && !event.shiftKey && !event.altKey) {
-    // todo undo
-  } else if (event.key === "z" && event.ctrlKey && event.shiftKey && !event.altKey) {
-    // todo redo
-  } else if (event.key === "d" && event.ctrlKey) {
-    document.getElementById("upload-input").click()
-    event.preventDefault()
-  } else if (event.key === "s" && event.ctrlKey && event.shiftKey) {
-    downloadHandler()
-    event.preventDefault()
-  } else if (event.key === "s" && event.ctrlKey) {
-    saveWorker.postMessage(["save",store])
-    event.preventDefault()
-  } else if (event.key === "m" && event.ctrlKey) {
-    if (document.body.className === "light") {
-      user.theme = "dark"
-      saveUser()
-    } else {
-      user.theme = "light"
+const globalHotkeys = {
+  "hide top bar": {
+    key: "b",
+    ctrl: true,
+    fn: () => {
+      if (topBar.style.marginTop === "0px") user.topBar = "hidden"
+      else user.topBar = "visible"
       saveUser()
     }
-    event.preventDefault()
-  } else if (event.key === "d" && event.altKey) {
-    goto("dailyNotes")
-    event.preventDefault()
-  } else if (event.ctrlKey && event.key === "u") {
-    if (topBar.style.marginTop !== "0px") topBar.style.marginTop = "0px"
-    searchInput.focus()
-    event.preventDefault()
-  } else if (event.ctrlKey && event.key === "o") {
-    if (editingLink && editingLink.className === "page-ref")
-      goto("pageTitle",editingLink.children[1].innerText)
-    if (editingLink && editingLink.className === "tag")
-      goto("pageTitle",editingLink.innerText.substring(1))
-    event.preventDefault()
-  } else if (autocompleteList.style.display !== "none") {
-    const selected = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
-    if (selected) {
-      const newSelected = (event.key === "ArrowUp" && selected.previousSibling) || (event.key === "ArrowDown" && selected.nextSibling)
-      if (newSelected) {
-        newSelected.dataset.selected = "true"
-        delete selected.dataset.selected
-        event.preventDefault()
+  },
+  "escape": {
+    key: "Escape",fn: () => {
+      autocompleteList.style.display = "none"
+    }
+  },
+  "upload": {
+    key: "d",control: true,fn: () => {
+      document.getElementById("upload-input").click()
+    }
+  },
+  "download": { key: "s",control: true,shift: true,fn: downloadHandler },
+  "save": { key: "s",control: true,fn: () => { saveWorker.postMessage(["save",store]) } },
+  "toggle color theme": {
+    key: "m",control: true,fn: () => {
+      if (document.body.className === "light") {
+        user.theme = "dark"
+        saveUser()
+      } else {
+        user.theme = "light"
+        saveUser()
       }
     }
-  } else if (event.key === "i" && event.ctrlKey && event.altKey) {
-    if (terminalElement.style.display === "none") {
-      terminalElement.style.display = "block"
-      terminalElement.focus()
-      event.preventDefault()
-    } else {
-      terminalElement.style.display = "none"
+  },
+  "search": {
+    key: "u",control: true,fn: () => {
+      if (topBar.style.marginTop !== "0px") topBar.style.marginTop = "0px"
+      searchInput.focus()
     }
+  },
+  "open": {
+    key: "o",control: true,fn: () => {
+      if (editingLink && editingLink.className === "page-ref")
+        goto("pageTitle",editingLink.children[1].innerText)
+      if (editingLink && editingLink.className === "tag")
+        goto("pageTitle",editingLink.innerText.substring(1))
+    }
+  },
+  "terminal": {
+    key: "i",control: true,alt: true,fn: () => {
+      if (terminalElement.style.display === "none") {
+        terminalElement.style.display = "block"
+        terminalElement.focus()
+      } else {
+        terminalElement.style.display = "none"
+      }
+    }
+  }
+}
 
-    // Check for actions based on active element
-  } else if (focusedBlock) {
+document.addEventListener("keydown",(event) => {
+  updateCursorInfo()
+
+  for (let hotkeyName in globalHotkeys) {
+    const hotkey = globalHotkeys[hotkeyName]
+    if (event.key === hotkey.key &&
+      event.shiftKey === !!hotkey.shift &&
+      event.ctrlKey === !!hotkey.control &&
+      event.altKey === !!hotkey.alt) {
+      hotkey.fn()
+      event.preventDefault()
+      return
+    }
+  }
+
+  if (autocompleteList.style.display !== "none") {
+    if (event.key === "Tab") {
+      autocomplete()
+      event.preventDefault()
+    }
+    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousSibling) || (event.key === "ArrowDown" && focusSuggestion.nextSibling)
+    if (newSelected) {
+      newSelected.dataset.selected = "true"
+      delete focusSuggestion.dataset.selected
+      event.preventDefault()
+    }
+  } else if (sessionState.isFocused) {
     let blocks
     let newActiveBlock
-    const bid = focusedBlock.dataset.id
+    const bid = sessionState.focusId
     switch (event.key) {
       case "Enter":
         if (event.shiftKey) {
@@ -278,24 +264,23 @@ document.addEventListener("keydown",(event) => {
             idx += 1
           }
           const newBlockUid = runCommand("createBlock",store.blocks[bid].parent,idx)
-          const newBlockElement = renderBlock(focusedBlock.parentNode,newBlockUid,idx)
+          const newBlockElement = renderBlock(focusBlock.parentNode,newBlockUid,idx)
           newBlockElement.children[1].focus()
           event.preventDefault()
         }
         break
       case "Tab":
-        if (event.shiftKey) {
+        if (event.shiftKey)
           dedentFocusedBlock()
-        } else {
+        else
           indentFocusedBlock()
-        }
         event.preventDefault()
         break
       case "Backspace":
-        if (cursorPositionInBlock === 0) {
+        if (sessionState.position === 0) {
           blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
-          focusedBlock.remove()
+          newActiveBlock = blocks[blocks.indexOf(focusBlock) - 1]
+          focusBlock.remove()
           focusBlockEnd(newActiveBlock)
           runCommand("deleteBlock",bid)
           event.preventDefault()
@@ -304,19 +289,19 @@ document.addEventListener("keydown",(event) => {
       case "ArrowDown":
         if (event.altKey && event.shiftKey) {
           const parentId = store.blocks[bid].parent
-          const parentElement = focusedBlock.parentNode
+          const parentElement = focusBlock.parentNode
           const currentIdx = blockOrPageFromId(parentId).children.indexOf(bid)
-          if (focusedBlock.nextSibling) {
+          if (focusBlock.nextSibling) {
             runCommand("moveBlock",bid,parentId,currentIdx + 1)
-            if (focusedBlock.nextSibling.nextSibling) {
-              parentElement.insertBefore(focusedBlock,focusedBlock.nextSibling.nextSibling)
-            } else parentElement.appendChild(focusedBlock)
-            getSelection().collapse(focusedNode,focusOffset)
+            if (focusBlock.nextSibling.nextSibling) {
+              parentElement.insertBefore(focusBlock,focusBlock.nextSibling.nextSibling)
+            } else parentElement.appendChild(focusBlock)
+            getSelection().collapse(focusNode,focusOffset)
             event.preventDefault()
           }
         } else if (!event.shiftKey && !event.altKey) {
           blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(focusedBlock) + 1]
+          newActiveBlock = blocks[blocks.indexOf(focusBlock) + 1]
           focusBlockStart(newActiveBlock)
           event.preventDefault()
         }
@@ -324,17 +309,17 @@ document.addEventListener("keydown",(event) => {
       case "ArrowUp":
         if (event.altKey && event.shiftKey) {
           const parentId = store.blocks[bid].parent
-          const parentElement = focusedBlock.parentNode
+          const parentElement = focusBlock.parentNode
           const currentIdx = blockOrPageFromId(parentId).children.indexOf(bid)
-          if (focusedBlock.previousSibling) {
+          if (focusBlock.previousSibling) {
             runCommand("moveBlock",bid,parentId,currentIdx - 1)
-            parentElement.insertBefore(focusedBlock,focusedBlock.previousSibling)
-            getSelection().collapse(focusedNode,focusOffset)
+            parentElement.insertBefore(focusBlock,focusBlock.previousSibling)
+            getSelection().collapse(focusNode,focusOffset)
             event.preventDefault()
           }
         } else if (!event.shiftKey && !event.altKey) {
           blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
+          newActiveBlock = blocks[blocks.indexOf(focusBlock) - 1]
           focusBlockEnd(newActiveBlock)
           event.preventDefault()
         }
@@ -342,9 +327,9 @@ document.addEventListener("keydown",(event) => {
       case "ArrowLeft":
         if (event.shiftKey && event.altKey) {
           dedentFocusedBlock()
-        } else if (cursorPositionInBlock === 0) {
+        } else if (sessionState.position === 0) {
           blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(focusedBlock) - 1]
+          newActiveBlock = blocks[blocks.indexOf(focusBlock) - 1]
           if (newActiveBlock) focusBlockEnd(newActiveBlock)
           event.preventDefault()
         }
@@ -352,25 +337,25 @@ document.addEventListener("keydown",(event) => {
       case "ArrowRight":
         if (event.shiftKey && event.altKey) {
           indentFocusedBlock()
-        } else if (cursorPositionInBlock === focusedBlockBody.innerText.length) {
+        } else if (sessionState.position === focusBlockBody.innerText.length) {
           blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(focusedBlock) + 1]
+          newActiveBlock = blocks[blocks.indexOf(focusBlock) + 1]
           if (newActiveBlock) focusBlockStart(newActiveBlock)
           event.preventDefault()
         }
         break
     }
-  } else if (
+  }
+
+  if (
     document.activeElement &&
     document.activeElement.id === "search-input"
   ) {
     if (event.key === "Enter") {
-      console.log(event.target.value)
       goto("pageTitle",event.target.value)
       event.preventDefault()
       return
     } else if (event.key === "Tab") {
-      console.log("goto suggestion")
       const selected = searchResultList.querySelector(`.search-result[data-selected="true"]`)
       if (selected) {
         if (selected.dataset.title) {
@@ -381,7 +366,9 @@ document.addEventListener("keydown",(event) => {
         return
       }
     }
-  } else if (terminalElement.style.display !== "none") {
+  }
+
+  if (terminalElement.style.display !== "none") {
     if (event.key === "Enter" && !event.ctrlKey && !event.shiftKey && !event.altKey) {
       const tc = terminalCommands[event.target.innerText]
       if (tc) tc()
@@ -392,6 +379,7 @@ document.addEventListener("keydown",(event) => {
       }
     }
   }
+
 })
 
 document.addEventListener("click",(event) => {
@@ -413,7 +401,9 @@ document.addEventListener("click",(event) => {
   } else if (event.target.id === "daily-notes-button") {
     goto("dailyNotes")
   } else if (event.target.className === "autocomplete__suggestion") {
-    autocomplete(event.target)
+    if (focusSuggestion) focusSuggestion.dataset.selected = false
+    event.target.dataset.selected = true
+    autocomplete()
   } else if (event.target.className === "search-result") {
     if (event.target.dataset.title) {
       goto("pageTitle",event.target.dataset.title)

@@ -16,7 +16,8 @@ const roamJsonToStore = (graphName,text) => {
   const pagesByTitle = {}
 
   let ownerRoamId = null
-  if (obj[0][":edit/user"]) ownerRoamId = obj[0][":edit/user"][":user/uid"] // todo interface with roam user ids well
+  // todo interface with roam user ids well
+  if (obj[0][":edit/user"]) ownerRoamId = obj[0][":edit/user"][":user/uid"]
 
   const addBlock = (block,parent) => {
     blocks[block.uid] = block
@@ -83,18 +84,6 @@ const roamJsonToStore = (graphName,text) => {
   for (let blockUid in blocks) {
     const block = blocks[blockUid]
 
-    // if (block.refs) {
-    //   block.refs.forEach(ref => {
-    //     if (blocks[ref] !== undefined) {
-    //       blocks[ref].backRefs.push(blockUid)
-    //     } else if (pages[ref] !== undefined) {
-    //       pages[ref].backRefs.push(blockUid)
-    //     } else {
-    //       //throw new Error(`bad ref ${ref}`)
-    //     }
-    //   })
-    // }
-
     if (block[":block/refs"]) {
       block[":block/refs"].forEach(ref => {
         if (blocks[ref] !== undefined) {
@@ -121,7 +110,6 @@ const roamJsonToStore = (graphName,text) => {
   const store = { graphName,pages,blocks,pagesByTitle,ownerRoamId }
   console.log(`roamJsonToStore took ${performance.now() - stime}`)
   console.log(store)
-  // console.log(JSON.stringify(store))
 
   return store
 }
@@ -246,7 +234,6 @@ const titleExactFullTextSearch = (string) => {
     }
   }
   results.sort((a,b) => a.idx - b.idx)
-  console.log(results)
   return results.slice(0,10)
 }
 
@@ -267,4 +254,26 @@ const exactFullTextSearch = (string) => {
   }
   return results.sort((a,b) => a.idx - b.idx).slice(0,10)
 }
+
+/*
+
+ZIP header
+local file header signature     4 bytes 0  (0x04034b50)
+version needed to extract       2 bytes 4
+general purpose bit flag        2 bytes 6
+compression method              2 bytes 8
+last mod file time              2 bytes 10
+last mod file date              2 bytes 12
+crc-32                          4 bytes 14
+compressed size                 4 bytes 18
+uncompressed size               4 bytes 22
+file name length                2 bytes 26
+extra field length              2 bytes 28
+
+
+const mdToStore = ([...files])
+
+const fileToStore = (blob)
+
+*/
 

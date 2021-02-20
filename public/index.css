@@ -239,6 +239,10 @@ a:visited { color:var(--link) }
 
 /* Parsed block styles -------------------------------------------------------------------------------------- */
 
+.page-ref{
+  position:relative;
+}
+
 .page-ref__brackets{
   font-weight: lighter;
   color:var(--brackets);
@@ -257,6 +261,7 @@ a:visited { color:var(--link) }
 .tag{
   color:var(--page-ref);
   font-weight: 800;
+  position:relative;
 }
 
 .tag:hover{

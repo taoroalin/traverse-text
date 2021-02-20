@@ -103,7 +103,6 @@ const renderBlockBody = (parent,text) => {
       tagElement.appendChild(newTextNode(match[3]))
       stackTop.appendChild(tagElement)
     } else if (match[4]) {
-      // @query would use a query here if I had them
       const blockId = match[4].substring(2,match[4].length - 2)
       const block = store.blocks[blockId]
       if (block) {

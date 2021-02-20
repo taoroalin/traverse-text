@@ -18,15 +18,13 @@ const blockOrPageFromId = (id) => {
 
 const parentThingey = (id) => store.pages[id] ? "pages" : "blocks"
 
-// Commands
-// this is real const, don't edit in runtime
 const commands = {
   deleteBlock: (blockId) => {
     const block = store.blocks[blockId]
     const parentId = block.parent
     const refs = block[":block/refs"]
     const backRefs = block.backRefs
-    // todo make legit ref tracking on deleteBlock
+    // todo make child ref tracking on delete block
     const edits = {
       subtract: [[parentThingey(block.parent),parentId,"children",blockId],
       ...refs.map(ref => ([parentThingey(ref),ref,"backRefs",blockId])),
@@ -109,10 +107,7 @@ const commands = {
     return { edits }
   },
 
-  // gonna add more fields later
-  // the new id is in the change so it can be serialized deterministically
   createBlock: (parentId,idx,time) => {
-    // todo make date guaranteed same between main and worker thread
     const blockId = newUid()
     const parentThingey = !!store.pages[parentId] ? "pages" : "blocks"
     const parent = store[parentThingey]

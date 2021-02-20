@@ -13,7 +13,7 @@ const getIn = (arr,skip) => {
 
 const doEdits = (edits) => {
 
-  // it's important that subtract comes first, you can subtract something then insert it somewhere else
+  // it's important that subtract comes first because you can subtract something then insert it earlier in the same list
   if (edits.subtract) {
     for (let op of edits.subtract) {
       const obj = getIn(op,2)
