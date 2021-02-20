@@ -168,11 +168,35 @@ const renderBlockBody = (parent,text) => {
    * PARSING REVELATION!!!!
    * Instead of backtracking and deleting when a block doesn't close, I can just erase the className of the block. Then it's still part of the tree but looks like it's gone! much less performance cost than backtracking!!
    */
-  while (stackTop.className !== "block__body") {
+  while (stackTop !== parent) {
     if (stackTop.className === "page-ref")
       stackTop.children[0].className = ""
     stackTop.className = ""
     stackTop = stackTop.parentNode
   }
   return refTitles
+}
+
+const renderBreadcrumb = (parent,blockId) => {
+  const list = []
+  while (true) {
+    blockId = store.blocks[blockId].parent
+    if (store.blocks[blockId] !== undefined) {
+      list.push({ string: store.blocks[blockId].string,id: blockId })
+    } else {
+      list.push({ title: store.pages[blockId].title,id: blockId })
+      break
+    }
+  }
+  console.log(list)
+  const node = breadcrumbPageTemplate.cloneNode(true)
+  renderBlockBody(node,list[list.length - 1].title)
+  parent.appendChild(node)
+  for (let i = list.length - 2; i >= 0; i--) {
+    const node = breadcrumbBlockTemplate.cloneNode(true)
+    const nodeBody = node.children[1]
+    renderBlockBody(nodeBody,list[i].string)
+    node.dataset.id = list[i].id
+    parent.appendChild(node)
+  }
 }

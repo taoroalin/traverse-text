@@ -103,7 +103,6 @@ document.addEventListener("input",(event) => {
 
     autocompleteList.style.display = "none"
     if (editingTitle) {
-      console.log("have title")
       const matchingTitles = titleExactFullTextSearch(editingTitle)
       if (matchingTitles.length > 0) {
         autocompleteList.innerHTML = ""
@@ -268,18 +267,16 @@ document.addEventListener("keydown",(event) => {
   } else if (sessionState.isFocused) {
     let blocks
     let newActiveBlock
-    const bid = sessionState.focusId
     switch (event.key) {
       case "Enter":
-        if (event.shiftKey) {
-
-        } else {
-          const parent = blockOrPageFromId(store.blocks[bid].parent)
-          let idx = parent.children.indexOf(bid)
+        if (!event.shiftKey) {
+          const parent = blockOrPageFromId(store.blocks[sessionState.focusId].parent)
+          let idx = parent.children.indexOf(sessionState.focusId)
           if (!event.ctrlKey) {
             idx += 1
           }
-          const newBlockUid = runCommand("createBlock",store.blocks[bid].parent,idx)
+          console.log(idx)
+          const newBlockUid = runCommand("createBlock",store.blocks[sessionState.focusId].parent,idx)
           const newBlockElement = renderBlock(focusBlock.parentNode,newBlockUid,idx)
           newBlockElement.children[1].focus()
           event.preventDefault()
@@ -298,17 +295,17 @@ document.addEventListener("keydown",(event) => {
           newActiveBlock = blocks[blocks.indexOf(focusBlock) - 1]
           focusBlock.remove()
           focusBlockEnd(newActiveBlock)
-          runCommand("deleteBlock",bid)
+          runCommand("deleteBlock",sessionState.focusId)
           event.preventDefault()
         }
         break
       case "ArrowDown":
         if (event.altKey && event.shiftKey) {
-          const parentId = store.blocks[bid].parent
+          const parentId = store.blocks[sessionState.focusId].parent
           const parentElement = focusBlock.parentNode
-          const currentIdx = blockOrPageFromId(parentId).children.indexOf(bid)
+          const currentIdx = blockOrPageFromId(parentId).children.indexOf(sessionState.focusId)
           if (focusBlock.nextSibling) {
-            runCommand("moveBlock",bid,parentId,currentIdx + 1)
+            runCommand("moveBlock",sessionState.focusId,parentId,currentIdx + 1)
             if (focusBlock.nextSibling.nextSibling) {
               parentElement.insertBefore(focusBlock,focusBlock.nextSibling.nextSibling)
             } else parentElement.appendChild(focusBlock)
@@ -324,11 +321,11 @@ document.addEventListener("keydown",(event) => {
         break
       case "ArrowUp":
         if (event.altKey && event.shiftKey) {
-          const parentId = store.blocks[bid].parent
+          const parentId = store.blocks[sessionState.focusId].parent
           const parentElement = focusBlock.parentNode
-          const currentIdx = blockOrPageFromId(parentId).children.indexOf(bid)
+          const currentIdx = blockOrPageFromId(parentId).children.indexOf(sessionState.focusId)
           if (focusBlock.previousSibling) {
-            runCommand("moveBlock",bid,parentId,currentIdx - 1)
+            runCommand("moveBlock",sessionState.focusId,parentId,currentIdx - 1)
             parentElement.insertBefore(focusBlock,focusBlock.previousSibling)
             getSelection().collapse(focusNode,focusOffset)
             event.preventDefault()
@@ -402,6 +399,17 @@ document.addEventListener("click",(event) => {
 
   const closestBullet = event.target.closest(".block__bullet")
 
+  if (event.target.className === "search-result") {
+    if (event.target.dataset.title) {
+      goto("pageTitle",event.target.dataset.title)
+    } else {
+      goto("block",event.target.dataset.id)
+    }
+    return
+  } else if (event.target.id !== "search-input") {
+    searchResultList.style.display = "none"
+  }
+
   if (event.target.className === "page-ref__body") {
     goto("pageTitle",event.target.innerText)
   } else if (closestBullet) {
@@ -420,12 +428,6 @@ document.addEventListener("click",(event) => {
     if (focusSuggestion) focusSuggestion.dataset.selected = false
     event.target.dataset.selected = true
     autocomplete()
-  } else if (event.target.className === "search-result") {
-    if (event.target.dataset.title) {
-      goto("pageTitle",event.target.dataset.title)
-    } else {
-      goto("block",event.target.dataset.id)
-    }
   } else if (event.target.className === "url") { // using spans with event handlers as links because they play nice with contenteditable
     const link = document.createElement("a")
     link.target = "_blank"
@@ -460,3 +462,10 @@ topBarHiddenHitbox.addEventListener("mouseover",() => {
   user.topBar = "visible"
   saveUser()
 })
+
+document.addEventListener("beforeinput",(event) => {
+  updateCursorInfo()
+  console.log(focusBlockBody.innerText)
+  console.log(event)
+}
+)

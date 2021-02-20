@@ -8,6 +8,8 @@ const blockFocusFrameTemplate = getTemp("block-focus-frame")
 const pageBreakTemplate = getTemp("page-break")
 const suggestionTemplate = getTemp("autocomplete__suggestion")
 const searchResultTemplate = getTemp("search-result")
+const breadcrumbBlockTemplate = getTemp("breadcrumb-block")
+const breadcrumbPageTemplate = getTemp("breadcrumb-page")
 
 // Block parsing Templates
 const pageRefTemplate = getTemp("page-ref")
