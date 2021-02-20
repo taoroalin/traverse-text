@@ -164,6 +164,22 @@ document.addEventListener("input",(event) => {
   }
 })
 
+const focusBlockEnd = (blockNode) => {
+  const body = blockNode.children[1]
+  const temp = document.createTextNode(" ")
+  body.appendChild(temp)
+  getSelection().collapse(temp,0)
+  temp.remove()
+}
+
+const focusBlockStart = (blockNode) => {
+  const body = blockNode.children[1]
+  const temp = document.createTextNode(" ")
+  body.insertBefore(temp,body.firstChild)
+  getSelection().collapse(temp,0)
+  temp.remove()
+}
+
 const globalHotkeys = {
   "hide top bar": {
     key: "b",
@@ -330,7 +346,7 @@ document.addEventListener("keydown",(event) => {
         } else if (sessionState.position === 0) {
           blocks = Array.from(document.querySelectorAll(".block"))
           newActiveBlock = blocks[blocks.indexOf(focusBlock) - 1]
-          if (newActiveBlock) focusBlockEnd(newActiveBlock)
+          focusBlockEnd(newActiveBlock)
           event.preventDefault()
         }
         break
