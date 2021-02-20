@@ -5,7 +5,8 @@ let store = null
 let saveTimeout = null
 let user = null
 
-const dbReq = indexedDB.open("microroam",4) // @copypaste this needs to be the exact same as in index.html, I don't want to have to load another file before accessing indexeddb in index.html, so will have to remain a copypaste sync
+// This needs to be the exact same db version as in index.html, I don't want to have to load another file before accessing indexeddb in index.html, so will have to remain a sync
+const dbReq = indexedDB.open("microroam",4)
 dbReq.onsuccess = (event) => idb = event.target.result
 
 

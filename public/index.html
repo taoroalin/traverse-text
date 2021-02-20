@@ -30,13 +30,15 @@
 
       </div>
     </div>
-
     <div id="autocomplete-list" style="display:none"></div>
+    <!-- inline styles on this site are all edited directly by js -->
     <div id="search-result-list" style="display:none"></div>
+
 
   </div>
   <script>
     const r = indexedDB.open("microroam",4);// I had this as line 1, saves ~5ms start time, don't now cause I'm lazy
+    // This needs to be the exact same db version as in worker.js
     const blankUser = { graphName: "default",theme: "light",topBar: "visible",logging: false,spellcheck: false }
     let user = blankUser
     const storedUser = localStorage.getItem("user")
@@ -76,20 +78,19 @@
     }
     r.onerror = (event) => {
       alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
-    You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
+      You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
     }
 
-    let oldestLoadedDailyNoteDate = null
     let commitDebounce = null
 
     let editingLink = null
     let editingTitle = null
-    let focusedNode = null
+    let focusNode = null
     let focusOffset = null
 
-    let focusedBlock = null
-    let cursorPositionInBlock = null
+    let focusBlock = null
 
+    let focusSuggestion = null
     let sessionState = { pageFrame: "dailyNotes",focusId: null,scroll: 0,position: null }
 
     const topBar = document.getElementById("top-bar")
@@ -110,7 +111,6 @@
       localStorage.setItem("user",JSON.stringify(user))
     }
     saveUser()
-    // editingLink, focusedBlock, cursorPositionInBlock are all about where the cursor is. They are all set at the beginning of each event handler
 
 
     /* This inline script is all about opening a connection to IndexedDB and setting the user's theme ASAP. This allows IndexedDB to run in parallel with main script compilation, and avoids layout thrashing
@@ -127,7 +127,6 @@
 
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inconsolata">
-
 
   <template id="page">
     <div class="page">
