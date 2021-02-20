@@ -5,34 +5,34 @@
     "XIZN6JwWY": {
       "string": "All the core features of Roam Research, but 10X faster. ",
       "parent": "I7swK7y1x",
-      ":create/time": 1613101994274,
+      "create-time": 1613101994274,
       "children": [],
       "backRefs": []
     },
     "pvBsQAsDW": {
       "string": "Double square brackets are [[Page Links]]",
       "parent": "RokDbINrC",
-      ":create/time": 1613102121753,
+      "create-time": 1613102121753,
       "children": [],
       "backRefs": [],
       ":block/refs": [
         "gpJwCWgLD"
       ],
-      ":edit/time": 1613446027888
+      "edit-time": 1613446027888
     },
     "jcnmX8-34": {
       "string": "Surround text with double *, ^, or _ for **bold**, ^^highlighted^^,  or __Italic__",
       "parent": "RokDbINrC",
-      ":create/time": 1613102143572,
+      "create-time": 1613102143572,
       "children": [],
       "backRefs": [],
-      ":edit/time": 1613634735932,
+      "edit-time": 1613634735932,
       ":block/refs": []
     },
     "qvrocywph": {
       "string": "Edit [[Page Links]], #Tags, and **styling** live - no waiting until you click out of the block",
       "parent": "RokDbINrC",
-      ":create/time": 1613102206085,
+      "create-time": 1613102206085,
       "children": [],
       "backRefs": [],
       ":block/refs": [
@@ -43,7 +43,7 @@
     "NJS9MN73y": {
       "string": "[[Keyboard Shortcuts]]",
       "parent": "I7swK7y1x",
-      ":create/time": 1613102304704,
+      "create-time": 1613102304704,
       "children": [
         "U3DjJ95X5",
         "_I2n9koSE",
@@ -66,21 +66,21 @@
     "_I2n9koSE": {
       "string": "Ctrl + O : Open link under cursor ",
       "parent": "NJS9MN73y",
-      ":create/time": 1613102315942,
+      "create-time": 1613102315942,
       "children": [],
       "backRefs": []
     },
     "nnVo-272O": {
       "string": "Alt + D : Open Daily notes",
       "parent": "NJS9MN73y",
-      ":create/time": 1613102339058,
+      "create-time": 1613102339058,
       "children": [],
       "backRefs": []
     },
     "wAuIcZZNf": {
       "string": "Search bar keys:",
       "parent": "NJS9MN73y",
-      ":create/time": 1613102363076,
+      "create-time": 1613102363076,
       "children": [
         "KBFpCQto3",
         "kC2YHH-k_"
@@ -90,45 +90,45 @@
     "KBFpCQto3": {
       "string": "Enter : Go to the exact page you typed ",
       "parent": "wAuIcZZNf",
-      ":create/time": 1613102401807,
+      "create-time": 1613102401807,
       "children": [],
       "backRefs": []
     },
     "kC2YHH-k_": {
       "string": "Tab : Go to the top autocomplete result ",
       "parent": "wAuIcZZNf",
-      ":create/time": 1613102414438,
+      "create-time": 1613102414438,
       "children": [],
       "backRefs": []
     },
     "5tkVxi4Jm": {
       "string": "Ctrl + M : Toggle dark theme",
       "parent": "NJS9MN73y",
-      ":create/time": 1613102430976,
+      "create-time": 1613102430976,
       "children": [],
       "backRefs": []
     },
     "U3DjJ95X5": {
       "string": "Ctrl + U : Search",
       "parent": "NJS9MN73y",
-      ":create/time": 1613102478500,
+      "create-time": 1613102478500,
       "children": [],
       "backRefs": []
     },
     "SItUn-ejl": {
       "string": "Tab / Shift Tab : Nest / un-nest block",
       "parent": "NJS9MN73y",
-      ":create/time": 1613102503317,
+      "create-time": 1613102503317,
       "children": [],
       "backRefs": []
     },
     "e5qwu46yQ": {
       "string": "Download JSON from [[Roam Research]] ( top-right-menu -> export-all -> JSON )",
       "parent": "dw_X4KIEJ",
-      ":create/time": 1613105364889,
+      "create-time": 1613105364889,
       "children": [],
       "backRefs": [],
-      ":edit/time": 1613407649420,
+      "edit-time": 1613407649420,
       ":block/refs": [
         "Fdb44w1Hx"
       ]
@@ -136,30 +136,30 @@
     "B-SD2Pkx3": {
       "string": "",
       "parent": "1-13-2021",
-      ":create/time": 1613254263665,
+      "create-time": 1613254263665,
       "children": [],
       "backRefs": []
     },
     "BUnJien6o": {
       "string": "Alt + Shift + Arrow : Move block\n\n",
       "parent": "NJS9MN73y",
-      ":create/time": 1613254604108,
+      "create-time": 1613254604108,
       "children": [],
       "backRefs": [],
-      ":edit/time": 1613446131465,
+      "edit-time": 1613446131465,
       ":block/refs": []
     },
     "N7jFbmEDg": {
       "string": "Ctrl + D : Upload JSON",
       "parent": "NJS9MN73y",
-      ":create/time": 1613254670160,
+      "create-time": 1613254670160,
       "children": [],
       "backRefs": []
     },
     "dw_X4KIEJ": {
       "string": "[[Migrate from Roam Research with 2 clicks!]]",
       "parent": "I7swK7y1x",
-      ":create/time": 1613254747377,
+      "create-time": 1613254747377,
       "children": [
         "e5qwu46yQ",
         "rJEwNT4jg",
@@ -174,7 +174,7 @@
     "rJEwNT4jg": {
       "string": "Click \"Upload JSON\" in the top right of [[Micro Roam]]",
       "parent": "dw_X4KIEJ",
-      ":create/time": 1613254826120,
+      "create-time": 1613254826120,
       "children": [],
       "backRefs": [],
       ":block/refs": [
@@ -184,7 +184,7 @@
     "RokDbINrC": {
       "string": "Editing Text",
       "parent": "I7swK7y1x",
-      ":create/time": 1613254864314,
+      "create-time": 1613254864314,
       "children": [
         "Ja_IdH_2N",
         "pvBsQAsDW",
@@ -198,37 +198,37 @@
     "Ja_IdH_2N": {
       "string": "You can create links and text decorations using text",
       "parent": "RokDbINrC",
-      ":create/time": 1613254896178,
+      "create-time": 1613254896178,
       "children": [],
       "backRefs": [],
-      ":edit/time": 1613445980336,
+      "edit-time": 1613445980336,
       ":block/refs": []
     },
     "k56xk48p9": {
       "string": "",
       "parent": "1-14-2021",
-      ":create/time": 1613321801711,
+      "create-time": 1613321801711,
       "children": [],
       "backRefs": []
     },
     "KsofiFo8Q": {
       "string": "",
       "parent": "h8zNE0iXD",
-      ":create/time": 1613321832736,
+      "create-time": 1613321832736,
       "children": [],
       "backRefs": []
     },
     "VRKEwswEQ": {
       "string": "",
       "parent": "2jdJb7t8w",
-      ":create/time": 1613321838382,
+      "create-time": 1613321838382,
       "children": [],
       "backRefs": []
     },
     "8mL1SxeZj": {
       "string": "",
       "parent": "Fdb44w1Hx",
-      ":create/time": 1613407645321,
+      "create-time": 1613407645321,
       "children": [],
       "backRefs": [],
       ":block/refs": []
@@ -236,7 +236,7 @@
     "Q6pknWD3T": {
       "string": "",
       "parent": "xRlOJJJkp",
-      ":create/time": 1613407687938,
+      "create-time": 1613407687938,
       "children": [],
       "backRefs": [],
       ":block/refs": []
@@ -244,7 +244,7 @@
     "B4M3hWpdx": {
       "string": "",
       "parent": "gpJwCWgLD",
-      ":create/time": 1613407694061,
+      "create-time": 1613407694061,
       "children": [],
       "backRefs": [],
       ":block/refs": []
@@ -252,7 +252,7 @@
     "NJjB51S-m": {
       "string": "",
       "parent": "QlsUPjXCX",
-      ":create/time": 1613407695439,
+      "create-time": 1613407695439,
       "children": [],
       "backRefs": [],
       ":block/refs": []
@@ -260,18 +260,18 @@
     "bmyDeXcMa": {
       "string": "#Hashtags are page links too, just like square brackets",
       "parent": "RokDbINrC",
-      ":create/time": 1613446026023,
+      "create-time": 1613446026023,
       "children": [],
       "backRefs": [],
       ":block/refs": [
         "ReT_V51ix"
       ],
-      ":edit/time": 1613446058955
+      "edit-time": 1613446058955
     },
     "sEARVY31k": {
       "string": "",
       "parent": "ReT_V51ix",
-      ":create/time": 1613446064061,
+      "create-time": 1613446064061,
       "children": [],
       "backRefs": [],
       ":block/refs": []
@@ -279,54 +279,54 @@
     "PezRFJYtW": {
       "string": "Enter : Add new block underneath",
       "parent": "NJS9MN73y",
-      ":create/time": 1613446131463,
+      "create-time": 1613446131463,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613446186004
+      "edit-time": 1613446186004
     },
     "RWE71zH5Y": {
       "string": "Ctrl + Enter : Add new block above",
       "parent": "NJS9MN73y",
-      ":create/time": 1613446142046,
+      "create-time": 1613446142046,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613446182141
+      "edit-time": 1613446182141
     },
     "8_5x7L2oq": {
       "string": "Shift + Enter : Add new line in block",
       "parent": "NJS9MN73y",
-      ":create/time": 1613446156876,
+      "create-time": 1613446156876,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613446175673
+      "edit-time": 1613446175673
     },
     "3LNqSCuXJ": {
       "string": "Ctrl + B : Hide / show top bar. ",
       "parent": "NJS9MN73y",
-      ":create/time": 1613589447969,
+      "create-time": 1613589447969,
       "children": [
         "yXFLmHK4V"
       ],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613630820786
+      "edit-time": 1613630820786
     },
     "rYnhtABNH": {
       "string": "",
       "parent": "rzjyteabt",
-      ":create/time": 1613589581166,
+      "create-time": 1613589581166,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613590675503
+      "edit-time": 1613590675503
     },
     "ElFkVecKE": {
       "string": "[[What you might miss from Roam Research]]",
       "parent": "dw_X4KIEJ",
-      ":create/time": 1613629682061,
+      "create-time": 1613629682061,
       "children": [
         "BtagfFPz_",
         "cyjJC3-Sn"
@@ -335,30 +335,30 @@
       ":block/refs": [
         "RUBKg0Y_J"
       ],
-      ":edit/time": 1613630111440
+      "edit-time": 1613630111440
     },
     "cyjJC3-Sn": {
       "string": "Micro Roam treats ambiguous markup differently. Roam Research often picks the 'highest priority' out of multiple overlapping pieces of markup, whereas Micro treats them both as invalid. For instance, Roam Research sees ** bold text [[ Page Link? ** ]] as a link with no bold, whereas Micro Roam sees nothing.",
       "parent": "ElFkVecKE",
-      ":create/time": 1613629701044,
+      "create-time": 1613629701044,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613630261488
+      "edit-time": 1613630261488
     },
     "BtagfFPz_": {
       "string": "Roam Research has many features Micro Roam doesn't, like kanban boards, a date picker, tables, queries, and many more. I plan on implementing some of these in the future. If you want any feature, please ask. ",
       "parent": "ElFkVecKE",
-      ":create/time": 1613630063467,
+      "create-time": 1613630063467,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613630247739
+      "edit-time": 1613630247739
     },
     "_OBgldEe6": {
       "string": "[[Advantages of Micro Roam]]",
       "parent": "dw_X4KIEJ",
-      ":create/time": 1613630352655,
+      "create-time": 1613630352655,
       "children": [
         "FF0MFrIM6",
         "pD1EMDIy5",
@@ -368,12 +368,12 @@
       ":block/refs": [
         "E7j9h_h-z"
       ],
-      ":edit/time": 1613630360505
+      "edit-time": 1613630360505
     },
     "FF0MFrIM6": {
       "string": "Performance. ",
       "parent": "_OBgldEe6",
-      ":create/time": 1613630361294,
+      "create-time": 1613630361294,
       "children": [
         "IouwnhnEq",
         "DngAMhVNx",
@@ -381,81 +381,81 @@
       ],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613630582460
+      "edit-time": 1613630582460
     },
     "bocwhcpyC": {
       "string": "More features, like real-time cross graph linking, coming soon",
       "parent": "_OBgldEe6",
-      ":create/time": 1613630522510,
+      "create-time": 1613630522510,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613630756800
+      "edit-time": 1613630756800
     },
     "pD1EMDIy5": {
       "string": "See markup __while you edit__. That means blocks don't move when you click on them, so you can edit faster.",
       "parent": "_OBgldEe6",
-      ":create/time": 1613630548105,
+      "create-time": 1613630548105,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613630733374
+      "edit-time": 1613630733374
     },
     "IouwnhnEq": {
       "string": "Micro Roam commits to loading 100% in under 1 second, always. It loads my graph (100k+ words) in 0.2 to 0.4 seconds. This allows you to write wherever you want, whenever you want, without disrupting your flow. ",
       "parent": "FF0MFrIM6",
-      ":create/time": 1613630583210,
+      "create-time": 1613630583210,
       "children": [
         "YJnyqMJ7d"
       ],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613631130348
+      "edit-time": 1613631130348
     },
     "DngAMhVNx": {
       "string": "Search all your pages and blocks in under 0.05 second",
       "parent": "FF0MFrIM6",
-      ":create/time": 1613630585160,
+      "create-time": 1613630585160,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613630611001
+      "edit-time": 1613630611001
     },
     "ExF_LjRwN": {
       "string": "Open 60 links per second (assuming you could click that fast)",
       "parent": "FF0MFrIM6",
-      ":create/time": 1613630615126,
+      "create-time": 1613630615126,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613630644984
+      "edit-time": 1613630644984
     },
     "yXFLmHK4V": {
       "string": "Hover over the top of the screen to show the top bar again",
       "parent": "3LNqSCuXJ",
-      ":create/time": 1613630824493,
+      "create-time": 1613630824493,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613630858390
+      "edit-time": 1613630858390
     },
     "YJnyqMJ7d": {
       "string": "__browser extensions can slow down page load by up to 0.7 seconds. if you find the website slow even without browser extensions, please report an issue__ ",
       "parent": "IouwnhnEq",
-      ":create/time": 1613630983873,
+      "create-time": 1613630983873,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613631119341
+      "edit-time": 1613631119341
     },
     "yzZYXdAJf": {
       "string": "Backquotes for `monospaced code`",
       "parent": "RokDbINrC",
-      ":create/time": 1613634737269,
+      "create-time": 1613634737269,
       "children": [],
       "backRefs": [],
       ":block/refs": [],
-      ":edit/time": 1613634753053
+      "edit-time": 1613634753053
     }
   },
   "pages": {
@@ -467,7 +467,7 @@
         "RokDbINrC",
         "NJS9MN73y"
       ],
-      ":create/time": 1613101994274,
+      "create-time": 1613101994274,
       "backRefs": []
     },
     "2jdJb7t8w": {
@@ -475,7 +475,7 @@
       "children": [
         "VRKEwswEQ"
       ],
-      ":create/time": 1613321812971,
+      "create-time": 1613321812971,
       "backRefs": [
         "dw_X4KIEJ"
       ]
@@ -485,7 +485,7 @@
       "children": [
         "Q6pknWD3T"
       ],
-      ":create/time": 1613321817867,
+      "create-time": 1613321817867,
       "backRefs": [
         "rJEwNT4jg"
       ]
@@ -493,7 +493,7 @@
     "wgVcJQtQS": {
       "title": "Page Link",
       "children": [],
-      ":create/time": 1613321821546,
+      "create-time": 1613321821546,
       "backRefs": []
     },
     "gpJwCWgLD": {
@@ -501,7 +501,7 @@
       "children": [
         "B4M3hWpdx"
       ],
-      ":create/time": 1613321821595,
+      "create-time": 1613321821595,
       "backRefs": [
         "pvBsQAsDW",
         "qvrocywph"
@@ -510,7 +510,7 @@
     "ubrXhxiXp": {
       "title": "Tag",
       "children": [],
-      ":create/time": 1613321825244,
+      "create-time": 1613321825244,
       "backRefs": []
     },
     "QlsUPjXCX": {
@@ -518,7 +518,7 @@
       "children": [
         "NJjB51S-m"
       ],
-      ":create/time": 1613321825255,
+      "create-time": 1613321825255,
       "backRefs": [
         "qvrocywph"
       ]
@@ -528,7 +528,7 @@
       "children": [
         "KsofiFo8Q"
       ],
-      ":create/time": 1613321829954,
+      "create-time": 1613321829954,
       "backRefs": [
         "NJS9MN73y"
       ]
@@ -538,7 +538,7 @@
       "children": [
         "8mL1SxeZj"
       ],
-      ":create/time": 1613407645320,
+      "create-time": 1613407645320,
       "backRefs": [
         "e5qwu46yQ"
       ]
@@ -548,7 +548,7 @@
       "children": [
         "sEARVY31k"
       ],
-      ":create/time": 1613446058955,
+      "create-time": 1613446058955,
       "backRefs": [
         "bmyDeXcMa"
       ]
@@ -556,7 +556,7 @@
     "RUBKg0Y_J": {
       "title": "What you might miss from Roam Research",
       "children": [],
-      ":create/time": 1613630111440,
+      "create-time": 1613630111440,
       "backRefs": [
         "ElFkVecKE"
       ]
@@ -564,7 +564,7 @@
     "E7j9h_h-z": {
       "title": "Advantages of Micro Roam",
       "children": [],
-      ":create/time": 1613630360505,
+      "create-time": 1613630360505,
       "backRefs": [
         "_OBgldEe6"
       ]
