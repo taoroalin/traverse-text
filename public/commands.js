@@ -1,12 +1,12 @@
 // idk whether this is "random enough"
 // it is highly performance inneficient but i don't need to call this many times
-const chars64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
+const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
 const newUid = () => {
   let result
   do {
     result = ""
     for (let i = 0; i < 9; i++) {
-      result += chars64[Math.floor(Math.random() * 64)]
+      result += CHARS_64[Math.floor(Math.random() * 64)]
     }
   } while (store.pages[result] !== undefined || store.blocks[result] !== undefined)
   return result
