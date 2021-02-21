@@ -65,9 +65,9 @@ const renderBlock = (parentNode,uid,idx) => {
 const renderBlockBody = (parent,text) => {
   if (text[text.length - 1] !== " ") text += " " // add space because of getSelection.collapse() weirdness with end of contenteditable
   const stack = [parent]
-  // 1             2              3   4         5    6         7      8    9
-  // page-ref-open page-ref-close tag block-ref bold highlight italic link literal
-  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]{8,50}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`/g)
+  // 1             2              3   4         5    6         7      8    9       10
+  // page-ref-open page-ref-close tag block-ref bold highlight italic link literal template-expander
+  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]{8,50}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|(;;(?:[^ \n\r]*))/g)
 
   let idx = 0
   let stackTop = parent
@@ -162,6 +162,10 @@ const renderBlockBody = (parent,text) => {
       const literalElement = literalTemplate.cloneNode(true)
       literalElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(literalElement)
+    } else if (match[10]) {
+      const templateExpanderElement = templateExpanderTemplate.cloneNode(true)
+      templateExpanderElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(templateExpanderElement)
     }
     idx = match.index + match[0].length
   }

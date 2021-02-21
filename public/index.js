@@ -156,36 +156,38 @@ const updateCursorInfo = () => {
       sessionState.isFocused = true
       sessionState.focusId = focusBlock.dataset.id
 
-      const suggestion = focusNode.parentNode.closest(".autocomplete__suggestion")
-      if (!suggestion) {
-        if (focusNode.className === "block__body") {
-          sessionState.position = focusBlock.innerText.length * (focusOffset !== 0) // todo make this less jank
-        } else {
-          sessionState.position = focusOffset
-          if (focusNode.startIdx) sessionState.position += focusNode.startIdx
-        }
-        focusBlockBody = focusBlock.children[1]
-
-        editingLink = undefined
-        const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
-        const tags = focusBlockBody.querySelectorAll(".tag")
-        for (let tag of tags) {
-          if (tag.childNodes[0].endIdx >= sessionState.position && tag.childNodes[0].startIdx < sessionState.position) {
-            editingLink = tag
-          }
-        }
-        for (let ref of pageRefs) {
-          if (ref.children[1].childNodes[0].endIdx >= sessionState.position && ref.children[1].childNodes[0].startIdx < sessionState.position) {
-            editingLink = ref
-          }
-        }
-
-        editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
-
-        focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`)
+      if (focusNode.className === "block__body") {
+        sessionState.position = focusBlock.innerText.length * (focusOffset !== 0) // todo make this less jank
       } else {
-        focusSuggestion = suggestion
+        sessionState.position = focusOffset
+        if (focusNode.startIdx) sessionState.position += focusNode.startIdx
       }
+      focusBlockBody = focusBlock.children[1]
+
+      editingLink = undefined
+      const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
+      const tags = focusBlockBody.querySelectorAll(".tag")
+      for (let tag of tags) {
+        if (tag.childNodes[0].endIdx >= sessionState.position && tag.childNodes[0].startIdx < sessionState.position) {
+          editingLink = tag
+        }
+      }
+      for (let ref of pageRefs) {
+        if (ref.children[1].childNodes[0].endIdx >= sessionState.position && ref.children[1].childNodes[0].startIdx < sessionState.position) {
+          editingLink = ref
+        }
+      }
+      editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
+
+      const templateExpanders = focusBlockBody.querySelectorAll(".template-expander")
+      for (let temp of templateExpanders) {
+        if (temp.childNodes[0].endIdx >= sessionState.position && temp.childNodes[0].startIdx < sessionState.position) {
+          editingTemplateExpander = temp
+        }
+      }
+
+      focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`) || templateList.querySelector(`.template__suggestion[data-selected="true"]`)
+
     } else
       sessionState.isFocused = false
 

@@ -146,6 +146,29 @@ const commands = {
       }
     }
     return { edits }
+  },
+  copyBlock: (blockId,parentId,idx,time) => {
+    const newId = newUid()
+    const edits = { write: [],insert: [[parentThingey(parentId),parentId,"children",newId,idx]],subtract: [] }
+    const copyBlock = (oldId,newId,parentId) => {
+      const block = store.blocks[oldId]
+      const newBlock = { "create-time": time,string: block.string,parent: parentId }
+      for (let propName of LIST_PROPS) {
+        if (block[propName])
+          newBlock[propName] = Array.from(block[propName])
+      }
+      if (block.children) {
+        newBlock.children = []
+        for (let child of block.children) {
+          const newChildId = newUid()
+          copyBlock(child,newChildId,newId)
+          newBlock.children.push(newChildId)
+        }
+      }
+      edits.write.push(["blocks",newId,newBlock])
+    }
+    copyBlock(blockId,newId,parentId)
+    return { edits,returns: newId }
   }
 
 }

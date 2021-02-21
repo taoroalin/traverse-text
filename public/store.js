@@ -6,6 +6,7 @@ const blankStore = () => ({
   pagesByTitle: {}
 })
 
+const LIST_PROPS = ["refs",":block/refs","backRefs"]
 
 const LOCAL_FILE_SIGNATURE = 0x04034b50
 const END_CENTRAL_DIR_SIGNATURE = 0x06054b50
@@ -369,7 +370,7 @@ const mergeStore = (otherStore) => {
         newBlock.children.push(newChildId)
       }
     }
-    for (let listName of ["refs",":block/refs","backRefs"]) {
+    for (let listName of LIST_PROPS) {
       let list = block[listName]
       if (list) {
         newBlock[listName] = list.map(getNewId)
@@ -394,7 +395,7 @@ const mergeStore = (otherStore) => {
         }
       }
 
-      for (let listName of ["refs",":block/refs","backRefs"]) {
+      for (let listName of LIST_PROPS) {
         let list = page[listName]
         if (list) {
           newPage[listName] = list.map(getNewId)
@@ -411,7 +412,7 @@ const mergeStore = (otherStore) => {
           existingPage.children.push(newChildId)
         }
       }
-      for (let listName of ["refs",":block/refs","backRefs"]) {
+      for (let listName of LIST_PROPS) {
         if (page[listName]) {
           if (existingPage[listName] === undefined) existingPage[listName] = []
           for (let name of page[listName]) {
@@ -475,4 +476,26 @@ const exactFullTextSearch = (string) => {
     if (match) results.push({ string: block.string,id: blockUid,idx: match.index + 1 - block.backRefs.length * searchRefCountWeight })
   }
   return results.sort((a,b) => a.idx - b.idx).slice(0,10)
+}
+
+const searchTemplates = (string) => {
+  const templatePage = store.pages[store.pagesByTitle["roam/templates"]]
+  const result = []
+  if (templatePage) {
+    const fn = (blockId,f) => {
+      const block = store.blocks[blockId]
+      const match = block.string.match(f ? /^([^ \r\n]+)\s*$/ : /^([^ \r\n]+)\s*(?:(?:#roam\/templates)|(?:\[\[roam\/templates\]\]))$/)
+      console.log(match)
+      if (match) {
+        if (match.length >= string.length && match[1].substring(0,string.length).toLowerCase() === string.toLowerCase()) {
+          result.push({ id: blockId,string: match[1] })
+        }
+      }
+    }
+    for (let backref of templatePage.backRefs)
+      fn(backref,0)
+    for (let blockId of templatePage.children)
+      fn(blockId,1)
+  }
+  return result
 }
