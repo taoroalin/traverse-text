@@ -149,6 +149,9 @@ const updateCursorInfo = () => {
 
   focusNode = getSelection().focusNode
   focusOffset = getSelection().focusOffset
+
+  focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`) || templateList.querySelector(`.template__suggestion[data-selected="true"]`)
+
   if (focusNode) {
     focusBlock = focusNode.parentNode.closest(".block")
     if (focusBlock) {
@@ -186,9 +189,6 @@ const updateCursorInfo = () => {
           editingTemplateExpander = temp
         }
       }
-
-      focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`) || templateList.querySelector(`.template__suggestion[data-selected="true"]`)
-
     } else
       sessionState.isFocused = false
 
