@@ -141,7 +141,7 @@ a:visited { color:var(--link) }
   flex-grow: 1;
 }
 
-#autocomplete-list{
+#autocomplete-list, #template-list{
   position:absolute;
   display:flex;
   flex-direction: column;
@@ -151,11 +151,11 @@ a:visited { color:var(--link) }
   box-shadow: 0 0 8px var(--shadow);
 }
 
-.autocomplete__suggestion[data-selected="true"]{
+.autocomplete__suggestion[data-selected="true"],.template__suggestion[data-selected="true"]{
   background-color:var(--click);
 }
 
-.autocomplete__suggestion{
+.autocomplete__suggestion, .template__suggestion{
   padding:7px;
   cursor:pointer;
   border-radius: 5px;

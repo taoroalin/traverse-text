@@ -33,6 +33,7 @@
     <div id="autocomplete-list" style="display:none"></div>
     <!-- inline styles on this site are all edited directly by js -->
     <div id="search-result-list" style="display:none"></div>
+    <div id="template-list" style="display:none"></div>
 
 
   </div>
@@ -88,6 +89,8 @@
     }
 
     let commitDebounce = null
+
+    let editingTemplateExpander = null
 
     let editingLink = null
     let editingTitle = null
@@ -219,6 +222,11 @@
     <span class="literal"></span>
   </template>
 
+  <!-- this is a bit silly, since this element doesn't show up as anyting, but for consistancy?? -->
+  <template id="template-expander">
+    <span class="template-expander"></span>
+  </template>
+
   <!--using spans with event handlers as links because they play nice with contenteditable-->
   <template id="url">
     <span class="url"></span>
@@ -226,6 +234,10 @@
 
   <template id="autocomplete__suggestion">
     <div class="autocomplete__suggestion"></div>
+  </template>
+
+  <template id="template__suggestion">
+    <div class="template__suggestion"></div>
   </template>
 
   <template id="search-result">

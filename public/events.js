@@ -24,6 +24,29 @@ const downloadHandler = () => {
   downloadButton.setAttribute('download',`${store.graphName}-micro-roam.json`)
 }
 
+const expandTemplate = () => {
+  const id = focusSuggestion.dataset.id
+  const block = store.blocks[sessionState.focusId]
+  if (block.children === undefined || block.children.length === 0) {
+    const parentId = store.blocks[sessionState.focusId].parent
+    const childIds = store.blocks[id].children
+    const currentIdx = blockOrPageFromId(parentId).children.indexOf(sessionState.focusId)
+    runCommand("deleteBlock",sessionState.focusId)
+    const parentNode = focusBlock.parentNode
+    focusBlock.remove()
+    for (let i = 0; i < childIds.length; i++) {
+      const childId = childIds[i]
+      const idx = currentIdx + i
+      const newId = runCommand("copyBlock",childId,parentId,idx)
+      const e = renderBlock(parentNode,newId,idx)
+      if (i === 0) {
+        focusBlockEnd(e)
+      }
+    }
+  } else
+    alert("can't expand template from block with children")
+  templateList.style.display = "none"
+}
 
 const autocomplete = () => {
   const origString = store.blocks[sessionState.focusId].string
@@ -81,10 +104,6 @@ const dedentFocusedBlock = () => {
   }
 }
 
-// Global event listeners that switch on active element, as a possibly more performant, simpler option than propagating through multiple event handlers
-
-// Event listener functions that can't be written inline because multiple triggers / disconnect / reconnect
-
 document.addEventListener("input",(event) => {
   updateCursorInfo()
   if (sessionState.isFocused) {
@@ -102,6 +121,7 @@ document.addEventListener("input",(event) => {
     setFocusedBlockString(string)
 
     autocompleteList.style.display = "none"
+    templateList.style.display = "none"
     if (editingTitle) {
       const matchingTitles = titleExactFullTextSearch(editingTitle)
       if (matchingTitles.length > 0) {
@@ -129,6 +149,29 @@ document.addEventListener("input",(event) => {
       }
     }
 
+    templateList.style.display = "none"
+    if (editingTemplateExpander) {
+      console.log("editingTemplateExpander")
+      const editingTemplateText = editingTemplateExpander.innerText.substring(2)
+      const matchingTemplates = searchTemplates(editingTemplateText)
+      console.log(matchingTemplates)
+      if (matchingTemplates.length > 0) {
+        templateList.innerHTML = ""
+        for (let i = 0; i < Math.min(matchingTemplates.length,10); i++) {
+          const result = templateSuggestionTemplate.cloneNode(true)
+          if (i === 0) {
+            result.dataset.selected = "true"
+          }
+          result.dataset.string = matchingTemplates[i].string
+          result.dataset.id = matchingTemplates[i].id
+          result.innerText = truncateElipsis(matchingTemplates[i].string,50)
+          templateList.appendChild(result)
+        }
+        templateList.style.display = "block"
+        templateList.style.top = editingTemplateExpander.getBoundingClientRect().bottom
+        templateList.style.left = editingTemplateExpander.getBoundingClientRect().left
+      }
+    }
 
   } else if (event.target.id === "search-input") {
     const matchingTitles = exactFullTextSearch(event.target.value)
@@ -254,8 +297,19 @@ document.addEventListener("keydown",(event) => {
   }
 
   if (autocompleteList.style.display !== "none") {
-    if (event.key === "Tab") {
+    if (event.key === "Tab" || event.key === "Enter") {
       autocomplete()
+      event.preventDefault()
+    }
+    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousSibling) || (event.key === "ArrowDown" && focusSuggestion.nextSibling)
+    if (newSelected) {
+      newSelected.dataset.selected = "true"
+      delete focusSuggestion.dataset.selected
+      event.preventDefault()
+    }
+  } else if (templateList.style.display !== "none") {
+    if (event.key === "Tab" || event.key === "Enter") {
+      expandTemplate()
       event.preventDefault()
     }
     const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousSibling) || (event.key === "ArrowDown" && focusSuggestion.nextSibling)
@@ -412,7 +466,12 @@ document.addEventListener("click",(event) => {
 
   const closestBreadcrumbPage = event.target.closest(".breadcrumb-page")
   const closestBreadcrumbBlock = event.target.closest(".breadcrumb-block")
-  if (event.target.className === "page-ref__body") {
+  if (event.target.className === "template__suggestion") {
+    if (focusSuggestion) focusSuggestion.dataset.selected = false
+    event.target.dataset.selected = true
+    focusSuggestion = event.target
+    expandTemplate()
+  } else if (event.target.className === "page-ref__body") {
     goto("pageTitle",event.target.innerText)
   } else if (closestBullet) {
     goto("block",closestBullet.parentNode.dataset.id)
