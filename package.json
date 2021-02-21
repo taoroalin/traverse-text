@@ -1,6 +1,10 @@
 {
   "scripts": {
     "build": "node build.js",
-    "dev": "cd public && live-server --no-css-inject"
+    "dev": "cd public && live-server --no-css-inject",
+    "dev-build": "nodemon --watch public build.js"
+  },
+  "dependencies": {
+    "uglify-js": "^3.12.8"
   }
 }
