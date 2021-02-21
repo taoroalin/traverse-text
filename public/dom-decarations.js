@@ -12,6 +12,7 @@ const templateSuggestionTemplate = getTemp("template__suggestion")
 const breadcrumbBlockTemplate = getTemp("breadcrumb-block")
 const breadcrumbPageTemplate = getTemp("breadcrumb-page")
 const backrefFrameTemplate = getTemp("backref-frame")
+const notificationTemplate = getTemp("notification")
 
 // Block parsing Templates
 const pageRefTemplate = getTemp("page-ref")

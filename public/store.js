@@ -59,7 +59,7 @@ const zipToFiles = (buffer) => {
 
       } else {
         console.log(compressionMethod)
-        alert("Micro Roam can't handle .zip files that are actually compressed. use a .json file or an uncompressed .zip file, like ones exported by Roam Research or Micro Roam")
+        notifyText("Micro Roam can't handle .zip files that are actually compressed. use a .json file or an uncompressed .zip file, like ones exported by Roam Research or Micro Roam",10)
         return
       }
     } else if (sigInt === END_CENTRAL_DIR_SIGNATURE) {

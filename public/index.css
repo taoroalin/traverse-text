@@ -17,6 +17,7 @@
   --click:darkgrey;
   --page-ref:#2bcc5b;
   --shadow:rgb(98, 98, 98);
+  --notification:#2e4736;
 }
 
 .light{
@@ -32,6 +33,7 @@
   --highlight:rgb(255, 239, 146);
   --click:rgb(197, 197, 197);
   --page-ref:rgb(73, 197, 91);
+  --notification:#a4d1b1;
 }
 
 input, button, a{
@@ -81,6 +83,19 @@ a{
 }
 
 a:visited { color:var(--link) }
+
+.notification{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  top:-40px; /* transitions to more px */
+  margin-top: 0px;
+  opacity:1;
+  transition: top 0.25s ease-out, opacity 0.2s linear;
+  padding:20px;
+  background-color:var(--notification);
+  border-radius:8px;
+}
 
 
 /* singular element styles --------------------------------------------------------------------------------------- */
@@ -181,7 +196,6 @@ a:visited { color:var(--link) }
   cursor:pointer;
   border-radius: 5px;
 }
-
 
 /* Page styles --------------------------------------------------------------------------------------------------- */
 

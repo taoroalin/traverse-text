@@ -209,3 +209,15 @@ const renderBreadcrumb = (parent,blockId) => {
     parent.appendChild(node)
   }
 }
+
+const notifyText = (text,duration) => {
+  const el = notificationTemplate.cloneNode(true)
+  el.innerText = text
+  document.getElementById("app").appendChild(el)
+  setTimeout(() => el.style.top = "60px",50)
+  const dur = (duration && duration * 1000) || 5000
+  setTimeout(() => el.style.opacity = "0",dur)
+  setTimeout(() => {
+    el.remove()
+  },dur + 300)
+}

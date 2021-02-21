@@ -44,7 +44,7 @@ const expandTemplate = () => {
       }
     }
   } else
-    alert("can't expand template from block with children")
+    notifyText("can't use a template inside a block that has children")
   templateList.style.display = "none"
 }
 
@@ -549,6 +549,6 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
       }))
     })
   } else {
-    alert("Micro Roam only accepts a .json file, a .zip file containing 1 .json file, or a .zip file containing .md files")
+    notifyText("Micro Roam only accepts a .json file, a .zip file containing 1 .json file, or a .zip file containing .md files")
   }
 })
