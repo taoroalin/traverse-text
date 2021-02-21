@@ -26,6 +26,7 @@ const result = html.replace(regexScriptImport,scriptReplacer).replace(regexStyle
 fs.writeFileSync("./public/index.html",result)
 
 fs.copyFile("./src/favicon.ico","./public/favicon.ico",() => { })
+fs.copyFile("./src/default-store.json","./public/default-store.json",() => { })
 
 let workerFile = fs.readFileSync("./src/worker.js","utf8")
 workerFile = workerFile.replace(/importScripts\(([^\)]+)\)/g,(match,namesText) => {
