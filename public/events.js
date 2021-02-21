@@ -468,11 +468,17 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
           mergeStore(json)
           theresANewStore()
         }))
-      } else if (files.every((x) => x.ext === "md")) {
-        console.log("parsing markdown")
-
       } else {
-        alert(`That zip file contained ${fileName}, but Micro Roam expected a .json file or multiple .md files`)
+        const mds = []
+        for (let file of files) {
+          if (file.ext === "md") {
+            mds.push(file)
+          } else {
+            console.log(`That zip file contained ${file.fullName}, but Micro Roam expected a .json file or multiple .md files`)
+          }
+        }
+        console.log("parsing markdown")
+        mdToStore(mds)
       }
     })
   } else if (extension === "json") {

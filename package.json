@@ -1,5 +1,6 @@
 {
   "scripts": {
-    "build": "node build.js"
+    "build": "node build.js",
+    "dev": "cd public && live-server --no-css-inject"
   }
 }

@@ -8,6 +8,11 @@ const blankStore = () => ({
 
 
 const LOCAL_FILE_SIGNATURE = 0x04034b50
+const END_CENTRAL_DIR_SIGNATURE = 0x06054b50
+
+const CENTRAL_FILE_SIGNATURE = 0x02014b50
+const ARCHIVE_EXTRA_RECORD_SIGNATURE = 0x08064b50
+const ZIP64_END_CENTRAL_SIGNATURE = 0x06064b50
 
 const zipToFiles = (buffer) => {
   const bufferU8 = new Uint8Array(buffer)
@@ -15,7 +20,7 @@ const zipToFiles = (buffer) => {
   let idx = 0
   const result = []
   while (idx < length) {
-    // I have to copy header uint32s into new arrays because they might not be aligned :(
+    // I have to copy header u32s into new arrays because they might not be aligned :(
     const sigBuf = new ArrayBuffer(4)
     const sigInt8 = new Uint8Array(sigBuf)
     for (let i = 0; i < 4; i++) {
@@ -36,6 +41,9 @@ const zipToFiles = (buffer) => {
         const rawSize = dumbu32[1]
         const fileNameSize = dumbu32[2]
 
+        if (fileNameSize >= 1441805) {
+          break
+        }
         const decoder = new TextDecoder()
         const fullName = decoder.decode(new Uint8Array(buffer,idx + 30,fileNameSize))
         const match = fullName.match(/\.([a-z]+)$/)
@@ -53,16 +61,40 @@ const zipToFiles = (buffer) => {
         alert("Micro Roam can't handle .zip files that are actually compressed. use a .json file or an uncompressed .zip file, like ones exported by Roam Research or Micro Roam")
         return
       }
+    } else if (sigInt === END_CENTRAL_DIR_SIGNATURE) {
+      break
     } else {
       console.log(`got signature ${sigInt}`)
-      return result
+      break
     }
   }
   return result
 }
 /*
+ZIP
 
-ZIP header
+[local file header 1]
+[encryption header 1]
+[file data 1]
+[data descriptor 1]
+. 
+.
+.
+[local file header n]
+[encryption header n]
+[file data n]
+[data descriptor n]
+[archive decryption header] 
+[archive extra data record] 
+[central directory header 1]
+.
+.
+.
+[central directory header n]
+[zip64 end of central directory record]
+[zip64 end of central directory locator] 
+[end of central directory record]
+
 local file header signature     4 bytes 0  (0x04034b50)
 version needed to extract       2 bytes 4
 general purpose bit flag        2 bytes 6
@@ -74,6 +106,46 @@ compressed size                 4 bytes 18
 uncompressed size               4 bytes 22
 file name length                2 bytes 26
 extra field length              2 bytes 28
+
+central file header signature   4 bytes 0  (0x02014b50)
+version made by                 2 bytes 4
+version needed to extract       2 bytes 6
+general purpose bit flag        2 bytes 8
+compression method              2 bytes 10
+last mod file time              2 bytes 12
+last mod file date              2 bytes 14
+crc-32                          4 bytes 16
+compressed size                 4 bytes 20
+uncompressed size               4 bytes 24
+file name length                2 bytes 28
+extra field length              2 bytes 30
+file comment length             2 bytes 32
+disk number start               2 bytes 34
+internal file attributes        2 bytes 36
+external file attributes        4 bytes 38
+relative offset of local header 4 bytes 42
+
+end of central dir signature    4 bytes  (0x06054b50)
+number of this disk             2 bytes
+number of the disk with the
+start of the central directory  2 bytes
+total number of entries in the
+central directory on this disk  2 bytes
+total number of entries in
+the central directory           2 bytes
+size of the central directory   4 bytes
+offset of start of central
+directory with respect to
+the starting disk number        4 bytes
+.ZIP file comment length        2 bytes
+.ZIP file comment       (variable size)
+
+If one of the fields in the end of central directory
+record is too small to hold required data, the field SHOULD be 
+set to -1 (0xFFFF or 0xFFFFFFFF) and the ZIP64 format record 
+SHOULD be created.
+
+-- zip64 is for when data is too big for ZIP
 
 */
 
@@ -207,7 +279,7 @@ const mdToStore = (files) => { // files: [{name, ext, fullName, text}]
 
   store = blankStore()
 
-  const getPageId = (title) => pagesByTitle[title] || newUid()
+  const getPageId = (title) => store.pagesByTitle[title] || newUid()
 
 
   for (let file of files) {
@@ -242,11 +314,11 @@ const mdToStore = (files) => { // files: [{name, ext, fullName, text}]
 
   console.log(store)
 
-  for (let blockId of store.blocks) {
-    const block = store.blocks[blockId]
-    const { pageRefs,quotes } = parseMdBlock(block.string)
-  }
-  const { pageRefs,quotes } = parseMdBlock(blockText)
+  // for (let blockId in store.blocks) {
+  //   const block = store.blocks[blockId]
+  //   const { pageRefs,quotes } = parseMdBlock(block.string)
+  // }
+  // const { pageRefs,quotes } = parseMdBlock(blockText)
 }
 
 const parseMdBlock = (text) => {
