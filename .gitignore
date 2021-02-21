@@ -1,3 +1,5 @@
 **/node_modules/**
 **/package-lock.json
-back/user-data/**
+
+back/prod-db/**
+back/test-db/**

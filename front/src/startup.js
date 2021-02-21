@@ -7,11 +7,12 @@ if (storedUser) user = JSON.parse(storedUser)
 let w = false // flag for whether either code or data loaded
 let store = null
 let idb = null
+let startCommand = ["dailyNotes"]
 
 const theresANewStore = () => {
   user.graphName = store.graphName
   saveUser()
-  gotoNoHistory("dailyNotes")
+  gotoNoHistory(...startCommand)
   setTimeout(() => saveWorker.postMessage(["save",store]),0)
 }
 
@@ -29,6 +30,7 @@ r.onsuccess = (e1) => {
       fetch("./default-store.json").then(text => text.json().then(json => {
         store = json
         user.graphName = json.graphName
+        startCommand = ["pageTitle","Welcome to Micro Roam"]
         if (w) {
           theresANewStore()
         } else
