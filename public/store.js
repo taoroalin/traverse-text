@@ -404,5 +404,3 @@ const exactFullTextSearch = (string) => {
   }
   return results.sort((a,b) => a.idx - b.idx).slice(0,10)
 }
-
-

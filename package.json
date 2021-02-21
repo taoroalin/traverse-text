@@ -1,6 +1,5 @@
 {
   "scripts": {
-    "build": "node preprocess-js/index.js",
-    "dev": "cd public && live-server --no-css-inject"
+    "build": "node preprocess-js/index.js"
   }
 }
