@@ -6,6 +6,77 @@ const blankStore = () => ({
   pagesByTitle: {}
 })
 
+
+const LOCAL_FILE_SIGNATURE = 0x04034b50
+
+const zipToFiles = (buffer) => {
+  const bufferU8 = new Uint8Array(buffer)
+  const length = bufferU8.length
+  let idx = 0
+  const result = []
+  while (idx < length) {
+    // I have to copy header uint32s into new arrays because they might not be aligned :(
+    const sigBuf = new ArrayBuffer(4)
+    const sigInt8 = new Uint8Array(sigBuf)
+    for (let i = 0; i < 4; i++) {
+      sigInt8[i] = bufferU8[idx + i]
+    }
+    const sigInt = (new Uint32Array(sigBuf))[0]
+    if (sigInt === LOCAL_FILE_SIGNATURE) {
+      const compressionMethod = (new Uint16Array(buffer,8,1))[0]
+      if (compressionMethod === 0) {
+
+        const dumbArray = new ArrayBuffer(12)
+        const dumbu8 = new Uint8Array(dumbArray)
+        for (let i = 0; i < 12; i++) {
+          dumbu8[i] = bufferU8[i + 18 + idx]
+        }
+        const dumbu32 = new Uint32Array(dumbArray)
+        const compressedSize = dumbu32[0]
+        const rawSize = dumbu32[1]
+        const fileNameSize = dumbu32[2]
+
+        const decoder = new TextDecoder()
+        const fullName = decoder.decode(new Uint8Array(buffer,idx + 30,fileNameSize))
+        const match = fullName.match(/\.([a-z]+)$/)
+        const text = decoder.decode(new Uint8Array(buffer,idx + 30 + fileNameSize,rawSize))
+        let ext,name
+        if (match) {
+          ext = match[1]
+          name = fullName.substring(0,match.index)
+        }
+        result.push({ name,ext,text,fullName })
+        idx += 30 + fileNameSize + rawSize
+
+      } else {
+        console.log(compressionMethod)
+        alert("Micro Roam can't handle .zip files that are actually compressed. use a .json file or an uncompressed .zip file, like ones exported by Roam Research or Micro Roam")
+        return
+      }
+    } else {
+      console.log(`got signature ${sigInt}`)
+      return result
+    }
+  }
+  return result
+}
+/*
+
+ZIP header
+local file header signature     4 bytes 0  (0x04034b50)
+version needed to extract       2 bytes 4
+general purpose bit flag        2 bytes 6
+compression method              2 bytes 8
+last mod file time              2 bytes 10
+last mod file date              2 bytes 12
+crc-32                          4 bytes 14
+compressed size                 4 bytes 18
+uncompressed size               4 bytes 22
+file name length                2 bytes 26
+extra field length              2 bytes 28
+
+*/
+
 const roamJsonToStore = (graphName,text) => {
   const stime = performance.now()
 
@@ -114,6 +185,84 @@ const roamJsonToStore = (graphName,text) => {
   return store
 }
 
+
+/*
+
+Here's what's lost importing Markdown that's saved in JSON:
+block author
+block create time
+block end time
+block references get confused with quotes - referencing a block just looks like it's text in quotes, "Block Refs". Micro Roam treats all quotes that could be block refs as block refs, which accidentally creates too many block refs
+blocks with line breaks in them can split into two blocks
+
+*/
+
+const mdToStore = (files) => { // files: [{name, ext, fullName, text}]
+
+  const now = Date.now()
+
+  const oldStore = store
+
+  const blockStringIndex = {}
+
+  store = blankStore()
+
+  const getPageId = (title) => pagesByTitle[title] || newUid()
+
+
+  for (let file of files) {
+    const title = file.name
+    const text = file.text
+    const pageId = getPageId(title)
+    const page = { "create-time": now,title: title }
+    store.pages[pageId] = page
+    store.pagesByTitle[title] = pageId
+    if (text.length > 0) {
+      page.children = []
+
+      const addBlock = (string) => {
+        const blockId = newUid()
+        blockStringIndex[string] = blockId // overwrite previous string when multiple have the same :(
+        const block = { "create-time": now,string }
+        store.blocks[blockId] = block
+        page.children.push(blockId)
+      }
+
+      const stack = [page]
+      const blockBreaks = text.matchAll(/\n((?:    )*)- /g)
+      let idx = 2 // skip first block break, "- "
+
+      for (let blockBreak of blockBreaks) {
+        addBlock(text.substring(idx,blockBreak.index))
+        idx = blockBreak.index + blockBreak[0].length
+      }
+      addBlock(text.substring(idx))
+    }
+  }
+
+  console.log(store)
+
+  for (let blockId of store.blocks) {
+    const block = store.blocks[blockId]
+    const { pageRefs,quotes } = parseMdBlock(block.string)
+  }
+  const { pageRefs,quotes } = parseMdBlock(blockText)
+}
+
+const parseMdBlock = (text) => {
+
+}
+/*
+block refs ger replaced with "referenced block text". in order to recover these I have to search for a block with that text
+
+if you have
+'
+text
+- text
+'
+as a block, it will look like 2 blocks in markdown
+*/
+
 const mergeStore = (otherStore) => {
   // merge pages by title, adding all blocks to the end
   // if the new store has a block with the same id, give it a new id
@@ -214,6 +363,7 @@ const gcBlocks = () => {
 }
 
 
+
 // search
 
 const escapeRegex = (string) => {
@@ -255,25 +405,4 @@ const exactFullTextSearch = (string) => {
   return results.sort((a,b) => a.idx - b.idx).slice(0,10)
 }
 
-/*
-
-ZIP header
-local file header signature     4 bytes 0  (0x04034b50)
-version needed to extract       2 bytes 4
-general purpose bit flag        2 bytes 6
-compression method              2 bytes 8
-last mod file time              2 bytes 10
-last mod file date              2 bytes 12
-crc-32                          4 bytes 14
-compressed size                 4 bytes 18
-uncompressed size               4 bytes 22
-file name length                2 bytes 26
-extra field length              2 bytes 28
-
-
-const mdToStore = ([...files])
-
-const fileToStore = (blob)
-
-*/
 

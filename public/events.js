@@ -448,30 +448,42 @@ document.addEventListener("click",(event) => {
   updateCursorInfo()
 })
 
-document.getElementById('upload-input').addEventListener('change',(event) => {
-  const file = event.target.files[0]
-  graphName = file.name.substring(0,file.name.length - 5)
-  file.text().then((text) => {
-    store = roamJsonToStore(graphName,text)
-    user.graphName = graphName
-    saveUser()
-    fetch("./default-store.json").then(text => text.json().then(json => {
-      mergeStore(json)
-      // gotoReplaceHistory("pageTitle","Welcome to Micro Roam")
-      gotoReplaceHistory("dailyNotes")
-      setTimeout(() => saveWorker.postMessage(["save",store]),0)
-    }))
-  })
-})
-
 topBarHiddenHitbox.addEventListener("mouseover",() => {
   user.topBar = "visible"
   saveUser()
 })
 
-// document.addEventListener("beforeinput",(event) => {
-//   updateCursorInfo()
-//   console.log(focusBlockBody.innerText)
-//   console.log(event)
-// }
-// )
+document.getElementById('upload-input').addEventListener('change',(event) => {
+  const file = event.target.files[0]
+  console.log(file)
+  const [name,extension] = file.name.split(".")
+  console.log(`name ${name} extension ${extension}`)
+  if (extension === "zip") {
+    file.arrayBuffer().then((buffer) => {
+      const files = zipToFiles(buffer)
+      console.log(files)
+      if (files.length === 1 && files[0].ext === "json") {
+        store = roamJsonToStore(files[0].name,files[0].text)
+        fetch("./default-store.json").then(text => text.json().then(json => {
+          mergeStore(json)
+          theresANewStore()
+        }))
+      } else if (files.every((x) => x.ext === "md")) {
+        console.log("parsing markdown")
+
+      } else {
+        alert(`That zip file contained ${fileName}, but Micro Roam expected a .json file or multiple .md files`)
+      }
+    })
+  } else if (extension === "json") {
+    file.text().then((text) => {
+      store = roamJsonToStore(name,text)
+      fetch("./default-store.json").then(text => text.json().then(json => {
+        mergeStore(json)
+        theresANewStore()
+      }))
+    })
+  } else {
+    alert("Micro Roam only accepts a .json file, a .zip file containing 1 .json file, or a .zip file containing .md files")
+  }
+})
