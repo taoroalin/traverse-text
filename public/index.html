@@ -46,14 +46,21 @@
     let w = false; // flag for whether either code or data loaded
     let store = null;
     let idb = null
+
+    const theresANewStore = () => {
+      user.graphName = store.graphName
+      saveUser()
+      gotoNoHistory("dailyNotes")
+      setTimeout(() => saveWorker.postMessage(["save",store]),0)
+    }
+
     r.onsuccess = (e1) => {
       idb = e1.target.result
       idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
         if (e.target.result) {
           store = JSON.parse(e.target.result.store)
           if (w) {
-            gotoReplaceHistory("dailyNotes")
-            setTimeout(() => saveWorker.postMessage(["save",store]),0)
+            theresANewStore()
           } else
             w = true;
         } else {
@@ -62,8 +69,7 @@
             store = json
             user.graphName = json.graphName
             if (w) {
-              gotoReplaceHistory("pageTitle","Welcome to Micro Roam")
-              setTimeout(() => saveWorker.postMessage(["save",store]),0)
+              theresANewStore()
             } else
               w = true;
           }))

@@ -65,8 +65,6 @@ const renderSessionState = () => {
 }
 
 const gotoNoHistory = (commandName,...command) => {
-  console.log(commandName)
-  console.log(command)
   switch (commandName) {
     case "dailyNotes":
       sessionState.pageFrame = "dailyNotes"
@@ -214,8 +212,7 @@ saveWorker.onmessage = (event) => {
 
 // Finally starting the program after everything's compiled
 if (w) {
-  gotoReplaceHistory("dailyNotes")
-  setTimeout(() => saveWorker.postMessage(["save",store]),0)
+  theresANewStore()
 } else {
   w = true
 }
