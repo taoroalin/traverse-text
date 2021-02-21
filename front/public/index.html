@@ -1,6 +1,7 @@
 <body>
   <div id="app">
     <div id="top-bar" style="margin-top:0px">
+
       <a id="report-issue-button" target="_blank" href="mailto:taoroalin@gmail.com?subject=You Made Micro Roam Wrong"
         tabindex="-1">
         Report Issue
@@ -31,17 +32,20 @@
       </div>
     </div>
 
+    
+<script>
+const r=indexedDB.open("microroam",4),blankUser={graphName:"default",theme:"light",topBar:"visible",logging:!1,spellcheck:!1};let user=blankUser;const storedUser=localStorage.getItem("user");storedUser&&(user=JSON.parse(storedUser));let w=!1,store=null,idb=null;const theresANewStore=()=>{user.graphName=store.graphName,saveUser(),gotoNoHistory("dailyNotes"),setTimeout(()=>saveWorker.postMessage(["save",store]),0)};r.onsuccess=e=>{idb=e.target.result,idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess=e=>{e.target.result?(store=JSON.parse(e.target.result.store),w?theresANewStore():w=!0):(console.log("adding default graph"),fetch("./default-store.json").then(e=>e.json().then(e=>{store=e,user.graphName=e.graphName,w?theresANewStore():w=!0})))}},r.onupgradeneeded=e=>{const s=r.result,t=Array.from(s.objectStoreNames);t.includes("stores")||s.createObjectStore("stores",{keyPath:"graphName"})},r.onerror=e=>{alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
+      You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)};let commitDebounce=null,editingTemplateExpander=null,editingLink=null,editingTitle=null,focusNode=null,focusOffset=null,focusBlock=null,focusSuggestion=null,sessionState={pageFrame:"dailyNotes",focusId:null,scroll:0,position:null};const topBar=document.getElementById("top-bar"),topBarHiddenHitbox=document.getElementById("top-bar-hidden-hitbox"),showTopBar=()=>{topBar.style.marginTop="0px",topBarHiddenHitbox.style.display="none"},hideTopBar=()=>{topBar.style.marginTop="-46px",topBarHiddenHitbox.style.display="block"},saveUser=()=>{document.body.className=user.theme,("visible"===user.topBar?showTopBar:hideTopBar)(),localStorage.setItem("user",JSON.stringify(user))};saveUser();
+</script>
+
+
     <div id="autocomplete-list" style="display:none"></div>
     <!-- inline styles on this site are all edited directly by js -->
     <div id="search-result-list" style="display:none"></div>
     <div id="template-list" style="display:none"></div>
 
   </div>
-  
-<script>
-const r=indexedDB.open("microroam",4),blankUser={graphName:"default",theme:"light",topBar:"visible",logging:!1,spellcheck:!1};let user=blankUser;const storedUser=localStorage.getItem("user");storedUser&&(user=JSON.parse(storedUser));let w=!1,store=null,idb=null;const theresANewStore=()=>{user.graphName=store.graphName,saveUser(),gotoNoHistory("dailyNotes"),setTimeout(()=>saveWorker.postMessage(["save",store]),0)};r.onsuccess=e=>{idb=e.target.result,idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess=e=>{e.target.result?(store=JSON.parse(e.target.result.store),w?theresANewStore():w=!0):(console.log("adding default graph"),fetch("./default-store.json").then(e=>e.json().then(e=>{store=e,user.graphName=e.graphName,w?theresANewStore():w=!0})))}},r.onupgradeneeded=e=>{const s=r.result,t=Array.from(s.objectStoreNames);t.includes("stores")||s.createObjectStore("stores",{keyPath:"graphName"})},r.onerror=e=>{alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
-      You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)};let commitDebounce=null,editingTemplateExpander=null,editingLink=null,editingTitle=null,focusNode=null,focusOffset=null,focusBlock=null,focusSuggestion=null,sessionState={pageFrame:"dailyNotes",focusId:null,scroll:0,position:null};const topBar=document.getElementById("top-bar"),topBarHiddenHitbox=document.getElementById("top-bar-hidden-hitbox"),showTopBar=()=>{topBar.style.marginTop="0px",topBarHiddenHitbox.style.display="none"},hideTopBar=()=>{topBar.style.marginTop="-46px",topBarHiddenHitbox.style.display="block"},saveUser=()=>{document.body.className=user.theme,("visible"===user.topBar?showTopBar:hideTopBar)(),localStorage.setItem("user",JSON.stringify(user))};saveUser();
-</script>
+
   <title>Micro Roam</title>
 
   
@@ -546,4 +550,5 @@ const initialDailyNotes=5,renderSessionState=()=>{switch(searchResultList.style.
 
 const page=e=>{console.log(store.pages[store.pagesByTitle[e]])},log=()=>{user.logging=!0,saveUser(),saveWorker.postMessage(["user",user])},nolog=()=>{user.logging=!1,saveUser(),saveWorker.postMessage(["user",user])},test=()=>{const e=document.createElement("script");e.src="test.js",document.body.appendChild(e)},reset=()=>{indexedDB.deleteDatabase("microroam");localStorage.removeItem("user"),window.location.href=window.location.href},blank=()=>{store=blankStore(),user=blankUser,saveUser(),goto("dailyNotes")},pr=()=>{console.log(JSON.stringify(store))};let pingstime;const ping=()=>{pingstime=performance.now(),saveWorker.postMessage(["ping",{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:{hello:"hello"}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])},terminalCommands={blank:blank,reset:reset,test:test,log:log,page:page,nolog:nolog,ping:ping,pr:pr};
 </script>
+
 </body>
