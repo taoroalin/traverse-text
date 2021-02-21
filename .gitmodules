@@ -1,7 +1,0 @@
-[submodule "datalog-js"]
-	path = datalog-js
-	url = https://github.com/taoroalin/datalog-js.git
-
-[submodule "preprocess-js"]
-	path = preprocess-js
-	url = https://github.com/taoroalin/preprocess-js.git
