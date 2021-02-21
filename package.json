@@ -1,5 +1,5 @@
 {
   "scripts": {
-    "build": "node preprocess-js/index.js"
+    "build": "echo 'hi'"
   }
 }
