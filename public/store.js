@@ -492,10 +492,14 @@ const searchTemplates = (string) => {
         }
       }
     }
-    for (let backref of templatePage.backRefs)
-      fn(backref,0)
-    for (let blockId of templatePage.children)
-      fn(blockId,1)
+    if (templatePage.backRefs) {
+      for (let backref of templatePage.backRefs)
+        fn(backref,0)
+    }
+    if (templatePage.children) {
+      for (let blockId of templatePage.children)
+        fn(blockId,1)
+    }
   }
   return result
 }

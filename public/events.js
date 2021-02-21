@@ -106,6 +106,8 @@ const dedentFocusedBlock = () => {
 
 document.addEventListener("input",(event) => {
   updateCursorInfo()
+  autocompleteList.style.display = "none"
+  templateList.style.display = "none"
   if (sessionState.isFocused) {
 
     if (focusBlockBody.innerText === " " || focusBlockBody.innerText === "") {
@@ -120,8 +122,6 @@ document.addEventListener("input",(event) => {
 
     setFocusedBlockString(string)
 
-    autocompleteList.style.display = "none"
-    templateList.style.display = "none"
     if (editingTitle) {
       const matchingTitles = titleExactFullTextSearch(editingTitle)
       if (matchingTitles.length > 0) {
@@ -149,7 +149,6 @@ document.addEventListener("input",(event) => {
       }
     }
 
-    templateList.style.display = "none"
     if (editingTemplateExpander) {
       console.log("editingTemplateExpander")
       const editingTemplateText = editingTemplateExpander.innerText.substring(2)
@@ -235,6 +234,7 @@ const globalHotkeys = {
   "escape": {
     key: "Escape",fn: () => {
       autocompleteList.style.display = "none"
+      templateList.style.display = "none"
     }
   },
   "upload": {
