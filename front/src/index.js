@@ -144,8 +144,6 @@ const setFocusedBlockString = (string) => {
 
 // todo call this less. right now it's called twice as much as necessary, costing 0.3ms per keystroke and making code ugly
 const updateCursorInfo = () => {
-  console.log("update cursor info")
-  sessionState.scroll = pageFrameOuter.scrollTop
 
   focusNode = getSelection().focusNode
   focusOffset = getSelection().focusOffset
