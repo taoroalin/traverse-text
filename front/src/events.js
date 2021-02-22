@@ -90,7 +90,7 @@ const autocomplete = () => {
 
 const indentFocusedBlock = () => {
   const bid = sessionState.focusId
-  const olderSibling = focusBlock.previousSibling
+  const olderSibling = focusBlock.previousElementSibling
   if (olderSibling && olderSibling.dataset && olderSibling.dataset.id) {
     const newParentId = olderSibling.dataset.id
     const idx = blockOrPageFromId(newParentId).children.length
@@ -112,7 +112,7 @@ const dedentFocusedBlock = () => {
 
     const parentNode = focusBlock.parentNode.parentNode
     const grandparentChildren = parentNode.parentNode
-    const cousin = parentNode.nextSibling
+    const cousin = parentNode.nextElementSibling
     if (cousin) {
       grandparentChildren.insertBefore(focusBlock,cousin)
     } else {
@@ -306,7 +306,7 @@ document.addEventListener("keydown",(event) => {
       autocomplete()
       event.preventDefault()
     }
-    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousSibling) || (event.key === "ArrowDown" && focusSuggestion.nextSibling)
+    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousElementSibling) || (event.key === "ArrowDown" && focusSuggestion.nextElementSibling)
     if (newSelected) {
       newSelected.dataset.selected = "true"
       delete focusSuggestion.dataset.selected
@@ -317,7 +317,7 @@ document.addEventListener("keydown",(event) => {
       expandTemplate()
       event.preventDefault()
     }
-    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousSibling) || (event.key === "ArrowDown" && focusSuggestion.nextSibling)
+    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousElementSibling) || (event.key === "ArrowDown" && focusSuggestion.nextElementSibling)
     if (newSelected) {
       newSelected.dataset.selected = "true"
       delete focusSuggestion.dataset.selected
@@ -363,10 +363,10 @@ document.addEventListener("keydown",(event) => {
           const parentId = store.blocks[sessionState.focusId].parent
           const parentElement = focusBlock.parentNode
           const currentIdx = blockOrPageFromId(parentId).children.indexOf(sessionState.focusId)
-          if (focusBlock.nextSibling) {
+          if (focusBlock.nextElementSibling) {
             runCommand("moveBlock",sessionState.focusId,parentId,currentIdx + 1)
-            if (focusBlock.nextSibling.nextSibling) {
-              parentElement.insertBefore(focusBlock,focusBlock.nextSibling.nextSibling)
+            if (focusBlock.nextElementSibling.nextElementSibling) {
+              parentElement.insertBefore(focusBlock,focusBlock.nextElementSibling.nextElementSibling)
             } else parentElement.appendChild(focusBlock)
             getSelection().collapse(focusNode,focusOffset)
             event.preventDefault()
@@ -383,9 +383,9 @@ document.addEventListener("keydown",(event) => {
           const parentId = store.blocks[sessionState.focusId].parent
           const parentElement = focusBlock.parentNode
           const currentIdx = blockOrPageFromId(parentId).children.indexOf(sessionState.focusId)
-          if (focusBlock.previousSibling) {
+          if (focusBlock.previousElementSibling) {
             runCommand("moveBlock",sessionState.focusId,parentId,currentIdx - 1)
-            parentElement.insertBefore(focusBlock,focusBlock.previousSibling)
+            parentElement.insertBefore(focusBlock,focusBlock.previousElementSibling)
             getSelection().collapse(focusNode,focusOffset)
             event.preventDefault()
           }
