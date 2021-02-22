@@ -177,10 +177,12 @@
   <script src="dom-decarations.js"></script>
   <script src="render.js"></script>
 
+  <script src="events.js"></script>
   <script src="index.js"></script>
+  <!--got dailynotes references dailynotesinfinitescrolllistener, so events is before index
+  would only save 1ms by loading it later anyway-->
 
   <!-- now rendering is done, loading interactive scripts-->
 
-  <script src="events.js"></script>
   <script src="terminal.js"></script>
 </body>
