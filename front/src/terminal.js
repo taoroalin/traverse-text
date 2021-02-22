@@ -40,7 +40,7 @@ const pr = () => {
 let pingstime
 const ping = () => {
   pingstime = performance.now()
-  saveWorker.postMessage(["ping",{ hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: { hello: "hello" } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } }])
+  saveWorker.postMessage(["ping","hi"])
 }
 
 const terminalCommands = {

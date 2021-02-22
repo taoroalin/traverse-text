@@ -1,4 +1,21 @@
 // Event Listener Helpers -----------------------------------------------------------------------------------------------
+
+const focusBlockEnd = (blockNode) => {
+  const body = blockNode.children[1]
+  const temp = document.createTextNode(" ")
+  body.appendChild(temp)
+  getSelection().collapse(temp,0)
+  temp.remove()
+}
+
+const focusBlockStart = (blockNode) => {
+  const body = blockNode.children[1]
+  const temp = document.createTextNode(" ")
+  body.insertBefore(temp,body.firstChild)
+  getSelection().collapse(temp,0)
+  temp.remove()
+}
+
 const dailyNotesInfiniteScrollListener = () => {
   const fromBottom =
     pageFrame.getBoundingClientRect().bottom - innerHeight
@@ -204,22 +221,6 @@ document.addEventListener("input",(event) => {
     runCommand("writePageTitle",pageId,event.target.innerText)
   }
 })
-
-const focusBlockEnd = (blockNode) => {
-  const body = blockNode.children[1]
-  const temp = document.createTextNode(" ")
-  body.appendChild(temp)
-  getSelection().collapse(temp,0)
-  temp.remove()
-}
-
-const focusBlockStart = (blockNode) => {
-  const body = blockNode.children[1]
-  const temp = document.createTextNode(" ")
-  body.insertBefore(temp,body.firstChild)
-  getSelection().collapse(temp,0)
-  temp.remove()
-}
 
 const globalHotkeys = {
   "hide top bar": {
