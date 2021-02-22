@@ -1,20 +1,14 @@
-const level = require('level')
+const { Worker } = require('worker_threads')
+let timesed = 0
+let worker
+const fn = (x) => {
+  timesed += 1
+  if (timesed <= 1) {
+    if (worker)
+      worker.terminate()
+    worker = new Worker("./worker.js")
+    worker.onmessage = fn
+  }
+}
 
-// 1) Create our database, supply location and options.
-//    This will create or open the underlying store.
-const db = level('test-db')
-
-
-
-// 2) Put a key & value
-db.put('name','Level',function (err) {
-  if (err) return console.log('Ooops!',err) // some kind of I/O error
-
-  // 3) Fetch by key
-  db.get('name',function (err,value) {
-    if (err) return console.log('Ooops!',err) // likely the key was not found
-
-    // Ta da!
-    console.log('name=' + value)
-  })
-})
+fn()
