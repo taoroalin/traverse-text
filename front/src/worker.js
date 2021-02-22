@@ -2,7 +2,11 @@
 importScripts("main-worker-shared.js")
 let idb = null
 let store = null
-let saveTimeout = null
+
+// async structure: onmessage, save unless save in progress, else set toSave=true, when save finishes checks toSave, possib saves again
+
+let saving = false
+let toSave = false
 let user = null
 
 // This needs to be the exact same db version as in index.html, I don't want to have to load another file before accessing indexeddb in index.html, so will have to remain a sync
@@ -18,33 +22,36 @@ onmessage = (event) => {
   } else if (operation === "save") {
     store = data
     debouncedSaveStore()
-  } else if (operation === "command") {
-    commands[data[0]](...data.slice(1))
-    debouncedSaveStore()
-    print(`ran command ${JSON.stringify(data)}`)
   } else if (operation === "edits") {
     print(data)
     doEdits(data)
     debouncedSaveStore()
   } else if (operation === "ping") {
     postMessage(["ping",undefined])
-  } {
+  } else {
     print(`saveWorker got weird operation: ${operation}`)
   }
 }
 
 const debouncedSaveStore = () => {
-  clearTimeout(saveTimeout)
-  saveTimeout = setTimeout(saveStore,100)
+  if (saving === false) {
+    saveStore()
+  } else {
+    toSave = true
+  }
 }
 
 const saveStore = () => {
+  toSave = false
+  saving = true
   const transaction = idb.transaction(["stores"],"readwrite")
   const storeStore = transaction.objectStore("stores")
   const str = JSON.stringify(store)
   const req = storeStore.put({ graphName: store.graphName,store: str })
   req.onsuccess = () => {
     print("saved")
+    if (toSave) saveStore()
+    else saving = false
   }
   req.onerror = (event) => {
     print("save error")

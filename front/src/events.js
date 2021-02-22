@@ -102,22 +102,26 @@ const indentFocusedBlock = () => {
 
 const dedentFocusedBlock = () => {
   const bid = sessionState.focusId
-  const parent = focusBlock.parentNode.parentNode
-  if (parent) {
-    const grandparentChildren = parent.parentNode
-    const grandparent = parent.parentNode.parentNode
-    const grandparentId = grandparent.dataset.id
-    const cousin = parent.nextSibling
-    if (grandparentId) {
-      if (cousin) {
-        grandparentChildren.insertBefore(focusBlock,cousin)
-      } else {
-        grandparentChildren.appendChild(focusBlock)
-      }
-      const idx = blockOrPageFromId(grandparentId).children.indexOf(bid)
-      runCommand("moveBlock",bid,grandparentId,idx + 1)
-      getSelection().collapse(focusNode,focusOffset)
+  const parentId = store.blocks[bid].parent
+  const parentBlock = store.blocks[parentId]
+  if (parentBlock) {
+    const grandparentId = parentBlock.parent
+    const grandparent = blockOrPageFromId(grandparentId)
+    const idx = grandparent.children.indexOf(parentId)
+    runCommand("moveBlock",bid,grandparentId,idx + 1)
+
+    const parentNode = focusBlock.parentNode.parentNode
+    const grandparentChildren = parentNode.parentNode
+    const cousin = parentNode.nextSibling
+    if (cousin) {
+      grandparentChildren.insertBefore(focusBlock,cousin)
+    } else {
+      grandparentChildren.appendChild(focusBlock)
     }
+
+    getSelection().collapse(focusNode,focusOffset)
+  } else {
+    notifyText("can't dedent from page root")
   }
 }
 
