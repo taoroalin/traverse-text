@@ -23,9 +23,12 @@ onmessage = (event) => {
     store = data
     debouncedSaveStore()
   } else if (operation === "edits") {
-    print(data)
-    doEdits(data)
-    debouncedSaveStore()
+    if (store) {
+
+      print(data)
+      doEdits(data)
+      debouncedSaveStore()
+    }
   } else if (operation === "ping") {
     postMessage(["ping",undefined])
   } else {

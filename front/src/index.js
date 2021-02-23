@@ -87,6 +87,7 @@ const goto = (...command) => {
 
   const oldSessionState = JSON.parse(JSON.stringify(sessionState))
 
+  sessionState.isFocused = false
   sessionState.scroll = 0
   gotoNoHistory(...command)
   setTimeout(() => {
@@ -143,6 +144,7 @@ const setFocusedBlockString = (string) => {
 }
 
 // todo call this less. right now it's called twice as much as necessary, costing 0.3ms per keystroke and making code ugly
+// todo also get rid of this entirely. it's a complete mess
 const updateCursorInfo = () => {
 
   focusNode = getSelection().focusNode

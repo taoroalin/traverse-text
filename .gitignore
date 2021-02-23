@@ -1,5 +1,7 @@
 **/node_modules/**
 **/package-lock.json
 
-back/prod-db/**
-back/test-db/**
+back_node_level/prod-db/**
+back_node_level/test-db/**
+back_c_rocks/prod-db/**
+back_c_rocks/test-db/**

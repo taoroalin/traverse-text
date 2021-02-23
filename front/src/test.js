@@ -22,3 +22,24 @@ const createPageTest = () => {
   runCommand("createPage","Test Page")
   store = oldStore
 }
+
+const benchmarkPageLoad = () => {
+  // todo fix this. hanging for some reason
+  const times = []
+  const durations = []
+  const fn = () => {
+    times.push(performance.now())
+    if (times.length < 100) {
+      goto("pageTitle","Welcome to Micro Roam")
+      setTimeout(fn,0)
+    } else {
+      for (let i = 1; i < times.length; i++) {
+        durations.push(times[i] - times[i - 1])
+      }
+      console.log(durations)
+    }
+  }
+  fn()
+}
+
+benchmarkPageLoad()

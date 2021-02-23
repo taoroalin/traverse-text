@@ -121,7 +121,7 @@ const dedentFocusedBlock = () => {
 
     getSelection().collapse(focusNode,focusOffset)
   } else {
-    notifyText("can't dedent from page root")
+    // notifyText("can't dedent from page root", 2) // don't need error message here?
   }
 }
 
@@ -444,16 +444,25 @@ document.addEventListener("keydown",(event) => {
     if (event.key === "Enter" && !event.ctrlKey && !event.shiftKey && !event.altKey) {
       const tc = terminalCommands[event.target.innerText]
       if (tc) tc()
-      else eval(event.target.innerText)
-      if (!event.ctrlKey) {
-        terminalElement.style.display = "none"
-        terminalElement.innerHTML = ""
+      else {
+        try {
+          eval(event.target.innerText)
+          if (!event.ctrlKey) {
+            terminalElement.style.display = "none"
+            terminalElement.innerHTML = ""
+          }
+        } catch (error) {
+          console.log(error)
+          event.preventDefault()
+        }
       }
     }
   }
 
 })
 
+
+// The single event handler model has some problems. The cases need to appear in the same order they are nested in the DOM
 document.addEventListener("click",(event) => {
 
   const closestBullet = event.target.closest(".block__bullet")
@@ -471,21 +480,30 @@ document.addEventListener("click",(event) => {
 
   const closestBreadcrumbPage = event.target.closest(".breadcrumb-page")
   const closestBreadcrumbBlock = event.target.closest(".breadcrumb-block")
-  if (event.target.className === "template__suggestion") {
-    if (focusSuggestion) focusSuggestion.dataset.selected = false
-    event.target.dataset.selected = true
-    focusSuggestion = event.target
-    expandTemplate()
-  } else if (event.target.className === "page-ref__body") {
+
+  // markup
+  if (event.target.className === "page-ref__body") {
     goto("pageTitle",event.target.innerText)
   } else if (closestBullet) {
     goto("block",closestBullet.parentNode.dataset.id)
   } else if (event.target.className === "block-ref") {
     goto("block",event.target.dataset.id)
+  } else if (event.target.className === "url") { // using spans with event handlers as links because they play nice with contenteditable
+    const link = document.createElement("a")
+    link.target = "_blank"
+    link.href = event.target.innerText
+    link.click()
   } else if (event.target.closest(".tag")) {
     goto("pageTitle",event.target.closest(".tag").innerText.substring(1))
   } else if (event.target.id === "download-button") {
     downloadHandler()
+
+    // everything else, so none of it triggers when user clicks markup
+  } else if (event.target.className === "template__suggestion") {
+    if (focusSuggestion) focusSuggestion.dataset.selected = false
+    event.target.dataset.selected = true
+    focusSuggestion = event.target
+    expandTemplate()
   } else if (event.target.id === "upload-button") {
     document.getElementById("upload-input").click()
   } else if (event.target.id === "daily-notes-button") {
@@ -494,11 +512,6 @@ document.addEventListener("click",(event) => {
     if (focusSuggestion) focusSuggestion.dataset.selected = false
     event.target.dataset.selected = true
     autocomplete()
-  } else if (event.target.className === "url") { // using spans with event handlers as links because they play nice with contenteditable
-    const link = document.createElement("a")
-    link.target = "_blank"
-    link.href = event.target.innerText
-    link.click()
   } else if (event.target.id === "help-button") {
     goto("pageTitle","Welcome to Micro Roam")
   } else if (closestBreadcrumbPage) {
@@ -511,6 +524,47 @@ document.addEventListener("click",(event) => {
   // todo have better tracking of active block
   updateCursorInfo()
 })
+
+
+const commonAncestorNode = (a,b) => {
+  const aList = []
+  while (a.dataset.id !== undefined) {
+    aSet.push(a.dataset.id)
+    a = a.parentNode.parentNode
+  }
+  const bList = []
+  while (aList.indexOf(b.dataset.id) === undefined) {
+    bList.push(b.dataset.id)
+    b = b.parentNode.parentNode
+  }
+  const cA = aList[aList.indexOf(b.dataset.id) - 1]
+  const cB = bList[-1]
+  return b,cA,cB
+}
+
+const mouseMoveListener = (event) => {
+  const blockNode = event.target.closest(".block")
+  if (blockNode) {
+    for (let i = 0; i < event.path.length; i++) {
+      event.path
+    }
+  }
+}
+
+document.addEventListener("mousedown",(event) => {
+  updateCursorInfo()
+  document.addEventListener("mousemove",mouseMoveListener)
+  if (event.target.closest(".block"))
+    dragSelectStartBlock = null
+})
+
+document.addEventListener("mouseup",(event) => {
+  if (dragSelectStartBlock !== null) {
+    document.removeEventListener("mousemove",mouseMoveListener)
+    dragSelectStartBlock = null
+  }
+})
+
 
 topBarHiddenHitbox.addEventListener("mouseover",() => {
   user.topBar = "visible"
@@ -533,6 +587,8 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
           theresANewStore()
         }))
       } else {
+        notifyText("Markdown import doesn't work yet. Upload a .json file, or a .zip file containing a .json file instead.",12)
+        throw new Error("md import doesn't work")
         const mds = []
         for (let file of files) {
           if (file.ext === "md") {

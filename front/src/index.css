@@ -18,6 +18,7 @@
   --page-ref:#2bcc5b;
   --shadow:rgb(98, 98, 98);
   --notification:#2e4736;
+  --selected:#2a4761;
 }
 
 .light{
@@ -34,6 +35,8 @@
   --click:rgb(197, 197, 197);
   --page-ref:rgb(73, 197, 91);
   --notification:#a4d1b1;
+  --selected:#5998cf;
+
 }
 
 input, button, a{
@@ -234,6 +237,10 @@ a:visited { color:var(--link) }
 
 .block{
   position:relative;
+}
+
+.block[data-selected="true"]{
+  background-color:var(--selected);
 }
 
 .block__body{
