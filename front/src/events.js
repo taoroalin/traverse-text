@@ -140,18 +140,18 @@ document.addEventListener("input",(event) => {
     // reparse block and insert cursor into correct position while typing
 
     let string = focusBlockBody.innerText
-    if(event.data==="["){
-      const pageRefClosesMissingOpens = event.target.querySelectorAll(".page-ref-close-missing-open");
-      let broke = false;
-      for(let x of pageRefClosesMissingOpens){
+    if (event.data === "[") {
+      const pageRefClosesMissingOpens = event.target.querySelectorAll(".page-ref-close-missing-open")
+      let broke = false
+      for (let x of pageRefClosesMissingOpens) {
         console.log(x)
-        if(x.childNodes[0].startIdx>sessionState.position){
-          broke=true;
-          break;
+        if (x.childNodes[0].startIdx > sessionState.position) {
+          broke = true
+          break
         }
       }
-      if(!broke)
-          string=string.substring(0,sessionState.position)+"]"+string.substring(sessionState.position);
+      if (!broke)
+        string = string.substring(0,sessionState.position) + "]" + string.substring(sessionState.position)
     }
     store.blocks[sessionState.focusId].string = string // todo commit changes on word boundaries
 
@@ -588,7 +588,7 @@ topBarHiddenHitbox.addEventListener("mouseover",() => {
 document.getElementById('upload-input').addEventListener('change',(event) => {
   const file = event.target.files[0]
   console.log(file)
-  const [name,extension] = file.name.split(".")
+  const { name,ext: extension } = splitFileName(file.name)
   console.log(`name ${name} extension ${extension}`)
   if (extension === "zip") {
     file.arrayBuffer().then((buffer) => {
@@ -617,6 +617,7 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
     })
   } else if (extension === "json") {
     file.text().then((text) => {
+      user.graphName = name
       store = roamJsonToStore(name,text)
       fetch("./default-store.json").then(text => text.json().then(json => {
         mergeStore(json)

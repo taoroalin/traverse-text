@@ -15,6 +15,11 @@ const CENTRAL_FILE_SIGNATURE = 0x02014b50
 const ARCHIVE_EXTRA_RECORD_SIGNATURE = 0x08064b50
 const ZIP64_END_CENTRAL_SIGNATURE = 0x06064b50
 
+const splitFileName = (fileName) => {
+  const match = fileName.match(/\.([a-z]+)$/)
+  return { name: fileName.substring(0,match.index),ext: match[1] }
+}
+
 const zipToFiles = (buffer) => {
   const bufferU8 = new Uint8Array(buffer)
   const length = bufferU8.length
@@ -47,13 +52,8 @@ const zipToFiles = (buffer) => {
         }
         const decoder = new TextDecoder()
         const fullName = decoder.decode(new Uint8Array(buffer,idx + 30,fileNameSize))
-        const match = fullName.match(/\.([a-z]+)$/)
+        const { name,ext } = splitFileName(fullName)
         const text = decoder.decode(new Uint8Array(buffer,idx + 30 + fileNameSize,rawSize))
-        let ext,name
-        if (match) {
-          ext = match[1]
-          name = fullName.substring(0,match.index)
-        }
         result.push({ name,ext,text,fullName })
         idx += 30 + fileNameSize + rawSize
 
@@ -235,7 +235,7 @@ const roamJsonToStore = (graphName,text) => {
         } else if (pages[ref] !== undefined) {
           pages[ref].backRefs.push(blockUid)
         } else {
-          //throw new Error(`bad ref ${ref}`)
+          throw new Error(`bad ref ${ref}`)
         }
       })
     }

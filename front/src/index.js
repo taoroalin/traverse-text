@@ -198,6 +198,29 @@ const updateCursorInfo = () => {
 
 }
 
+const parseStackTrace = (string) => {
+  const result = []
+  const matches = string.matchAll(/([^ ]+) \(([^\)]+):([0-9]+):([0-9]+)\)(?:\n|$)/g)
+  for (let match of matches) {
+    result.push({ function: match[1],file: match[2],line: match[3],column: match[4] })
+  }
+  return result
+}
+
+window.onerror = (message,url,lineNumber,columnNumber,error) => {
+  const errorInfo = { line: lineNumber,file: url,stack: parseStackTrace(error.stack),message,column: columnNumber }
+  const existingErrors = localStorage.getItem("error_log")
+  if (existingErrors) {
+    const z = JSON.parse(existingErrors)
+    z.push(errorInfo)
+    localStorage.setItem("error_log",JSON.stringify(z))
+  } else {
+    localStorage.setItem("error_log",JSON.stringify([errorInfo]))
+  }
+  // todo send error to server at this point
+  return false // we don't actually "catch" the error, we just report that it happened. The error is still an error
+}
+
 
 // start the save worker
 const saveWorker = new Worker('/worker.js')
