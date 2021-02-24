@@ -503,3 +503,66 @@ const searchTemplates = (string) => {
   }
   return result
 }
+
+// make pages by title takes 0.8ms, therefore no need to store in backend. backend has refs, backrefs, which reference id, backend doesn't do any parsing
+const makePagesByTitle = () => {
+  const stime = performance.now()
+  store.pagesByTitle = {}
+  for (let pageId in store.pages) {
+    store.pagesByTitle[store.pages[pageId].title] = pageId
+  }
+  console.log(`makepbt took ${performance.now() - stime}`)
+}
+
+const storeToFlat = () => {
+  const keys = []
+  const values = []
+  for (let pageId in store.pages) {
+    keys.push(pageId)
+    values.push(JSON.stringify(store.pages[pageId]))
+  }
+  for (let blockId in store.blocks) {
+    keys.push(blockId)
+    values.push(JSON.stringify(store.blocks[blockId]))
+  }
+  return { keys,values }
+}
+
+const storeToBinary = () => {
+  const stime = performance.now()
+  const encoder = new TextEncoder()
+
+  const { keys,values } = storeToFlat(store)
+  let numBytes = 4 // num keys as int
+  let keyValueEndIdxs = []
+  for (let i = 0; i < keys.length; i++) {
+    const keyLen = encoder.encode(keys[i]).length
+    const valLen = encoder.encode(values[i]).length
+    numBytes += keyLen + valLen + 8 // int to store key end, int to store value end
+    keyValueEndIdxs.push(keyLen,valLen)
+  }
+
+  const messageBuffer = new ArrayBuffer(numBytes)
+  const messageChars = new Uint8Array(messageBuffer)
+  const messageInts = new Uint32Array(messageBuffer,0,keyValueEndIdxs.length + 10)
+
+  messageInts[0] = Math.floor(keyValueEndIdxs.length / 2)
+  for (let i = 0; i < keyValueEndIdxs.length; i++) {
+    messageInts[i + 1] = keyValueEndIdxs[i]
+  }
+
+  let idx = 4 + keyValueEndIdxs.length * 4
+  for (let i = 0; i < keys.length; i++) {
+    const k = keys[i]
+    const v = values[i]
+    const klen = keyValueEndIdxs[i * 2]
+    const vlen = keyValueEndIdxs[i * 2 + 1]
+
+    encoder.encodeInto(k,messageChars.subarray(idx))
+    idx += klen
+    encoder.encodeInto(v,messageChars.subarray(idx))
+    idx += vlen
+  }
+  console.log(`store to binary took ${performance.now() - stime}`)
+  return messageBuffer
+}

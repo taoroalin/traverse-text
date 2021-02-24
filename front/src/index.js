@@ -189,6 +189,7 @@ const updateCursorInfo = () => {
           editingTemplateExpander = temp
         }
       }
+
     } else
       sessionState.isFocused = false
 

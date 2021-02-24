@@ -5,3 +5,5 @@ back_node_level/prod-db/**
 back_node_level/test-db/**
 back_c_rocks/prod-db/**
 back_c_rocks/test-db/**
+**/*.a
+back_c_rocks/include/**

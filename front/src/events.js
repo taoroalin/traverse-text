@@ -136,9 +136,23 @@ document.addEventListener("input",(event) => {
       return
     }
 
+
     // reparse block and insert cursor into correct position while typing
 
     let string = focusBlockBody.innerText
+    if(event.data==="["){
+      const pageRefClosesMissingOpens = event.target.querySelectorAll(".page-ref-close-missing-open");
+      let broke = false;
+      for(let x of pageRefClosesMissingOpens){
+        console.log(x)
+        if(x.childNodes[0].startIdx>sessionState.position){
+          broke=true;
+          break;
+        }
+      }
+      if(!broke)
+          string=string.substring(0,sessionState.position)+"]"+string.substring(sessionState.position);
+    }
     store.blocks[sessionState.focusId].string = string // todo commit changes on word boundaries
 
     setFocusedBlockString(string)

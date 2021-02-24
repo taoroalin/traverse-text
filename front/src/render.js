@@ -99,7 +99,10 @@ const renderBlockBody = (parent,text) => {
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
-        stackTop.appendChild(newTextNode("]]"))
+        const el = document.createElement("span");
+        el.className="page-ref-close-missing-open"
+        el.appendChild(newTextNode("]]"))
+        stackTop.appendChild(el)
       }
     } else if (match[3]) {
       refTitles.push(match[3].substring(1))
@@ -178,8 +181,8 @@ const renderBlockBody = (parent,text) => {
    */
   while (stackTop !== parent) {
     if (stackTop.className === "page-ref")
-      stackTop.children[0].className = ""
-    stackTop.className = ""
+      stackTop.children[0].className = stackTop.children[0].className+"-incomplete"
+    stackTop.className = stackTop.className+"-incomplete"
     stackTop = stackTop.parentNode
   }
   return refTitles
