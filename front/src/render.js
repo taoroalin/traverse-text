@@ -6,6 +6,9 @@ const renderPage = (parentNode,uid) => {
   body.dataset.id = uid
   element.dataset.id = uid
 
+  if (page.title === undefined) {
+    throw new Error(`error with page id ${uid}`)
+  }
   title.innerText = page.title
 
   let children = page.children
@@ -62,8 +65,10 @@ const renderBlock = (parentNode,uid,idx) => {
 }
 
 
-const renderBlockBody = (parent,text) => {
-  if (text[text.length - 1] !== " ") text += " " // add space because of getSelection.collapse() weirdness with end of contenteditable
+const renderBlockBody = (parent,text,disableSpace = false) => {
+  if (!disableSpace) {
+    if (text[text.length - 1] !== " ") text += " " // add space because of getSelection.collapse() weirdness with end of contenteditable
+  }
   const stack = [parent]
   // 1             2              3   4         5    6         7      8    9       10
   // page-ref-open page-ref-close tag block-ref bold highlight italic link literal template-expander
@@ -207,7 +212,7 @@ const renderBreadcrumb = (parent,blockId) => {
   for (let i = list.length - 2; i >= 0; i--) {
     const node = breadcrumbBlockTemplate.cloneNode(true)
     const nodeBody = node.children[1]
-    renderBlockBody(nodeBody,list[i].string)
+    renderBlockBody(nodeBody,list[i].string,true)
     node.dataset.id = list[i].id
     parent.appendChild(node)
   }

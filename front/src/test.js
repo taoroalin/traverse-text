@@ -14,7 +14,6 @@ const testRoundTrip = () => {
   }
 }
 
-testRoundTrip()
 
 const createPageTest = () => {
   const oldStore = store
@@ -23,23 +22,60 @@ const createPageTest = () => {
   store = oldStore
 }
 
-const benchmarkPageLoad = () => {
-  // todo fix this. hanging for some reason
-  const times = []
-  const durations = []
-  const fn = () => {
-    times.push(performance.now())
-    if (times.length < 100) {
-      goto("pageTitle","Welcome to Micro Roam")
-      setTimeout(fn,0)
-    } else {
-      for (let i = 1; i < times.length; i++) {
-        durations.push(times[i] - times[i - 1])
-      }
-      console.log(durations)
-    }
+let testSTime
+const renderMulti = (f,state = undefined,reps = 100,recurse = false) => {
+  if (!recurse) {
+    testSTime = performance.now()
   }
-  fn()
+  if (reps > 0) {
+    const exit = f(state)
+    if (!exit)
+      setTimeout(() => renderMulti(f,state,reps - 1,true),0)
+  } else {
+    console.log(`test func took ${performance.now() - testSTime}`)
+  }
 }
 
-benchmarkPageLoad()
+const benchmarkPageLoad = () => renderMulti(() => goto("pageTitle","Welcome to Micro Roam"))
+
+
+let benchmarkRandomWalkSTime = null
+const benchmarkRandomWalk = () => renderMulti(() => {
+  let linkTitles = []
+  const pageLinks = document.querySelectorAll(".page-ref")
+  const tags = document.querySelectorAll(".tag")
+  const pageBreadcrumbs = document.querySelectorAll(".breadcrumb-page")
+  for (let link of pageLinks) {
+    linkTitles.push(link.children[1].innerText)
+  }
+  for (let tag of tags) {
+    linkTitles.push(tag.innerText.substring(1))
+  }
+  for (let pb of pageBreadcrumbs) {
+    linkTitles.push(pb.innerText)
+  }
+  linkTitles = linkTitles.filter(x => store.pagesByTitle[x] && store.pages[store.pagesByTitle[x]] && store.pages[store.pagesByTitle[x]].title)
+  const chosenTitle = linkTitles[Math.floor(Math.random() * (linkTitles.length - 1))]
+  goto("pageTitle",chosenTitle)
+})
+
+const benchmarkRenderAll = () => renderMulti((state) => {
+  goto("pageTitle",state.list[state.idx])
+  state.idx += 1
+  if (state.idx >= state.list.length) {
+    console.log(`rendered ${state.list.length} pages in ${performance.now() - testSTime}`)
+    return true
+  }
+},{ idx: 0,list: Object.keys(store.pagesByTitle) },100000)
+
+
+const testAll = () => {
+  testRoundTrip()
+  benchmarkPageLoad()
+  benchmarkRandomWalk()
+  benchmarkRenderAll()
+}
+
+const test_log = (...stuff) => {
+
+}

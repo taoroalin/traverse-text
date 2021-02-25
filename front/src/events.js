@@ -262,7 +262,7 @@ const globalHotkeys = {
     }
   },
   "download": { key: "s",control: true,shift: true,fn: downloadHandler },
-  "save": { key: "s",control: true,fn: () => { saveWorker.postMessage(["save",store]) } },
+  "save": { key: "s",control: true,fn: debouncedSaveStore },
   "toggle color theme": {
     key: "m",control: true,fn: () => {
       if (document.body.className === "light") {

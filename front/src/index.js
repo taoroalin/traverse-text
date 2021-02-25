@@ -137,7 +137,9 @@ const focusIdPosition = () => {
 
 const setFocusedBlockString = (string) => {
   focusBlockBody.innerHTML = ""
-  const refTitles = renderBlockBody(focusBlockBody,string)
+  const fragment = document.createDocumentFragment()
+  const refTitles = renderBlockBody(fragment,string)
+  focusBlockBody.appendChild(fragment)
   focusIdPosition()
   updateCursorInfo()
   runCommand("writeBlock",sessionState.focusId,string,refTitles)
@@ -221,20 +223,6 @@ const logError = (message,url,lineNumber,columnNumber,error) => {
 }
 
 window.onerror = logError
-
-// start the save worker
-saveWorker = new Worker('/worker.js')
-
-saveWorker.postMessage(["user",user])
-
-saveWorker.onmessage = (event) => {
-  const data = event.data[1]
-  const operation = event.data[0]
-  if (operation === "ping") {
-    console.log(`ping took ${performance.now() - pingstime}`)
-  }
-
-}
 
 
 // Finally starting the program after everything's compiled

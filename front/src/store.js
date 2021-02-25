@@ -238,7 +238,7 @@ const roamJsonToStore = (graphName,text) => {
           const error = new Error(`bad ref ${ref}`)
           console.log(error)
           console.log("ERROR")
-          throw error
+          // throw error
         }
       }
     }
@@ -582,4 +582,48 @@ const storeToBinary = () => {
   }
   console.log(`store to binary took ${performance.now() - stime}`)
   return messageBuffer
+}
+
+const attemptToUnCorruptStore = () => {
+  // fuck me
+  for (let blockId in store.blocks) {
+    const block = store.blocks[blockId]
+    for (let listName of LIST_PROPS) {
+      if (block[listName])
+        block[listName] = block[listName].filter(blockOrPageFromId)
+    }
+  }
+  for (let pageId in store.pages) {
+    const page = store.pages[pageId]
+    for (let listName of LIST_PROPS) {
+      if (page[listName])
+        page[listName] = page[listName].filter(blockOrPageFromId)
+    }
+  }
+
+  for (let title in store.pagesByTitle) {
+    if (title === "undefined")
+      delete store.pagesByTitle[title]
+  }
+}
+
+const getRidOfUnusedLists = () => {
+  for (let blockId in store.blocks) {
+    const block = store.blocks[blockId]
+    for (let listName of LIST_PROPS) {
+      if (block[listName] && block[listName].length === 0)
+        delete block[listName]
+    }
+    if (block.children && block.children.length === 0)
+      delete block.children
+  }
+  for (let pageId in store.pages) {
+    const page = store.pages[pageId]
+    for (let listName of LIST_PROPS) {
+      if (page[listName])
+        page[listName] = page[listName].filter(blockOrPageFromId)
+    }
+    if (page.children && page.children.length === 0)
+      delete page.children
+  }
 }

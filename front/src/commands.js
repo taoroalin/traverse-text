@@ -179,6 +179,7 @@ const runCommand = (...command) => {
   console.log(command)
   const { edits,returns } = commands[command[0]](...command.slice(1),Date.now())
   doEdits(edits)
-  saveWorker.postMessage(["edits",edits])
+  // saveWorker.postMessage(["edits",edits])
+  debouncedSaveStore()
   return returns
 }

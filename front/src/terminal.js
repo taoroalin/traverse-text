@@ -5,13 +5,11 @@ const page = (string) => {
 const log = () => {
   user.logging = true
   saveUser()
-  saveWorker.postMessage(["user",user])
 }
 
 const nolog = () => {
   user.logging = false
   saveUser()
-  saveWorker.postMessage(["user",user])
 }
 
 const test = () => {
@@ -37,12 +35,6 @@ const pr = () => {
   console.log(JSON.stringify(store))
 }
 
-let pingstime
-const ping = () => {
-  pingstime = performance.now()
-  saveWorker.postMessage(["ping","hi"])
-}
-
 const downloadBinary = () => {
   const buffer = storeToBinary()
   const data = new Blob([buffer],{ type: 'application/x-micro-roam' })
@@ -54,5 +46,5 @@ const downloadBinary = () => {
 }
 
 const terminalCommands = {
-  blank,reset,test,log,page,nolog,ping,pr,downloadBinary
+  blank,reset,test,log,page,nolog,pr,downloadBinary
 }

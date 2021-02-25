@@ -1,6 +1,6 @@
 const r = indexedDB.open("microroam",4)// I had this as line 1, saves ~5ms start time, don't now cause I'm lazy
 // This needs to be the exact same db version as in worker.js
-const blankUser = { graphName: "default",theme: "light",topBar: "visible",logging: false,spellcheck: false }
+const blankUser = { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false }
 let user = blankUser
 const storedUser = localStorage.getItem("user")
 if (storedUser) user = JSON.parse(storedUser)
@@ -13,7 +13,7 @@ const theresANewStore = () => {
   user.graphName = store.graphName
   saveUser()
   gotoNoHistory(...startCommand)
-  setTimeout(() => saveWorker.postMessage(["save",store]),0)
+  debouncedSaveStore()
 }
 
 r.onsuccess = (e1) => {
@@ -66,10 +66,6 @@ let sessionState = { pageFrame: "dailyNotes",focusId: null,scroll: 0,position: n
 
 let dragSelectStartBlock = null
 
-let saveWorker = null
-
-let lastEventTime = Date.now()
-
 const topBar = document.getElementById("top-bar")
 const topBarHiddenHitbox = document.getElementById("top-bar-hidden-hitbox")
 
@@ -86,7 +82,6 @@ const saveUser = () => {
   if (user.topBar === "visible") showTopBar()
   else hideTopBar()
   localStorage.setItem("user",JSON.stringify(user))
-  if (saveWorker) saveWorker.postMessage(["user",user])
 }
 saveUser()
 

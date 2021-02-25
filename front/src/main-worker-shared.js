@@ -79,6 +79,13 @@ const saveStore = () => {
   }
 }
 
+let saveStoreTimeout = null
+
+const debouncedSaveStore = () => {
+  clearTimeout(saveStoreTimeout)
+  saveStoreTimeout = setTimeout(saveStore,500)
+}
+
 const print = (text) => {
   if (user.logging) {
     console.log(text)
