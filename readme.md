@@ -14,13 +14,13 @@ Page link load: 10ms-100ms for ordinary sized pages, but I've seen 2s for extrem
 
 Note: Website performance depends on your browser, browser extensions, computer, internet connection, and location. The biggest causes of discrepency is browser extensions - these can add 1 second to load times and 50ms to all event handlers.
 
-## Internals
+# Internals
 
 This project is made with *System Complexity*, in mind. That means instead of writing your own code to be elegant, you write code such that the entire project, including the platform, libraries, frameworks, as a whole is as as simple as possible. Currently the dependencies are:
 
-npm: uglify-js
+npm: uglify-js (this has no dependencies)
 
-c++: rocksdb
+Backend dependencies: still considering backend options. ScyllaDB, RocksDB look good.
 
 ## Data format
 

@@ -7,6 +7,7 @@ const blankStore = () => ({
 })
 
 const LIST_PROPS = ["refs",":block/refs","backRefs"]
+const LIST_PROPS_FORWARD = ["refs",":block/refs"]
 
 const LOCAL_FILE_SIGNATURE = 0x04034b50
 const END_CENTRAL_DIR_SIGNATURE = 0x06054b50
@@ -227,17 +228,19 @@ const roamJsonToStore = (graphName,text) => {
   // add backrefs
   for (let blockUid in blocks) {
     const block = blocks[blockUid]
-
     if (block[":block/refs"]) {
-      block[":block/refs"].forEach(ref => {
+      for (let ref of block[":block/refs"]) {
         if (blocks[ref] !== undefined) {
           blocks[ref].backRefs.push(blockUid)
         } else if (pages[ref] !== undefined) {
           pages[ref].backRefs.push(blockUid)
         } else {
-          throw new Error(`bad ref ${ref}`)
+          const error = new Error(`bad ref ${ref}`)
+          console.log(error)
+          console.log("ERROR")
+          throw error
         }
-      })
+      }
     }
 
   }
@@ -334,7 +337,16 @@ text
 - text
 '
 as a block, it will look like 2 blocks in markdown
+
+example store:
+
 */
+const exampleStore = {
+  blocks: {
+    "bnslSbnd": { string: "",":block/refs": ["steklsne","nslkeDk"] },
+  },
+  pages: { "nslkeDk": { title: "I have title",backRefs: ["bnslSbnd"] } }
+}
 
 const mergeStore = (otherStore) => {
   // merge pages by title, adding all blocks to the end
@@ -343,8 +355,14 @@ const mergeStore = (otherStore) => {
   const idTranslation = {}
 
   const getNewId = (id) => {
-    if (store.blocks[id] !== undefined || store.pages[id] !== undefined)
-      return idTranslation[id] || newUid()
+    if (idTranslation[id]) return idTranslation[id]
+    if (store.blocks[id] !== undefined || store.pages[id] !== undefined) {
+      return newUid()
+    }
+    if (otherStore.pages[id] && store.pagesByTitle[otherStore.pages[id].title]) {
+      idTranslation[id] = store.pagesByTitle[otherStore.pages[id].title]
+      return idTranslation[id]
+    }
     return id
   }
 
@@ -361,7 +379,7 @@ const mergeStore = (otherStore) => {
     const block = otherStore.blocks[blockId]
     const newBlock = { ...block }
     store.blocks[newBlockId] = newBlock
-    block.parent = parentId
+    newBlock.parent = parentId
     if (block.children) {
       newBlock.children = []
       for (let childId of block.children) {
@@ -379,10 +397,9 @@ const mergeStore = (otherStore) => {
   }
 
   for (let pageId in otherStore.pages) {
-    let page = otherStore.pages[pageId]
-    const existingPageId = store.pagesByTitle[page.title]
-    if (existingPageId === undefined) {
-      const newPageId = getNewId(pageId)
+    const newPageId = getNewId(pageId)
+    const page = otherStore.pages[pageId]
+    if (store.pages[newPageId] === undefined) {
       const newPage = { ...page }
       store.pages[newPageId] = newPage
       store.pagesByTitle[page.title] = newPageId
@@ -390,7 +407,7 @@ const mergeStore = (otherStore) => {
         newPage.children = []
         for (let blockId of page.children) {
           const newBlockId = getNewId(blockId)
-          transferBlock(blockId,newBlockId,pageId)
+          transferBlock(blockId,newBlockId,newPageId)
           newPage.children.push(newBlockId)
         }
       }
@@ -403,12 +420,12 @@ const mergeStore = (otherStore) => {
       }
 
     } else {
-      const existingPage = store.pages[existingPageId]
+      const existingPage = store.pages[newPageId]
       if (page.children) {
         if (existingPage.children === undefined) existingPage.children = []
         for (let childId of page.children) {
           const newChildId = getNewId(childId)
-          transferBlock(childId,newChildId,existingPageId)
+          transferBlock(childId,newChildId,newPageId)
           existingPage.children.push(newChildId)
         }
       }

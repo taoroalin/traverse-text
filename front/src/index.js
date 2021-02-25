@@ -206,8 +206,7 @@ const parseStackTrace = (string) => {
   }
   return result
 }
-
-window.onerror = (message,url,lineNumber,columnNumber,error) => {
+const logError = (message,url,lineNumber,columnNumber,error) => {
   const errorInfo = { line: lineNumber,file: url,stack: parseStackTrace(error.stack),message,column: columnNumber }
   const existingErrors = localStorage.getItem("error_log")
   if (existingErrors) {
@@ -221,9 +220,10 @@ window.onerror = (message,url,lineNumber,columnNumber,error) => {
   return false // we don't actually "catch" the error, we just report that it happened. The error is still an error
 }
 
+window.onerror = logError
 
 // start the save worker
-const saveWorker = new Worker('/worker.js')
+saveWorker = new Worker('/worker.js')
 
 saveWorker.postMessage(["user",user])
 

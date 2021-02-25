@@ -66,6 +66,10 @@ let sessionState = { pageFrame: "dailyNotes",focusId: null,scroll: 0,position: n
 
 let dragSelectStartBlock = null
 
+let saveWorker = null
+
+let lastEventTime = Date.now()
+
 const topBar = document.getElementById("top-bar")
 const topBarHiddenHitbox = document.getElementById("top-bar-hidden-hitbox")
 
@@ -82,6 +86,7 @@ const saveUser = () => {
   if (user.topBar === "visible") showTopBar()
   else hideTopBar()
   localStorage.setItem("user",JSON.stringify(user))
+  if (saveWorker) saveWorker.postMessage(["user",user])
 }
 saveUser()
 

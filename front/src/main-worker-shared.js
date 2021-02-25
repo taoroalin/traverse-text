@@ -1,3 +1,5 @@
+const cpy = x => JSON.parse(JSON.stringify(x))
+
 const getIn = (arr,skip) => {
   let result = store
   for (let i = 0; i < arr.length - skip; i++) {
@@ -25,13 +27,13 @@ const doEdits = (edits) => {
   if (edits.write) {
     for (let op of edits.write) {
       const obj = getIn(op,2)
-      obj[op[op.length - 2]] = op[op.length - 1]
+      obj[op[op.length - 2]] = cpy(op[op.length - 1])
     }
   }
   if (edits.add) {
     for (let op of edits.add) {
       const obj = getIn(op,2)
-      obj[op[op.length - 2]].push(op[op.length - 1])
+      obj[op[op.length - 2]].push(cpy(op[op.length - 1]))
     }
   }
   if (edits.insert) {
@@ -47,10 +49,10 @@ const doEdits = (edits) => {
       } else if (old.length < idx) {
         console.log(old)
         console.log(key)
-        throw new Error(`tried to insert past end of list`)
+        throw new Error(`tried to insert past end of list`) // todo always put error at the end
       } else {
         obj[key] = old.slice(0,idx)
-        obj[key].push(val)
+        obj[key].push(cpy(val))
         obj[key].push(...old.slice(idx))
       }
     }
@@ -63,6 +65,19 @@ const doEdits = (edits) => {
   }
 }
 
+const saveStore = () => {
+  const transaction = idb.transaction(["stores"],"readwrite")
+  const storeStore = transaction.objectStore("stores")
+  const str = JSON.stringify(store)
+  const req = storeStore.put({ graphName: store.graphName,store: str })
+  req.onsuccess = () => {
+    console.log("saved")
+  }
+  req.onerror = (event) => {
+    console.log("save error")
+    console.log(error)
+  }
+}
 
 const print = (text) => {
   if (user.logging) {

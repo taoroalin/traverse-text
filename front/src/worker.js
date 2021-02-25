@@ -1,8 +1,8 @@
 // dumb special API for importing scripts from web worker, but at least it works
 importScripts("main-worker-shared.js")
 let messageQueue = []
-onmessage=(event)=>{
-  if(event.data[0]==="save")store=event.data[1]
+onmessage = (event) => {
+  if (event.data[0] === "save") store = event.data[1]
   else
     messageQueue.push(event.data)
 }
@@ -46,10 +46,10 @@ const processMessage = (message) => {
 const dbReq = indexedDB.open("microroam",4)
 dbReq.onsuccess = (event) => {
   idb = event.target.result
-  for(let message of messageQueue){
-    processMessage(message);
+  for (let message of messageQueue) {
+    processMessage(message)
   }
-  onmessage=(event)=>processMessage(event.data);
+  onmessage = (event) => processMessage(event.data)
 }
 
 const debouncedSaveStore = () => {
@@ -60,19 +60,3 @@ const debouncedSaveStore = () => {
   }
 }
 
-const saveStore = () => {
-  toSave = false
-  saving = true
-  const transaction = idb.transaction(["stores"],"readwrite")
-  const storeStore = transaction.objectStore("stores")
-  const str = JSON.stringify(store)
-  const req = storeStore.put({ graphName: store.graphName,store: str })
-  req.onsuccess = () => {
-    print("saved")
-    if (toSave) saveStore()
-    else saving = false
-  }
-  req.onerror = (event) => {
-    print("save error")
-  }
-}

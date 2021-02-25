@@ -17,7 +17,7 @@ const renderPage = (parentNode,uid) => {
     renderBlock(body,child)
   }
 
-  if (page.backRefs.length > 0) {
+  if (page.backRefs && page.backRefs.length > 0) {
     const backrefsListElement = backrefListTemplate.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
     page.backRefs.sort((a,b) => store.blocks[b]["edit-time"] - store.blocks[a]["edit-time"])
@@ -99,8 +99,8 @@ const renderBlockBody = (parent,text) => {
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
-        const el = document.createElement("span");
-        el.className="page-ref-close-missing-open"
+        const el = document.createElement("span")
+        el.className = "page-ref-close-missing-open"
         el.appendChild(newTextNode("]]"))
         stackTop.appendChild(el)
       }
@@ -181,8 +181,8 @@ const renderBlockBody = (parent,text) => {
    */
   while (stackTop !== parent) {
     if (stackTop.className === "page-ref")
-      stackTop.children[0].className = stackTop.children[0].className+"-incomplete"
-    stackTop.className = stackTop.className+"-incomplete"
+      stackTop.children[0].className = stackTop.children[0].className + "-incomplete"
+    stackTop.className = stackTop.className + "-incomplete"
     stackTop = stackTop.parentNode
   }
   return refTitles

@@ -9,6 +9,8 @@ const newUid = () => {
       result += CHARS_64[Math.floor(Math.random() * 64)]
     }
   } while (store.pages[result] !== undefined || store.blocks[result] !== undefined)
+  console.trace()
+  console.log(result)
   return result
 }
 
@@ -121,7 +123,7 @@ const commands = {
   createPage: (pageTitle,time) => {
     const pageId = newUid()
     const edits = {
-      write: [["pages",pageId,{ title: pageTitle,children: [],":create/time": time,backRefs: [] }],
+      write: [["pages",pageId,{ title: pageTitle,":create/time": time }],
       ["pagesByTitle",pageTitle,pageId]]
     }
     return { edits,returns: pageId }
@@ -174,6 +176,7 @@ const commands = {
 }
 
 const runCommand = (...command) => {
+  console.log(command)
   const { edits,returns } = commands[command[0]](...command.slice(1),Date.now())
   doEdits(edits)
   saveWorker.postMessage(["edits",edits])
