@@ -63,7 +63,8 @@ const benchmarkRenderAll = () => renderMulti((state) => {
   goto("pageTitle",state.list[state.idx])
   state.idx += 1
   if (state.idx >= state.list.length) {
-    console.log(`rendered ${state.list.length} pages in ${performance.now() - testSTime}`)
+    const duration = performance.now() - testSTime
+    console.log(`rendered ${state.list.length} pages in ${duration}, avg ${duration / state.list.length}`)
     return true
   }
 },{ idx: 0,list: Object.keys(store.pagesByTitle) },100000)

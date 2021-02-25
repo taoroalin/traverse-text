@@ -48,3 +48,13 @@ const downloadBinary = () => {
 const terminalCommands = {
   blank,reset,test,log,page,nolog,pr,downloadBinary
 }
+
+const loadGraphminerNotes = () => {
+  fetch("./graphminer-store.json").then(text => text.json().then(json => {
+    store = json
+    user.graphName = store.graphName
+    saveUser()
+    theresANewStore()
+    debouncedSaveStore()
+  }))
+}

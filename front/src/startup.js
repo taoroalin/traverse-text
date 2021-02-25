@@ -65,6 +65,9 @@ let focusSuggestion = null
 let sessionState = { pageFrame: "dailyNotes",focusId: null,scroll: 0,position: null }
 
 let dragSelectStartBlock = null
+let dragSelect = null
+
+let clipboardData = null
 
 const topBar = document.getElementById("top-bar")
 const topBarHiddenHitbox = document.getElementById("top-bar-hidden-hitbox")

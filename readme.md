@@ -52,3 +52,7 @@ All event handling for non-permanent elements (anything without id) is done thro
 ## Templating
 
 I'm using HTML `<template>`s, `cloneNode`, and `element.firstElementChild.children[1].innerText=` for templating because it's the most performant out of methids I tested (more so than string replacement or `document.createElement`). This is hard to read and overly coupled, so I may make an abstraction over this. The highest performance option (which would not be tremendously more performant than other options) is a preprocessor that reads positions of classes within templates and replaces "calls" to those classes with `element.firstElementChild.children[1]` type stuff. Query at compile time, not runtime.
+
+## Future improvements
+
+Handling huge block parses. Right now it works well up to something like 500 syntax elements per block. Gets synchronously laggy after that.

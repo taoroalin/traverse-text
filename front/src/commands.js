@@ -103,8 +103,6 @@ const newUid = () => {
       result += CHARS_64[Math.floor(Math.random() * 64)]
     }
   } while (store.pages[result] !== undefined || store.blocks[result] !== undefined)
-  console.trace()
-  console.log(result)
   return result
 }
 

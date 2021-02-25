@@ -65,6 +65,33 @@ const expandTemplate = () => {
   templateList.style.display = "none"
 }
 
+const pasteBlocks = () => {
+  const parentId = store.blocks[sessionState.focusId].parent
+  let currentIdx = blockOrPageFromId(parentId).children.indexOf(sessionState.focusId)
+  const parentNode = focusBlock.parentNode
+  if (focusBlockBody.innerText === "") {
+    runCommand("deleteBlock",sessionState.focusId)
+    focusBlock.remove()
+  } else {
+    currentIdx += 1
+  }
+
+  if (clipboardData.dragSelect.rooted) {
+    const newId = runCommand("copyBlock",clipboardData.dragSelect.root,parentId,currentIdx)
+    const e = renderBlock(parentNode,newId,currentIdx)
+    focusBlockEnd(e)
+  } else {
+    let lastNode = null
+    for (let i = 0; i < clipboardData.dragSelect.endIdx + 1 - clipboardData.dragSelect.startIdx; i++) {
+      const blockId = blockOrPageFromId(clipboardData.dragSelect.root).children[i + clipboardData.dragSelect.startIdx]
+      const newId = runCommand("copyBlock",blockId,parentId,i + currentIdx)
+      const e = renderBlock(parentNode,newId,i + currentIdx)
+      lastNode = e
+    }
+    focusBlockEnd(lastNode)
+  }
+}
+
 const autocomplete = () => {
   const origString = store.blocks[sessionState.focusId].string
   if (editingLink.className === "tag") {
@@ -315,7 +342,20 @@ document.addEventListener("keydown",(event) => {
     }
   }
 
-  if (autocompleteList.style.display !== "none") {
+  if (dragSelect) {
+    if (event.key === "c" && event.ctrlKey) {
+      console.log("copy blocks")
+      clipboardData = {
+        dragSelect: {
+          root: dragSelect.root.dataset.id,
+          startIdx: dragSelect.startIdx,
+          endIdx: dragSelect.endIdx,
+          rooted: dragSelect.rooted
+        },
+      }
+      event.preventDefault()
+    }
+  } else if (autocompleteList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       autocomplete()
       event.preventDefault()
@@ -428,6 +468,19 @@ document.addEventListener("keydown",(event) => {
           newActiveBlock = blocks[blocks.indexOf(focusBlock) + 1]
           if (newActiveBlock) focusBlockStart(newActiveBlock)
           event.preventDefault()
+        }
+        break
+      case "v":
+        if (event.ctrlKey) {
+          if (clipboardData) {
+            pasteBlocks()
+            event.preventDefault
+          }
+        }
+        break
+      case "c":
+        if (event.ctrlKey) {
+          clipboardData = null
         }
         break
     }
@@ -543,33 +596,59 @@ document.addEventListener("click",(event) => {
 const commonAncestorNode = (a,b) => {
   const aList = []
   while (a.dataset.id !== undefined) {
-    aSet.push(a.dataset.id)
+    aList.push(a.dataset.id)
     a = a.parentNode.parentNode
   }
   const bList = []
-  while (aList.indexOf(b.dataset.id) === undefined) {
+  while (b.dataset.id !== undefined) {
     bList.push(b.dataset.id)
+    if (aList.indexOf(b.dataset.id) !== -1) {
+      const caid = aList[aList.indexOf(b.dataset.id) - 1]
+      const cbid = bList[bList.length - 2]
+      const parentChildIds = blockOrPageFromId(b.dataset.id).children
+      const bidx = parentChildIds ? parentChildIds.indexOf(cbid) : -1
+      const aidx = parentChildIds ? parentChildIds.indexOf(caid) : -1
+      const e = Math.max(aidx,bidx)
+      return { root: b,startIdx: Math.max(Math.min(aidx,bidx),0),endIdx: e === -1 ? parentChildIds.length : e,rooted: bidx === -1 || aidx === -1 }
+    }
     b = b.parentNode.parentNode
   }
-  const cA = aList[aList.indexOf(b.dataset.id) - 1]
-  const cB = bList[-1]
-  return b,cA,cB
+}
+
+const setDragSelected = (bool) => {
+  if (dragSelect) {
+    if (dragSelect.rooted) {
+      dragSelect.root.dataset.selected = bool
+    } else {
+      const children = dragSelect.root.children[dragSelect.root.className === "page" ? 1 : 2].children
+      for (let i = dragSelect.startIdx; i < dragSelect.endIdx + 1; i++) {
+        children[i].dataset.selected = bool
+      }
+    }
+  }
 }
 
 const mouseMoveListener = (event) => {
+  setDragSelected(false)
   const blockNode = event.target.closest(".block")
-  if (blockNode) {
-    for (let i = 0; i < event.path.length; i++) {
-      event.path
+  if (blockNode && blockNode !== dragSelectStartBlock) {
+    getSelection().empty()
+    const can = commonAncestorNode(dragSelectStartBlock,blockNode)
+    if (can) {
+      dragSelect = can
+      setDragSelected(true)
     }
   }
 }
 
 document.addEventListener("mousedown",(event) => {
   updateCursorInfo()
-  document.addEventListener("mousemove",mouseMoveListener)
-  if (event.target.closest(".block"))
-    dragSelectStartBlock = null
+  setDragSelected(false)
+  dragSelect = null
+  if (event.target.closest(".block")) {
+    document.addEventListener("mousemove",mouseMoveListener)
+    dragSelectStartBlock = event.target.closest(".block")
+  }
 })
 
 document.addEventListener("mouseup",(event) => {
@@ -625,6 +704,7 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
 
 const preprocessNewStore = () => {
   attemptToUnCorruptStore() // todo get to the bottom of corrupt stores (links to nowhere)
+  startCommand = ["dailyNotes"]
   fetch("./default-store.json").then(text => text.json().then(json => {
     mergeStore(json)
     theresANewStore()
