@@ -39,7 +39,7 @@ fs.writeFileSync("./public/index.html",result)
 
 fs.copyFile("./src/favicon.ico","./public/favicon.ico",() => { })
 fs.copyFile("./src/default-store.json","./public/default-store.json",() => { })
-fs.copyFile("./src/test.json","./public/test.json",() => { })
+fs.copyFile("./src/test.js","./public/test.js",() => { })
 
 // console.log(`took ${performance.now() - stime}`)
 

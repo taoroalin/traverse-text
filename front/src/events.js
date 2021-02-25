@@ -596,10 +596,7 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
       console.log(files)
       if (files.length === 1 && files[0].ext === "json") {
         store = roamJsonToStore(files[0].name,files[0].text)
-        fetch("./default-store.json").then(text => text.json().then(json => {
-          mergeStore(json)
-          theresANewStore()
-        }))
+        preprocessNewStore()
       } else {
         notifyText("Markdown import doesn't work yet. Upload a .json file, or a .zip file containing a .json file instead.",12)
         throw new Error("md import doesn't work")
@@ -619,12 +616,17 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
     file.text().then((text) => {
       user.graphName = name
       store = roamJsonToStore(name,text)
-      fetch("./default-store.json").then(text => text.json().then(json => {
-        mergeStore(json)
-        theresANewStore()
-      }))
+      preprocessNewStore()
     })
   } else {
     notifyText("Micro Roam only accepts a .json file, a .zip file containing 1 .json file, or a .zip file containing .md files")
   }
 })
+
+const preprocessNewStore = () => {
+  attemptToUnCorruptStore() // todo get to the bottom of corrupt stores (links to nowhere)
+  fetch("./default-store.json").then(text => text.json().then(json => {
+    mergeStore(json)
+    theresANewStore()
+  }))
+}
