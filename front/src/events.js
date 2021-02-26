@@ -361,7 +361,8 @@ document.addEventListener("keydown",(event) => {
   }
 
   if (dragSelect) {
-    if (event.key === "c" && event.ctrlKey) {
+    let did = false
+    if ((event.key === "c" || event.key === "x") && event.ctrlKey) {
       console.log("copy blocks")
       clipboardData = {
         dragSelect: {
@@ -371,8 +372,9 @@ document.addEventListener("keydown",(event) => {
           rooted: dragSelect.rooted
         },
       }
-      event.preventDefault()
-    } else if (event.key === "Backspace" || event.key === "Delete") {
+      did = true
+    }
+    if (event.key === "Backspace" || event.key === "Delete" || (event.key === "x" && event.ctrlKey)) {
       console.log(dragSelect)
       if (dragSelect.rooted) {
         focusBlockVerticalOffset(-1,dragSelect.root)
@@ -390,8 +392,9 @@ document.addEventListener("keydown",(event) => {
         }
       }
       dragSelect = null
-      event.preventDefault()
+      did = true
     }
+    if (did) event.preventDefault()
   } else if (autocompleteList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       autocomplete()
@@ -503,7 +506,7 @@ document.addEventListener("keydown",(event) => {
         if (event.ctrlKey) {
           if (clipboardData) {
             pasteBlocks()
-            event.preventDefault
+            event.preventDefault()
           }
         }
         break
