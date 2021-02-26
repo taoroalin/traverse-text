@@ -627,3 +627,19 @@ const getRidOfUnusedLists = () => {
       delete page.children
   }
 }
+
+const stripRefs = () => {
+  delete store.pagesByTitle
+  for (let pageId in store.pages) {
+    const page = store.pages[pageId]
+    for (let listProp of LIST_PROPS) {
+      delete page[listProp]
+    }
+  }
+  for (let blockId in store.blocks) {
+    const block = store.blocks[blockId]
+    for (let listProp of LIST_PROPS) {
+      delete block[listProp]
+    }
+  }
+}

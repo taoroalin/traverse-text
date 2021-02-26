@@ -353,6 +353,14 @@ a:visited { color:var(--link) }
   font-size:1.15em;
 }
 
+.attribute{
+  font-weight: bold;
+}
+
+.attribute:hover{
+  cursor:pointer;
+}
+
 #terminal{
   font-family:'Inconsolata';
   width:100%;

@@ -70,9 +70,10 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
     if (text[text.length - 1] !== " ") text += " " // add space because of getSelection.collapse() weirdness with end of contenteditable
   }
   const stack = [parent]
-  // 1             2              3   4         5    6         7      8    9       10
-  // page-ref-open page-ref-close tag block-ref bold highlight italic link literal template-expander
-  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]{8,50}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|(;;(?:[^ \n\r]*))/g)
+  // 1             2              3   4         5    6         7      8    9       10                11
+  // page-ref-open page-ref-close tag block-ref bold highlight italic link literal template-expander attribute
+  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]{8,50}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|(;;(?:[^ \n\r]*))|(^[\/a-zA-Z0-9_-]+)::/g)
+  // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
   let idx = 0
   let stackTop = parent
@@ -174,6 +175,10 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
       const templateExpanderElement = templateExpanderTemplate.cloneNode(true)
       templateExpanderElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(templateExpanderElement)
+    } else if (match[11]) {
+      const attributeElement = attributeTemplate.cloneNode(true)
+      attributeElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(attributeElement)
     }
     idx = match.index + match[0].length
   }

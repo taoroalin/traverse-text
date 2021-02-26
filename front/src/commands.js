@@ -14,7 +14,6 @@ const getIn = (arr,skip) => {
 // Edit format: {delete:[[...keys]],write:[[...keys,value]], add:[[...keys, value]], subtract:[[...keys, value]], insert: [[...keys, value, idx]]}
 
 const doEdits = (edits) => {
-
   // it's important that subtract comes first because you can subtract something then insert it earlier in the same list
   if (edits.subtract) {
     for (let op of edits.subtract) {
@@ -63,6 +62,7 @@ const doEdits = (edits) => {
       delete obj[op[op.length - 1]]
     }
   }
+  print(edits)
 }
 
 const saveStore = () => {

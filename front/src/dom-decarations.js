@@ -34,4 +34,4 @@ const italicTemplate = getTemp("italic")
 const highlightTemplate = getTemp("highlight")
 const literalTemplate = getTemp("literal")
 const templateExpanderTemplate = getTemp("template-expander")
-
+const attributeTemplate = getTemp("attribute")

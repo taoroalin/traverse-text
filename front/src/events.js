@@ -572,8 +572,27 @@ document.addEventListener("keydown",(event) => {
 })
 
 
+const getPageTitleOfNode = (node) => {
+  const tag = node.closest(".tag")
+  if (tag) return tag.innerText.substring(1)
+
+  const attribute = node.closest(".attribute")
+  if (attribute) return attribute.innerText.substring(0,attribute.innerText.length - 2)
+
+  const pageRef = node.closest(".page-ref")
+  if (pageRef) return pageRef.children[1].innerText
+
+  return undefined
+}
+
 // The single event handler model has some problems. The cases need to appear in the same order they are nested in the DOM
 document.addEventListener("click",(event) => {
+
+  const clickedPageTitle = getPageTitleOfNode(event.target)
+  if (clickedPageTitle) {
+    goto("pageTitle",clickedPageTitle)
+    return
+  }
 
   const closestBullet = event.target.closest(".block__bullet")
 
@@ -592,9 +611,7 @@ document.addEventListener("click",(event) => {
   const closestBreadcrumbBlock = event.target.closest(".breadcrumb-block")
 
   // markup
-  if (event.target.closest(".page-ref")) {
-    goto("pageTitle",event.target.closest(".page-ref").children[1].innerText)
-  } else if (closestBullet) {
+  if (closestBullet) {
     goto("block",closestBullet.parentNode.dataset.id)
   } else if (event.target.className === "block-ref") {
     goto("block",event.target.dataset.id)
@@ -603,8 +620,6 @@ document.addEventListener("click",(event) => {
     link.target = "_blank"
     link.href = event.target.innerText
     link.click()
-  } else if (event.target.closest(".tag")) {
-    goto("pageTitle",event.target.closest(".tag").innerText.substring(1))
   } else if (event.target.id === "download-button") {
     downloadHandler()
 

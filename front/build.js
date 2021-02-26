@@ -51,3 +51,5 @@ const minifyReadablishName = (string) => {
   }
   return result
 }
+
+const simpletonRemovePrint = (string) => string.replaceAll(/^[\t ]+print\([^\n]+\)\n/g,"").replaceAll(/^[\t ]+console\.log\([^\n]+\)\n/g,"")
