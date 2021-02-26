@@ -171,6 +171,7 @@ const dedentFocusedBlock = () => {
 // Event listners --------------------------------------------------------------------------------------------------------
 
 document.addEventListener("input",(event) => {
+  console.log("input")
   updateCursorInfo()
   autocompleteList.style.display = "none"
   templateList.style.display = "none"
@@ -511,8 +512,18 @@ document.addEventListener("keydown",(event) => {
         }
         break
       case "c":
-        if (event.ctrlKey) {
+        if (event.ctrlKey) { // LEGITTODO copy md text and check paste text against, 
           clipboardData = null
+        }
+        break
+      case "]":
+        console.log(sessionState.position)
+        if (focusBlockBody.innerText[sessionState.position] === "]") {
+          event.preventDefault()
+          sessionState.position += 1
+          focusIdPosition()
+        } else {
+          console.log(focusBlockBody.innerText[sessionState.position])
         }
         break
     }
@@ -581,8 +592,8 @@ document.addEventListener("click",(event) => {
   const closestBreadcrumbBlock = event.target.closest(".breadcrumb-block")
 
   // markup
-  if (event.target.className === "page-ref__body") {
-    goto("pageTitle",event.target.innerText)
+  if (event.target.closest(".page-ref")) {
+    goto("pageTitle",event.target.closest(".page-ref").children[1].innerText)
   } else if (closestBullet) {
     goto("block",closestBullet.parentNode.dataset.id)
   } else if (event.target.className === "block-ref") {

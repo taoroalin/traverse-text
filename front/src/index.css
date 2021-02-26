@@ -296,9 +296,12 @@ a:visited { color:var(--link) }
   font-weight: 800;
 }
 
-.page-ref__body:hover{
-  text-decoration: underline;
+.page-ref:hover{
   cursor:pointer;
+}
+
+.page-ref:hover>.page-ref__body{
+  text-decoration: underline;
 }
 
 .tag{
