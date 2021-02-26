@@ -1,3 +1,13 @@
+// Singleton elements
+const pageFrame = document.getElementById("page-frame")
+const pageFrameOuter = document.getElementById("page-frame-outer")
+const searchInput = document.getElementById("search-input")
+const downloadButton = document.getElementById("download-button")
+const terminalElement = document.getElementById("terminal")
+const searchResultList = document.getElementById("search-result-list")
+const autocompleteList = document.getElementById("autocomplete-list")
+const templateList = document.getElementById("template-list")
+
 const getTemp = (str) => document.getElementById(str).content.firstElementChild
 
 // Templates
@@ -25,12 +35,3 @@ const highlightTemplate = getTemp("highlight")
 const literalTemplate = getTemp("literal")
 const templateExpanderTemplate = getTemp("template-expander")
 
-// Singleton elements
-const pageFrame = document.getElementById("page-frame")
-const pageFrameOuter = document.getElementById("page-frame-outer")
-const searchInput = document.getElementById("search-input")
-const downloadButton = document.getElementById("download-button")
-const terminalElement = document.getElementById("terminal")
-const searchResultList = document.getElementById("search-result-list")
-const autocompleteList = document.getElementById("autocomplete-list")
-const templateList = document.getElementById("template-list")

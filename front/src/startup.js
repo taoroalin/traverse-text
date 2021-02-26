@@ -1,5 +1,4 @@
 const r = indexedDB.open("microroam",4)// I had this as line 1, saves ~5ms start time, don't now cause I'm lazy
-// This needs to be the exact same db version as in worker.js
 const blankUser = { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false }
 let user = blankUser
 const storedUser = localStorage.getItem("user")

@@ -16,6 +16,22 @@ const focusBlockStart = (blockNode) => {
   temp.remove()
 }
 
+const focusBlockVerticalOffset = (offset,block = focusBlock,start = false) => { // this closure feels weird, maybe shoudn't use this language feature?
+  const blocks = Array.from(document.querySelectorAll(".block"))
+  const newActiveBlock = blocks[blocks.indexOf(block) + offset]
+  if (newActiveBlock) {
+    if (!start) {
+      focusBlockEnd(newActiveBlock)
+    } else {
+      focusBlockStart(newActiveBlock)
+    }
+  }
+}
+
+const getChildren = (node) => {
+  return node.className === "block" ? node.children[2].children : node.children[1].children
+}
+
 const dailyNotesInfiniteScrollListener = () => {
   const fromBottom =
     pageFrame.getBoundingClientRect().bottom - innerHeight
@@ -96,7 +112,7 @@ const autocomplete = () => {
   const origString = store.blocks[sessionState.focusId].string
   if (editingLink.className === "tag") {
     const textNode = editingLink.childNodes[0]
-    // check for the exact inverse of regex test to see if this would be a valid tag, otherwise make it a ref
+    // check for the exact inverse of tag regex to see if this would be a valid tag, otherwise make it a ref  
     if (/[^\/a-zA-Z0-9_-]/.test(focusSuggestion.dataset.title)) {
       const string = origString.slice(0,textNode.startIdx) + "[[" + focusSuggestion.dataset.title + "]]" + origString.slice(textNode.endIdx)
       sessionState.position = textNode.startIdx + focusSuggestion.dataset.title.length + 4
@@ -151,6 +167,8 @@ const dedentFocusedBlock = () => {
     // notifyText("can't dedent from page root", 2) // don't need error message here?
   }
 }
+
+// Event listners --------------------------------------------------------------------------------------------------------
 
 document.addEventListener("input",(event) => {
   updateCursorInfo()
@@ -354,6 +372,25 @@ document.addEventListener("keydown",(event) => {
         },
       }
       event.preventDefault()
+    } else if (event.key === "Backspace" || event.key === "Delete") {
+      console.log(dragSelect)
+      if (dragSelect.rooted) {
+        focusBlockVerticalOffset(-1,dragSelect.root)
+        runCommand("deleteBlock",dragSelect.root.dataset.id)
+        document.querySelectorAll(`.block[data-id="${dragSelect.root.dataset.id}"]`).forEach(x => x.remove())
+      } else {
+        const childNodes = getChildren(dragSelect.root)
+        focusBlockVerticalOffset(-1,childNodes[dragSelect.startIdx])
+        console.log(`cnl ${childNodes.length} start ${dragSelect.startIdx} end ${dragSelect.endIdx}`)
+        // iterate backwards so the idxs don't shift underneath you
+        for (let i = dragSelect.endIdx; i >= dragSelect.startIdx; i--) {
+          const node = childNodes[i]
+          runCommand("deleteBlock",node.dataset.id)
+          document.querySelectorAll(`.block[data-id="${node.dataset.id}"]`).forEach(x => x.remove())
+        }
+      }
+      dragSelect = null
+      event.preventDefault()
     }
   } else if (autocompleteList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
@@ -426,9 +463,7 @@ document.addEventListener("keydown",(event) => {
             event.preventDefault()
           }
         } else if (!event.shiftKey && !event.altKey) {
-          blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(focusBlock) + 1]
-          focusBlockStart(newActiveBlock)
+          focusBlockVerticalOffset(1)
           event.preventDefault()
         }
         break
@@ -444,9 +479,7 @@ document.addEventListener("keydown",(event) => {
             event.preventDefault()
           }
         } else if (!event.shiftKey && !event.altKey) {
-          blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(focusBlock) - 1]
-          focusBlockEnd(newActiveBlock)
+          focusBlockVerticalOffset(-1)
           event.preventDefault()
         }
         break
@@ -454,9 +487,7 @@ document.addEventListener("keydown",(event) => {
         if (event.shiftKey && event.altKey) {
           dedentFocusedBlock()
         } else if (sessionState.position === 0) {
-          blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(focusBlock) - 1]
-          focusBlockEnd(newActiveBlock)
+          focusBlockVerticalOffset(-1)
           event.preventDefault()
         }
         break
@@ -464,9 +495,7 @@ document.addEventListener("keydown",(event) => {
         if (event.shiftKey && event.altKey) {
           indentFocusedBlock()
         } else if (sessionState.position === focusBlockBody.innerText.length) {
-          blocks = Array.from(document.querySelectorAll(".block"))
-          newActiveBlock = blocks[blocks.indexOf(focusBlock) + 1]
-          if (newActiveBlock) focusBlockStart(newActiveBlock)
+          focusBlockVerticalOffset(1,focusBlock,true)
           event.preventDefault()
         }
         break
@@ -620,7 +649,7 @@ const setDragSelected = (bool) => {
     if (dragSelect.rooted) {
       dragSelect.root.dataset.selected = bool
     } else {
-      const children = dragSelect.root.children[dragSelect.root.className === "page" ? 1 : 2].children
+      const children = getChildren(dragSelect.root)
       for (let i = dragSelect.startIdx; i < dragSelect.endIdx + 1; i++) {
         children[i].dataset.selected = bool
       }
@@ -638,6 +667,8 @@ const mouseMoveListener = (event) => {
       dragSelect = can
       setDragSelected(true)
     }
+  } else {
+    dragSelect = null
   }
 }
 
@@ -698,7 +729,7 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
       preprocessNewStore()
     })
   } else {
-    notifyText("Micro Roam only accepts a .json file, a .zip file containing 1 .json file, or a .zip file containing .md files")
+    notifyText("Micro Roam only accepts a .json file or .zip file containing 1 .json file") // add "md" once that works
   }
 })
 

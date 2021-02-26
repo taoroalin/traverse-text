@@ -116,8 +116,8 @@ const commands = {
   deleteBlock: (blockId) => {
     const block = store.blocks[blockId]
     const parentId = block.parent
-    const refs = block[":block/refs"]
-    const backRefs = block.backRefs
+    const refs = block[":block/refs"] || []
+    const backRefs = block.backRefs || []
     // todo make child ref tracking on delete block
     const edits = {
       subtract: [[parentThingey(block.parent),parentId,"children",blockId],

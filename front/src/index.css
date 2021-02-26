@@ -6,7 +6,7 @@
 
 .dark{
   --background:#161616;
-  --text: white;
+  --text: rgb(246, 246, 246);
   --link: #3f84c0;
   --brackets:#A7B6C2;
   --block-ref:rgb(63, 63, 63);
