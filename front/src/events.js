@@ -553,7 +553,12 @@ document.addEventListener("keydown",(event) => {
   if (terminalElement.style.display !== "none") {
     if (event.key === "Enter" && !event.ctrlKey && !event.shiftKey && !event.altKey) {
       const tc = terminalCommands[event.target.innerText]
-      if (tc) tc()
+      if (tc) {
+        tc()
+        event.preventDefault()
+        terminalElement.style.display = "none"
+        terminalElement.innerHTML = ""
+      }
       else {
         try {
           eval(event.target.innerText)

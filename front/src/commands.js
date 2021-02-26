@@ -96,13 +96,25 @@ const print = (text) => {
 // it is highly performance inneficient but i don't need to call this many times
 const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
 const newUid = () => {
+  let values = new Uint8Array(9)
   let result
   do {
+    crypto.getRandomValues(values)
     result = ""
     for (let i = 0; i < 9; i++) {
-      result += CHARS_64[Math.floor(Math.random() * 64)]
+      result += CHARS_64[values[i] % 64]
     }
   } while (store.pages[result] !== undefined || store.blocks[result] !== undefined)
+  return result
+}
+
+const newUUID = () => {// this is 126 bits, 21xbase64
+  let values = new Uint8Array(21)
+  crypto.getRandomValues(values)
+  let result = ""
+  for (let i = 0; i < 21; i++) {
+    result += CHARS_64[values[i] % 64]
+  }
   return result
 }
 

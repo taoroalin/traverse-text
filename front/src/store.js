@@ -643,3 +643,29 @@ const stripRefs = () => {
     }
   }
 }
+
+const generateRefs = () => {
+  const stime = performance.now()
+  refs = {}
+  titles = {}
+  for (let pageId in store.pages) {
+    const page = store.pages[pageId]
+    titles[page.title] = pageId
+  }
+  for (let blockId in store.blocks) {
+    const frag = document.createDocumentFragment()
+    const pageTitles = renderBlockBody(frag,blockId)
+    if (pageTitles.length > 0) {
+      for (let pageTitle of pageTitles) {
+        const pageId = titles[pageTitle]
+        if (pageId) {
+          if (!refs[pageId]) refs[pageId] = []
+          refs[pageId].push(blockId)
+        } else {
+          console.log(`no page ${pageTitle}`)
+        }
+      }
+    }
+  }
+  console.log(`gen refs took ${performance.now() - stime}`)
+}

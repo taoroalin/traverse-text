@@ -62,3 +62,11 @@ Store chached stuff (pagesByTitle, backRefs, refs, :block/refs), seperately. The
 Make each page render (and block render?) keep track of how long it's taken and break + resume when it takes too long
 
 Maybe make bracket auto close not happen when you're right in front of word??
+
+# Working on right now
+
+Seperating core state (strings & child structure) from backrefs / pagesFromTitle
+
+Using query params to specify page / block in site
+
+Storing edits / commits with uuids

@@ -12,11 +12,7 @@ const nolog = () => {
   saveUser()
 }
 
-const test = () => {
-  const testScriptNode = document.createElement("script")
-  testScriptNode.src = "test.js"
-  document.body.appendChild(testScriptNode)
-}
+const flash = benchmarkRenderAll
 
 const reset = () => {
   const r = indexedDB.deleteDatabase("microroam")
@@ -45,10 +41,6 @@ const downloadBinary = () => {
   button.click()
 }
 
-const terminalCommands = {
-  blank,reset,test,log,page,nolog,pr,downloadBinary
-}
-
 const loadGraphminerNotes = () => {
   fetch("./graphminer-store.json").then(text => text.json().then(json => {
     store = json
@@ -57,4 +49,10 @@ const loadGraphminerNotes = () => {
     theresANewStore()
     debouncedSaveStore()
   }))
+}
+
+const taonotes = loadGraphminerNotes
+
+const terminalCommands = {
+  blank,reset,flash,log,page,nolog,pr,taonotes,downloadBinary
 }

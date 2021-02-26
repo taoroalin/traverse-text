@@ -226,11 +226,7 @@ window.onerror = logError
 
 
 // Finally starting the program after everything's compiled
-if (w) {
-  theresANewStore()
-} else {
-  w = true
-}
+finishStartupThread()
 
 
 // const ptest = () => {
