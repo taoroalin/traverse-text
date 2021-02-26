@@ -768,10 +768,10 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
 })
 
 const preprocessNewStore = () => {
-  attemptToUnCorruptStore() // todo get to the bottom of corrupt stores (links to nowhere)
   startCommand = ["dailyNotes"]
   fetch("./default-store.json").then(text => text.json().then(json => {
     mergeStore(json)
+    attemptToUnCorruptStore() // todo get to the bottom of corrupt stores (links to nowhere)
     theresANewStore()
   }))
 }

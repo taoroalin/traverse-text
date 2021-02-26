@@ -51,6 +51,13 @@ r.onerror = () => {
       You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
 }
 
+let store = null
+let refs = null
+let titles = null
+let idb = null
+
+let startCommand = ["dailyNotes"]
+
 let startupThreads = 2
 const finishStartupThread = () => {
   if (startupThreads <= 1)
@@ -65,11 +72,6 @@ const theresANewStore = () => {
   debouncedSaveStore()
 }
 
-let store = null
-let refs = null
-let titles = null
-let idb = null
-let startCommand = ["dailyNotes"]
 
 let commitDebounce = null
 
