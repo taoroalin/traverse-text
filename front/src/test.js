@@ -76,10 +76,17 @@ const benchmarkRenderAll = async () => {
   notifyText(message,10)
 }
 
-
 const testAll = () => {
   testRoundTrip()
   benchmarkPageLoad()
   benchmarkRandomWalk()
   benchmarkRenderAll()
 }
+
+// hash takes 7ms for 2M data. That's 400M/s. Casey Muratori does 64G/s.
+// let jsond = new TextEncoder().encode(JSON.stringify(store))
+// const zstime = performance.now()
+// crypto.subtle.digest("SHA-256",jsond).then(d => {
+//   console.log(`hash took ${performance.now() - zstime}`)
+//   console.log(d)
+// })

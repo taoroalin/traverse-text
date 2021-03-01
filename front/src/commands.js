@@ -25,20 +25,22 @@ difs are serial, not paralel
 
 const applyDif = (string,difs) => {
   let result = string
-  for (let dif in difs) {
-    const start = dif.s || result.length
-    const end = start + ((dif.d && dif.d.length) || 0)
+  for (let dif of difs) {
+    let start = result.length
+    if (dif.s !== undefined) start = dif.s
+    const end = start + (((dif.d !== undefined) && dif.d.length) || 0)
     result = result.substring(0,start) + (dif.i || "") + result.substring(end)
   }
   return result
 }
 
 const diff = (string,oldString) => { // todo real diff
-  return { d: oldString,i: string }
+  return [{ s: 0,d: oldString,i: string }]
 }
 
 const doEdit = (edit) => {
   print(edit)
+  console.log(edit)
 
   for (let id in edit.dl || []) {
     const parent = store.blox[id].p
@@ -82,8 +84,11 @@ const doEdit = (edit) => {
   for (let id in edit.df) {
     const df = edit.df[id]
     const bloc = store.blox[id]
+    console.log(bloc)
     bloc.et = edit.t
+    if (!bloc.p) delete store.titles[bloc.s]
     bloc.s = applyDif(bloc.s,df)
+    if (!bloc.p) store.titles[bloc.s] = id
   }
 }
 
@@ -108,7 +113,7 @@ let saveStoreTimeout = null
 
 const debouncedSaveStore = () => {
   clearTimeout(saveStoreTimeout)
-  saveStoreTimeout = setTimeout(saveStore,500)
+  saveStoreTimeout = setTimeout(saveStore,300)
 }
 
 const print = (text) => {
@@ -187,7 +192,7 @@ const commands = {
     const pageId = newUid()
     const edit = { cr: {},df: {} }
     edit.cr[pageId] = []
-    edit.df[pageId] = { i: pageTitle }
+    edit.df[pageId] = diff(pageTitle,"")
     return { edit,returns: pageId }
   },
 
@@ -219,18 +224,16 @@ const queCommand = (...command) => {
   print(command)
   const { edit,returns } = commands[command[0]](...command.slice(1))
   edit.t = Date.now()
+  doEdit(edit)
   activeEdits.push(edit)
+  debouncedSaveStore()
   return returns
 }
 
 const commit = () => {
   if (activeEdits.length > 0) {
-
-    for (let edit of activeEdits) {
-      doEdit(edit)
-    }
+    edits.push(activeEdits)
     activeEdits = []
-    // saveWorker.postMessage(["edits",edits])
     debouncedSaveStore()
   } else {
     throw new Error(`tried to commit empty command buffer`)
@@ -238,7 +241,10 @@ const commit = () => {
 }
 
 const runCommand = (...command) => {
-  const returns = queCommand(...command)
-  commit()
+  print(command)
+  const { edit,returns } = commands[command[0]](...command.slice(1))
+  edit.t = Date.now()
+  doEdit(edit)
+  debouncedSaveStore()
   return returns
 }

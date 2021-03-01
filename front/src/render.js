@@ -156,7 +156,7 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
       const block = store.blox[blockId]
       if (block) {
         const blockRefElement = blockRefTemplate.cloneNode(true)
-        blockRefElement.innerText = block.string
+        blockRefElement.innerText = block.s
         blockRefElement.dataset.id = blockId
         stackTop.appendChild(blockRefElement)
       } else {

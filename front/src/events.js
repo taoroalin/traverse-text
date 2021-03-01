@@ -72,14 +72,14 @@ const pasteBlocks = () => {
   let currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
   const parentNode = focusBlock.parentNode
   if (focusBlockBody.innerText === "") {
-    runCommand("deleteBlock",sessionState.focusId)
+    queCommand("deleteBlock",sessionState.focusId)
     focusBlock.remove()
   } else {
     currentIdx += 1
   }
 
   if (clipboardData.dragSelect.rooted) {
-    const newId = runCommand("copyBlock",clipboardData.dragSelect.root,parentId,currentIdx)
+    const newId = queCommand("copyBlock",clipboardData.dragSelect.root,parentId,currentIdx)
     const e = renderBlock(parentNode,newId,currentIdx)
     focusBlockEnd(e)
   } else {
@@ -90,9 +90,9 @@ const pasteBlocks = () => {
       const e = renderBlock(parentNode,newId,i + currentIdx)
       lastNode = e
     }
-    commit()
     focusBlockEnd(lastNode)
   }
+  commit()
 }
 
 const autocomplete = () => {

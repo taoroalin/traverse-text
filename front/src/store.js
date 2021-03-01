@@ -217,6 +217,20 @@ const mergeStore = (otherStore) => {
   }
 }
 
+// inner refs are refs in a page/block and any pages/blocks within it
+const generateInnerRefs = () => {
+  // algorithm: for each ref anywhere, add it to each of its parent's uprefs
+  for (let blocId in store.refs) {
+    const refs = store.refs[blocId]
+
+  }
+}
+
+// outer refs are refs in a block / page and each block/page in its ancestry
+const generateOuterRefs = () => {
+
+}
+
 
 // search
 
