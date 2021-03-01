@@ -282,12 +282,13 @@ const searchTemplates = (string) => {
   const templatePage = store.blox[templatePageId]
   const result = []
   if (templatePage) {
-    const fn = (blockId,f) => {
+    const fn = (blockId) => {
       const block = store.blox[blockId]
-      const match = block.s.match(f ? /^([^ \r\n]+)\s*$/ : /^([^ \r\n]+)\s*(?:(?:#roam\/templates)|(?:\[\[roam\/templates\]\]))$/)
+      console.log(block.s)
+      const match = block.s.match(/^([^ \r\n]+)/)
       console.log(match)
       if (match) {
-        if (match.length >= string.length && match[1].substring(0,string.length).toLowerCase() === string.toLowerCase()) {
+        if (match[1].length >= string.length && match[1].substring(0,string.length).toLowerCase() === string.toLowerCase()) {
           result.push({
             id: blockId,
             string: match[1]

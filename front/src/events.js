@@ -72,7 +72,7 @@ const pasteBlocks = () => {
   let currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
   const parentNode = focusBlock.parentNode
   if (focusBlockBody.innerText === "") {
-    macros.nocommit.deleteBlock(sessionState.focusId)
+    macros.nocommit.delete(sessionState.focusId)
     focusBlock.remove()
   } else {
     currentIdx += 1
@@ -311,11 +311,14 @@ const globalHotkeys = {
     }
   },
   "open": {
-    key: "o",control: true,fn: () => {
-      if (editingLink && editingLink.className === "page-ref")
-        goto("pageTitle",editingLink.children[1].innerText)
-      if (editingLink && editingLink.className === "tag")
-        goto("pageTitle",editingLink.innerText.substring(1))
+    key: "o",control: true,fn: (event) => {
+      if (editingTitle) goto("pageTitle",editingTitle)
+      else if (editingUrlElement) editingUrlElement.click()
+    }
+  },
+  "daily notes": {
+    key: "d",alt: true,fn: () => {
+      goto("dailyNotes")
     }
   },
   "terminal": {
@@ -339,7 +342,7 @@ document.addEventListener("keydown",(event) => {
       event.shiftKey === !!hotkey.shift &&
       event.ctrlKey === !!hotkey.control &&
       event.altKey === !!hotkey.alt) {
-      hotkey.fn()
+      hotkey.fn(event)
       event.preventDefault()
       return
     }

@@ -15,6 +15,7 @@ const applyDif = (string,difs) => {
     const end = start + (((dif.d !== undefined) && dif.d.length) || 0)
     result = result.substring(0,start) + (dif.i || "") + result.substring(end)
   }
+  console.log(result)
   return result
 }
 
@@ -35,7 +36,7 @@ const doEdit = (...edit) => {
     case "dl":
       const parent = store.blox[id].p
       if (parent) {
-        store.blox[parent].k = store.box[parent].k.filter(x => x !== id)
+        store.blox[parent].k = store.blox[parent].k.filter(x => x !== id)
       } else {
         delete store.titles[store.blox[id].s]
       }
@@ -143,19 +144,23 @@ const newUUID = () => { // this is 126 bits, 21xbase64
 }
 
 
-const qdit = { true: commitEdit,false: doEdit }
-
 const macros = {}
 macros.nocommit = {
   copyBlock: (oldId,parentId,idx) => {
-    const newId = newUid()
-    const block = store.blox[oldId]
-    doEdit("cr",newId,parentId,idx)
-    doEdit("df",newId,{ i: block.s })
-    for (let i = 0; i < block.k && block.k.length; i++) {
-      copyBlock(block.k[i],newId,i)
+    const copyBlock = (oldId,parentId,idx) => {
+      const newId = newUid()
+      const block = store.blox[oldId]
+      console.log(`copying block ${block.s}`)
+      doEdit("cr",newId,parentId,idx)
+      doEdit("df",newId,diff(block.s,""))
+      if (block.k) {
+        for (let i = 0; i < block.k.length; i++) {
+          copyBlock(block.k[i],newId,i)
+        }
+      }
+      return newId
     }
-    return newId
+    return copyBlock(oldId,parentId,idx)
   },
   delete: (id) => {
     doEdit("dl",id,cpy(store.blox[id]))
@@ -166,7 +171,7 @@ macros.nocommit = {
   createPage: (title) => {
     const id = newUid()
     doEdit("cr",id)
-    doEdit("df",diff(title,""))
+    doEdit("df",id,diff(title,""))
   },
   move: (id,parentId,idx) => {
     const bloc = store.blox[id]

@@ -149,6 +149,15 @@ const setFocusedBlockString = (string) => {
   macros.write(sessionState.focusId,string,refTitles)
 }
 
+const getEditingSimpleSpan = (className) => {
+  const elements = focusBlockBody.querySelectorAll("." + className)
+  for (let temp of elements) {
+    if (temp.childNodes[0].endIdx >= sessionState.position && temp.childNodes[0].startIdx < sessionState.position) {
+      return temp
+    }
+  }
+}
+
 // todo call this less. right now it's called twice as much as necessary, costing 0.3ms per keystroke and making code ugly
 // todo also get rid of this entirely. it's a complete mess
 const updateCursorInfo = () => {
@@ -188,13 +197,9 @@ const updateCursorInfo = () => {
       }
       editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
 
-      editingTemplateExpander = undefined
-      const templateExpanders = focusBlockBody.querySelectorAll(".template-expander")
-      for (let temp of templateExpanders) {
-        if (temp.childNodes[0].endIdx >= sessionState.position && temp.childNodes[0].startIdx < sessionState.position) {
-          editingTemplateExpander = temp
-        }
-      }
+      editingTemplateExpander = getEditingSimpleSpan("template-expander")
+
+      editingUrlElement = getEditingSimpleSpan("url")
 
     } else
       sessionState.isFocused = false
@@ -203,6 +208,7 @@ const updateCursorInfo = () => {
     sessionState.isFocused = false
 
 }
+
 
 
 const dailyNotesInfiniteScrollListener = () => {
