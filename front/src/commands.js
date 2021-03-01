@@ -1,26 +1,10 @@
 const cpy = x => JSON.parse(JSON.stringify(x))
 
 /*
+Paralel difs are too much work. Switching to simpler single command buffer
 
-OLD Edit format: {delete:[[...keys]],write:[[...keys,value]], add:[[...keys, value]], subtract:[[...keys, value]], insert: [[...keys, value, idx]]}
+["cr"|"dl"|"df"|"mv", ]
 
-edit:{s:start,d:delete,i:insert,a:append}
-
-The fox jumped over the lazy dog
-The fox didn't jump over the lazy dogs
-{"s":8,"i":"didn't "},{"s":20,"d":"ed"},{"i":"s"}
-
-diff:[edit]
-Diff format: s:start, d:delete text, i:insert text
-Start defaults to 0
-
-// this dif format is meant to be compressible. Every change is its own diff, but the difs can be merged into the same format
-
-{id, t, df:{blocId:diff},mv:{blocId:[np, nidx,op, oidx]},cr:{blocId:[pid,idx]},dl:{blocId:bloc}}
-
-okay, this shows that it can be practical to store diffs as json
-
-difs are serial, not paralel
 */
 
 const applyDif = (string,difs) => {
@@ -38,58 +22,68 @@ const diff = (string,oldString) => { // todo real diff
   return [{ s: 0,d: oldString,i: string }]
 }
 
-const doEdit = (edit) => {
+let edits = []
+let activeEdits = []
+
+const doEdit = (...edit) => {
+  const time = Date.now()
+  activeEdits.push(edit)
   print(edit)
   console.log(edit)
-
-  for (let id in edit.dl || []) {
-    const parent = store.blox[id].p
-    if (parent) {
-      store.blox[parent].k = store.box[parent].k.filter(x => x !== id)
-    } else {
-      delete store.titles[store.blox[id].s]
-    }
-    delete store.blox[id]
-  }
-
-  // make all blocks first before adding children so parents don't have to be declared before children
-  for (let blocId in edit.cr || []) {
-    store.blox[blocId] = {
-      ct: edit.t,
-      s: ""
-    }
-  }
-  for (let blocId in edit.cr || []) {
-    const [parentId,idx] = edit.cr[blocId]
-    if (parentId) {
-      store.blox[blocId].p = parentId
-      if (!store.blox[parentId].k) store.blox[parentId].k = []
-      if (idx) {
-        store.blox[parentId].k.splice(idx,0,blocId)
+  const [op,id,p1,p2,p3,p4] = edit
+  switch (op) {
+    case "dl":
+      const parent = store.blox[id].p
+      if (parent) {
+        store.blox[parent].k = store.box[parent].k.filter(x => x !== id)
       } else {
-        store.blox[parentId].k.push(blocId)
+        delete store.titles[store.blox[id].s]
       }
-    }
+      delete store.blox[id]
+      break
+    case "cr":
+      store.blox[id] = {
+        ct: time,
+        s: ""
+      }
+      const parentId = p1,idx = p2
+      if (parentId) {
+        store.blox[id].p = parentId
+        if (!store.blox[parentId].k) store.blox[parentId].k = []
+        if (idx) {
+          store.blox[parentId].k.splice(idx,0,id)
+        } else {
+          store.blox[parentId].k.push(id)
+        }
+      }
+      break
+    case "mv":
+      const newParent = p1,nidx = p2,oldParent = p3,oidx = p4
+      const block = store.blox[id]
+      store.blox[oldParent].k = store.blox[oldParent].k.filter(x => x != id)
+      block.p = newParent
+      if (!store.blox[newParent].k) store.blox[newParent].k = []
+      store.blox[newParent].k.splice(nidx,0,id)
+      break
+    case "df":
+      const df = p1
+      const bloc = store.blox[id]
+      bloc.et = time
+      if (!bloc.p) delete store.titles[bloc.s]
+      bloc.s = applyDif(bloc.s,df)
+      if (!bloc.p) store.titles[bloc.s] = id
+      break
   }
+}
 
-  for (let id in edit.mv || []) {
-    const [np,nidx,op,oidx] = edit.mv[id]
-    const block = store.blox[id]
-    store.blox[op].k = store.blox[op].k.filter(x => x != id)
-    block.p = np
-    if (!store.blox[np].k) store.blox[np].k = []
-    store.blox[np].k.splice(nidx,0,id)
-  }
-
-  for (let id in edit.df) {
-    const df = edit.df[id]
-    const bloc = store.blox[id]
-    console.log(bloc)
-    bloc.et = edit.t
-    if (!bloc.p) delete store.titles[bloc.s]
-    bloc.s = applyDif(bloc.s,df)
-    if (!bloc.p) store.titles[bloc.s] = id
-  }
+const commit = () => {
+  edits.push({ id: newUUID(),t: Date.now(),edits: activeEdits })
+  activeEdits = []
+  debouncedSaveStore()
+}
+const commitEdit = (...edit) => {
+  doEdit(...edit)
+  commit()
 }
 
 const saveStore = () => {
@@ -105,7 +99,7 @@ const saveStore = () => {
   }
   req.onerror = (event) => {
     console.log("save error")
-    console.log(error)
+    console.log(event)
   }
 }
 
@@ -122,8 +116,6 @@ const print = (text) => {
   }
 }
 
-// idk whether this is "random enough"
-// it is highly performance inneficient but i don't need to call this many times
 const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
 const CHARS_16 = "0123456789ABCDEF"
 const newUid = () => {
@@ -139,7 +131,7 @@ const newUid = () => {
   return result
 }
 
-// I'm using base64 126 bit UUIDs instead because they're less length in JSON and they are more ergonomic to write in ((uuid)) if I ever want to do that
+// I'm using base64 126 bit UUIDs instead because they're less length in JSON and they are more ergonomic to write in markup like ((uuid)) if I ever want to do that
 const newUUID = () => { // this is 126 bits, 21xbase64
   let values = new Uint8Array(21)
   crypto.getRandomValues(values)
@@ -151,100 +143,39 @@ const newUUID = () => { // this is 126 bits, 21xbase64
 }
 
 
-let edits = []
-let activeEdits = []
+const qdit = { true: commitEdit,false: doEdit }
 
-const commands = {
-  deleteBlock: (blockId) => {
-    const edit = { dl: {} }
-    edit.dl[blockId] = cpy(store.blox[blockId])
-    return { edit,returns: undefined }
-  },
-
-  moveBlock: (blockId,parentId,idx) => {
-    const edit = { mv: {} }
-    const oldParent = store.blox[blockId].p
-    const oldIdx = store.blox[oldParent].k.indexOf(blockId)
-    edit.mv[blockId] = [parentId,idx,oldParent,oldIdx]
-    return { edit,returns: undefined }
-  },
-
-  // writeBlock takes link title list to avoid recomputation. couples this with renderBlockBody
-  writeBloc: (blocId,string) => {
-    const edit = { df: {} }
-    const block = store.blox[blocId]
-    const oldString = block.s
-    edit.df[blocId] = diff(string,oldString)
-    return { edit,returns: undefined }
-  },
-
-  createBlock: (parentId,idx) => {
-    const blockId = newUid()
-    const edit = { cr: {} }
-    edit.cr[blockId] = [parentId,idx]
-    return {
-      edit,
-      returns: blockId
+const macros = {}
+macros.nocommit = {
+  copyBlock: (oldId,parentId,idx) => {
+    const newId = newUid()
+    const block = store.blox[oldId]
+    doEdit("cr",newId,parentId,idx)
+    doEdit("df",newId,{ i: block.s })
+    for (let i = 0; i < block.k && block.k.length; i++) {
+      copyBlock(block.k[i],newId,i)
     }
+    return newId
   },
-
-  createPage: (pageTitle) => {
-    const pageId = newUid()
-    const edit = { cr: {},df: {} }
-    edit.cr[pageId] = []
-    edit.df[pageId] = diff(pageTitle,"")
-    return { edit,returns: pageId }
+  delete: (id) => {
+    doEdit("dl",id,cpy(store.blox[id]))
   },
-
-  copyBlock: (blockId,newId,parentId,idx) => {
-    const edit = { cr: {},df: {} }
-    const copyBlock = (oldId,newId,parentId,idx) => {
-      const block = store.blox[oldId]
-      edit.cr[newId] = [parentId,idx]
-      edit.df[newId] = { i: block.s }
-      if (block.k) {
-        let i = 0
-        for (let child of block.k) {
-          const newChildId = newUid()
-          copyBlock(child,newChildId,newId,i)
-          i++
-        }
-      }
-    }
-    copyBlock(blockId,newId,parentId,idx)
-    return {
-      edit,
-      returns: newId
-    }
-  }
-
-}
-
-const queCommand = (...command) => {
-  print(command)
-  const { edit,returns } = commands[command[0]](...command.slice(1))
-  edit.t = Date.now()
-  doEdit(edit)
-  activeEdits.push(edit)
-  debouncedSaveStore()
-  return returns
-}
-
-const commit = () => {
-  if (activeEdits.length > 0) {
-    edits.push(activeEdits)
-    activeEdits = []
-    debouncedSaveStore()
-  } else {
-    throw new Error(`tried to commit empty command buffer`)
+  write: (id,string) => {
+    doEdit("df",id,diff(string,store.blox[id].s))
+  },
+  createPage: (title) => {
+    const id = newUid()
+    doEdit("cr",id)
+    doEdit("df",diff(title,""))
+  },
+  move: (id,parentId,idx) => {
+    const bloc = store.blox[id]
+    doEdit("mv",id,parentId,idx,bloc.p,store.blox[bloc.p].k.indexOf(id))
   }
 }
-
-const runCommand = (...command) => {
-  print(command)
-  const { edit,returns } = commands[command[0]](...command.slice(1))
-  edit.t = Date.now()
-  doEdit(edit)
-  debouncedSaveStore()
-  return returns
+for (let k in macros.nocommit) {
+  macros[k] = (...args) => {
+    macros.nocommit[k](...args)
+    commit()
+  }
 }

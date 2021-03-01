@@ -17,7 +17,7 @@ const renderSessionState = () => {
     case "pageTitle":
       let existingPage = store.titles[sessionState.page]
       if (existingPage === undefined) {
-        existingPage = runCommand("createPage",sessionState.page)
+        existingPage = macros.createPage(sessionState.page)
       }
       renderPage(pageFrame,existingPage)
       break
@@ -41,7 +41,7 @@ const renderSessionState = () => {
       sessionState.oldestDate = new Date(Date.now())
       let numNotesLoaded = 0
       if (store.titles[formatDate(sessionState.oldestDate)] === undefined) {
-        runCommand("createPage",formatDate(sessionState.oldestDate))
+        macros.createPage(formatDate(sessionState.oldestDate))
       }
       for (let i = 0; i < 1000; i++) {
         const daysNotes = store.titles[formatDate(sessionState.oldestDate)]
@@ -146,7 +146,7 @@ const setFocusedBlockString = (string) => {
   focusBlockBody.appendChild(fragment)
   focusIdPosition()
   updateCursorInfo()
-  runCommand("writeBloc",sessionState.focusId,string,refTitles)
+  macros.write(sessionState.focusId,string,refTitles)
 }
 
 // todo call this less. right now it's called twice as much as necessary, costing 0.3ms per keystroke and making code ugly

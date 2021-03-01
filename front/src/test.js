@@ -16,7 +16,7 @@ const testRoundTrip = () => {
 const createPageTest = () => {
   const oldStore = store
   store = blankStore()
-  runCommand("createPage","Test Page")
+  macros.createPage("Test Page")
   store = oldStore
 }
 

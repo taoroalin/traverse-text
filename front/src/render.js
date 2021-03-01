@@ -13,7 +13,8 @@ const renderPage = (parentNode,uid) => {
 
   let children = page.k
   if (!children || children.length === 0) { // todo set standards for when lists can be empty to reduce ambiguity
-    runCommand("createBlock",uid,0)
+    const newId = newUid()
+    commitEdit("cr",newId,uid,0)
     children = page.k
   }
 
