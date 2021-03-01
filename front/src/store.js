@@ -6,8 +6,8 @@ titles:{title:uid},
 // blox or bloc means either block or page. they're almost the same, just one has a parent and the other doesn't, and linking syntax is different
 const blankStore = () => ({
   blox: {},
-  refs: {},
   titles: {},
+  refs: {},
   roamProps: {},
   ownerRoamId: undefined,
   graphName: undefined

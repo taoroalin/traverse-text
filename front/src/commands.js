@@ -172,6 +172,7 @@ macros.nocommit = {
     const id = newUid()
     doEdit("cr",id)
     doEdit("df",id,diff(title,""))
+    return id
   },
   move: (id,parentId,idx) => {
     const bloc = store.blox[id]

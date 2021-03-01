@@ -16,10 +16,13 @@ const reset = () => {
   window.location.href = window.location.href
 }
 
-const blank = () => {
+const blank = (name = "default") => {
   store = blankStore()
-  user = blankUser
+  store.graphName = name
+  user = cpy(blankUser)
+  user.graphName = name
   saveUser()
+  debouncedSaveStore()
   goto("dailyNotes")
 }
 
