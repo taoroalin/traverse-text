@@ -1,3 +1,7 @@
+/**
+example query string
+?title=Micro Roam&scroll=100&focus=fS4vHpM2_&position=10
+ */
 const initialDailyNotes = 5
 
 const renderSessionState = () => {
@@ -11,20 +15,20 @@ const renderSessionState = () => {
   // render state
   switch (sessionState.pageFrame) {
     case "pageTitle":
-      let existingPage = store.pagesByTitle[sessionState.pageFrameTitle]
+      let existingPage = store.titles[sessionState.page]
       if (existingPage === undefined) {
-        existingPage = runCommand("createPage",sessionState.pageFrameTitle)
+        existingPage = runCommand("createPage",sessionState.page)
       }
       renderPage(pageFrame,existingPage)
       break
     case "block":
       const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
       pageFrame.appendChild(blockFocusFrame)
-      renderBreadcrumb(blockFocusFrame.children[0],sessionState.pageFrameId)
-      renderBlock(blockFocusFrame.children[1],sessionState.pageFrameId)
-      const backRefs = store.blocks[sessionState.pageFrameId].backRefs
+      renderBreadcrumb(blockFocusFrame.children[0],sessionState.block)
+      renderBlock(blockFocusFrame.children[1],sessionState.block)
+      const backRefs = store.refs[sessionState.block]
       if (backRefs) {
-        backRefs.sort((a,b) => store.blocks[b]["edit-time"] - store.blocks[a]["edit-time"])
+        backRefs.sort((a,b) => store.blox[b].et - store.blox[a].et)
         const backrefsListElement = backrefListTemplate.cloneNode(true)
         blockFocusFrame.children[2].appendChild(backrefsListElement)
         for (let backref of backRefs) {
@@ -36,11 +40,11 @@ const renderSessionState = () => {
       pageFrameOuter.addEventListener("scroll",dailyNotesInfiniteScrollListener)
       sessionState.oldestDate = new Date(Date.now())
       let numNotesLoaded = 0
-      if (store.pagesByTitle[formatDate(sessionState.oldestDate)] === undefined) {
+      if (store.titles[formatDate(sessionState.oldestDate)] === undefined) {
         runCommand("createPage",formatDate(sessionState.oldestDate))
       }
       for (let i = 0; i < 1000; i++) {
-        const daysNotes = store.pagesByTitle[formatDate(sessionState.oldestDate)]
+        const daysNotes = store.titles[formatDate(sessionState.oldestDate)]
         if (daysNotes) {
           renderPage(pageFrame,daysNotes)
           pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
@@ -71,11 +75,11 @@ const gotoNoHistory = (commandName,...command) => {
       break
     case "pageTitle":
       sessionState.pageFrame = "pageTitle"
-      sessionState.pageFrameTitle = command[0]
+      sessionState.page = command[0]
       break
     case "block":
       sessionState.pageFrame = "block"
-      sessionState.pageFrameId = command[0]
+      sessionState.block = command[0]
       break
   }
 
@@ -111,7 +115,7 @@ window.addEventListener("popstate",(event) => {
 })
 
 const focusIdPosition = () => {
-  focusBlockBody = document.querySelector(`.block[data-id="${sessionState.focusId}"]>.block__body`)
+  focusBlockBody = document.querySelector(`.block[data-id="${sessionState.focusId}"]>.block__body`) // todo this looks wrong
 
   const scanElement = (element) => {
     for (let el of element.childNodes) {
@@ -142,7 +146,7 @@ const setFocusedBlockString = (string) => {
   focusBlockBody.appendChild(fragment)
   focusIdPosition()
   updateCursorInfo()
-  runCommand("writeBlock",sessionState.focusId,string,refTitles)
+  runCommand("writeBloc",sessionState.focusId,string,refTitles)
 }
 
 // todo call this less. right now it's called twice as much as necessary, costing 0.3ms per keystroke and making code ugly
@@ -199,6 +203,24 @@ const updateCursorInfo = () => {
     sessionState.isFocused = false
 
 }
+
+
+const dailyNotesInfiniteScrollListener = () => {
+  const fromBottom =
+    pageFrame.getBoundingClientRect().bottom - innerHeight
+  if (fromBottom < 700) {
+    for (let i = 0; i < 100; i++) {
+      sessionState.oldestDate.setDate(sessionState.oldestDate.getDate() - 1)
+      const daysNotes = store.titles[formatDate(sessionState.oldestDate)]
+      if (daysNotes) {
+        renderPage(pageFrame,daysNotes)
+        pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
+        break
+      }
+    }
+  }
+}
+
 
 const parseStackTrace = (string) => {
   const result = []

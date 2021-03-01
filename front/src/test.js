@@ -1,5 +1,3 @@
-console.log("test")
-
 const testRoundTrip = () => {
   const jsonOutput = storeToRoamJSON(store)
   store = roamJsonToStore(store.graphName,jsonOutput)
@@ -55,7 +53,7 @@ const benchmarkRandomWalk = () => renderMulti(() => {
   for (let pb of pageBreadcrumbs) {
     linkTitles.push(pb.innerText)
   }
-  linkTitles = linkTitles.filter(x => store.pagesByTitle[x] && store.pages[store.pagesByTitle[x]] && store.pages[store.pagesByTitle[x]].title)
+  linkTitles = linkTitles.filter(x => store.titles[x] && store.blox[store.titles[x]])
   const chosenTitle = linkTitles[Math.floor(Math.random() * (linkTitles.length - 1))]
   goto("pageTitle",chosenTitle)
 })
@@ -64,7 +62,7 @@ const benchmarkRenderAll = async () => {
   const stime = performance.now()
   let functionTime = 0
   let count = 0
-  for (let pageTitle in store.pagesByTitle) {
+  for (let pageTitle in store.titles) {
     const functionSTime = performance.now()
     gotoNoHistory("pageTitle",pageTitle)
     functionTime += performance.now() - functionSTime

@@ -1,7 +1,3 @@
-const page = (string) => {
-  console.log(store.pages[store.pagesByTitle[string]])
-}
-
 const log = () => {
   user.logging = true
   saveUser()

@@ -32,22 +32,6 @@ const getChildren = (node) => {
   return node.className === "block" ? node.children[2].children : node.children[1].children
 }
 
-const dailyNotesInfiniteScrollListener = () => {
-  const fromBottom =
-    pageFrame.getBoundingClientRect().bottom - innerHeight
-  if (fromBottom < 700) {
-    for (let i = 0; i < 100; i++) {
-      sessionState.oldestDate.setDate(sessionState.oldestDate.getDate() - 1)
-      const daysNotes = store.pagesByTitle[formatDate(sessionState.oldestDate)]
-      if (daysNotes) {
-        renderPage(pageFrame,daysNotes)
-        pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
-        break
-      }
-    }
-  }
-}
-
 const downloadHandler = () => {
   console.log("download")
   const json = storeToRoamJSON(store)
@@ -59,31 +43,33 @@ const downloadHandler = () => {
 
 const expandTemplate = () => {
   const id = focusSuggestion.dataset.id
-  const block = store.blocks[sessionState.focusId]
+  const block = store.blox[sessionState.focusId]
   if (block.children === undefined || block.children.length === 0) {
-    const parentId = store.blocks[sessionState.focusId].parent
-    const childIds = store.blocks[id].children
-    const currentIdx = blockOrPageFromId(parentId).children.indexOf(sessionState.focusId)
-    runCommand("deleteBlock",sessionState.focusId)
+    const parentId = store.blox[sessionState.focusId].p
+    const childIds = store.blox[id].k
+    const currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
+    queCommand("deleteBlock",sessionState.focusId)
     const parentNode = focusBlock.parentNode
     focusBlock.remove()
     for (let i = 0; i < childIds.length; i++) {
       const childId = childIds[i]
       const idx = currentIdx + i
-      const newId = runCommand("copyBlock",childId,parentId,idx)
+      const newId = queCommand("copyBlock",childId,parentId,idx)
       const e = renderBlock(parentNode,newId,idx)
       if (i === 0) {
         focusBlockEnd(e)
       }
     }
+    commit()
   } else
     notifyText("can't use a template inside a block that has children")
   templateList.style.display = "none"
 }
 
 const pasteBlocks = () => {
-  const parentId = store.blocks[sessionState.focusId].parent
-  let currentIdx = blockOrPageFromId(parentId).children.indexOf(sessionState.focusId)
+  const block = store.blox[sessionState.focusId]
+  const parentId = block.p
+  let currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
   const parentNode = focusBlock.parentNode
   if (focusBlockBody.innerText === "") {
     runCommand("deleteBlock",sessionState.focusId)
@@ -99,17 +85,18 @@ const pasteBlocks = () => {
   } else {
     let lastNode = null
     for (let i = 0; i < clipboardData.dragSelect.endIdx + 1 - clipboardData.dragSelect.startIdx; i++) {
-      const blockId = blockOrPageFromId(clipboardData.dragSelect.root).children[i + clipboardData.dragSelect.startIdx]
-      const newId = runCommand("copyBlock",blockId,parentId,i + currentIdx)
+      const blockId = store.blox[clipboardData.dragSelect.root].k[i + clipboardData.dragSelect.startIdx]
+      const newId = queCommand("copyBlock",blockId,parentId,i + currentIdx)
       const e = renderBlock(parentNode,newId,i + currentIdx)
       lastNode = e
     }
+    commit()
     focusBlockEnd(lastNode)
   }
 }
 
 const autocomplete = () => {
-  const origString = store.blocks[sessionState.focusId].string
+  const origString = store.blox[sessionState.focusId].s
   if (editingLink.className === "tag") {
     const textNode = editingLink.childNodes[0]
     // check for the exact inverse of tag regex to see if this would be a valid tag, otherwise make it a ref  
@@ -136,7 +123,8 @@ const indentFocusedBlock = () => {
   const olderSibling = focusBlock.previousElementSibling
   if (olderSibling && olderSibling.dataset && olderSibling.dataset.id) {
     const newParentId = olderSibling.dataset.id
-    const idx = blockOrPageFromId(newParentId).children.length
+    console.log(newParentId)
+    const idx = (store.blox[newParentId].k && store.blox[newParentId].k.length) || 0
     runCommand("moveBlock",bid,newParentId,idx)
     olderSibling.children[2].appendChild(focusBlock)
     getSelection().collapse(focusNode,focusOffset)
@@ -145,14 +133,12 @@ const indentFocusedBlock = () => {
 
 const dedentFocusedBlock = () => {
   const bid = sessionState.focusId
-  const parentId = store.blocks[bid].parent
-  const parentBlock = store.blocks[parentId]
+  const parentId = store.blox[bid].p
+  const parentBlock = store.blox[parentId]
   if (parentBlock) {
-    const grandparentId = parentBlock.parent
-    const grandparent = blockOrPageFromId(grandparentId)
-    const idx = grandparent.children.indexOf(parentId)
+    const grandparentId = parentBlock.p
+    const idx = store.blox[grandparentId].k.indexOf(parentId)
     runCommand("moveBlock",bid,grandparentId,idx + 1)
-
     const parentNode = focusBlock.parentNode.parentNode
     const grandparentChildren = parentNode.parentNode
     const cousin = parentNode.nextElementSibling
@@ -178,7 +164,7 @@ document.addEventListener("input",(event) => {
   if (sessionState.isFocused) {
 
     if (focusBlockBody.innerText === " " || focusBlockBody.innerText === "") {
-      runCommand("writeBlock",sessionState.focusId,"",[])
+      runCommand("writeBloc",sessionState.focusId,"",[])
       return
     }
 
@@ -199,7 +185,7 @@ document.addEventListener("input",(event) => {
       if (!broke)
         string = string.substring(0,sessionState.position) + "]" + string.substring(sessionState.position)
     }
-    store.blocks[sessionState.focusId].string = string // todo commit changes on word boundaries
+    store.blox[sessionState.focusId].s = string // todo commit changes on word boundaries
 
     setFocusedBlockString(string)
 
@@ -388,9 +374,10 @@ document.addEventListener("keydown",(event) => {
         // iterate backwards so the idxs don't shift underneath you
         for (let i = dragSelect.endIdx; i >= dragSelect.startIdx; i--) {
           const node = childNodes[i]
-          runCommand("deleteBlock",node.dataset.id)
+          queCommand("deleteBlock",node.dataset.id)
           document.querySelectorAll(`.block[data-id="${node.dataset.id}"]`).forEach(x => x.remove())
         }
+        commit()
       }
       dragSelect = null
       did = true
@@ -424,13 +411,12 @@ document.addEventListener("keydown",(event) => {
     switch (event.key) {
       case "Enter":
         if (!event.shiftKey) {
-          const parent = blockOrPageFromId(store.blocks[sessionState.focusId].parent)
-          let idx = parent.children.indexOf(sessionState.focusId)
+          let idx = store.blox[store.blox[sessionState.focusId].p].k.indexOf(sessionState.focusId)
           if (!event.ctrlKey) {
             idx += 1
           }
           console.log(idx)
-          const newBlockUid = runCommand("createBlock",store.blocks[sessionState.focusId].parent,idx)
+          const newBlockUid = runCommand("createBlock",store.blox[sessionState.focusId].p,idx)
           const newBlockElement = renderBlock(focusBlock.parentNode,newBlockUid,idx)
           newBlockElement.children[1].focus()
           event.preventDefault()
@@ -455,9 +441,9 @@ document.addEventListener("keydown",(event) => {
         break
       case "ArrowDown":
         if (event.altKey && event.shiftKey) {
-          const parentId = store.blocks[sessionState.focusId].parent
+          const parentId = store.blox[sessionState.focusId].p
           const parentElement = focusBlock.parentNode
-          const currentIdx = blockOrPageFromId(parentId).children.indexOf(sessionState.focusId)
+          const currentIdx = store.blox[parentId].children.indexOf(sessionState.focusId)
           if (focusBlock.nextElementSibling) {
             runCommand("moveBlock",sessionState.focusId,parentId,currentIdx + 1)
             if (focusBlock.nextElementSibling.nextElementSibling) {
@@ -473,9 +459,9 @@ document.addEventListener("keydown",(event) => {
         break
       case "ArrowUp":
         if (event.altKey && event.shiftKey) {
-          const parentId = store.blocks[sessionState.focusId].parent
+          const parentId = store.blox[sessionState.focusId].p
           const parentElement = focusBlock.parentNode
-          const currentIdx = blockOrPageFromId(parentId).children.indexOf(sessionState.focusId)
+          const currentIdx = store.blox[parentId].children.indexOf(sessionState.focusId)
           if (focusBlock.previousElementSibling) {
             runCommand("moveBlock",sessionState.focusId,parentId,currentIdx - 1)
             parentElement.insertBefore(focusBlock,focusBlock.previousElementSibling)
@@ -625,10 +611,10 @@ document.addEventListener("click",(event) => {
     link.target = "_blank"
     link.href = event.target.innerText
     link.click()
-  } else if (event.target.id === "download-button") {
-    downloadHandler()
 
     // everything else, so none of it triggers when user clicks markup
+  } else if (event.target.id === "download-button") {
+    downloadHandler()
   } else if (event.target.className === "template__suggestion") {
     if (focusSuggestion) focusSuggestion.dataset.selected = false
     event.target.dataset.selected = true
@@ -638,6 +624,8 @@ document.addEventListener("click",(event) => {
     document.getElementById("upload-input").click()
   } else if (event.target.id === "daily-notes-button") {
     goto("dailyNotes")
+  } else if (event.target.id === "options-button") {
+    notifyText("Options coming soon")
   } else if (event.target.className === "autocomplete__suggestion") {
     if (focusSuggestion) focusSuggestion.dataset.selected = false
     event.target.dataset.selected = true
@@ -668,7 +656,7 @@ const commonAncestorNode = (a,b) => {
     if (aList.indexOf(b.dataset.id) !== -1) {
       const caid = aList[aList.indexOf(b.dataset.id) - 1]
       const cbid = bList[bList.length - 2]
-      const parentChildIds = blockOrPageFromId(b.dataset.id).children
+      const parentChildIds = store.blox[b.dataset.id].k
       const bidx = parentChildIds ? parentChildIds.indexOf(cbid) : -1
       const aidx = parentChildIds ? parentChildIds.indexOf(caid) : -1
       const e = Math.max(aidx,bidx)
@@ -771,7 +759,6 @@ const preprocessNewStore = () => {
   startCommand = ["dailyNotes"]
   fetch("./default-store.json").then(text => text.json().then(json => {
     mergeStore(json)
-    attemptToUnCorruptStore() // todo get to the bottom of corrupt stores (links to nowhere)
     theresANewStore()
   }))
 }

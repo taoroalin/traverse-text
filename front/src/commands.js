@@ -1,75 +1,100 @@
 const cpy = x => JSON.parse(JSON.stringify(x))
 
-const getIn = (arr,skip) => {
-  let result = store
-  for (let i = 0; i < arr.length - skip; i++) {
-    if (result[arr[i]] === undefined) {
-      result[arr[i]] = {}
-    }
-    result = result[arr[i]]
+/*
+
+OLD Edit format: {delete:[[...keys]],write:[[...keys,value]], add:[[...keys, value]], subtract:[[...keys, value]], insert: [[...keys, value, idx]]}
+
+edit:{s:start,d:delete,i:insert,a:append}
+
+The fox jumped over the lazy dog
+The fox didn't jump over the lazy dogs
+{"s":8,"i":"didn't "},{"s":20,"d":"ed"},{"i":"s"}
+
+diff:[edit]
+Diff format: s:start, d:delete text, i:insert text
+Start defaults to 0
+
+// this dif format is meant to be compressible. Every change is its own diff, but the difs can be merged into the same format
+
+{id, t, df:{blocId:diff},mv:{blocId:[np, nidx,op, oidx]},cr:{blocId:[pid,idx]},dl:{blocId:bloc}}
+
+okay, this shows that it can be practical to store diffs as json
+
+difs are serial, not paralel
+*/
+
+const applyDif = (string,difs) => {
+  let result = string
+  for (let dif in difs) {
+    const start = dif.s || result.length
+    const end = start + ((dif.d && dif.d.length) || 0)
+    result = result.substring(0,start) + (dif.i || "") + result.substring(end)
   }
   return result
 }
 
-// Edit format: {delete:[[...keys]],write:[[...keys,value]], add:[[...keys, value]], subtract:[[...keys, value]], insert: [[...keys, value, idx]]}
+const diff = (string,oldString) => { // todo real diff
+  return { d: oldString,i: string }
+}
 
-const doEdits = (edits) => {
-  // it's important that subtract comes first because you can subtract something then insert it earlier in the same list
-  if (edits.subtract) {
-    for (let op of edits.subtract) {
-      const obj = getIn(op,2)
-      const key = op[op.length - 2]
-      obj[key] = obj[key].filter(x => (x != op[op.length - 1]))
+const doEdit = (edit) => {
+  print(edit)
+
+  for (let id in edit.dl || []) {
+    const parent = store.blox[id].p
+    if (parent) {
+      store.blox[parent].k = store.box[parent].k.filter(x => x !== id)
+    } else {
+      delete store.titles[store.blox[id].s]
     }
+    delete store.blox[id]
   }
 
-  if (edits.write) {
-    for (let op of edits.write) {
-      const obj = getIn(op,2)
-      obj[op[op.length - 2]] = cpy(op[op.length - 1])
+  // make all blocks first before adding children so parents don't have to be declared before children
+  for (let blocId in edit.cr || []) {
+    store.blox[blocId] = {
+      ct: edit.t,
+      s: ""
     }
   }
-  if (edits.add) {
-    for (let op of edits.add) {
-      const obj = getIn(op,2)
-      obj[op[op.length - 2]].push(cpy(op[op.length - 1]))
-    }
-  }
-  if (edits.insert) {
-    for (let op of edits.insert) {
-      const obj = getIn(op,3)
-      const key = op[op.length - 3]
-      const val = op[op.length - 2]
-      const idx = op[op.length - 1]
-      let old = obj[key]
-      if (old === undefined) {
-        old = [val]
-        obj[key] = old
-      } else if (old.length < idx) {
-        console.log(old)
-        console.log(key)
-        throw new Error(`tried to insert past end of list`) // todo always put error at the end
+  for (let blocId in edit.cr || []) {
+    const [parentId,idx] = edit.cr[blocId]
+    if (parentId) {
+      store.blox[blocId].p = parentId
+      if (!store.blox[parentId].k) store.blox[parentId].k = []
+      if (idx) {
+        store.blox[parentId].k.splice(idx,0,blocId)
       } else {
-        obj[key] = old.slice(0,idx)
-        obj[key].push(cpy(val))
-        obj[key].push(...old.slice(idx))
+        store.blox[parentId].k.push(blocId)
       }
     }
   }
-  if (edits.delete) {
-    for (let op of edits.delete) {
-      const obj = getIn(op,1)
-      delete obj[op[op.length - 1]]
-    }
+
+  for (let id in edit.mv || []) {
+    const [np,nidx,op,oidx] = edit.mv[id]
+    const block = store.blox[id]
+    store.blox[op].k = store.blox[op].k.filter(x => x != id)
+    block.p = np
+    if (!store.blox[np].k) store.blox[np].k = []
+    store.blox[np].k.splice(nidx,0,id)
   }
-  print(edits)
+
+  for (let id in edit.df) {
+    const df = edit.df[id]
+    const bloc = store.blox[id]
+    bloc.et = edit.t
+    bloc.s = applyDif(bloc.s,df)
+  }
 }
 
 const saveStore = () => {
   const transaction = idb.transaction(["stores"],"readwrite")
   const storeStore = transaction.objectStore("stores")
   const str = JSON.stringify(store)
-  const req = storeStore.put({ graphName: store.graphName,store: str })
+  const req = storeStore.put({
+    graphName: store.graphName,
+    store: str
+  })
   req.onsuccess = () => {
     console.log("saved")
   }
@@ -95,6 +120,7 @@ const print = (text) => {
 // idk whether this is "random enough"
 // it is highly performance inneficient but i don't need to call this many times
 const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
+const CHARS_16 = "0123456789ABCDEF"
 const newUid = () => {
   let values = new Uint8Array(9)
   let result
@@ -104,11 +130,12 @@ const newUid = () => {
     for (let i = 0; i < 9; i++) {
       result += CHARS_64[values[i] % 64]
     }
-  } while (store.pages[result] !== undefined || store.blocks[result] !== undefined)
+  } while (store.blox[result] !== undefined)
   return result
 }
 
-const newUUID = () => {// this is 126 bits, 21xbase64
+// I'm using base64 126 bit UUIDs instead because they're less length in JSON and they are more ergonomic to write in ((uuid)) if I ever want to do that
+const newUUID = () => { // this is 126 bits, 21xbase64
   let values = new Uint8Array(21)
   crypto.getRandomValues(values)
   let result = ""
@@ -118,172 +145,100 @@ const newUUID = () => {// this is 126 bits, 21xbase64
   return result
 }
 
-const blockOrPageFromId = (id) => {
-  return store.blocks[id] || store.pages[id]
-}
 
-const parentThingey = (id) => store.pages[id] ? "pages" : "blocks"
+let edits = []
+let activeEdits = []
 
 const commands = {
   deleteBlock: (blockId) => {
-    const block = store.blocks[blockId]
-    const parentId = block.parent
-    const refs = block[":block/refs"] || []
-    const backRefs = block.backRefs || []
-    // todo make child ref tracking on delete block
-    const edits = {
-      subtract: [[parentThingey(block.parent),parentId,"children",blockId],
-      ...refs.map(ref => ([parentThingey(ref),ref,"backRefs",blockId])),
-      ...backRefs.map(backRef => ([parentThingey(backRef),backRef,"refs",blockId]))],
-      delete: [["blocks",blockId]]
-    }
-
-    return { edits }
+    const edit = { dl: {} }
+    edit.dl[blockId] = cpy(store.blox[blockId])
+    return { edit,returns: undefined }
   },
 
-  moveBlock: (blockId,parentId,idx,time) => {
-    const oldParent = store.blocks[blockId].parent
-    const edits = {
-      write: [["blocks",blockId,"parent",parentId]],
-      insert: [[parentThingey(parentId),parentId,"children",blockId,idx]],
-      subtract: [[parentThingey(oldParent),oldParent,"children",blockId]]
-    }
-    return { edits,returns: undefined }
+  moveBlock: (blockId,parentId,idx) => {
+    const edit = { mv: {} }
+    const oldParent = store.blox[blockId].p
+    const oldIdx = store.blox[oldParent].k.indexOf(blockId)
+    edit.mv[blockId] = [parentId,idx,oldParent,oldIdx]
+    return { edit,returns: undefined }
   },
 
   // writeBlock takes link title list to avoid recomputation. couples this with renderBlockBody
-  writeBlock: (blockId,string,refTitles,time) => {
-    /**
-     * This does a lot. It
-     * 
-     * writes string
-     * writes :edit/time
-     * writes :block/refs
-     * writes corresponding backRefs
-     * removes old backRefs
-     * 
-     */
-
-    const block = store.blocks[blockId]
-    const oldRefs = block[":block/refs"]
-
-    const edits = {
-      write: [],
-      subtract: [],
-      add: [],
-      delete: []
-    }
-
-    // add refs
-    const newRefs = refTitles.map(title => {
-      let pageId = store.pagesByTitle[title]
-      if (pageId !== undefined) {
-        if (!oldRefs.includes(pageId)) {
-          edits.add.push(["pages",pageId,"backRefs",blockId])
-        }
-        return pageId
-      }
-      pageId = newUid()
-      edits.write.push(["pages",pageId,{ title: title,children: [],":create/time": time,backRefs: [blockId] }])
-      edits.write.push(["pagesByTitle",title,pageId])
-      return pageId
-    })
-
-    // add string, edit time
-    edits.write.push(["blocks",blockId,"string",string],
-      ["blocks",blockId,"edit-time",time],
-      ["blocks",blockId,":block/refs",newRefs])
-
-
-    // subtract old refs
-    if (oldRefs) {
-      for (let oldRef of oldRefs) {
-        if (!newRefs.includes(oldRef)) {
-          const page = store.pages[oldRef]
-          if (parentThingey(oldRef) === "pages" && (page.children === undefined || page.children.length === 0) && (page.backRefs === undefined || page.backRefs.length <= 1)) {
-            edits.delete.push(["pagesByTitle",page.title])
-            edits.delete.push(["pages",oldRef])
-          } else {
-            edits.subtract.push([parentThingey(oldRef),oldRef,"backRefs",blockId])
-          }
-        }
-      }
-    }
-
-    return { edits }
+  writeBloc: (blocId,string) => {
+    const edit = { df: {} }
+    const block = store.blox[blocId]
+    const oldString = block.s
+    edit.df[blocId] = diff(string,oldString)
+    return { edit,returns: undefined }
   },
 
-  createBlock: (parentId,idx,time) => {
+  createBlock: (parentId,idx) => {
     const blockId = newUid()
-    const parentThingey = !!store.pages[parentId] ? "pages" : "blocks"
-    const parent = store[parentThingey]
-    const edits = {
-      write: [["blocks",blockId,{ string: "",parent: parentId,":create/time": time,children: [],backRefs: [],":block/refs": [],refs: parent.refs }]],
-      insert: [[parentThingey,parentId,"children",blockId,idx]],
+    const edit = { cr: {} }
+    edit.cr[blockId] = [parentId,idx]
+    return {
+      edit,
+      returns: blockId
     }
-    return { edits,returns: blockId }
   },
 
-  createPage: (pageTitle,time) => {
+  createPage: (pageTitle) => {
     const pageId = newUid()
-    const edits = {
-      write: [["pages",pageId,{ title: pageTitle,":create/time": time }],
-      ["pagesByTitle",pageTitle,pageId]]
-    }
-    return { edits,returns: pageId }
+    const edit = { cr: {},df: {} }
+    edit.cr[pageId] = []
+    edit.df[pageId] = { i: pageTitle }
+    return { edit,returns: pageId }
   },
 
-  writePageTitle: (pageId,title,time) => {
-    const page = store.pages[pageId]
-    const oldTitle = page.title
-    const edits = {
-      write: [["pages",pageId,"title",title],
-      ["pages",pageId,"edit-time",time],
-      ["pagesByTitle",title,pageId]],
-      delete: [["pagesByTitle",oldTitle]]
-    }
-    if (page.backRefs) {
-      for (let backRef of page.backRefs) {
-        const block = store.blocks[backRef]
-        let string = block.string
-
-        // this replaces all other instances of that word, not just linked ones. This is a feature decision I made because it's easy
-        edits.write.push(["blocks",backRef,"string",string.replaceAll(oldTitle,title)])
-      }
-    }
-    return { edits }
-  },
-  copyBlock: (blockId,parentId,idx,time) => {
-    const newId = newUid()
-    const edits = { write: [],insert: [[parentThingey(parentId),parentId,"children",newId,idx]],subtract: [] }
-    const copyBlock = (oldId,newId,parentId) => {
-      const block = store.blocks[oldId]
-      const newBlock = { "create-time": time,string: block.string,parent: parentId }
-      for (let propName of LIST_PROPS) {
-        if (block[propName])
-          newBlock[propName] = Array.from(block[propName])
-      }
-      if (block.children) {
-        newBlock.children = []
-        for (let child of block.children) {
+  copyBlock: (blockId,newId,parentId,idx) => {
+    const edit = { cr: {},df: {} }
+    const copyBlock = (oldId,newId,parentId,idx) => {
+      const block = store.blox[oldId]
+      edit.cr[newId] = [parentId,idx]
+      edit.df[newId] = { i: block.s }
+      if (block.k) {
+        let i = 0
+        for (let child of block.k) {
           const newChildId = newUid()
-          copyBlock(child,newChildId,newId)
-          newBlock.children.push(newChildId)
+          copyBlock(child,newChildId,newId,i)
+          i++
         }
       }
-      edits.write.push(["blocks",newId,newBlock])
     }
-    copyBlock(blockId,newId,parentId)
-    return { edits,returns: newId }
+    copyBlock(blockId,newId,parentId,idx)
+    return {
+      edit,
+      returns: newId
+    }
   }
 
 }
 
-const runCommand = (...command) => {
+const queCommand = (...command) => {
   print(command)
-  const { edits,returns } = commands[command[0]](...command.slice(1),Date.now())
-  doEdits(edits)
-  // saveWorker.postMessage(["edits",edits])
-  debouncedSaveStore()
+  const { edit,returns } = commands[command[0]](...command.slice(1))
+  edit.t = Date.now()
+  activeEdits.push(edit)
+  return returns
+}
+
+const commit = () => {
+  if (activeEdits.length > 0) {
+
+    for (let edit of activeEdits) {
+      doEdit(edit)
+    }
+    activeEdits = []
+    // saveWorker.postMessage(["edits",edits])
+    debouncedSaveStore()
+  } else {
+    throw new Error(`tried to commit empty command buffer`)
+  }
+}
+
+const runCommand = (...command) => {
+  const returns = queCommand(...command)
+  commit()
   return returns
 }

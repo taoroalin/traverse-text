@@ -6,6 +6,7 @@
 
 .dark{
   --background:#161616;
+  --click:rgb(100, 100, 100);
   --text: rgb(246, 246, 246);
   --link: #3f84c0;
   --brackets:#A7B6C2;
@@ -14,7 +15,6 @@
   --border:#afbeca;
   --break: #838e97;
   --highlight:rgb(110, 93, 16);
-  --click:darkgrey;
   --page-ref:#2bcc5b;
   --shadow:rgb(98, 98, 98);
   --notification:#2e4736;
@@ -23,6 +23,7 @@
 
 .light{
   --background:white;
+  --click:rgb(197, 197, 197);
   --text:black;
   --link: rgb(54, 123, 184);
   --brackets:#A7B6C2;
@@ -32,7 +33,6 @@
   --shadow:#585e64;
   --break:#a8b4be;
   --highlight:rgb(255, 239, 146);
-  --click:rgb(197, 197, 197);
   --page-ref:rgb(73, 197, 91);
   --notification:#a4d1b1;
   --selected:#abcdeb;
@@ -87,6 +87,8 @@ a{
 a:visited { color:var(--link) }
 
 .notification{
+  text-align: center;
+  min-width:300px;
   position:fixed;
   left:50%;
   transform:translateX(-50%);

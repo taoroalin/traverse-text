@@ -27,6 +27,13 @@ const formatDate = (date) =>
     date.getDate()
   )}, ${date.getFullYear()}`
 
+const unFormatDate = (string) => {
+  const match = string.match(/([a-zA-Z]+) ([0-9]{1,2})(?:st|nd|rd|th), ([0-9]{4})/)
+  if (match && monthNames.includes(match[1])) {
+    return new Date()
+  }
+}
+
 const truncateElipsis = (text,limit = 40) => {
   if (text.length > limit) {
     return text.substring(0,limit - 3) + "..."

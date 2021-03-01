@@ -1,30 +1,32 @@
 const renderPage = (parentNode,uid) => {
-  const page = store.pages[uid]
+  const page = store.blox[uid]
   const element = pageTemplate.cloneNode(true)
   const title = element.firstElementChild
   const body = element.children[1]
   body.dataset.id = uid
   element.dataset.id = uid
 
-  if (page.title === undefined) {
+  if (page.s === undefined) {
     throw new Error(`error with page id ${uid}`)
   }
-  title.innerText = page.title
+  title.innerText = page.s
 
-  let children = page.children
+  let children = page.k
   if (!children || children.length === 0) { // todo set standards for when lists can be empty to reduce ambiguity
     runCommand("createBlock",uid,0)
-    children = page.children
+    children = page.k
   }
+
   for (let child of children) {
     renderBlock(body,child)
   }
 
-  if (page.backRefs && page.backRefs.length > 0) {
+  const refs = store.refs[uid]
+  if (refs && refs.length > 0) {
     const backrefsListElement = backrefListTemplate.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
-    page.backRefs.sort((a,b) => store.blocks[b]["edit-time"] - store.blocks[a]["edit-time"])
-    for (let backref of page.backRefs) {
+    refs.sort((a,b) => store.blox[b].et - store.blox[a].et)
+    for (let backref of refs) {
       const backrefFrame = backrefFrameTemplate.cloneNode(true)
       renderBreadcrumb(backrefFrame.children[0],backref)
       renderBlock(backrefFrame.children[1],backref)
@@ -44,16 +46,12 @@ const renderBlock = (parentNode,uid,idx) => {
   childrenContainer.dataset.id = uid
   body.dataset.id = uid
 
-  const string = store.blocks[uid].string
-  if (string) {
-    renderBlockBody(body,string)
-  }
+  const string = store.blox[uid].s
+  renderBlockBody(body,string)
 
-  const children = store.blocks[uid].children
-  if (children) {
-    for (let child of children) {
-      renderBlock(childrenContainer,child)
-    }
+  const children = store.blox[uid].k
+  for (let child of children || []) {
+    renderBlock(childrenContainer,child)
   }
 
   if (idx !== undefined && parentNode.children.length >= idx) {
@@ -64,15 +62,53 @@ const renderBlock = (parentNode,uid,idx) => {
   return element
 }
 
+const renderBreadcrumb = (parent,blockId) => {
+  const list = []
+  while (true) {
+    blockId = store.blox[blockId].p
+    if (store.blox[blockId].p) {
+      list.push({ string: store.blox[blockId].s,id: blockId })
+    } else {
+      list.push({ title: store.blox[blockId].s,id: blockId })
+      break
+    }
+  }
+  const node = breadcrumbPageTemplate.cloneNode(true)
+  const title = list[list.length - 1].title
+  renderBlockBody(node,title)
+  node.dataset.title = title
+  parent.appendChild(node)
+  for (let i = list.length - 2; i >= 0; i--) {
+    const node = breadcrumbBlockTemplate.cloneNode(true)
+    const nodeBody = node.children[1]
+    renderBlockBody(nodeBody,list[i].string,true)
+    node.dataset.id = list[i].id
+    parent.appendChild(node)
+  }
+}
+
+const notifyText = (text,duration) => {
+  const el = notificationTemplate.cloneNode(true)
+  el.innerText = text
+  document.getElementById("app").appendChild(el)
+  setTimeout(() => el.style.top = "60px",50)
+  const dur = (duration && duration * 1000) || 5000
+  setTimeout(() => el.style.opacity = "0",dur)
+  setTimeout(() => {
+    el.remove()
+  },dur + 300)
+}
+
+// 1             2              3   4         5    6         7      8    9       10                11
+// page-ref-open page-ref-close tag block-ref bold highlight italic link literal template-expander attribute
+const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]{8,50})\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]*)|(^[\/a-zA-Z0-9_-]+)::/g
 
 const renderBlockBody = (parent,text,disableSpace = false) => {
   if (!disableSpace) {
     if (text[text.length - 1] !== " ") text += " " // add space because of getSelection.collapse() weirdness with end of contenteditable
   }
   const stack = [parent]
-  // 1             2              3   4         5    6         7      8    9       10                11
-  // page-ref-open page-ref-close tag block-ref bold highlight italic link literal template-expander attribute
-  const matches = text.matchAll(/(\[\[)|(\]\])|(#[\/a-zA-Z0-9_-]+)|(\(\([a-zA-Z0-9\-_]{8,50}\)\))|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|(;;(?:[^ \n\r]*))|(^[\/a-zA-Z0-9_-]+)::/g)
+  const matches = text.matchAll(parseRegex)
   // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
   let idx = 0
@@ -111,13 +147,13 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
         stackTop.appendChild(el)
       }
     } else if (match[3]) {
-      refTitles.push(match[3].substring(1))
+      refTitles.push(match[3])
       const tagElement = tagTemplate.cloneNode(true)
-      tagElement.appendChild(newTextNode(match[3]))
+      tagElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(tagElement)
     } else if (match[4]) {
-      const blockId = match[4].substring(2,match[4].length - 2)
-      const block = store.blocks[blockId]
+      const blockId = match[4]
+      const block = store.blox[blockId]
       if (block) {
         const blockRefElement = blockRefTemplate.cloneNode(true)
         blockRefElement.innerText = block.string
@@ -164,7 +200,7 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
       }
     } else if (match[8]) {
       const urlElement = urlTemplate.cloneNode(true)
-      urlElement.appendChild(newTextNode(match[8]))
+      urlElement.appendChild(newTextNode(match[0]))
       urlElement.href = match[8]
       stackTop.appendChild(urlElement)
     } else if (match[9]) {
@@ -196,41 +232,4 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
     stackTop = stackTop.parentNode
   }
   return refTitles
-}
-
-const renderBreadcrumb = (parent,blockId) => {
-  const list = []
-  while (true) {
-    blockId = store.blocks[blockId].parent
-    if (store.blocks[blockId] !== undefined) {
-      list.push({ string: store.blocks[blockId].string,id: blockId })
-    } else {
-      list.push({ title: store.pages[blockId].title,id: blockId })
-      break
-    }
-  }
-  const node = breadcrumbPageTemplate.cloneNode(true)
-  const title = list[list.length - 1].title
-  renderBlockBody(node,title)
-  node.dataset.title = title
-  parent.appendChild(node)
-  for (let i = list.length - 2; i >= 0; i--) {
-    const node = breadcrumbBlockTemplate.cloneNode(true)
-    const nodeBody = node.children[1]
-    renderBlockBody(nodeBody,list[i].string,true)
-    node.dataset.id = list[i].id
-    parent.appendChild(node)
-  }
-}
-
-const notifyText = (text,duration) => {
-  const el = notificationTemplate.cloneNode(true)
-  el.innerText = text
-  document.getElementById("app").appendChild(el)
-  setTimeout(() => el.style.top = "60px",50)
-  const dur = (duration && duration * 1000) || 5000
-  setTimeout(() => el.style.opacity = "0",dur)
-  setTimeout(() => {
-    el.remove()
-  },dur + 300)
 }

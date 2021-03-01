@@ -63,6 +63,8 @@ Make each page render (and block render?) keep track of how long it's taken and 
 
 Maybe make bracket auto close not happen when you're right in front of word??
 
+When there is cross-graph linking, load graphs when they're needed before first render, then do others in 50ms chunks
+
 # Working on right now
 
 Seperating core state (strings & child structure) from backrefs / pagesFromTitle

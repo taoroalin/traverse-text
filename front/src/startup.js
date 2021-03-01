@@ -52,8 +52,6 @@ r.onerror = () => {
 }
 
 let store = null
-let refs = null
-let titles = null
 let idb = null
 
 let startCommand = ["dailyNotes"]
@@ -73,8 +71,6 @@ const theresANewStore = () => {
 }
 
 
-let commitDebounce = null
-
 let editingTemplateExpander = null
 
 let editingLink = null
@@ -85,13 +81,10 @@ let focusOffset = null
 let focusBlock = null
 
 let focusSuggestion = null
+
 let sessionState = { pageFrame: "dailyNotes",focusId: null,scroll: 0,position: null }
 
 let dragSelectStartBlock = null
 let dragSelect = null
 
 let clipboardData = null
-
-
-/* starts all the threads needed to start up immediately on page load while setting user theme quick enough to avoid flashing. Right now those threads are 1:loading data from indexedDB and 2: loading html/css/js.
-*/

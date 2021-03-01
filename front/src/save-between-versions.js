@@ -9,35 +9,32 @@ const storeToRoamJSON = (store) => {
   const roamJSON = []
 
   const blockIdToJSON = (blockId) => {
-    const result = { uid: blockId }
-    const block = store.blocks[blockId]
-    Object.assign(result,block)
+    const block = store.blox[blockId]
+    const result = { uid: blockId,string: block.s,"create-time": block.ct,"edit-time": block.et }
+    const roamProps = store.roamProps[blockId]
+    if (roamProps) Object.assign(result,roamProps)
 
-    if (block.children) result.children = block.children.map(blockIdToJSON)
+    if (block.k) result.children = block.k.map(blockIdToJSON)
 
     result[":create/user"] = { ":user/uid": store.ownerRoamId }
     result[":edit/user"] = { ":user/uid": store.ownerRoamId }
-    if (block[":create/user"])
-      result[":create/user"] = { ":user/uid": block[":create/user"] }
-    if (block[":edit/user"])
-      result[":edit/user"] = { ":user/uid": block[":edit/user"] }
+    if (block.cu)
+      result[":create/user"] = { ":user/uid": block.cu }
+    if (block.eu)
+      result[":edit/user"] = { ":user/uid": block.eu }
 
-    if (block.refs) result.refs = block.refs.map(x => ({ uid: x }))
-    if (block[":block/refs"]) result[":block/refs"] = block[":block/refs"].map(x => ({ ":block/uid": x }))
-
-    delete result.backRefs
-    delete result.parent
     return result
   }
 
-  for (let pageId in store.pages) {
-    const page = store.pages[pageId]
-    const jsonPage = { uid: pageId }
+  for (let title in store.titles) {
+    const pageId = store.titles[title]
+    const page = store.blox[pageId]
+    const roamProps = store.roamProps[pageId]
+    const jsonPage = { uid: pageId,title: page.s,"edit-time": page.et,"create-time": page.ct }
     roamJSON.push(jsonPage)
-    Object.assign(jsonPage,page)
-    delete jsonPage.backRefs
-    if (page.children) {
-      jsonPage.children = page.children.map(blockIdToJSON)
+    Object.assign(jsonPage,roamProps)
+    if (page.k) {
+      jsonPage.children = page.k.map(blockIdToJSON)
     }
     jsonPage[":create/user"] = { ":user/uid": store.ownerRoamId }
     jsonPage[":edit/user"] = { ":user/uid": store.ownerRoamId }
