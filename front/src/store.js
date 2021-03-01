@@ -264,12 +264,15 @@ const exactFullTextSearch = (string) => {
     const bloc = store.blox[id]
     const string = bloc.s
     const match = string.match(regex)
-    if (match) results.push({
-      string,
-      parent: bloc.p,
-      id,
-      idx: match.index - (store.refs[id] && store.refs[id].length) * searchRefCountWeight - (bloc.p === undefined)
-    })
+    if (match) {
+      const matchObj = {
+        id,
+        idx: match.index - (store.refs[id] && store.refs[id].length) * searchRefCountWeight - (bloc.p === undefined)
+      }
+      if (bloc.p) matchObj.string = bloc.s
+      else matchObj.title = bloc.s
+      results.push(matchObj)
+    }
   }
   return results.sort((a,b) => a.idx - b.idx).slice(0,10)
 }
