@@ -1,3 +1,6 @@
+let store = null
+let idb = null
+console.log("v5")
 const r = indexedDB.open("microroam",5)// I had this as line 1, saves ~5ms start time, don't now cause I'm lazy
 const blankUser = { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false }
 let user = blankUser
@@ -24,6 +27,7 @@ const saveUser = () => {
 saveUser()
 
 r.onsuccess = (e1) => {
+  console.log("normal success")
   idb = e1.target.result
   idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
     if (e.target.result) {
@@ -41,6 +45,9 @@ r.onsuccess = (e1) => {
   }
 }
 r.onupgradeneeded = (event) => {
+  console.log(
+    "upgradeneeded`"
+  )
   const db = r.result
   const stores = Array.from(db.objectStoreNames)
   if (!stores.includes("stores")) {
@@ -48,33 +55,39 @@ r.onupgradeneeded = (event) => {
   } else {
     console.log(event)
     console.log(db)
-    const storeStore = db.transaction(["stores"],"readonly").objectStore("stores")
-    storeStore.get(user.graphName).onsuccess = (e) => {
-      const store = e.target.result.store
-      const roamJSON = oldStoreToRoamJSON[db.version](store)
-      roamJsonToStore(user.graphName,roamJSON)
-      saveStore()
+
+    r.onsuccess = () => {
+      console.log("new success")
+      idb = event.target.result
+      const storeStore = db.transaction(["stores"],"readonly").objectStore("stores")
+      storeStore.get(user.graphName).onsuccess = (e) => {
+        store = e.target.result.store
+        const roamJSON = oldStoreToRoamJSON[db.version](store)
+        roamJsonToStore(user.graphName,roamJSON)
+        saveStore()
+        finishStartupThread()
+      }
     }
   }
 }
-r.onerror = () => {
+r.onerror = (e) => {
+  console.log("error")
+  console.log(e)
   alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
       You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
 }
 
-let store = null
-let idb = null
 
 let startFn = () => gotoNoHistory("dailyNotes")
 
 let startupThreads = 2
 const finishStartupThread = () => {
   if (startupThreads <= 1)
-    theresANewStore()
+    start()
   else
     startupThreads--
 }
-const theresANewStore = () => {
+const start = () => {
   user.graphName = store.graphName
   saveUser()
   startFn()

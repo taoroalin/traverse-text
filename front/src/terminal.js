@@ -45,7 +45,7 @@ const loadGraphminerNotes = () => {
     store = json
     user.graphName = store.graphName
     saveUser()
-    theresANewStore()
+    start()
     debouncedSaveStore()
   }))
 }

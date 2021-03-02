@@ -48,7 +48,7 @@ const storeToRoamJSON = (store) => {
   return JSON.stringify(roamJSON)
 }
 
-const exportOld = {
+const oldStoreToRoamJSON = {
   4: (store) => {
     const roamJSON = []
 
