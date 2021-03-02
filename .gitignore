@@ -8,3 +8,5 @@ back_c_rocks/test-db/**
 back_c_rocks/include/**
 back_c_rocks/c_micro_roam
 **/*.a
+
+**/user-data/**

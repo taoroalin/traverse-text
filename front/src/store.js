@@ -8,6 +8,8 @@ const blankStore = () => ({
   blox: {},
   titles: {},
   refs: {},
+  innerRefs: {},
+  outerRefs: {},
   roamProps: {},
   ownerRoamId: undefined,
   graphName: undefined
@@ -127,6 +129,7 @@ const roamJsonToStore = (graphName,text) => {
 const generateRefs = () => {
   const stime = performance.now()
   store.refs = {}
+  store.forwardRefs = {}
   for (let blocId in store.blox) {
     const bloc = store.blox[blocId]
     if (bloc.p) {
@@ -138,6 +141,8 @@ const generateRefs = () => {
           if (pageId) {
             if (!store.refs[pageId]) store.refs[pageId] = []
             store.refs[pageId].push(blocId)
+            if (!store.forwardRefs[blocId]) store.forwardRefs[blocId] = []
+            store.forwardRefs[blocId].push(pageId)
           } else {
             console.log(`no page ${pageTitle}`)
           }
@@ -149,6 +154,47 @@ const generateRefs = () => {
   }
   console.log(`gen refs took ${performance.now() - stime}`)
   return store
+}
+
+const mergeLists = (list1,list2) => {
+  for (let x of list2) {
+    if (!list1.includes(x)) list1.push(x)
+  }
+}
+
+// inner refs are refs in a page/block and any pages/blocks within it
+const generateInnerRefs = () => {
+  // algorithm: for each ref anywhere, add it to each of its parent's uprefs
+  const stime = performance.now()
+  store.innerRefs = {}
+  for (let blocId in store.forwardRefs) {
+    const refs = store.forwardRefs[blocId]
+    let id = blocId
+    while (id) {
+      if (!store.innerRefs[id]) store.innerRefs[id] = []
+      mergeLists(store.innerRefs[id],refs)
+      id = store.blox[id].p
+    }
+  }
+  console.log(`innerrefs took ${performance.now() - stime}`)
+}
+
+// outer refs are refs in a block / page and each block/page in its ancestry
+const generateOuterRefs = () => {
+  const stime = performance.now()
+  store.outerRefs = {}
+  for (let blocId in store.forwardRefs) {
+    const refs = store.forwardRefs[blocId]
+    const fn = (id) => {
+      if (!store.outerRefs[id]) store.outerRefs[id] = []
+      mergeLists(store.outerRefs[id],refs)
+      for (let cid of store.blox[id].k || []) {
+        fn(cid)
+      }
+    }
+    fn(blocId)
+  }
+  console.log(`outerrefs took ${performance.now() - stime}`)
 }
 
 const mergeStore = (otherStore) => {
@@ -217,19 +263,6 @@ const mergeStore = (otherStore) => {
   }
 }
 
-// inner refs are refs in a page/block and any pages/blocks within it
-const generateInnerRefs = () => {
-  // algorithm: for each ref anywhere, add it to each of its parent's uprefs
-  for (let blocId in store.refs) {
-    const refs = store.refs[blocId]
-
-  }
-}
-
-// outer refs are refs in a block / page and each block/page in its ancestry
-const generateOuterRefs = () => {
-
-}
 
 
 // search
@@ -308,44 +341,107 @@ const searchTemplates = (string) => {
   return result
 }
 
-const storeToBinary = () => {
-  const stime = performance.now()
-  const encoder = new TextEncoder()
 
-  const {
-    keys,
-    values
-  } = storeToFlat(store)
-  let numBytes = 4 // num keys as int
-  let keyValueEndIdxs = []
-  for (let i = 0; i < keys.length; i++) {
-    const keyLen = encoder.encode(keys[i]).length
-    const valLen = encoder.encode(values[i]).length
-    numBytes += keyLen + valLen + 8 // int to store key end, int to store value end
-    keyValueEndIdxs.push(keyLen,valLen)
+const hydrateFromBlox = (graphName,blox) => {
+  store = blankStore()
+  store.blox = blox
+  store.graphName = graphName
+  for (let id in blox) {
+    const bloc = blox[id]
+    if (bloc.p === undefined) store.titles[bloc.s] = id
+  }
+  generateRefs()
+  generateInnerRefs()
+  generateOuterRefs()
+}
+
+const storeToRoamJSON = (store) => {
+  const roamJSON = []
+
+  const blockIdToJSON = (blockId) => {
+    const block = store.blox[blockId]
+    const result = { uid: blockId,string: block.s,"create-time": block.ct,"edit-time": block.et }
+    const roamProps = store.roamProps[blockId]
+    if (roamProps) Object.assign(result,roamProps)
+
+    if (block.k) result.children = block.k.map(blockIdToJSON)
+
+    result[":create/user"] = { ":user/uid": store.ownerRoamId }
+    result[":edit/user"] = { ":user/uid": store.ownerRoamId }
+    if (block.cu)
+      result[":create/user"] = { ":user/uid": block.cu }
+    if (block.eu)
+      result[":edit/user"] = { ":user/uid": block.eu }
+
+    return result
   }
 
-  const messageBuffer = new ArrayBuffer(numBytes)
-  const messageChars = new Uint8Array(messageBuffer)
-  const messageInts = new Uint32Array(messageBuffer,0,keyValueEndIdxs.length + 10)
-
-  messageInts[0] = Math.floor(keyValueEndIdxs.length / 2)
-  for (let i = 0; i < keyValueEndIdxs.length; i++) {
-    messageInts[i + 1] = keyValueEndIdxs[i]
+  for (let title in store.titles) {
+    const pageId = store.titles[title]
+    const page = store.blox[pageId]
+    const roamProps = store.roamProps[pageId]
+    const jsonPage = { uid: pageId,title: page.s,"edit-time": page.et,"create-time": page.ct }
+    roamJSON.push(jsonPage)
+    Object.assign(jsonPage,roamProps)
+    if (page.k) {
+      jsonPage.children = page.k.map(blockIdToJSON)
+    }
+    jsonPage[":create/user"] = { ":user/uid": store.ownerRoamId }
+    jsonPage[":edit/user"] = { ":user/uid": store.ownerRoamId }
+    if (page[":create/user"])
+      jsonPage[":create/user"] = { ":user/uid": page[":create/user"] }
+    if (page[":edit/user"])
+      jsonPage[":edit/user"] = { ":user/uid": page[":edit/user"] }
   }
+  console.log(roamJSON)
 
-  let idx = 4 + keyValueEndIdxs.length * 4
-  for (let i = 0; i < keys.length; i++) {
-    const k = keys[i]
-    const v = values[i]
-    const klen = keyValueEndIdxs[i * 2]
-    const vlen = keyValueEndIdxs[i * 2 + 1]
+  return JSON.stringify(roamJSON)
+}
 
-    encoder.encodeInto(k,messageChars.subarray(idx))
-    idx += klen
-    encoder.encodeInto(v,messageChars.subarray(idx))
-    idx += vlen
+const oldStoreToRoamJSON = {
+  4: (store) => {
+    const roamJSON = []
+
+    const blockIdToJSON = (blockId) => {
+      const result = { uid: blockId }
+      const block = store.blocks[blockId]
+      Object.assign(result,block)
+
+      if (block.children) result.children = block.children.map(blockIdToJSON)
+
+      result[":create/user"] = { ":user/uid": store.ownerRoamId }
+      result[":edit/user"] = { ":user/uid": store.ownerRoamId }
+      if (block[":create/user"])
+        result[":create/user"] = { ":user/uid": block[":create/user"] }
+      if (block[":edit/user"])
+        result[":edit/user"] = { ":user/uid": block[":edit/user"] }
+
+      if (block.refs) result.refs = block.refs.map(x => ({ uid: x }))
+      if (block[":block/refs"]) result[":block/refs"] = block[":block/refs"].map(x => ({ ":block/uid": x }))
+
+      delete result.backRefs
+      delete result.parent
+      return result
+    }
+
+    for (let pageId in store.pages) {
+      const page = store.pages[pageId]
+      const jsonPage = { uid: pageId }
+      roamJSON.push(jsonPage)
+      Object.assign(jsonPage,page)
+      delete jsonPage.backRefs
+      if (page.children) {
+        jsonPage.children = page.children.map(blockIdToJSON)
+      }
+      jsonPage[":create/user"] = { ":user/uid": store.ownerRoamId }
+      jsonPage[":edit/user"] = { ":user/uid": store.ownerRoamId }
+      if (page[":create/user"])
+        jsonPage[":create/user"] = { ":user/uid": page[":create/user"] }
+      if (page[":edit/user"])
+        jsonPage[":edit/user"] = { ":user/uid": page[":edit/user"] }
+    }
+    console.log(roamJSON)
+
+    return JSON.stringify(roamJSON)
   }
-  console.log(`store to binary took ${performance.now() - stime}`)
-  return messageBuffer
 }

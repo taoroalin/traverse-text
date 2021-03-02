@@ -90,3 +90,11 @@ const testAll = () => {
 //   console.log(`hash took ${performance.now() - zstime}`)
 //   console.log(d)
 // })
+
+const benchmarkGen = () => {
+  const stime = performance.now()
+  for (let i = 0; i < 100; i++) {
+    generateInnerRefs()
+  }
+  console.log(`gen took ${performance.now() - stime}`)
+}
