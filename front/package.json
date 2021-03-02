@@ -4,8 +4,5 @@
     "build": "node build.js",
     "build:watch": "nodemon --watch build.js --watch src build.js",
     "serve": "cd public && live-server --no-css-inject"
-  },
-  "dependencies": {
-    "uglify-js": "^3.12.8"
   }
 }

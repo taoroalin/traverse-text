@@ -1,7 +1,13 @@
 // const { performance } = require('perf_hooks')
 // const stime = performance.now()
 const fs = require("fs")
-var UglifyJS = require("uglify-js")
+
+try {
+  var UglifyJS = require("uglify-js")
+} catch (e) {
+  var UglifyJS = { minify: (code) => ({ code }) }
+}
+
 console.log("building")
 
 const regexScriptImport = /<script src="([^":]+)"><\/script>/g
