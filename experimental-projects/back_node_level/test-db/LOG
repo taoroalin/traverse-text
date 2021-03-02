@@ -1,0 +1,11 @@
+2021/02/22-04:05:34.137 1404 Recovering log #39
+2021/02/22-04:05:34.341 1404 Level-0 table #41: started
+2021/02/22-04:05:34.583 1404 Level-0 table #41: 5405529 bytes OK
+2021/02/22-04:05:34.600 1404 Delete type=0 #39
+2021/02/22-04:05:34.603 1404 Delete type=3 #37
+2021/02/22-04:05:34.604 4f84 Compacting 4@0 + 3@1 files
+2021/02/22-04:05:34.868 4f84 Generated table #43@0: 12937 keys, 2136105 bytes
+2021/02/22-04:05:35.132 4f84 Generated table #44@0: 12990 keys, 2136264 bytes
+2021/02/22-04:05:35.272 4f84 Generated table #45@0: 6561 keys, 1131846 bytes
+2021/02/22-04:05:35.272 4f84 Compacted 4@0 + 3@1 files => 5404215 bytes
+2021/02/22-04:05:35.274 4f84 compacted to: files[ 0 3 0 0 0 0 0 ]
