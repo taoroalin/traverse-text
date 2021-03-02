@@ -265,29 +265,32 @@ const mergeStore = (otherStore) => {
 const escapeRegex = (string) => string.replaceAll(/([\[\]\(\)])/g,"\\$1").replaceAll("\\\\","")
 
 const searchRefCountWeight = 0.05
+const pageOverBlockWeight = 1
 
+let titleExactFullTextSearchCache = []
 const titleExactFullTextSearch = (string) => {
   const regex = new RegExp(escapeRegex(string),"i")
-  const results = []
+  titleExactFullTextSearchCache = []
   for (let title in store.titles) {
     const id = store.titles[title]
     const page = store.blox[id]
     const match = title.match(regex)
     if (match) {
-      results.push({
+      titleExactFullTextSearchCache.push({
         title,
         id,
-        idx: match.index - (store.refs[id] && store.refs[id].length) * searchRefCountWeight
+        idx: match.index - (store.refs[id] ? store.refs[id].length : 0) * searchRefCountWeight
       })
     }
   }
-  results.sort((a,b) => a.idx - b.idx)
-  return results.slice(0,10)
+  titleExactFullTextSearchCache.sort((a,b) => a.idx - b.idx)
+  return titleExactFullTextSearchCache.slice(0,10)
 }
 
+let exactFullTextSearchCache = []
 const exactFullTextSearch = (string) => {
   const regex = new RegExp(escapeRegex(string),"i")
-  const results = []
+  exactFullTextSearchCache = []
   for (let id in store.blox) {
     const bloc = store.blox[id]
     const string = bloc.s
@@ -295,14 +298,15 @@ const exactFullTextSearch = (string) => {
     if (match) {
       const matchObj = {
         id,
-        idx: match.index - (store.refs[id] && store.refs[id].length) * searchRefCountWeight - (bloc.p === undefined)
+        idx: match.index - (store.refs[id] ? store.refs[id].length : 0) * searchRefCountWeight - (bloc.p === undefined) * pageOverBlockWeight
       }
       if (bloc.p) matchObj.string = bloc.s
       else matchObj.title = bloc.s
-      results.push(matchObj)
+      exactFullTextSearchCache.push(matchObj)
     }
   }
-  return results.sort((a,b) => a.idx - b.idx).slice(0,10)
+  exactFullTextSearchCache.sort((a,b) => a.idx - b.idx)
+  return exactFullTextSearchCache.slice(0,10)
 }
 
 const searchTemplates = (string) => {

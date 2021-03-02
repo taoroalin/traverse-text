@@ -147,15 +147,18 @@ const newUUID = () => { // this is 126 bits, 21xbase64
 const macros = {}
 macros.nocommit = {
   copyBlock: (oldId,parentId,idx) => {
+    // todo make this stop infinite looping when you copy a block into its own children using snapshots when I get those
     const copyBlock = (oldId,parentId,idx) => {
       const newId = newUid()
+      blacklist.push(newId)
       const block = store.blox[oldId]
       console.log(`copying block ${block.s}`)
       doEdit("cr",newId,parentId,idx)
       doEdit("df",newId,diff(block.s,""))
       if (block.k) {
         for (let i = 0; i < block.k.length; i++) {
-          copyBlock(block.k[i],newId,i)
+          const kidId = block.k[i]
+          copyBlock(kidId,newId,i)
         }
       }
       return newId

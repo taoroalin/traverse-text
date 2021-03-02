@@ -182,6 +182,10 @@ document.addEventListener("input",(event) => {
       }
       if (!broke)
         string = string.substring(0,sessionState.position) + "]" + string.substring(sessionState.position)
+    } else if (event.data === "]") {
+      if (string[sessionState.position] === "]") {
+        string = string.substring(0,sessionState.position - 1) + string.substring(sessionState.position)
+      }
     }
     store.blox[sessionState.focusId].s = string // todo commit changes on word boundaries
 
@@ -508,22 +512,13 @@ document.addEventListener("keydown",(event) => {
           clipboardData = null
         }
         break
-      case "]":
-        console.log(sessionState.position)
-        if (focusBlockBody.innerText[sessionState.position] === "]") {
-          event.preventDefault()
-          sessionState.position += 1
-          focusIdPosition()
-        } else {
-          console.log(focusBlockBody.innerText[sessionState.position])
-        }
-        break
     }
   }
 
   if (
     document.activeElement &&
     document.activeElement.id === "search-input"
+    && focusSearchResult
   ) {
     if (event.key === "Enter" && !event.ctrlKey) {
       if (focusSearchResult) {
@@ -532,6 +527,7 @@ document.addEventListener("keydown",(event) => {
         } else {
           goto("block",focusSearchResult.dataset.id)
         }
+        event.preventDefault()
         return
       }
     } else if (event.key === "Enter" && event.ctrlKey) {
@@ -539,12 +535,19 @@ document.addEventListener("keydown",(event) => {
       event.preventDefault()
       return
     }
-    const newSelected = (event.key === "ArrowUp" && focusSearchResult.previousElementSibling) || ((event.key === "ArrowDown" || event.key === "Tab") && focusSearchResult.nextElementSibling)
-    if (newSelected) {
-      newSelected.dataset.selected = "true"
-      delete focusSearchResult.dataset.selected
-      event.preventDefault()
-    }
+    // const moveDirection = (event.key === "ArrowUp" && -1) || ((event.key === "ArrowDown" || event.key === "Tab") && 1)
+    // console.log(`moveDireciton ${moveDirection}`)
+    // if (moveDirection) {
+    //   const siblingToMoveTo = moveDirection === -1 ? focusSearchResult.previousElementSibling : focusSearchResult.nextElementSibling
+    //   console.log(`moveTo ${siblingToMoveTo}`)
+    //   if (siblingToMoveTo) {
+    //     siblingToMoveTo.dataset.selected = "true"
+    //     delete focusSearchResult.dataset.selected
+    //     event.preventDefault()
+    //   } else {
+
+    //   }
+    // }
   }
 
   if (terminalElement.style.display !== "none") {
