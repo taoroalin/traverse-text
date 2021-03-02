@@ -66,6 +66,8 @@ const renderSessionState = () => {
   }
 
   pageFrameOuter.scrollTop = sessionState.scroll || 0
+
+  focusBlockStart(document.querySelector(".block"))
 }
 
 const gotoNoHistory = (commandName,...command) => {
@@ -166,6 +168,8 @@ const updateCursorInfo = () => {
   focusOffset = getSelection().focusOffset
 
   focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`) || templateList.querySelector(`.template__suggestion[data-selected="true"]`)
+
+  focusSearchResult = searchResultList.querySelector(`.search-result[data-selected="true"]`)
 
   if (focusNode) {
     focusBlock = focusNode.parentNode.closest(".block")

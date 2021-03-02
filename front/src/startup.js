@@ -105,6 +105,7 @@ let focusOffset = null
 let focusBlock = null
 
 let focusSuggestion = null
+let focusSearchResult = null
 
 let sessionState = { pageFrame: "dailyNotes",focusId: null,scroll: 0,position: null }
 

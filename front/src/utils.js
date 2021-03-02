@@ -34,9 +34,17 @@ const unFormatDate = (string) => {
   }
 }
 
+// const formatDateId = (date) => `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`
+const formatDateYMD = (date) => `${date.getFullYear()}-${formatInt(date.getMonth() + 1,2)}-${formatInt(date.getDate(),2)}`
+
 const truncateElipsis = (text,limit = 40) => {
   if (text.length > limit) {
     return text.substring(0,limit - 3) + "..."
   }
   return text
+}
+
+const formatInt = (int,digits) => {
+  const raw = int.toString()
+  return ("0".repeat(digits - raw.length) + raw)
 }

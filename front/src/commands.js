@@ -181,7 +181,8 @@ macros.nocommit = {
 }
 for (let k in macros.nocommit) {
   macros[k] = (...args) => {
-    macros.nocommit[k](...args)
+    const result = macros.nocommit[k](...args)
     commit()
+    return result
   }
 }

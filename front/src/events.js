@@ -38,7 +38,7 @@ const downloadHandler = () => {
   const data = new Blob([json],{ type: 'text/json' })
   const url = URL.createObjectURL(data)
   downloadButton.setAttribute('href',url)
-  downloadButton.setAttribute('download',`${store.graphName}-micro-roam.json`)
+  downloadButton.setAttribute('download',`${store.graphName}-${formatDateYMD(new Date(Date.now()))}.json`)
 }
 
 const expandTemplate = () => {
@@ -335,7 +335,7 @@ const globalHotkeys = {
 
 document.addEventListener("keydown",(event) => {
   updateCursorInfo()
-
+  console.log(event.key)
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
     if (event.key === hotkey.key &&
@@ -385,11 +385,11 @@ document.addEventListener("keydown",(event) => {
     }
     if (did) event.preventDefault()
   } else if (autocompleteList.style.display !== "none") {
-    if (event.key === "Tab" || event.key === "Enter") {
+    if (event.key === "Enter") {
       autocomplete()
       event.preventDefault()
     }
-    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousElementSibling) || (event.key === "ArrowDown" && focusSuggestion.nextElementSibling)
+    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousElementSibling) || ((event.key === "ArrowDown" || event.key === "Tab") && focusSuggestion.nextElementSibling)
     if (newSelected) {
       newSelected.dataset.selected = "true"
       delete focusSuggestion.dataset.selected
@@ -400,7 +400,7 @@ document.addEventListener("keydown",(event) => {
       expandTemplate()
       event.preventDefault()
     }
-    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousElementSibling) || (event.key === "ArrowDown" && focusSuggestion.nextElementSibling)
+    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousElementSibling) || ((event.key === "ArrowDown" || event.key === "Tab") && focusSuggestion.nextElementSibling)
     if (newSelected) {
       newSelected.dataset.selected = "true"
       delete focusSuggestion.dataset.selected
@@ -525,20 +525,25 @@ document.addEventListener("keydown",(event) => {
     document.activeElement &&
     document.activeElement.id === "search-input"
   ) {
-    if (event.key === "Enter") {
-      goto("pageTitle",event.target.value)
-      event.preventDefault()
-      return
-    } else if (event.key === "Tab") {
-      const selected = searchResultList.querySelector(`.search-result[data-selected="true"]`)
-      if (selected) {
-        if (selected.dataset.title) {
-          goto("pageTitle",selected.dataset.title)
+    if (event.key === "Enter" && !event.ctrlKey) {
+      if (focusSearchResult) {
+        if (focusSearchResult.dataset.title) {
+          goto("pageTitle",focusSearchResult.dataset.title)
         } else {
-          goto("block",selected.dataset.id)
+          goto("block",focusSearchResult.dataset.id)
         }
         return
       }
+    } else if (event.key === "Enter" && event.ctrlKey) {
+      goto("pageTitle",event.target.value)
+      event.preventDefault()
+      return
+    }
+    const newSelected = (event.key === "ArrowUp" && focusSearchResult.previousElementSibling) || ((event.key === "ArrowDown" || event.key === "Tab") && focusSearchResult.nextElementSibling)
+    if (newSelected) {
+      newSelected.dataset.selected = "true"
+      delete focusSearchResult.dataset.selected
+      event.preventDefault()
     }
   }
 

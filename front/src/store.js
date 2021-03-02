@@ -1,8 +1,3 @@
-/*
-const storeSchema = {blox:{uid:{kids:[uid],string,parent,ct,edit-time,create-user,edit-user}},
-titles:{title:uid},
-*/
-
 // blox or bloc means either block or page. they're almost the same, just one has a parent and the other doesn't, and linking syntax is different
 const blankStore = () => ({
   blox: {},
