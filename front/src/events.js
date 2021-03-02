@@ -762,7 +762,7 @@ document.getElementById('upload-input').addEventListener('change',(event) => {
 })
 
 const preprocessNewStore = () => {
-  startCommand = ["dailyNotes"]
+  startFn = () => gotoNoHistory("dailyNotes")
   fetch("./default-store.json").then(text => text.json().then(json => {
     mergeStore(json)
     theresANewStore()

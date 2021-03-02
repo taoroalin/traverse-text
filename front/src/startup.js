@@ -34,7 +34,7 @@ r.onsuccess = (e1) => {
       fetch("./default-store.json").then(text => text.json().then(json => {
         store = json
         user.graphName = json.graphName
-        startCommand = ["pageTitle","Welcome to Micro Roam"]
+        startFn = () => gotoNoHistory("pageTitle","Welcome to Micro Roam")
         finishStartupThread()
       }))
     }
@@ -43,8 +43,19 @@ r.onsuccess = (e1) => {
 r.onupgradeneeded = (event) => {
   const db = r.result
   const stores = Array.from(db.objectStoreNames)
-  if (!stores.includes("stores"))
+  if (!stores.includes("stores")) {
     db.createObjectStore("stores",{ keyPath: "graphName" })
+  } else {
+    console.log(event)
+    console.log(db)
+    const storeStore = db.transaction(["stores"],"readonly").objectStore("stores")
+    storeStore.get(user.graphName).onsuccess = (e) => {
+      const store = e.target.result.store
+      const roamJSON = oldStoreToRoamJSON[db.version](store)
+      roamJsonToStore(user.graphName,roamJSON)
+      saveStore()
+    }
+  }
 }
 r.onerror = () => {
   alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
@@ -54,7 +65,7 @@ r.onerror = () => {
 let store = null
 let idb = null
 
-let startCommand = ["dailyNotes"]
+let startFn = () => gotoNoHistory("dailyNotes")
 
 let startupThreads = 2
 const finishStartupThread = () => {
@@ -66,7 +77,7 @@ const finishStartupThread = () => {
 const theresANewStore = () => {
   user.graphName = store.graphName
   saveUser()
-  gotoNoHistory(...startCommand)
+  startFn()
   debouncedSaveStore()
 }
 
