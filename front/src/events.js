@@ -717,10 +717,20 @@ document.addEventListener("mouseup",(event) => {
   }
 })
 
-
-topBarHiddenHitbox.addEventListener("mouseover",() => {
+const showTopBarFn = () => {
   user.topBar = "visible"
   saveUser()
+}
+let showTopBarTimeout = null
+
+topBarHiddenHitbox.addEventListener("mouseover",() => {
+  clearTimeout(showTopBarTimeout)
+  showTopBarTimeout = setTimeout(showTopBarFn,700)
+})
+
+topBarHiddenHitbox.addEventListener("mouseout",() => {
+  clearTimeout(showTopBarTimeout)
+  showTopBarTimeout = null
 })
 
 document.getElementById('upload-input').addEventListener('change',(event) => {
