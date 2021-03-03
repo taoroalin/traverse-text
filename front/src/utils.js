@@ -48,3 +48,5 @@ const formatInt = (int,digits) => {
   const raw = int.toString()
   return ("0".repeat(digits - raw.length) + raw)
 }
+
+const clamp = (x,min,max) => Math.max(min,Math.min(x,max))

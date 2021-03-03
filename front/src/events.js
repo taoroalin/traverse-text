@@ -154,6 +154,7 @@ const dedentFocusedBlock = () => {
   }
 }
 
+
 // Event listners --------------------------------------------------------------------------------------------------------
 
 document.addEventListener("input",(event) => {
@@ -193,79 +194,19 @@ document.addEventListener("input",(event) => {
 
     if (editingTitle) {
       const matchingTitles = titleExactFullTextSearch(editingTitle)
-      if (matchingTitles.length > 0) {
-        autocompleteList.innerHTML = ""
-        autocompleteList.style.display = "block"
-        const rect = editingLink.getBoundingClientRect()
-        autocompleteList.style.top = rect.bottom
-        autocompleteList.style.left = rect.left
-
-        for (let i = 0; i < matchingTitles.length; i++) {
-          matchingTitle = matchingTitles[i]
-          const suggestion = suggestionTemplate.cloneNode(true)
-          if (i === 0) suggestion.dataset.selected = "true"
-          suggestion.dataset.id = matchingTitle.id
-
-          if (matchingTitle.title) {
-            suggestion.dataset.title = matchingTitle.title
-            suggestion.innerText = truncateElipsis(matchingTitle.title,50)
-          } else {
-            suggestion.dataset.string = matchingTitle.string
-            suggestion.innerText = truncateElipsis(matchingTitle.string,50)
-          }
-          autocompleteList.appendChild(suggestion)
-        }
-      }
+      renderResultSet(editingLink,matchingTitles,autocompleteList,suggestionTemplate,0)
     }
 
     if (editingTemplateExpander) {
       console.log("editingTemplateExpander")
       const editingTemplateText = editingTemplateExpander.innerText.substring(2)
       const matchingTemplates = searchTemplates(editingTemplateText)
-      console.log(matchingTemplates)
-      if (matchingTemplates.length > 0) {
-        templateList.innerHTML = ""
-        for (let i = 0; i < Math.min(matchingTemplates.length,10); i++) {
-          const result = templateSuggestionTemplate.cloneNode(true)
-          if (i === 0) {
-            result.dataset.selected = "true"
-          }
-          result.dataset.string = matchingTemplates[i].string
-          result.dataset.id = matchingTemplates[i].id
-          result.innerText = truncateElipsis(matchingTemplates[i].string,50)
-          templateList.appendChild(result)
-        }
-        templateList.style.display = "block"
-        templateList.style.top = editingTemplateExpander.getBoundingClientRect().bottom
-        templateList.style.left = editingTemplateExpander.getBoundingClientRect().left
-      }
+      renderResultSet(editingTemplateExpander,matchingTemplates,templateList,templateSuggestionTemplate,0)
     }
 
   } else if (event.target.id === "search-input") {
     const matchingTitles = exactFullTextSearch(event.target.value)
-    if (matchingTitles.length > 0) {
-      searchResultList.innerHTML = ""
-      for (let i = 0; i < Math.min(matchingTitles.length,10); i++) {
-        const result = searchResultTemplate.cloneNode(true)
-        if (i === 0) {
-          result.dataset.selected = "true"
-        }
-        if (matchingTitles[i].title) {
-          result.dataset.title = matchingTitles[i].title
-          result.innerText = truncateElipsis(matchingTitles[i].title,50)
-        } else {
-          result.dataset.string = matchingTitles[i].string
-          result.dataset.id = matchingTitles[i].id
-          result.innerText = truncateElipsis(matchingTitles[i].string,50)
-        }
-        searchResultList.appendChild(result)
-      }
-      searchResultList.style.display = "block"
-      searchResultList.style.top = searchInput.getBoundingClientRect().bottom
-      searchResultList.style.left = searchInput.getBoundingClientRect().left
-    } else {
-      searchResultList.style.display = "none"
-    }
+    renderResultSet(searchInput,matchingTitles,searchResultList,searchResultTemplate,0)
 
   } else if (event.target.className === "page__title") {
     console.log("edit title")
@@ -355,6 +296,7 @@ document.addEventListener("keydown",(event) => {
   if (dragSelect) {
     let did = false
     if ((event.key === "c" || event.key === "x") && event.ctrlKey) {
+
       console.log("copy blocks")
       clipboardData = {
         dragSelect: {
@@ -535,19 +477,26 @@ document.addEventListener("keydown",(event) => {
       event.preventDefault()
       return
     }
-    // const moveDirection = (event.key === "ArrowUp" && -1) || ((event.key === "ArrowDown" || event.key === "Tab") && 1)
-    // console.log(`moveDireciton ${moveDirection}`)
-    // if (moveDirection) {
-    //   const siblingToMoveTo = moveDirection === -1 ? focusSearchResult.previousElementSibling : focusSearchResult.nextElementSibling
-    //   console.log(`moveTo ${siblingToMoveTo}`)
-    //   if (siblingToMoveTo) {
-    //     siblingToMoveTo.dataset.selected = "true"
-    //     delete focusSearchResult.dataset.selected
-    //     event.preventDefault()
-    //   } else {
-
-    //   }
-    // }
+    const moveDirection = ((event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey)) && -1) ||
+      ((event.key === "ArrowDown" || event.key === "Tab") && 1)
+    console.log(`moveDirection ${moveDirection}`)
+    if (moveDirection) {
+      const siblingToMoveTo = moveDirection === -1 ? focusSearchResult.previousElementSibling : focusSearchResult.nextElementSibling
+      console.log(`moveTo ${siblingToMoveTo}`)
+      if (siblingToMoveTo) {
+        siblingToMoveTo.dataset.selected = "true"
+        delete focusSearchResult.dataset.selected
+        event.preventDefault()
+      } else {
+        const oldIdx = parseInt(searchResultList.dataset.resultStartIdx)
+        const newIdx = clamp(oldIdx + moveDirection * SEARCH_RESULT_LENGTH,0,exactFullTextSearchCache.length - SEARCH_RESULT_LENGTH)
+        renderResultSet(searchInput,exactFullTextSearchCache,searchResultList,searchResultTemplate,newIdx)
+        if (moveDirection === -1) {
+          delete searchResultList.firstElementChild.dataset.selected
+          searchResultList.lastElementChild.dataset.selected = true
+        }
+      }
+    }
   }
 
   if (terminalElement.style.display !== "none") {

@@ -150,7 +150,6 @@ macros.nocommit = {
     // todo make this stop infinite looping when you copy a block into its own children using snapshots when I get those
     const copyBlock = (oldId,parentId,idx) => {
       const newId = newUid()
-      blacklist.push(newId)
       const block = store.blox[oldId]
       console.log(`copying block ${block.s}`)
       doEdit("cr",newId,parentId,idx)

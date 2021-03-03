@@ -113,3 +113,5 @@ let dragSelectStartBlock = null
 let dragSelect = null
 
 let clipboardData = null
+
+const SEARCH_RESULT_LENGTH = 12

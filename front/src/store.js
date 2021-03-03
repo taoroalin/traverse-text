@@ -284,7 +284,7 @@ const titleExactFullTextSearch = (string) => {
     }
   }
   titleExactFullTextSearchCache.sort((a,b) => a.idx - b.idx)
-  return titleExactFullTextSearchCache.slice(0,10)
+  return titleExactFullTextSearchCache
 }
 
 let exactFullTextSearchCache = []
@@ -306,7 +306,7 @@ const exactFullTextSearch = (string) => {
     }
   }
   exactFullTextSearchCache.sort((a,b) => a.idx - b.idx)
-  return exactFullTextSearchCache.slice(0,10)
+  return exactFullTextSearchCache
 }
 
 const searchTemplates = (string) => {
