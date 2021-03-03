@@ -41,6 +41,15 @@
     <div id="search-result-list" style="display:none"></div>
     <div id="template-list" style="display:none"></div>
 
+    <div id="login">
+      <form id="login-form">
+        <input type="email" id="login-email" placeholder="email">
+        <input type="password" id="login-password" placeholder="password">
+        <input type="text" id="login-username" placeholder="username" style="display:none">
+        <input type="submit" style="height:0px">
+        <!-- <button>Login</button> -->
+      </form>
+    </div>
   </div>
 
   <title>Micro Roam</title>
@@ -181,6 +190,8 @@
 
   <script src="dom-decarations.js"></script>
   <script src="render.js"></script>
+
+  <script src="auth.js"></script>
 
   <script src="index.js"></script>
   <!--got dailynotes references dailynotesinfinitescrolllistener, so events is before index
