@@ -194,19 +194,19 @@ document.addEventListener("input",(event) => {
 
     if (editingTitle) {
       const matchingTitles = titleExactFullTextSearch(editingTitle)
-      renderResultSet(editingLink,matchingTitles,autocompleteList,suggestionTemplate,0)
+      renderResultSet(editingLink,matchingTitles,autocompleteList,0)
     }
 
     if (editingTemplateExpander) {
       console.log("editingTemplateExpander")
       const editingTemplateText = editingTemplateExpander.innerText.substring(2)
       const matchingTemplates = searchTemplates(editingTemplateText)
-      renderResultSet(editingTemplateExpander,matchingTemplates,templateList,templateSuggestionTemplate,0)
+      renderResultSet(editingTemplateExpander,matchingTemplates,templateList,0)
     }
 
   } else if (event.target.id === "search-input") {
     const matchingTitles = exactFullTextSearch(event.target.value)
-    renderResultSet(searchInput,matchingTitles,searchResultList,searchResultTemplate,0)
+    renderResultSet(searchInput,matchingTitles,searchResultList,0)
 
   } else if (event.target.className === "page__title") {
     console.log("edit title")
@@ -280,7 +280,6 @@ const globalHotkeys = {
 
 document.addEventListener("keydown",(event) => {
   updateCursorInfo()
-  console.log(event.key)
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
     if (event.key === hotkey.key &&
@@ -335,23 +334,13 @@ document.addEventListener("keydown",(event) => {
       autocomplete()
       event.preventDefault()
     }
-    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousElementSibling) || ((event.key === "ArrowDown" || event.key === "Tab") && focusSuggestion.nextElementSibling)
-    if (newSelected) {
-      newSelected.dataset.selected = "true"
-      delete focusSuggestion.dataset.selected
-      event.preventDefault()
-    }
+    if (updownythingey(editingLink,autocompleteList,titleExactFullTextSearchCache,focusSuggestion)) event.preventDefault()
   } else if (templateList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       expandTemplate()
       event.preventDefault()
     }
-    const newSelected = (event.key === "ArrowUp" && focusSuggestion.previousElementSibling) || ((event.key === "ArrowDown" || event.key === "Tab") && focusSuggestion.nextElementSibling)
-    if (newSelected) {
-      newSelected.dataset.selected = "true"
-      delete focusSuggestion.dataset.selected
-      event.preventDefault()
-    }
+    if (updownythingey(editingTemplateExpander,templateList,templateSearchCache,focusSuggestion)) event.preventDefault()
   } else if (sessionState.isFocused) {
     let blocks
     let newActiveBlock
@@ -477,26 +466,9 @@ document.addEventListener("keydown",(event) => {
       event.preventDefault()
       return
     }
-    const moveDirection = ((event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey)) && -1) ||
-      ((event.key === "ArrowDown" || event.key === "Tab") && 1)
-    console.log(`moveDirection ${moveDirection}`)
-    if (moveDirection) {
-      const siblingToMoveTo = moveDirection === -1 ? focusSearchResult.previousElementSibling : focusSearchResult.nextElementSibling
-      console.log(`moveTo ${siblingToMoveTo}`)
-      if (siblingToMoveTo) {
-        siblingToMoveTo.dataset.selected = "true"
-        delete focusSearchResult.dataset.selected
-        event.preventDefault()
-      } else {
-        const oldIdx = parseInt(searchResultList.dataset.resultStartIdx)
-        const newIdx = clamp(oldIdx + moveDirection * SEARCH_RESULT_LENGTH,0,exactFullTextSearchCache.length - SEARCH_RESULT_LENGTH)
-        renderResultSet(searchInput,exactFullTextSearchCache,searchResultList,searchResultTemplate,newIdx)
-        if (moveDirection === -1) {
-          delete searchResultList.firstElementChild.dataset.selected
-          searchResultList.lastElementChild.dataset.selected = true
-        }
-      }
-    }
+
+    const didUpDowny = updownythingey(searchInput,searchResultList,exactFullTextSearchCache,focusSearchResult)
+    if (didUpDowny) event.preventDefault()
   }
 
   if (terminalElement.style.display !== "none") {
@@ -522,9 +494,29 @@ document.addEventListener("keydown",(event) => {
       }
     }
   }
-
 })
 
+const updownythingey = (parent,list,cache,focused) => {
+  // todo factor this so the same logic works on search all, block, title, and template
+  const moveDirection = ((event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey)) && -1) ||
+    ((event.key === "ArrowDown" || event.key === "Tab") && 1)
+  if (moveDirection) {
+    const siblingToMoveTo = moveDirection === -1 ? focused.previousElementSibling : focused.nextElementSibling
+    if (siblingToMoveTo) {
+      siblingToMoveTo.dataset.selected = "true"
+      delete focused.dataset.selected
+    } else {
+      const oldIdx = parseInt(list.dataset.resultStartIdx)
+      const newIdx = clamp(oldIdx + moveDirection * SEARCH_RESULT_LENGTH,0,cache.length - SEARCH_RESULT_LENGTH)
+      renderResultSet(parent,cache,list,newIdx)
+      if (moveDirection === -1) {
+        delete list.firstElementChild.dataset.selected
+        list.lastElementChild.dataset.selected = true
+      }
+    }
+    return true
+  }
+}
 
 const getPageTitleOfNode = (node) => {
   const tag = node.closest(".tag")

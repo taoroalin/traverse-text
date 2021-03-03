@@ -4,9 +4,15 @@ const pageFrameOuter = document.getElementById("page-frame-outer")
 const searchInput = document.getElementById("search-input")
 const downloadButton = document.getElementById("download-button")
 const terminalElement = document.getElementById("terminal")
+
 const searchResultList = document.getElementById("search-result-list")
+searchResultList.dataset.templateName = "search-result"
+
 const autocompleteList = document.getElementById("autocomplete-list")
+autocompleteList.dataset.templateName = "autocomplete__suggestion"
+
 const templateList = document.getElementById("template-list")
+templateList.dataset.templateName = "template__suggestion"
 
 const getTemp = (str) => document.getElementById(str).content.firstElementChild
 

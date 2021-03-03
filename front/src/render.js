@@ -88,7 +88,8 @@ const renderBreadcrumb = (parent,blockId) => {
   }
 }
 
-const renderResultSet = (parent,resultSet,resultFrame,resultTemplate,startIdx = 0) => {
+const renderResultSet = (parent,resultSet,resultFrame,startIdx = 0) => {
+  const resultTemplate = getTemp(resultFrame.dataset.templateName)
   if (resultSet.length > 0) {
     resultFrame.innerHTML = ""
     resultFrame.style.display = "block"

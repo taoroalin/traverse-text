@@ -309,10 +309,12 @@ const exactFullTextSearch = (string) => {
   return exactFullTextSearchCache
 }
 
+
+let templateSearchCache = []
 const searchTemplates = (string) => {
   const templatePageId = store.titles["roam/templates"]
   const templatePage = store.blox[templatePageId]
-  const result = []
+  templateSearchCache = []
   if (templatePage) {
     const fn = (blockId) => {
       const block = store.blox[blockId]
@@ -321,7 +323,7 @@ const searchTemplates = (string) => {
       console.log(match)
       if (match) {
         if (match[1].length >= string.length && match[1].substring(0,string.length).toLowerCase() === string.toLowerCase()) {
-          result.push({
+          templateSearchCache.push({
             id: blockId,
             string: match[1]
           })
@@ -337,7 +339,7 @@ const searchTemplates = (string) => {
         fn(blockId)
     }
   }
-  return result
+  return templateSearchCache
 }
 
 
