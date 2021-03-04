@@ -1,10 +1,11 @@
+// API knowingly does not follow REST spec for CORS simplicity reasons
 const basicBitchServerUrl = "http://localhost:3000"
 
 const saveStoreToBasicBitchServer = async (theStore = store) => {
   const putSentTime = performance.now()
   const response = await fetch(`${basicBitchServerUrl}/put/${theStore.graphName}`,
     {
-      method: "PUT",body: JSON.stringify(theStore.blox),
+      method: "POST",body: JSON.stringify(theStore.blox),
       headers: { passwordHash: user.passwordHash }
     })
   console.log(`save confirmed in ${performance.now() - putSentTime}`)
@@ -19,11 +20,15 @@ const getStoreFromBasicBitchServer = async (graphName) => {
   hydrateFromBlox(graphName,blox)
 }
 
+const saveSettingsToBasicBitchServer = async () => {
+  const response = await fetch(`${basicBitchServerUrl}/settings`,
+    { headers: { user: JSON.stringify(settings) } })
+}
 
 
 const middlePepper = "76pCgT0lW6ES9yjt01MeH"
 const beginPepper = "CeoPPOv9rIq6O7YiYlSFX"
-const endPepper = "Rzw1dagomQGpoo2s7iGE3lYL2"
+const endPepper = "Rzw1dagomQGpoo2s7iGE3lYL2yruaJDGrUk6bFCvz"
 const hashPassword = async (password,email) => {
   const saltAndPeppered = `${beginPepper}${password}${middlePepper}${email}${endPepper}`
   const buffer = new TextEncoder().encode(saltAndPeppered)
@@ -49,7 +54,7 @@ loginForm.addEventListener("submit",async (event) => {
   const password = loginPasswordElement.value
   loginPasswordElement.value = ""
   const passwordHash = await hashPassword(password,email)
-  const response = await fetch(`${basicBitchServerUrl}/auth`,{ method: "PUT",body: passwordHash })
+  const response = await fetch(`${basicBitchServerUrl}/auth`,{ method: "POST",headers: { passwordHash: passwordHash } })
   if (response.status === 200) {
     const responseData = await response.json()
     console.log(responseData)
@@ -73,7 +78,9 @@ signupForm.addEventListener("submit",async (event) => {
   const passwordHash = await hashPassword(password,email)
   const jsonBody = JSON.stringify({ passwordHash,username,email })
   console.log(jsonBody)
-  const response = await fetch(`${basicBitchServerUrl}/signup`,{ method: "PUT",body: jsonBody })
+  const headers = new Headers()
+  headers.set('body',jsonBody)
+  const response = await fetch(`${basicBitchServerUrl}/signup`,{ method: "POST",headers })
   if (response.status === 200) {
     console.log(response)
     console.log(`signed up`)
