@@ -2,6 +2,9 @@
 *{
   outline:none;
   scrollbar-width:none;
+
+  --pop:#c2c2c2;
+  --placeholder:#919191;
 }
 
 .dark{
@@ -19,7 +22,6 @@
   --shadow:rgb(98, 98, 98);
   --notification:#2e4736;
   --selected:#2d4a66;
-  --pop:#c2c2c2;
 }
 
 .light{
@@ -37,7 +39,6 @@
   --page-ref:rgb(73, 197, 91);
   --notification:#a4d1b1;
   --selected:#abcdeb;
-  --pop:#c2c2c2;
 }
 
 input, button, a{
@@ -132,18 +133,19 @@ a:visited { color:var(--link) }
   transition:margin-top 0.1s;
 }
 
-#login{
+#login, #signup{
   position:fixed;
   top:0;
   left:0;
   right:0;
   bottom:0;
   background-color:var(--pop);
+  text-align: center;
 }
 
-#login-form{
+#login-form, #signup-form{
   position:fixed;
-  top:25%;
+  top:28%;
   left:50%;
   transform:translateX(-50%);
   padding:13px 20px 20px;
@@ -153,7 +155,7 @@ a:visited { color:var(--link) }
   justify-content: space-between;
 }
 
-#login input{
+#login input, #signup input{
   background-color:var(--pop);
   font-size:1.4em;
   border-radius:3px;
@@ -163,19 +165,36 @@ a:visited { color:var(--link) }
   margin-bottom:13px;
 }
 
+#login input::placeholder{
+  color:var(--placeholder);
+}
+
 #login input:focus{
   /* border:1px solid var(--border); */
 }
 
-#login button{
+#login button, #signup button{
+  position:fixed;
+  bottom:5%;
+  left:50%;
+  transform:translateX(-50%);
   display:block;
   padding:4px;
   border-radius:3px;
-  font-size:1.4em;
-  background-color:var(--notification);
+  background-color:var(--pop);
+  color:var(--placeholder);
 }
 #login button:focus{
-  outline:solid white;
+  font-weight:bold;
+}
+
+#login p, #signup p{
+  left:50%;
+  font-size:1.7em;
+  color:var(--placeholder);
+  padding:4px;
+  margin-bottom:20px;
+  margin-top:40px;
 }
 
 /* these have different paddings, but look the same because weird stuff. todo investigate */

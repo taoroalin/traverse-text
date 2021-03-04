@@ -42,13 +42,23 @@
     <div id="template-list" style="display:none"></div>
 
     <div id="login">
-      <form id="login-form">
+      <p>login</p>
+      <form id="login-form" style="display:none">
         <input type="email" id="login-email" placeholder="email">
         <input type="password" id="login-password" placeholder="password">
-        <input type="text" id="login-username" placeholder="username" style="display:none">
         <input type="submit" style="height:0px">
-        <!-- <button>Login</button> -->
       </form>
+      <button id="switch-to-signup">Sign Up</button>
+    </div>
+    <div id="signup">
+      <p>sign up</p>
+      <form id="signup-form">
+        <input type="email" id="signup-email" placeholder="email">
+        <input type="text" id="signup-username" placeholder="username">
+        <input type="password" id="signup-password" placeholder="password">
+        <input type="submit" style="height:0px">
+      </form>
+      <button id="switch-to-login">Login</button>
     </div>
   </div>
 

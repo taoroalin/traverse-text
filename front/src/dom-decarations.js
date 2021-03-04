@@ -4,10 +4,6 @@ const pageFrameOuter = document.getElementById("page-frame-outer")
 const searchInput = document.getElementById("search-input")
 const downloadButton = document.getElementById("download-button")
 const terminalElement = document.getElementById("terminal")
-const loginForm = document.getElementById("login-form")
-const loginUsernameElement = document.getElementById("login-username")
-const loginEmailElement = document.getElementById("login-email")
-const loginPasswordElement = document.getElementById("login-password")
 
 const searchResultList = document.getElementById("search-result-list")
 searchResultList.dataset.templateName = "search-result"
