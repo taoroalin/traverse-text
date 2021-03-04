@@ -1,11 +1,38 @@
+const basicBitchServerUrl = "http://localhost:3000"
+
+let user
+let userText = localStorage.getItem("user")
+let usingLocalStore = true
+if (userText) {
+  user = JSON.parse(userText)
+  const headers = new Headers()
+  headers.set('passwordhash',user.passwordHash)
+  let reqUrl = `${basicBitchServerUrl}/startup/${user.settings.graphName}`
+  if (user.settings.lastCommitId) reqUrl += user.settings.lastCommitId
+  fetch(reqUrl,{ method: 'POST',headers: headers }).then(async (res) => {
+    if (res.headers.alreadyuptodate !== undefined) {
+      console.log(`already up to date`)
+      return
+    }
+    startupThreads += 1
+    usingLocalStore = false
+    res.json().then(blox => {
+      console.log('got blox')
+      console.log(blox)
+      hydrateFromBlox(user.settings.graphName,blox)
+      start() // todo catch code loading after this
+      debouncedSaveStore()
+    })
+  })
+
+} else {
+  user = { settings: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
+}
+
 let store = null
 let idb = null
 console.log("v5")
 const r = indexedDB.open("microroam",5)// I had this as line 1, saves ~5ms start time, don't now cause I'm lazy
-const blankUser = { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false }
-let user = blankUser
-const storedUser = localStorage.getItem("user")
-if (storedUser) user = JSON.parse(storedUser)
 
 const topBar = document.getElementById("top-bar")
 const topBarHiddenHitbox = document.getElementById("top-bar-hidden-hitbox")
@@ -29,19 +56,26 @@ saveUser()
 r.onsuccess = (e1) => {
   console.log("normal success")
   idb = e1.target.result
-  idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
-    if (e.target.result) {
-      store = JSON.parse(e.target.result.store)
-      finishStartupThread()
-    } else {
-      console.log("adding default graph")
-      fetch("./default-store.json").then(text => text.json().then(json => {
-        store = json
-        user.graphName = json.graphName
-        startFn = () => gotoNoHistory("pageTitle","Welcome to Micro Roam")
+  try {
+
+    idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
+      if (e.target.result) {
+        store = JSON.parse(e.target.result.store)
         finishStartupThread()
-      }))
+      } else {
+        console.log("adding default graph")
+        fetch("./default-store.json").then(text => text.json().then(json => {
+          if (usingLocalStore === true) {
+            store = json
+            user.graphName = json.graphName
+            startFn = () => gotoNoHistory("pageTitle","Welcome to Micro Roam")
+          }
+          finishStartupThread()
+        }))
+      }
     }
+  } catch (e) {
+
   }
 }
 r.onupgradeneeded = (event) => {
@@ -84,8 +118,7 @@ let startupThreads = 2
 const finishStartupThread = () => {
   if (startupThreads <= 1)
     start()
-  else
-    startupThreads--
+  startupThreads--
 }
 const start = () => {
   user.graphName = store.graphName

@@ -41,9 +41,9 @@
     <div id="search-result-list" style="display:none"></div>
     <div id="template-list" style="display:none"></div>
 
-    <div id="login">
+    <div id="login" style="display:none">
       <p>login</p>
-      <form id="login-form" style="display:none">
+      <form id="login-form">
         <input type="email" id="login-email" placeholder="email">
         <input type="password" id="login-password" placeholder="password">
         <input type="submit" style="height:0px">
@@ -51,7 +51,7 @@
       <button id="switch-to-signup">Sign Up</button>
     </div>
 
-    <div id="signup">
+    <div id="signup" style="display:none">
       <p>sign up</p>
       <form id="signup-form">
         <input type="email" id="signup-email" placeholder="email">
@@ -204,11 +204,11 @@
 
   <script src="basic-bitch-client.js"></script>
 
+  <script src="events.js"></script>
   <script src="index.js"></script>
 
   <!-- now rendering is done, loading interactive scripts-->
 
-  <script src="events.js"></script>
   <script src="io.js"></script>
   <script src="test.js"></script>
   <script src="terminal.js"></script>

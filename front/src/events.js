@@ -727,3 +727,13 @@ const preprocessNewStore = () => {
     start()
   }))
 }
+
+switchToSignup.addEventListener('click',() => {
+  signupElement.style.display = "block"
+  loginElement.style.display = "none"
+})
+
+switchToLogin.addEventListener('click',() => {
+  signupElement.style.display = "none"
+  loginElement.style.display = "block"
+})

@@ -263,8 +263,11 @@ finishStartupThread()
 
 // const ptest = () => {
 //   const t = performance.now()
-//   for (let i = 0; i < 1000000; i++) {
-//
+//   let y = undefined
+//   for (let i = 0; i < 10000000; i++) {
+//     if (y === undefined) y = []
+//     y.push(1)
+//     y = undefined
 //   }
 //   console.log(`took ${performance.now() - t}`)
 // }

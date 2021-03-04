@@ -165,7 +165,7 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
     } else if (match[2]) {
       if (stackTop.className === "page-ref__body") {
         stackTop.parentNode.children[2].appendChild(newTextNode("]]"))
-        refTitles.push(stackTop.innerText)
+        refTitles.push(stackTop.s)
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
@@ -258,6 +258,88 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
       stackTop.children[0].className = stackTop.children[0].className + "-incomplete"
     stackTop.className = stackTop.className + "-incomplete"
     stackTop = stackTop.parentNode
+  }
+  return refTitles
+}
+
+
+const parse = (text) => {
+  const matches = text.matchAll(parseRegex)
+  // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
+
+  let idx = 0
+  let stackTop = { s: "" } // s is string, t is type
+  let stack = [stackTop]
+
+  const refTitles = []
+
+  for (let match of matches) {
+    stackTop.s = stackTop.s + text.substring(idx,match.index)
+    idx = match.index
+
+    if (match[1]) {
+      const pageRefElement = { t: "pr",s: "" }
+      stackTop.s = stackTop.s + "[["
+      stack.push(pageRefElement)
+      stackTop = stack[stack.length - 1]
+    } else if (match[2]) {
+      if (stackTop.t === "pr") {
+        refTitles.push(stackTop.s)
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      }
+      stackTop.t += "]]"
+    } else if (match[3]) {
+      refTitles.push(match[3])
+      stackTop.s = stackTop.s + match[0]
+    } else if (match[11]) {
+      stackTop.s = stackTop.s + match[0]
+      refTitles.push(match[11])
+    } else if (match[4] && false) {
+      const blockId = match[4]
+      const block = store.blox[blockId]
+      if (block) {
+        const blockRefElement = blockRefTemplate.cloneNode(true)
+        blockRefElement.innerText = block.s
+        blockRefElement.dataset.id = blockId
+        stackTop.push(blockRefElement)
+      } else {
+        stackTop.push(newTextNode(match[0]))
+      }
+    } else if (match[5]) {
+      if (stackTop.t === "bold") {
+        stackTop.s = stackTop.s + "**"
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const boldElement = { t: "bold",s: "**" }
+        stack.push(boldElement)
+        stackTop = boldElement
+      }
+    } else if (match[6]) {
+      if (stackTop.t === "highlight") {
+        stackTop.s = stackTop.s + "^^"
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const boldElement = { t: "highlight",s: "^^" }
+        stack.push(boldElement)
+        stackTop = boldElement
+      }
+    } else if (match[7]) {
+      if (stackTop.t === "italic") {
+        stackTop.s = stackTop.s + "__"
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const boldElement = { t: "italic",s: "__" }
+        stack.push(boldElement)
+        stackTop = boldElement
+      }
+    } else {
+      stackTop.s = stackTop.s + match[0]
+    }
+    idx = match.index + match[0].length
   }
   return refTitles
 }

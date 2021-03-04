@@ -11,10 +11,13 @@ let accountsByHash = {}
 let accountsByUsername = {}
 let accountsByEmail = {}
 for (let account of accounts) {
-  accountsByHash[account.passwordHash] = account
-  accountsByEmail[account.public.email] = account
-  accountsByUsername[account.public.username] = account
+  accountsByHash[account.userReadable.passwordHash] = account
+  accountsByEmail[account.userReadable.email] = account
+  accountsByUsername[account.userReadable.username] = account
 }
+
+let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
+// {graphname:{lastCommitId,}}
 
 // todo create under different name and rename because rename is atomic, whereas a concurrent process could crash halfway through writeFile, leaving partial file
 const saveAccounts = () => {
@@ -34,9 +37,18 @@ const debouncedSaveAccounts = () => {
   }
 }
 
-// I had json in body, but that caused timing issues because I want to change end listener. Switched to putting all JSON made for immediate parsing in header
+// I had json in body, but that caused timing issues because I want to change end listener, but couldn't to it fast enough because the end event happens so fast. Switched to putting all JSON made for immediate parsing in header
 http.createServer((req,res) => {
-  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup)(?:\/([a-zA-Z_\-0-9]+))?$/)
+  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
+  if (req.headers["access-control-request-headers"]) {
+    console.log("preflight")
+    res.setHeader('Access-Control-Allow-Origin','*')
+    res.setHeader('Access-Control-Allow-Headers','*')
+    res.setHeader('Access-Control-Allow-Methods','GET, POST')
+    res.writeHead(200)
+    res.end()
+    return
+  }
   if (!match) {
     res.writeHead(404)
     res.write(`invalid request path`)
@@ -48,11 +60,6 @@ http.createServer((req,res) => {
     res.setHeader('Access-Control-Allow-Origin','*')
     res.setHeader('Access-Control-Allow-Headers','*')
     res.setHeader('Access-Control-Allow-Methods','GET, POST')
-    if (req.headers.body === undefined) {
-      res.writeHead(200)
-      res.end()
-      return
-    }
     let accountDetails
     try {
       accountDetails = JSON.parse(req.headers.body)
@@ -97,25 +104,23 @@ http.createServer((req,res) => {
       return
     }
     const storedAccountDetails = {
-      public: {
+      userReadable: {
         email: accountDetails.email,
         username: accountDetails.username,
+        passwordHash: accountDetails.passwordHash,
         readStores: {},
         writeStores: {},
-        settings: {}
+        settings: accountDetails.settings,
       },
-      passwordHash: accountDetails.passwordHash,
     }
     accounts.push(storedAccountDetails)
     accountsByEmail[email] = storedAccountDetails
     accountsByHash[hash] = storedAccountDetails
     accountsByUsername[username] = storedAccountDetails
     debouncedSaveAccounts()
-    res.write(JSON.stringify(storedAccountDetails.public))
+    res.write(JSON.stringify(storedAccountDetails.userReadable))
     res.end()
     // todo verify email
-    // console.log(`account created ${accountDetails}`)
-    // console.log("signup")
     return
   }
   const passwordHash = req.headers.passwordhash
@@ -134,11 +139,17 @@ http.createServer((req,res) => {
   let fileReadStream
   switch (match[1]) {
     case "put":
-      if (userAccount.public.writeStores[match[2]] === undefined) {
+      if (userAccount.userReadable.writeStores[match[2]] === undefined) {
         res.writeHead(403)
         res.end()
         return
       }
+      if (!match[3]) {
+        res.writeHead(400)
+        res.end()
+        return
+      }
+      graphs[match[2]].lastCommitId = match[3]
       writeStream = fs.createWriteStream(`../user-data/blox/${match[2]}.json`)
       req.pipe(writeStream)
       req.on("end",() => {
@@ -154,8 +165,13 @@ http.createServer((req,res) => {
       res.setHeader('Access-Control-Allow-Origin','*')
       res.setHeader('Access-Control-Allow-Headers','*')
       res.setHeader('Access-Control-Allow-Methods','GET,POST')
-      if (userAccount.public.readStores[match[2]] === undefined) {
+      if (userAccount.userReadable.readStores[match[2]] === undefined) {
         res.writeHead(403)
+        res.end()
+        return
+      }
+      if (match[3] && match[3] === graphs[match[2]].lastCommitId) {
+        res.writeHead('alreadyuptodate','true')
         res.end()
         return
       }
@@ -167,17 +183,18 @@ http.createServer((req,res) => {
       res.setHeader('Access-Control-Allow-Origin','*')
       res.setHeader('Access-Control-Allow-Headers','*')
       res.setHeader('Access-Control-Allow-Methods','GET,POST')
-      const existingGraph = fs.existsSync(`../user-data/blox/${match[2]}.json`)
+      const existingGraph = graphs[match[2]]
       // todo make sure a write stream can't create file here
-      if (existingGraph) {
+      if (existingGraph !== undefined) {
         res.writeHead(409)
         res.write("That graph name already taken.")
         return
       }
+      graphs[match[2]] = { lastCommitId: match[3] }
       writeStream = fs.createWriteStream(`../user-data/blox/${match[2]}.json`)
       req.pipe(writeStream)
-      userAccount.public.writeStores[match[2]] = true
-      userAccount.public.readStores[match[2]] = true
+      userAccount.userReadable.writeStores[match[2]] = true
+      userAccount.userReadable.readStores[match[2]] = true
       debouncedSaveAccounts()
       req.on("end",() => {
         res.setHeader('Access-Control-Allow-Origin','*')
@@ -191,7 +208,7 @@ http.createServer((req,res) => {
       res.setHeader('Access-Control-Allow-Origin','*')
       res.setHeader('Access-Control-Allow-Headers','*')
       res.setHeader('Access-Control-Allow-Methods','GET,POST')
-      res.write(JSON.stringify(userAccount.public))
+      res.write(JSON.stringify(userAccount.userReadable))
       res.end()
       // console.log("auth")
       return
@@ -207,30 +224,44 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      if (userAccount.public.readGraphs[settings.graphName] === undefined) {
+      if (userAccount.userReadable.readGraphs[settings.graphName] === undefined) {
         res.writeHead(403)
         res.write("You don't have access to that default graph")
         res.end()
         return
       }
-      userAccount.public.settings = settings
+      userAccount.userReadable.settings = settings
       debouncedSaveAccounts()
       res.writeHead(200)
       res.end()
       return
     case "startup":
-      const publicUserData = userAccount.public
-      res.setHeader('user',JSON.stringify(publicUserData))
-      if (publicUserData.settings.graphName === undefined) {
+      res.setHeader('Access-Control-Allow-Origin','*')
+      res.setHeader('Access-Control-Allow-Headers','*')
+      res.setHeader('Access-Control-Allow-Methods','GET,POST')
+      console.log("startup")
+      if (!match[2]) {
+        res.writeHead(400)
+        res.end()
+        return
+      }
+      const readableUserData = userAccount.userReadable
+      res.setHeader('user',JSON.stringify(readableUserData))
+
+      const graphName = readableUserData.settings.graphName
+      if (match[3] && match[3] === graphs[graphName].lastCommitId) {
+        res.setHeader('alreadyuptodate','true')
         res.end()
         return
       }
       // todo validate this
-      fileReadStream = fs.createReadStream(`../user-data/blox/${publicUserData.settings.graphName}.json`)
+      fileReadStream = fs.createReadStream(`../user-data/blox/${readableUserData.settings.graphName}.json`)
       fileReadStream.pipe(res)
       return
     default:
-      console.log(`what? ${req.url}`)
+      res.writeHead(400)
+      res.write(`waat? ${req.url}`)
+      res.end()
       return
   }
 }).listen(3000)

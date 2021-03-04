@@ -128,19 +128,15 @@ const generateRefs = () => {
   for (let blocId in store.blox) {
     const bloc = store.blox[blocId]
     if (bloc.p) {
-      const frag = document.createDocumentFragment()
-      const pageTitles = renderBlockBody(frag,bloc.s)
-      if (pageTitles.length > 0) {
-        for (let pageTitle of pageTitles) {
-          const pageId = store.titles[pageTitle]
-          if (pageId) {
-            if (!store.refs[pageId]) store.refs[pageId] = []
-            store.refs[pageId].push(blocId)
-            if (!store.forwardRefs[blocId]) store.forwardRefs[blocId] = []
-            store.forwardRefs[blocId].push(pageId)
-          } else {
-            console.log(`no page ${pageTitle}`)
-          }
+      for (let pageTitle of parse(bloc.s)) {
+        const pageId = store.titles[pageTitle]
+        if (pageId) {
+          if (pageId in store.refs) store.refs[pageId].push(blocId)
+          else store.refs[pageId] = [blocId]
+          if (blocId in store.forwardRefs) store.forwardRefs[blocId].push(pageId)
+          else store.forwardRefs[blocId] = [pageId]
+        } else {
+          console.log(`no page ${pageTitle}`)
         }
       }
     } else {

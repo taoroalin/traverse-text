@@ -1,5 +1,4 @@
 // API knowingly does not follow REST spec for CORS simplicity reasons
-const basicBitchServerUrl = "http://localhost:3000"
 
 const saveStoreToBasicBitchServer = async (theStore = store) => {
   const putSentTime = performance.now()
@@ -56,9 +55,10 @@ loginForm.addEventListener("submit",async (event) => {
   const passwordHash = await hashPassword(password,email)
   const response = await fetch(`${basicBitchServerUrl}/auth`,{ method: "POST",headers: { passwordHash: passwordHash } })
   if (response.status === 200) {
-    const responseData = await response.json()
-    console.log(responseData)
+    user = await response.json()
+    console.log(user)
   } else {
+    notifyText("Don't know that username + password.")
   }
 })
 
@@ -76,18 +76,29 @@ signupForm.addEventListener("submit",async (event) => {
   const password = signupPasswordElement.value
   signupPasswordElement.value = ""
   const passwordHash = await hashPassword(password,email)
-  const jsonBody = JSON.stringify({ passwordHash,username,email })
+  const jsonBody = JSON.stringify({ passwordHash,username,email,settings: user.settings })
   console.log(jsonBody)
   const headers = new Headers()
   headers.set('body',jsonBody)
   const response = await fetch(`${basicBitchServerUrl}/signup`,{ method: "POST",headers })
   if (response.status === 200) {
     console.log(response)
+    user = await response.json()
     console.log(`signed up`)
   } else {
-    console.log("errored")
+    const responseText = await response.json()
+    notifyText(responseText)
   }
 })
+
+const addGraph = async () => {
+  const headers = new Headers()
+  headers.set('passwordhash',user.passwordHash)
+  const response = await fetch(`${basicBitchServerUrl}/creategraph/${store.graphName}/${store.lastCommitId}`,{ headers,method: 'POST',body: JSON.stringify(store.blox) })
+  if (!response.ok) {
+    notifyText("failed to add graph")
+  }
+}
 
 // const patternUser = {
 //   username,

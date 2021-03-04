@@ -14,6 +14,11 @@ autocompleteList.dataset.templateName = "autocomplete__suggestion"
 const templateList = document.getElementById("template-list")
 templateList.dataset.templateName = "template__suggestion"
 
+const switchToLogin = document.getElementById("switch-to-login")
+const switchToSignup = document.getElementById("switch-to-signup")
+const signupElement = document.getElementById("signup")
+const loginElement = document.getElementById("login")
+
 const getTemp = (str) => document.getElementById(str).content.firstElementChild
 
 // Templates
