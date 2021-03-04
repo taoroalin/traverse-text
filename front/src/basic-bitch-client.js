@@ -1,3 +1,26 @@
+const basicBitchServerUrl = "http://localhost:3000"
+
+const saveStoreToBasicBitchServer = async (theStore = store) => {
+  const putSentTime = performance.now()
+  const response = await fetch(`${basicBitchServerUrl}/put/${theStore.graphName}`,
+    {
+      method: "PUT",body: JSON.stringify(theStore.blox),
+      headers: { passwordHash: user.passwordHash }
+    })
+  console.log(`save confirmed in ${performance.now() - putSentTime}`)
+}
+
+const getStoreFromBasicBitchServer = async (graphName) => {
+  const getSentTime = performance.now()
+  const response = await fetch(`${basicBitchServerUrl}/get/${graphName}`,
+    { headers: { passwordHash: user.passwordHash } })
+  const blox = await response.json()
+  console.log(`got in ${performance.now() - getSentTime}`)
+  hydrateFromBlox(graphName,blox)
+}
+
+
+
 const middlePepper = "76pCgT0lW6ES9yjt01MeH"
 const beginPepper = "CeoPPOv9rIq6O7YiYlSFX"
 const endPepper = "Rzw1dagomQGpoo2s7iGE3lYL2"

@@ -183,19 +183,4 @@ const storeToBinary = () => {
   return messageBuffer
 }
 
-const basicBitchServerUrl = "http://localhost:3000"
 
-const saveStoreToBasicBitchServer = async (theStore = store) => {
-  const putSentTime = performance.now()
-  const response = await fetch(`${basicBitchServerUrl}/put/${theStore.graphName}`,
-    { method: "PUT",body: JSON.stringify(theStore.blox) })
-  console.log(`save confirmed in ${performance.now() - putSentTime}`)
-}
-
-const getStoreFromBasicBitchServer = async (graphName) => {
-  const getSentTime = performance.now()
-  const response = await fetch(`${basicBitchServerUrl}/get/${graphName}`)
-  const blox = await response.json()
-  console.log(`got in ${performance.now() - getSentTime}`)
-  hydrateFromBlox(graphName,blox)
-}
