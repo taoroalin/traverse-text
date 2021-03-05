@@ -263,81 +263,77 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
 }
 
 
+// 1             2              3   4         5         6
+// page-ref-open page-ref-close tag block-ref attribute literal
+const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(^[\/a-zA-Z0-9_-]+)::|`([^`]+)`/g
+
 const parse = (text) => {
-  const matches = text.matchAll(parseRegex)
+  const matches = text.matchAll(parseRegexJustLinks)
   // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
   let idx = 0
-  let stackTop = { s: "" } // s is string, t is type
-  let stack = [stackTop]
+  let stackTop = undefined // s is string, t is type
+  let stack = []
 
   const refTitles = []
 
   for (let match of matches) {
-    stackTop.s = stackTop.s + text.substring(idx,match.index)
-    idx = match.index
-
-    if (match[1]) {
-      const pageRefElement = { t: "pr",s: "" }
-      stackTop.s = stackTop.s + "[["
-      stack.push(pageRefElement)
-      stackTop = stack[stack.length - 1]
-    } else if (match[2]) {
-      if (stackTop.t === "pr") {
-        refTitles.push(stackTop.s)
-        stack.pop()
+    if (stack.length === 0) {
+      if (match[1]) {
+        const pageRefElement = { t: "pr",s: "" }
+        stack.push(pageRefElement)
         stackTop = stack[stack.length - 1]
-      }
-      stackTop.t += "]]"
-    } else if (match[3]) {
-      refTitles.push(match[3])
-      stackTop.s = stackTop.s + match[0]
-    } else if (match[11]) {
-      stackTop.s = stackTop.s + match[0]
-      refTitles.push(match[11])
-    } else if (match[4] && false) {
-      const blockId = match[4]
-      const block = store.blox[blockId]
-      if (block) {
-        const blockRefElement = blockRefTemplate.cloneNode(true)
-        blockRefElement.innerText = block.s
-        blockRefElement.dataset.id = blockId
-        stackTop.push(blockRefElement)
-      } else {
-        stackTop.push(newTextNode(match[0]))
-      }
-    } else if (match[5]) {
-      if (stackTop.t === "bold") {
-        stackTop.s = stackTop.s + "**"
-        stack.pop()
-        stackTop = stack[stack.length - 1]
-      } else {
-        const boldElement = { t: "bold",s: "**" }
-        stack.push(boldElement)
-        stackTop = boldElement
-      }
-    } else if (match[6]) {
-      if (stackTop.t === "highlight") {
-        stackTop.s = stackTop.s + "^^"
-        stack.pop()
-        stackTop = stack[stack.length - 1]
-      } else {
-        const boldElement = { t: "highlight",s: "^^" }
-        stack.push(boldElement)
-        stackTop = boldElement
-      }
-    } else if (match[7]) {
-      if (stackTop.t === "italic") {
-        stackTop.s = stackTop.s + "__"
-        stack.pop()
-        stackTop = stack[stack.length - 1]
-      } else {
-        const boldElement = { t: "italic",s: "__" }
-        stack.push(boldElement)
-        stackTop = boldElement
+      } else if (match[3]) {
+        refTitles.push(match[3])
+      } else if (match[5]) {
+        refTitles.push(match[5])
+      } else if (match[4] && false) {
+        const blockId = match[4]
+        const block = store.blox[blockId]
+        if (block) {
+          const blockRefElement = blockRefTemplate.cloneNode(true)
+          blockRefElement.innerText = block.s
+          blockRefElement.dataset.id = blockId
+          stackTop.push(blockRefElement)
+        } else {
+          stackTop.push(newTextNode(match[0]))
+        }
       }
     } else {
-      stackTop.s = stackTop.s + match[0]
+      stackTop.s = stackTop.s + text.substring(idx,match.index)
+      idx = match.index
+      if (match[1]) {
+        const pageRefElement = { t: "pr",s: "" }
+        stackTop.s = stackTop.s + "[["
+        stack.push(pageRefElement)
+        stackTop = stack[stack.length - 1]
+      } else if (match[2]) {
+        if (stackTop.t === "pr") {
+          refTitles.push(stackTop.s)
+          stack.pop()
+          stackTop = stack[stack.length - 1]
+        }
+        if (stackTop !== undefined) stackTop.s = stackTop.s + "]]"
+      } else if (match[3]) {
+        refTitles.push(match[3])
+        stackTop.s = stackTop.s + match[0]
+      } else if (match[5]) {
+        stackTop.s = stackTop.s + match[0]
+        refTitles.push(match[5])
+      } else if (match[4] && false) {
+        const blockId = match[4]
+        const block = store.blox[blockId]
+        if (block) {
+          const blockRefElement = blockRefTemplate.cloneNode(true)
+          blockRefElement.innerText = block.s
+          blockRefElement.dataset.id = blockId
+          stackTop.push(blockRefElement)
+        } else {
+          stackTop.push(newTextNode(match[0]))
+        }
+      } else {
+        stackTop.s = stackTop.s + match[0]
+      }
     }
     idx = match.index + match[0].length
   }

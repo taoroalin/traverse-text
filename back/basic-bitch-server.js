@@ -1,7 +1,7 @@
 const http = require('http')
 const fs = require('fs')
 const { performance } = require('perf_hooks')
-
+console.log([1,2,3])
 // todo use session keys instead of holding onto password hash everywhere for more security
 
 const hashRegex = /^[a-zA-Z0-9_\-]{80,90}$/
