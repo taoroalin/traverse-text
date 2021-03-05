@@ -1,6 +1,127 @@
+<script>
+  const basicBitchServerUrl = "http://localhost:3000"
+
+  let user
+  let userText = localStorage.getItem("user")
+  let usingLocalStore = true
+  if (userText) {
+    user = JSON.parse(userText)
+    const headers = new Headers()
+    headers.set('passwordhash',user.passwordHash)
+    let reqUrl = `${basicBitchServerUrl}/startup/${user.settings.graphName}`
+    if (user.settings.lastCommitId) reqUrl += user.settings.lastCommitId
+    fetch(reqUrl,{ method: 'POST',headers: headers }).then(async (res) => {
+      if (res.headers.alreadyuptodate !== undefined) {
+        console.log(`already up to date`)
+        return
+      }
+      if (res.status !== 200) {
+        console.log(`STORE NOT ON SERVER`)
+        return
+      }
+      usingLocalStore = false
+      res.json().then(blox => {
+        console.log('got blox')
+        hydrateFromBlox(user.settings.graphName,blox)
+        setTimeout(generateInnerOuterRefs,160)
+        start() // todo catch code loading after this
+        debouncedSaveStore()
+      })
+    })
+  } else {
+    user = { settings: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
+  }
+
+  let store = null
+  let idb = null
+  const r = indexedDB.open("microroam",5)// I had this as line 1, saves ~5ms start time, don't now cause I'm lazy
+
+  r.onsuccess = (e1) => {
+    console.log("normal success")
+    idb = e1.target.result
+    if (usingLocalStore === true) {
+      try {
+        idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
+          if (usingLocalStore === true) {
+            if (e.target.result) {
+              store = JSON.parse(e.target.result.store)
+              finishStartupThread()
+            } else {
+              console.log("adding default graph")
+              fetch("./default-store.json").then(text => {
+                if (usingLocalStore) {
+                  text.json().then(json => {
+                    if (usingLocalStore === true) {
+                      store = json
+                      user.graphName = json.graphName
+                      startFn = () => gotoNoHistory("pageTitle","Welcome to Micro Roam")
+                    }
+                    finishStartupThread()
+                  })
+                }
+              })
+            }
+          }
+        }
+      } catch (e) {
+
+      }
+    }
+  }
+  r.onupgradeneeded = (event) => {
+    console.log(
+      "upgradeneeded`"
+    )
+    const db = r.result
+    const stores = Array.from(db.objectStoreNames)
+    if (!stores.includes("stores")) {
+      db.createObjectStore("stores",{ keyPath: "graphName" })
+    } else {
+      console.log(event)
+      console.log(db)
+
+      r.onsuccess = () => {
+        console.log("new success")
+        idb = event.target.result
+        const storeStore = db.transaction(["stores"],"readonly").objectStore("stores")
+        storeStore.get(user.graphName).onsuccess = (e) => {
+          store = e.target.result.store
+          const roamJSON = oldStoreToRoamJSON[db.version](store)
+          roamJsonToStore(user.graphName,roamJSON)
+          saveStore()
+          finishStartupThread()
+        }
+      }
+    }
+  }
+  r.onerror = (e) => {
+    console.log("error")
+    console.log(e)
+    alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
+      You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
+  }
+
+
+  let startFn = () => gotoNoHistory("dailyNotes")
+
+  let startupThreads = 2
+  const finishStartupThread = () => {
+    if (startupThreads <= 1)
+      start()
+    startupThreads--
+  }
+
+  const start = () => {
+    user.graphName = store.graphName
+    saveUser()
+    startFn()
+    debouncedSaveStore()
+  }
+</script>
+
 <body class="dark">
   <div id="app">
-    <div id="top-bar" style="margin-top:0px">
+    <div id="top-bar" style="margin-top:-46px">
       <a id="report-issue-button" target="_blank" href="mailto:taoroalin@gmail.com?subject=You Made Micro Roam Wrong"
         tabindex="-1">
         Report Issue
@@ -24,7 +145,20 @@
       </a>
     </div>
 
-    <div id="top-bar-hidden-hitbox" style="position:fixed;height:20px;width:100%"></div>
+    <div id="top-bar-hidden-hitbox" style="position:fixed;height:20px;width:100%;display:none;"></div>
+
+    <script>
+      document.body.className = user.settings.theme
+
+      const topBar = document.getElementById("top-bar")
+      const topBarHiddenHitbox = document.getElementById("top-bar-hidden-hitbox")
+
+      if (user.settings.topBar === 'visible') {
+        topBar.style.marginTop = "0px"
+        topBarHiddenHitbox.style.display = "none"
+      }
+      setTimeout(() => topBar.className = "top-bar-transition",200)
+    </script>
 
     <div id="terminal" contenteditable="true" style="display:none"></div>
 
@@ -34,7 +168,6 @@
       </div>
     </div>
 
-    <script src="startup.js"></script>
 
     <div id="autocomplete-list" style="display:none"></div>
     <!-- inline styles on this site are all edited directly by js -->
@@ -199,11 +332,11 @@
   </template>
 
   <!-- <script src="diff.js"></script> -->
+  <script src="declarations.js"></script>
   <script src="utils.js"></script>
   <script src="commands.js"></script>
   <script src="store.js"></script>
 
-  <script src="dom-decarations.js"></script>
   <script src="render.js"></script>
 
   <script src="basic-bitch-client.js"></script>

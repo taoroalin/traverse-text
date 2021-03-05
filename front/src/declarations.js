@@ -1,3 +1,25 @@
+let editingTemplateExpander = null
+
+let editingLink = null
+let editingTitle = null
+let focusNode = null
+let focusOffset = null
+
+let focusBlock = null
+
+let focusSuggestion = null
+let focusSearchResult = null
+
+let sessionState = { pageFrame: "dailyNotes",focusId: null,scroll: 0,position: null }
+
+let dragSelectStartBlock = null
+let dragSelect = null
+
+let clipboardData = null
+
+const SEARCH_RESULT_LENGTH = 12
+
+
 // Singleton elements
 const pageFrame = document.getElementById("page-frame")
 const pageFrameOuter = document.getElementById("page-frame-outer")

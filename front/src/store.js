@@ -121,27 +121,22 @@ const roamJsonToStore = (graphName,text) => {
   return store
 }
 
-
 const generateRefs = () => {
   const stime = performance.now()
   store.refs = {}
   store.forwardRefs = {}
   for (let blocId in store.blox) {
     const bloc = store.blox[blocId]
-    if (bloc.p) {
-      for (let pageTitle of parse(bloc.s)) {
-        const pageId = store.titles[pageTitle]
-        if (pageId) {
-          if (pageId in store.refs) store.refs[pageId].push(blocId)
-          else store.refs[pageId] = [blocId]
-          if (blocId in store.forwardRefs) store.forwardRefs[blocId].push(pageId)
-          else store.forwardRefs[blocId] = [pageId]
-        } else {
-          console.log(`no page ${pageTitle}`)
-        }
+    for (let pageTitle of parse(bloc.s)) {
+      const pageId = store.titles[pageTitle]
+      if (pageId) {
+        if (pageId in store.refs) store.refs[pageId].push(blocId)
+        else store.refs[pageId] = [blocId]
+        if (blocId in store.forwardRefs) store.forwardRefs[blocId].push(pageId)
+        else store.forwardRefs[blocId] = [pageId]
+      } else {
+        console.log(`no page ${pageTitle}`)
       }
-    } else {
-      store.titles[bloc.s] = blocId
     }
   }
   console.log(`gen refs took ${performance.now() - stime}`)
@@ -187,6 +182,11 @@ const generateOuterRefs = () => {
     fn(blocId)
   }
   console.log(`outerrefs took ${performance.now() - stime}`)
+}
+
+const generateInnerOuterRefs = () => {
+  generateInnerRefs()
+  generateOuterRefs()
 }
 
 const mergeStore = (otherStore) => {
@@ -349,8 +349,6 @@ const hydrateFromBlox = (graphName,blox) => {
     if (bloc.p === undefined) store.titles[bloc.s] = id
   }
   generateRefs()
-  generateInnerRefs()
-  generateOuterRefs()
 }
 
 const storeToRoamJSON = (store) => {

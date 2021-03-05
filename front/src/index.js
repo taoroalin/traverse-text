@@ -257,6 +257,22 @@ const logError = (message,url,lineNumber,columnNumber,error) => {
 window.onerror = logError
 
 
+const showTopBar = () => {
+  topBar.style.marginTop = "0px"
+  topBarHiddenHitbox.style.display = "none"
+}
+const hideTopBar = () => {
+  topBar.style.marginTop = "-46px"
+  topBarHiddenHitbox.style.display = "block"
+}
+const saveUser = () => {
+  document.body.className = user.settings.theme
+  if (user.topBar === "visible") showTopBar()
+  else hideTopBar()
+  localStorage.setItem("user",JSON.stringify(user))
+}
+
+
 // Finally starting the program after everything's compiled
 finishStartupThread()
 

@@ -230,7 +230,7 @@ http.createServer((req,res) => {
       res.setHeader('user',JSON.stringify(readableUserData))
 
       const graphName = readableUserData.settings.graphName
-      if (fs.existsSync(`../user-data/blox/${match[2]}`) === false) {
+      if (fs.existsSync(`../user-data/blox/${match[2]}.json`) === false) {
         res.writeHead(404)
         res.end()
         return

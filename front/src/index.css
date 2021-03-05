@@ -133,6 +133,9 @@ a:visited {
   flex-direction: row;
   align-content: space-between;
   background-color: var(--background);
+}
+
+.top-bar-transition{
   transition: margin-top 0.1s;
 }
 

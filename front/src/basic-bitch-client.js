@@ -22,8 +22,14 @@ const getStoreFromBasicBitchServer = async (graphName) => {
 }
 
 const saveSettingsToBasicBitchServer = async () => {
+  const headers = new Headers()
+  headers.set('passwordhash',user.passwordHash)
+  headers.set('body',JSON.stringify(user.settings))
   const response = await fetch(`${basicBitchServerUrl}/settings`,
-    { headers: { user: JSON.stringify(settings) } })
+    { headers })
+  if (response.status !== 200) {
+    console.log("failed to save settings")
+  }
 }
 
 
@@ -101,16 +107,3 @@ const addGraph = async () => {
     notifyText("failed to add graph")
   }
 }
-
-// const patternUser = {
-//   username,
-//   email,
-//   passwordHash,
-//   graphName,
-//   followingGraphNames,
-//   ownedGraphNames,
-//   logging,
-//   spellcheck,
-//   theme,
-//   topBar,
-// }

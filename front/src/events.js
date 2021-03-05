@@ -241,10 +241,10 @@ const globalHotkeys = {
   "toggle color theme": {
     key: "m",control: true,fn: () => {
       if (document.body.className === "light") {
-        user.theme = "dark"
+        user.settings.theme = "dark"
         saveUser()
       } else {
-        user.theme = "light"
+        user.settings.theme = "light"
         saveUser()
       }
     }
