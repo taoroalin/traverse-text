@@ -78,7 +78,9 @@ const doEdit = (...edit) => {
 }
 
 const commit = () => {
-  edits.push({ id: newUUID(),t: Date.now(),edits: activeEdits })
+  const newId = newUUID()
+  edits.push({ id: newId,t: Date.now(),edits: activeEdits })
+  store.lastCommitId = newId
   activeEdits = []
   debouncedSaveStore()
 }
@@ -88,6 +90,9 @@ const commitEdit = (...edit) => {
 }
 
 const saveStore = () => {
+  const blox = store.blox
+  const bloxText = JSON.stringify(blox)
+  saveStoreToBasicBitchServer(bloxText)
   const transaction = idb.transaction(["stores"],"readwrite")
   const storeStore = transaction.objectStore("stores")
   const str = JSON.stringify(store)

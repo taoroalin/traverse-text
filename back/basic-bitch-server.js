@@ -1,7 +1,6 @@
 const http = require('http')
 const fs = require('fs')
 const { performance } = require('perf_hooks')
-console.log([1,2,3])
 // todo use session keys instead of holding onto password hash everywhere for more security
 
 const hashRegex = /^[a-zA-Z0-9_\-]{80,90}$/
@@ -40,16 +39,16 @@ const debouncedSaveAccounts = () => {
 // I had json in body, but that caused timing issues because I want to change end listener, but couldn't to it fast enough because the end event happens so fast. Switched to putting all JSON made for immediate parsing in header
 http.createServer((req,res) => {
   const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
-  if (req.headers["access-control-request-headers"]) {
+  res.setHeader('Access-Control-Allow-Origin','*')
+  res.setHeader('Access-Control-Allow-Headers','*')
+  res.setHeader('Access-Control-Allow-Methods','GET, POST')
+  if (req.headers["access-control-request-headers"] !== undefined) {
     console.log("preflight")
-    res.setHeader('Access-Control-Allow-Origin','*')
-    res.setHeader('Access-Control-Allow-Headers','*')
-    res.setHeader('Access-Control-Allow-Methods','GET, POST')
     res.writeHead(200)
     res.end()
     return
   }
-  if (!match) {
+  if (match === null) {
     res.writeHead(404)
     res.write(`invalid request path`)
     res.end()
@@ -57,18 +56,16 @@ http.createServer((req,res) => {
   }
   if (match[1] === "signup") {
     console.log("signup")
-    res.setHeader('Access-Control-Allow-Origin','*')
-    res.setHeader('Access-Control-Allow-Headers','*')
-    res.setHeader('Access-Control-Allow-Methods','GET, POST')
     let accountDetails
+    const bdy = req.headers.body
     try {
-      accountDetails = JSON.parse(req.headers.body)
+      accountDetails = JSON.parse(bdy)
     } catch (e) {
-      console.log(req.headers.body)
+      console.log(bdy)
       res.writeHead(401)
-      res.write(`invalid json ${req.headers.body}`)
+      res.write(`invalid json ${bdy}`)
       res.end()
-      console.log(`bad syntax ${req.headers.body}`)
+      console.log(`bad syntax ${bdy}`)
       return
     }
     if (typeof accountDetails !== "object") {
@@ -77,7 +74,7 @@ http.createServer((req,res) => {
       return
     }
     const hash = accountDetails.passwordHash
-    if (hash === undefined || accountsByHash[hash] !== undefined || (!hash.match(hashRegex))) {
+    if (hash === undefined || accountsByHash[hash] !== undefined || hash.match(hashRegex) === null) {
       res.writeHead(401)
       res.write("Invalid password hash")
       res.end()
@@ -96,7 +93,7 @@ http.createServer((req,res) => {
     if (username === undefined ||
       accountsByUsername[username] !== undefined ||
       (typeof username !== "string") ||
-      !username.match(/^[a-zA-Z0-9_-]{3,50}$/)) {
+      username.match(/^[a-zA-Z0-9_-]{3,50}$/) === null) {
       res.writeHead(401)
       res.write(`Invalid username ${username}`)
       res.end()
@@ -124,7 +121,7 @@ http.createServer((req,res) => {
     return
   }
   const passwordHash = req.headers.passwordhash
-  if (passwordHash === undefined || !(typeof passwordHash === "string") || !passwordHash.match(hashRegex)) {
+  if (passwordHash === undefined || !(typeof passwordHash === "string") || passwordHash.match(hashRegex) === null) {
     res.writeHead(401)
     res.end()
     return
@@ -139,12 +136,17 @@ http.createServer((req,res) => {
   let fileReadStream
   switch (match[1]) {
     case "put":
+      if (match[2] === undefined) {
+        res.writeHead(400)
+        res.end()
+        return
+      }
       if (userAccount.userReadable.writeStores[match[2]] === undefined) {
         res.writeHead(403)
         res.end()
         return
       }
-      if (!match[3]) {
+      if (match[3] !== undefined && graphs[match[2]].lastCommitId === match[3]) {
         res.writeHead(400)
         res.end()
         return
@@ -153,18 +155,12 @@ http.createServer((req,res) => {
       writeStream = fs.createWriteStream(`../user-data/blox/${match[2]}.json`)
       req.pipe(writeStream)
       req.on("end",() => {
-        res.setHeader('Access-Control-Allow-Origin','*')
-        res.setHeader('Access-Control-Allow-Headers','*')
-        res.setHeader('Access-Control-Allow-Methods','GET,POST')
         res.writeHead(200)
         res.end()
       })
       // console.log(`wrote ${match[2]}`)
       return
     case "get":
-      res.setHeader('Access-Control-Allow-Origin','*')
-      res.setHeader('Access-Control-Allow-Headers','*')
-      res.setHeader('Access-Control-Allow-Methods','GET,POST')
       if (userAccount.userReadable.readStores[match[2]] === undefined) {
         res.writeHead(403)
         res.end()
@@ -180,9 +176,6 @@ http.createServer((req,res) => {
       // console.log(`get ${match[2]}`)
       return
     case "creategraph":
-      res.setHeader('Access-Control-Allow-Origin','*')
-      res.setHeader('Access-Control-Allow-Headers','*')
-      res.setHeader('Access-Control-Allow-Methods','GET,POST')
       const existingGraph = graphs[match[2]]
       // todo make sure a write stream can't create file here
       if (existingGraph !== undefined) {
@@ -197,25 +190,16 @@ http.createServer((req,res) => {
       userAccount.userReadable.readStores[match[2]] = true
       debouncedSaveAccounts()
       req.on("end",() => {
-        res.setHeader('Access-Control-Allow-Origin','*')
-        res.setHeader('Access-Control-Allow-Headers','*')
-        res.setHeader('Access-Control-Allow-Methods','GET,POST')
         res.writeHead(200)
         res.end()
       })
       return
     case "auth":
-      res.setHeader('Access-Control-Allow-Origin','*')
-      res.setHeader('Access-Control-Allow-Headers','*')
-      res.setHeader('Access-Control-Allow-Methods','GET,POST')
       res.write(JSON.stringify(userAccount.userReadable))
       res.end()
       // console.log("auth")
       return
     case "settings":
-      res.setHeader('Access-Control-Allow-Origin','*')
-      res.setHeader('Access-Control-Allow-Headers','*')
-      res.setHeader('Access-Control-Allow-Methods','GET,POST')
       let settings
       try {
         settings = JSON.parse(req.headers.body)
@@ -236,11 +220,8 @@ http.createServer((req,res) => {
       res.end()
       return
     case "startup":
-      res.setHeader('Access-Control-Allow-Origin','*')
-      res.setHeader('Access-Control-Allow-Headers','*')
-      res.setHeader('Access-Control-Allow-Methods','GET,POST')
       console.log("startup")
-      if (!match[2]) {
+      if (match[2] === undefined) {
         res.writeHead(400)
         res.end()
         return
@@ -249,7 +230,12 @@ http.createServer((req,res) => {
       res.setHeader('user',JSON.stringify(readableUserData))
 
       const graphName = readableUserData.settings.graphName
-      if (match[3] && match[3] === graphs[graphName].lastCommitId) {
+      if (fs.existsSync(`../user-data/blox/${match[2]}`) === false) {
+        res.writeHead(404)
+        res.end()
+        return
+      }
+      if (match[3] !== undefined && match[3] === graphs[graphName].lastCommitId) {
         res.setHeader('alreadyuptodate','true')
         res.end()
         return

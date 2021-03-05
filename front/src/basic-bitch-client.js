@@ -1,11 +1,13 @@
 // API knowingly does not follow REST spec for CORS simplicity reasons
 
-const saveStoreToBasicBitchServer = async (theStore = store) => {
+const saveStoreToBasicBitchServer = async (blox) => {
   const putSentTime = performance.now()
-  const response = await fetch(`${basicBitchServerUrl}/put/${theStore.graphName}`,
+  const headers = new Headers()
+  headers.set('passwordhash',user.passwordHash)
+  const response = await fetch(`${basicBitchServerUrl}/put/${store.graphName}`,
     {
-      method: "POST",body: JSON.stringify(theStore.blox),
-      headers: { passwordHash: user.passwordHash }
+      method: "POST",body: blox,
+      headers
     })
   console.log(`save confirmed in ${performance.now() - putSentTime}`)
 }

@@ -14,6 +14,10 @@ if (userText) {
       console.log(`already up to date`)
       return
     }
+    if (res.status !== 200) {
+      console.log(`STORE NOT ON SERVER`)
+      return
+    }
     startupThreads += 1
     usingLocalStore = false
     res.json().then(blox => {
@@ -56,26 +60,29 @@ saveUser()
 r.onsuccess = (e1) => {
   console.log("normal success")
   idb = e1.target.result
-  try {
-
-    idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
-      if (e.target.result) {
-        store = JSON.parse(e.target.result.store)
-        finishStartupThread()
-      } else {
-        console.log("adding default graph")
-        fetch("./default-store.json").then(text => text.json().then(json => {
-          if (usingLocalStore === true) {
-            store = json
-            user.graphName = json.graphName
-            startFn = () => gotoNoHistory("pageTitle","Welcome to Micro Roam")
+  if (usingLocalStore === true) {
+    try {
+      idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
+        if (usingLocalStore === true) {
+          if (e.target.result) {
+            store = JSON.parse(e.target.result.store)
+            finishStartupThread()
+          } else {
+            console.log("adding default graph")
+            fetch("./default-store.json").then(text => text.json().then(json => {
+              if (usingLocalStore === true) {
+                store = json
+                user.graphName = json.graphName
+                startFn = () => gotoNoHistory("pageTitle","Welcome to Micro Roam")
+              }
+              finishStartupThread()
+            }))
           }
-          finishStartupThread()
-        }))
+        }
       }
-    }
-  } catch (e) {
+    } catch (e) {
 
+    }
   }
 }
 r.onupgradeneeded = (event) => {

@@ -127,9 +127,9 @@ const notifyText = (text,duration) => {
   },dur + 300)
 }
 
-// 1             2              3   4         5    6         7      8    9       10                11
-// page-ref-open page-ref-close tag block-ref bold highlight italic link literal template-expander attribute
-const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::/g
+// 1             2              3   4         5    6         7      8    9       10                11        12
+// page-ref-open page-ref-close tag block-ref bold highlight italic link literal template-expander attribute code-block
+const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)/g
 
 const renderBlockBody = (parent,text,disableSpace = false) => {
   if (!disableSpace) {
@@ -243,6 +243,18 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
       const attributeElement = attributeTemplate.cloneNode(true)
       attributeElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(attributeElement)
+    } else if (match[12]) {
+      if (stackTop.className === "code-block") {
+        stackTop.appendChild(newTextNode(match[0]))
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const codeBlockElement = codeBlockTemplate.cloneNode(true)
+        codeBlockElement.appendChild(newTextNode(match[0]))
+        stackTop.appendChild(codeBlockElement)
+        stack.push(codeBlockElement)
+        stackTop = codeBlockElement
+      }
     }
     idx = match.index + match[0].length
   }
@@ -263,9 +275,9 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
 }
 
 
-// 1             2              3   4         5         6
-// page-ref-open page-ref-close tag block-ref attribute literal
-const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(^[\/a-zA-Z0-9_-]+)::|`([^`]+)`/g
+// 1             2              3   4         5         6       7
+// page-ref-open page-ref-close tag block-ref attribute literal code-block
+const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(^[\/a-zA-Z0-9_-]+)::|`([^`]+)`|```/g
 
 const parse = (text) => {
   const matches = text.matchAll(parseRegexJustLinks)
@@ -278,7 +290,7 @@ const parse = (text) => {
   const refTitles = []
 
   for (let match of matches) {
-    if (stack.length === 0) {
+    if (stack.length === 0 || stackTop.t === "cb") {
       if (match[1]) {
         const pageRefElement = { t: "pr",s: "" }
         stack.push(pageRefElement)
@@ -297,6 +309,14 @@ const parse = (text) => {
           stackTop.push(blockRefElement)
         } else {
           stackTop.push(newTextNode(match[0]))
+        }
+      } else if (match[7]) {
+        if (stackTop && stackTop.t === "cb") {
+          stack.pop()
+        } else {
+          const codeBlockElement = { t: 'cb',s: "" }
+          stack.push(codeBlockElement)
+          stackTop = stack[stack.length - 1]
         }
       }
     } else {
@@ -330,6 +350,14 @@ const parse = (text) => {
           stackTop.push(blockRefElement)
         } else {
           stackTop.push(newTextNode(match[0]))
+        }
+      } else if (match[7]) {
+        if (stackTop && stackTop.t === "cb") {
+          stack.pop()
+        } else {
+          const codeBlockElement = { t: 'cb',s: "" }
+          stack.push(codeBlockElement)
+          stackTop = stack[stack.length - 1]
         }
       } else {
         stackTop.s = stackTop.s + match[0]

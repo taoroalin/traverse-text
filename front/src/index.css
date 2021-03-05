@@ -431,6 +431,12 @@ a:visited {
   font-size: 1.15em;
 }
 
+.code-block {
+  font-family: "Inconsolata";
+  font-size: 1.15em;
+  /* display: block; */
+}
+
 .attribute {
   font-weight: bold;
 }

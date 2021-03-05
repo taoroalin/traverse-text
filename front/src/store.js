@@ -7,7 +7,7 @@ const blankStore = () => ({
   outerRefs: {},
   roamProps: {},
   ownerRoamId: undefined,
-  graphName: undefined
+  graphName: undefined,
 })
 
 const bloxProps = [
@@ -112,7 +112,8 @@ const roamJsonToStore = (graphName,text) => {
     }
   }
 
-  store = generateRefs()
+  generateRefs()
+  store.lastCommitId = "MYVERYFIRSTCOMMITEVER"
 
   console.log(`roamJsonToStore took ${performance.now() - stime}`)
   console.log(store)
