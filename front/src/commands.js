@@ -81,8 +81,10 @@ const commit = () => {
   const newId = newUUID()
   edits.push({ id: newId,t: Date.now(),edits: activeEdits })
   store.lastCommitId = newId
+  user.settings.lastCommitId = newId
   activeEdits = []
   debouncedSaveStore()
+  saveUser()
 }
 const commitEdit = (...edit) => {
   doEdit(...edit)

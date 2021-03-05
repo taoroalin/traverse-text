@@ -289,8 +289,8 @@ a:visited {
 }
 
 .page__title {
-  font-size: 36px;
-  margin: 40px 0 20px 0;
+  font-size: 32px;
+  margin: 35px 0 20px 0;
 }
 
 .page__body,
@@ -310,7 +310,7 @@ a:visited {
 
 .page-break {
   height: 0px;
-  margin: 60px 25px;
+  margin: 50px 25px;
   border: 1px solid var(--break);
   border-width: 1px 0 0 0;
 }

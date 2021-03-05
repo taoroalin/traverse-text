@@ -8,10 +8,10 @@
     user = JSON.parse(userText)
     const headers = new Headers()
     headers.set('passwordhash',user.passwordHash)
+    if (user.settings.lastCommitId) headers.set('lastCommitId',user.settings.lastCommitId)
     let reqUrl = `${basicBitchServerUrl}/startup/${user.settings.graphName}`
-    if (user.settings.lastCommitId) reqUrl += user.settings.lastCommitId
     fetch(reqUrl,{ method: 'POST',headers: headers }).then(async (res) => {
-      if (res.headers.alreadyuptodate !== undefined) {
+      if (res.status === 304) {
         console.log(`already up to date`)
         return
       }

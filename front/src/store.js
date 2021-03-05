@@ -114,6 +114,7 @@ const roamJsonToStore = (graphName,text) => {
 
   generateRefs()
   store.lastCommitId = "MYVERYFIRSTCOMMITEVER"
+  user.settings.lastCommitId = store.lastCommitId
 
   console.log(`roamJsonToStore took ${performance.now() - stime}`)
   console.log(store)

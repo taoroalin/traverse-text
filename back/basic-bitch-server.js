@@ -16,7 +16,26 @@ for (let account of accounts) {
 }
 
 let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
-// {graphname:{lastCommitId,}}
+// {graphname:{lastCommitId}}
+
+let saveGraphsTimeout = null
+const saveGraphs = () => {
+  fs.writeFile("../user-data/graphs.json",JSON.stringify(graphs),(err) => {
+    if (err !== null) {
+      console.log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
+      return
+    }
+  })
+  saveGraphsTimeout = null
+}
+
+const debouncedSaveGraphs = () => {
+  if (saveGraphsTimeout === null) {
+    saveGraphsTimeout = setTimeout(saveGraphs,50)
+  }
+}
+
+
 
 // todo create under different name and rename because rename is atomic, whereas a concurrent process could crash halfway through writeFile, leaving partial file
 const saveAccounts = () => {
@@ -41,6 +60,7 @@ http.createServer((req,res) => {
   const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
   res.setHeader('Access-Control-Allow-Origin','*')
   res.setHeader('Access-Control-Allow-Headers','*')
+  res.setHeader('Access-Control-Expose-Headers','*')
   res.setHeader('Access-Control-Allow-Methods','GET, POST')
   if (req.headers["access-control-request-headers"] !== undefined) {
     console.log("preflight")
@@ -146,12 +166,13 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      if (match[3] !== undefined && graphs[match[2]].lastCommitId === match[3]) {
-        res.writeHead(400)
+      if (req.headers.lastcommitid !== undefined && graphs[match[2]].lastCommitId === req.headers.lastcommitid) {
+        res.writeHead(304)
         res.end()
         return
       }
-      graphs[match[2]].lastCommitId = match[3]
+      graphs[match[2]].lastCommitId = req.headers.lastcommitid
+      debouncedSaveGraphs()
       writeStream = fs.createWriteStream(`../user-data/blox/${match[2]}.json`)
       req.pipe(writeStream)
       req.on("end",() => {
@@ -167,7 +188,7 @@ http.createServer((req,res) => {
         return
       }
       if (match[3] && match[3] === graphs[match[2]].lastCommitId) {
-        res.writeHead('alreadyuptodate','true')
+        res.writeHead(304)
         res.end()
         return
       }
@@ -189,6 +210,7 @@ http.createServer((req,res) => {
       userAccount.userReadable.writeStores[match[2]] = true
       userAccount.userReadable.readStores[match[2]] = true
       debouncedSaveAccounts()
+      debouncedSaveGraphs()
       req.on("end",() => {
         res.writeHead(200)
         res.end()
@@ -235,8 +257,8 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      if (match[3] !== undefined && match[3] === graphs[graphName].lastCommitId) {
-        res.setHeader('alreadyuptodate','true')
+      if (req.headers.lastcommitid !== undefined && req.headers.lastcommitid === graphs[graphName].lastCommitId) {
+        res.writeHead(304)
         res.end()
         return
       }
