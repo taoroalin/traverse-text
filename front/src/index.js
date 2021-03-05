@@ -274,7 +274,8 @@ const saveUser = () => {
 
 
 // Finally starting the program after everything's compiled
-finishStartupThread()
+if (dataLoaded) start()
+scriptsLoaded = true
 
 
 // const ptest = () => {

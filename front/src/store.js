@@ -121,22 +121,95 @@ const roamJsonToStore = (graphName,text) => {
   return store
 }
 
+// 1             2              3   4         5         6       7
+// page-ref-open page-ref-close tag block-ref attribute literal code-block
+const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(^[\/a-zA-Z0-9_-]+)::|`([^`]+)`|```/g
+
 const generateRefs = () => {
   const stime = performance.now()
   store.refs = {}
   store.forwardRefs = {}
   for (let blocId in store.blox) {
     const bloc = store.blox[blocId]
-    for (let pageTitle of parse(bloc.s)) {
-      const pageId = store.titles[pageTitle]
-      if (pageId) {
-        if (pageId in store.refs) store.refs[pageId].push(blocId)
-        else store.refs[pageId] = [blocId]
-        if (blocId in store.forwardRefs) store.forwardRefs[blocId].push(pageId)
-        else store.forwardRefs[blocId] = [pageId]
+    const text = bloc.s
+    const doRef = (ref) => {
+      if (ref in store.refs) store.refs[ref].push(blocId)
+      else store.refs[ref] = [blocId]
+      if (blocId in store.forwardRefs) store.forwardRefs[blocId].push(ref)
+      else store.forwardRefs[blocId] = [ref]
+    }
+    const matches = text.matchAll(parseRegexJustLinks)
+    // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
+
+    let idx = 0
+    let stackTop = undefined // s is string, t is type
+    let stack = []
+
+    for (let match of matches) {
+      if (stack.length === 0 || stackTop.t === "cb") {
+        if (match[1]) {
+          const pageRefElement = { t: "pr",s: "" }
+          stack.push(pageRefElement)
+          stackTop = stack[stack.length - 1]
+        } else if (match[3]) {
+          const ref = store.titles[match[3]]
+          if (ref) doRef(ref)
+        } else if (match[5]) {
+          const ref = store.titles[match[5]]
+          if (ref) doRef(ref)
+        } else if (match[4]) {
+          doRef(match[4])
+        } else if (match[7]) {
+          if (stackTop && stackTop.t === "cb") {
+            stack.pop()
+          } else {
+            const codeBlockElement = { t: 'cb',s: "" }
+            stack.push(codeBlockElement)
+            stackTop = stack[stack.length - 1]
+          }
+        }
       } else {
-        console.log(`no page ${pageTitle}`)
+        stackTop.s = stackTop.s + text.substring(idx,match.index)
+        idx = match.index
+        if (match[1]) {
+          const pageRefElement = { t: "pr",s: "" }
+          stackTop.s = stackTop.s + "[["
+          stack.push(pageRefElement)
+          stackTop = stack[stack.length - 1]
+        } else if (match[2]) {
+          let s = "]]"
+          if (stackTop.t === "pr") {
+            s = stackTop.s + "]]"
+            const ref = store.titles[stackTop.s]
+            if (ref) doRef(ref)
+            stack.pop()
+            stackTop = stack[stack.length - 1]
+          }
+          if (stackTop !== undefined) stackTop.s = stackTop.s + s
+        } else if (match[3]) {
+          const ref = store.titles[match[3]]
+          if (ref) doRef(ref)
+          stackTop.s = stackTop.s + match[0]
+        } else if (match[5]) {
+          stackTop.s = stackTop.s + match[0]
+          const ref = store.titles[match[5]]
+          if (ref) doRef(ref)
+        } else if (match[4]) {
+          doRef(match[4])
+          stackTop.s = stackTop.s + match[0]
+        } else if (match[7]) {
+          if (stackTop && stackTop.t === "cb") {
+            stack.pop()
+          } else {
+            const codeBlockElement = { t: 'cb',s: "" }
+            stack.push(codeBlockElement)
+            stackTop = stack[stack.length - 1]
+          }
+        } else {
+          stackTop.s = stackTop.s + match[0]
+        }
       }
+      idx = match.index + match[0].length
     }
   }
   console.log(`gen refs took ${performance.now() - stime}`)

@@ -45,7 +45,7 @@
           if (usingLocalStore === true) {
             if (e.target.result) {
               store = JSON.parse(e.target.result.store)
-              finishStartupThread()
+              setDataLoaded()
             } else {
               console.log("adding default graph")
               fetch("./default-store.json").then(text => {
@@ -56,7 +56,7 @@
                       user.graphName = json.graphName
                       startFn = () => gotoNoHistory("pageTitle","Welcome to Micro Roam")
                     }
-                    finishStartupThread()
+                    setDataLoaded()
                   })
                 }
               })
@@ -69,9 +69,7 @@
     }
   }
   r.onupgradeneeded = (event) => {
-    console.log(
-      "upgradeneeded`"
-    )
+    console.log("upgradeneeded")
     const db = r.result
     const stores = Array.from(db.objectStoreNames)
     if (!stores.includes("stores")) {
@@ -89,7 +87,7 @@
           const roamJSON = oldStoreToRoamJSON[db.version](store)
           roamJsonToStore(user.graphName,roamJSON)
           saveStore()
-          finishStartupThread()
+          setDataLoaded()
         }
       }
     }
@@ -104,11 +102,12 @@
 
   let startFn = () => gotoNoHistory("dailyNotes")
 
-  let startupThreads = 2
-  const finishStartupThread = () => {
-    if (startupThreads <= 1)
+  let dataLoaded = false
+  let scriptsLoaded = false
+  const setDataLoaded = () => {
+    if (scriptsLoaded)
       start()
-    startupThreads--
+    dataLoaded = true
   }
 
   const start = () => {
