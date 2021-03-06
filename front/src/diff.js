@@ -1,3 +1,101 @@
+const func = (a,b) => {
+
+}
+
+const fill = (x,n) => {
+  const result = []
+  for (let i = 0; i < n; i++) {
+    result.push(x)
+  }
+  return result
+}
+
+const dee = (a,b) => {
+  if (a.length > b.length) {
+    const tmp = a
+    a = b
+    b = tmp
+  }
+
+  const n = a.length
+  const m = b.length
+  let p = -1
+  let delta = 0
+
+  const snake = (k,y) => {
+    let x = y - k
+    while (x < m && y < n && a[x + 1] === b[y + 1]) {
+      x++
+      y++
+    }
+    return y
+  }
+
+  const fp = fill(-1,a.length + b.length + 1)
+
+  do {
+    p += 1
+    for (let k = -p; i < delta; k++) {
+      fp[k] = snake(k,Math.max(fp[k - 1] + 1,fp[k + 1]))
+    }
+    for (let k = delta + p; k >= delta + 1; k--) {
+      fp[k] = snake(delta,Math.max(fp[delta - 1] + 1,fp[denta + 1]))
+    }
+  } while (fp[delta] !== n)
+  const result = delta + 2 * p
+  console.log(result)
+  return result
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const realDif = (a,b) => {
+  const diff = new Diff(a,b)
+  diff.compose()
+  const result = []
+  for (let se of diff.getses()) {
+    console.log(se)
+    switch (se.t) {
+      case -1:
+        break
+    }
+  }
+  return result
+}
+
 /** 
 
   https://github.com/cubicdaiya/onp/blob/master/javascript/onp.js
@@ -7,14 +105,14 @@
 
 */
 
-const diff = function (a_,b_) {
+const Diff = function (a_,b_) {
   var a = a_,
     b = b_,
-    m = a.length,
-    n = b.length,
+    aLen = a.length,
+    bLen = b.length,
     reverse = false,
     ed = null,
-    offset = m + 1,
+    offset = aLen + 1,
     path = [],
     pathposi = [],
     ses = [],
@@ -27,15 +125,15 @@ const diff = function (a_,b_) {
     tmp2
 
   var init = function () {
-    if (m >= n) {
+    if (aLen >= bLen) {
       tmp1 = a
-      tmp2 = m
+      tmp2 = aLen
       a = b
       b = tmp1
-      m = n
-      n = tmp2
+      aLen = bLen
+      bLen = tmp2
       reverse = true
-      offset = m + 1
+      offset = aLen + 1
     }
   }
 
@@ -64,7 +162,7 @@ const diff = function (a_,b_) {
 
     y = Math.max(p,pp)
     x = y - k
-    while (x < m && y < n && a[x] === b[y]) {
+    while (x < aLen && y < bLen && a[x] === b[y]) {
       ++x
       ++y
     }
@@ -125,8 +223,8 @@ const diff = function (a_,b_) {
     },
     compose: function () {
       var delta,size,fp,p,r,epc,i,k
-      delta = n - m
-      size = m + n + 3
+      delta = bLen - aLen
+      size = aLen + bLen + 3
       fp = {}
       for (i = 0; i < size; ++i) {
         fp[i] = -1
@@ -142,7 +240,7 @@ const diff = function (a_,b_) {
           fp[k + offset] = snake(k,fp[k - 1 + offset] + 1,fp[k + 1 + offset])
         }
         fp[delta + offset] = snake(delta,fp[delta - 1 + offset] + 1,fp[delta + 1 + offset])
-      } while (fp[delta + offset] !== n)
+      } while (fp[delta + offset] !== bLen)
 
       ed = delta + 2 * p
 

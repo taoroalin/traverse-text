@@ -23,8 +23,22 @@ const diff = (string,oldString) => { // todo real diff
   return [{ s: 0,d: oldString,i: string }]
 }
 
+// useless function just for reference
+const inverseDiff = (diff) => {
+  const result = {}
+  if (diff.s) result.s = diff.s
+  if (diff.d) result.i = diff.d
+  if (diff.i) result.d = diff.i
+  return result
+}
+
+
 let edits = []
 let activeEdits = []
+
+const undoEdit = (...edit) => {
+
+}
 
 const doEdit = (...edit) => {
   const time = Date.now()

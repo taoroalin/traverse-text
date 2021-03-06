@@ -1,10 +1,16 @@
 const http = require('http')
 const fs = require('fs')
+const { Worker } = require('worker_threads')
 const zlib = require('zlib')
 const stream = require('stream')
 // crypto and cluster are node built-in modules to consider. cluster lets you have multiple identical processes and round-robin distributes requests among them
 const { performance } = require('perf_hooks')
 // todo use session keys instead of holding onto password hash everywhere for more security
+
+
+
+
+const compressionWorker = new Worker('./compression-worker.js')
 
 const hashRegex = /^[a-zA-Z0-9_\-]{80,90}$/
 
@@ -18,6 +24,30 @@ for (let account of accounts) {
   accountsByUsername[account.userReadable.username] = account
 }
 
+
+// todo find a good abstraction for saving whenever something changes or every 50ms.
+let toLog = ""
+// {graphname:{ommitId}}
+
+let logTimeout = null
+const doLog = () => {
+  fs.appendFile("../user-data/log.txt",toLog,(err) => {
+    if (err !== null) {
+      console.log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
+      return
+    }
+  })
+  toLog = ""
+  logTimeout = null
+}
+
+const log = (str) => {
+  toLog += str + "\n"
+  if (logTimeout === null) {
+    logTimeout = setTimeout(doLog,50)
+  }
+}
+
 let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
 // {graphname:{ommitId}}
 
@@ -25,7 +55,7 @@ let saveGraphsTimeout = null
 const saveGraphs = () => {
   fs.writeFile("../user-data/graphs.json",JSON.stringify(graphs),(err) => {
     if (err !== null) {
-      console.log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
+      log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
       return
     }
   })
@@ -43,7 +73,7 @@ const debouncedSaveGraphs = () => {
 const saveAccounts = () => {
   fs.writeFile("../user-data/accounts.json",JSON.stringify(accounts),(err) => {
     if (err !== null) {
-      console.log(`CRITICAL ERROR ACCOUNT SAVE FAILURE`)
+      log(`CRITICAL ERROR ACCOUNT SAVE FAILURE`)
       return
     }
   })
@@ -70,6 +100,7 @@ http.createServer((req,res) => {
     return
   }
   const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
+  log(req.url)
   if (match === null) {
     res.writeHead(404)
     res.write(`invalid request path`)
@@ -77,17 +108,15 @@ http.createServer((req,res) => {
     return
   }
   if (match[1] === "signup") {
-    console.log("signup")
     let accountDetails
     const bdy = req.headers.body
     try {
       accountDetails = JSON.parse(bdy)
     } catch (e) {
-      console.log(bdy)
+      log('bdy ' + bdy)
       res.writeHead(401)
       res.write(`invalid json ${bdy}`)
       res.end()
-      console.log(`bad syntax ${bdy}`)
       return
     }
     if (typeof accountDetails !== "object") {
@@ -100,7 +129,7 @@ http.createServer((req,res) => {
       res.writeHead(401)
       res.write("Invalid password hash")
       res.end()
-      console.log("Invalid password hash")
+      log("Invalid password hash")
       return
     }
     const email = accountDetails.email
@@ -108,7 +137,7 @@ http.createServer((req,res) => {
       res.writeHead(401)
       res.write("Email already in use")
       res.end()
-      console.log("Email already in use")
+      log("Email already in use")
       return
     }
     const username = accountDetails.username
@@ -119,7 +148,7 @@ http.createServer((req,res) => {
       res.writeHead(401)
       res.write(`Invalid username ${username}`)
       res.end()
-      console.log("Invalid username")
+      log("Invalid username")
       return
     }
     const storedAccountDetails = {
@@ -154,6 +183,7 @@ http.createServer((req,res) => {
     res.end()
     return
   }
+  log('user ' + userAccount.userReadable.email)
   let writeStream
   let fileReadStream
   let graphMetadata
@@ -176,9 +206,11 @@ http.createServer((req,res) => {
       }
       graphs[match[2]].commitId = req.headers.commitid
       debouncedSaveGraphs()
+      // todo add coordination between threads using err.code==='EBUSY'?
       writeStream = fs.createWriteStream(`../user-data/blox/${match[2]}.json`)
       req.pipe(writeStream)
       req.on("end",() => {
+        compressionWorker.postMessage(['compress',match[2]])
         res.writeHead(200)
         res.end()
       })
@@ -227,6 +259,7 @@ http.createServer((req,res) => {
       debouncedSaveAccounts()
       debouncedSaveGraphs()
       req.on("end",() => {
+        compressionWorker.postMessage(['compress',match[2]])
         res.writeHead(200)
         res.end()
       })
@@ -257,7 +290,6 @@ http.createServer((req,res) => {
       res.end()
       return
     case "startup":
-      console.log("startup")
       if (match[2] === undefined) {
         res.writeHead(400)
         res.end()
