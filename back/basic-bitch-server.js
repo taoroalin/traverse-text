@@ -1,5 +1,8 @@
 const http = require('http')
 const fs = require('fs')
+const zlib = require('zlib')
+const stream = require('stream')
+// crypto and cluster are node built-in modules to consider. cluster lets you have multiple identical processes and round-robin distributes requests among them
 const { performance } = require('perf_hooks')
 // todo use session keys instead of holding onto password hash everywhere for more security
 
@@ -16,7 +19,7 @@ for (let account of accounts) {
 }
 
 let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
-// {graphname:{lastCommitId}}
+// {graphname:{ommitId}}
 
 let saveGraphsTimeout = null
 const saveGraphs = () => {
@@ -34,7 +37,6 @@ const debouncedSaveGraphs = () => {
     saveGraphsTimeout = setTimeout(saveGraphs,50)
   }
 }
-
 
 
 // todo create under different name and rename because rename is atomic, whereas a concurrent process could crash halfway through writeFile, leaving partial file
@@ -57,17 +59,17 @@ const debouncedSaveAccounts = () => {
 
 // I had json in body, but that caused timing issues because I want to change end listener, but couldn't to it fast enough because the end event happens so fast. Switched to putting all JSON made for immediate parsing in header
 http.createServer((req,res) => {
-  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
+  res.setHeader('Access-Control-Expose-Headers','*')
   res.setHeader('Access-Control-Allow-Origin','*')
   res.setHeader('Access-Control-Allow-Headers','*')
-  res.setHeader('Access-Control-Expose-Headers','*')
-  res.setHeader('Access-Control-Allow-Methods','GET, POST')
+  // nodejs automatically lowercases all header keys because they're officially supposed to be case insensitive
+  // I have to send out header keys captialized because some people need that, though
   if (req.headers["access-control-request-headers"] !== undefined) {
-    console.log("preflight")
     res.writeHead(200)
     res.end()
     return
   }
+  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
   if (match === null) {
     res.writeHead(404)
     res.write(`invalid request path`)
@@ -154,6 +156,7 @@ http.createServer((req,res) => {
   }
   let writeStream
   let fileReadStream
+  let graphMetadata
   switch (match[1]) {
     case "put":
       if (match[2] === undefined) {
@@ -166,12 +169,12 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      if (req.headers.lastcommitid !== undefined && graphs[match[2]].lastCommitId === req.headers.lastcommitid) {
+      if (req.headers.commitid !== undefined && graphs[match[2]].commitId === req.headers.commitid) {
         res.writeHead(304)
         res.end()
         return
       }
-      graphs[match[2]].lastCommitId = req.headers.lastcommitid
+      graphs[match[2]].commitId = req.headers.commitid
       debouncedSaveGraphs()
       writeStream = fs.createWriteStream(`../user-data/blox/${match[2]}.json`)
       req.pipe(writeStream)
@@ -187,13 +190,25 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      if (match[3] && match[3] === graphs[match[2]].lastCommitId) {
+      graphMetadata = graphs[match[2]]
+      if (match[3] && match[3] === graphMetadata.commitId) {
         res.writeHead(304)
         res.end()
         return
       }
-      fileReadStream = fs.createReadStream(`../user-data/blox/${match[2]}.json`)
-      fileReadStream.pipe(res)
+      if (graphMetadata.commitId === undefined) {
+        res.writeHead(404)
+        res.end()
+        return
+      }
+      if (graphMetadata.commitId === graphMetadata.brCommitId) {
+        res.setHeader('Encoding','br')
+        fileReadStream = fs.createReadStream(`../user-data/blox-br/${match[2]}.json.br`)
+        fileReadStream.pipe(res)
+      } {
+        fileReadStream = fs.createReadStream(`../user-data/blox/${match[2]}.json`)
+        fileReadStream.pipe(res)
+      }
       // console.log(`get ${match[2]}`)
       return
     case "creategraph":
@@ -204,7 +219,7 @@ http.createServer((req,res) => {
         res.write("That graph name already taken.")
         return
       }
-      graphs[match[2]] = { lastCommitId: match[3] }
+      graphs[match[2]] = { commitId: match[3] }
       writeStream = fs.createWriteStream(`../user-data/blox/${match[2]}.json`)
       req.pipe(writeStream)
       userAccount.userReadable.writeStores[match[2]] = true
@@ -257,14 +272,26 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      if (req.headers.lastcommitid !== undefined && req.headers.lastcommitid === graphs[graphName].lastCommitId) {
+      if (req.headers.commitid !== undefined && req.headers.commitid === graphs[graphName].commitId) {
         res.writeHead(304)
         res.end()
         return
       }
       // todo validate this
-      fileReadStream = fs.createReadStream(`../user-data/blox/${readableUserData.settings.graphName}.json`)
-      fileReadStream.pipe(res)
+      graphMetadata = graphs[graphName]
+      if (!graphMetadata.commitId) {
+        res.writeHead(404)
+        res.end()
+        return
+      }
+      if (graphMetadata.commitId === graphMetadata.brCommitId) {
+        res.setHeader('Encoding','br')
+        fileReadStream = fs.createReadStream(`../user-data/blox/${graphName}.json.br`)
+        fileReadStream.pipe(res)
+      } else {
+        fileReadStream = fs.createReadStream(`../user-data/blox/${graphName}.json`)
+        fileReadStream.pipe(res)
+      }
       return
     default:
       res.writeHead(400)

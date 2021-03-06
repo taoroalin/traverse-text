@@ -80,8 +80,8 @@ const doEdit = (...edit) => {
 const commit = () => {
   const newId = newUUID()
   edits.push({ id: newId,t: Date.now(),edits: activeEdits })
-  store.lastCommitId = newId
-  user.settings.lastCommitId = newId
+  store.commitId = newId
+  user.settings.commitId = newId
   activeEdits = []
   debouncedSaveStore()
   saveUser()
@@ -114,8 +114,10 @@ const saveStore = () => {
 let saveStoreTimeout = null
 
 const debouncedSaveStore = () => {
-  clearTimeout(saveStoreTimeout)
-  saveStoreTimeout = setTimeout(saveStore,300)
+  if (user.settings.commitId !== user.settings.syncCommitId) {
+    clearTimeout(saveStoreTimeout)
+    saveStoreTimeout = setTimeout(saveStore,300)
+  }
 }
 
 const print = (text) => {

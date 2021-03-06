@@ -8,7 +8,7 @@
     user = JSON.parse(userText)
     const headers = new Headers()
     headers.set('passwordhash',user.passwordHash)
-    if (user.settings.lastCommitId) headers.set('lastCommitId',user.settings.lastCommitId)
+    if (user.settings.commitId) headers.set('commitid',user.settings.commitId)
     let reqUrl = `${basicBitchServerUrl}/startup/${user.settings.graphName}`
     fetch(reqUrl,{ method: 'POST',headers: headers }).then(async (res) => {
       if (res.status === 304) {

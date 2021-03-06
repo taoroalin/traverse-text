@@ -26,7 +26,7 @@ const styleReplacer = (match,fname) => {
 const html = fs.readFileSync("./src/index.html","utf8")
 const result = html.replace(regexScriptImport,scriptReplacer).replace(regexStyleImport,styleReplacer).replace(/<\/script>\s*<script>/g,"")
 // todo use minify(text, {toplevel:true}) for more mangling
-// todo minify inline scripts
+// todo minify inline
 
 fs.writeFileSync("./public/index.html",result)
 

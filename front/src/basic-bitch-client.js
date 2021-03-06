@@ -4,12 +4,18 @@ const saveStoreToBasicBitchServer = async (blox) => {
   const putSentTime = performance.now()
   const headers = new Headers()
   headers.set('passwordhash',user.passwordHash)
-  headers.set('lastcommitid',user.settings.lastCommitId)
+  const syncCommitId = user.settings.commitId
+  headers.set('commitid',user.settings.commitId)
+  headers.set('syncedcommitid',syncCommitId)
   const response = await fetch(`${basicBitchServerUrl}/put/${store.graphName}`,
     {
       method: "POST",body: blox,
       headers
     })
+  if (response.status === 200 || response.status === 304) {
+    user.settings.syncCommitId = syncCommitId
+    store.syncCommitId = syncCommitId
+  }
   console.log(`save confirmed in ${performance.now() - putSentTime}`)
 }
 
@@ -103,8 +109,13 @@ signupForm.addEventListener("submit",async (event) => {
 const addGraph = async () => {
   const headers = new Headers()
   headers.set('passwordhash',user.passwordHash)
-  const response = await fetch(`${basicBitchServerUrl}/creategraph/${store.graphName}/${store.lastCommitId}`,{ headers,method: 'POST',body: JSON.stringify(store.blox) })
+  headers.set('commitid',user.settings.commitId)
+  const syncCommitId = user.settings.commitId
+  const response = await fetch(`${basicBitchServerUrl}/creategraph/${store.graphName}`,{ headers,method: 'POST',body: JSON.stringify(store.blox) })
   if (!response.ok) {
     notifyText("failed to add graph")
+    return
   }
+  user.settings.syncCommitId = syncCommitId
+  store.syncCommitId = syncCommitId
 }
