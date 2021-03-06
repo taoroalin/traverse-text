@@ -158,7 +158,6 @@ const dedentFocusedBlock = () => {
 // Event listners --------------------------------------------------------------------------------------------------------
 
 document.addEventListener("input",(event) => {
-  console.log("input")
   updateCursorInfo()
   autocompleteList.style.display = "none"
   templateList.style.display = "none"

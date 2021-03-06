@@ -8,7 +8,7 @@ const { performance } = require('perf_hooks')
 // todo use session keys instead of holding onto password hash everywhere for more security
 
 
-
+const isUsingCompression = false
 
 const compressionWorker = new Worker('./compression-worker.js')
 
@@ -259,7 +259,7 @@ http.createServer((req,res) => {
       debouncedSaveAccounts()
       debouncedSaveGraphs()
       req.on("end",() => {
-        compressionWorker.postMessage(['compress',match[2]])
+        if (isUsingCompression) compressionWorker.postMessage(['compress',match[2]])
         res.writeHead(200)
         res.end()
       })

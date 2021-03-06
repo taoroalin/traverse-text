@@ -1,5 +1,3 @@
-console.log("test")
-
 const testRoundTrip = () => {
   const jsonOutput = storeToRoamJSON(store)
   store = roamJsonToStore(store.graphName,jsonOutput)
@@ -18,7 +16,7 @@ const testRoundTrip = () => {
 const createPageTest = () => {
   const oldStore = store
   store = blankStore()
-  runCommand("createPage","Test Page")
+  macros.createPage("Test Page")
   store = oldStore
 }
 
@@ -55,7 +53,7 @@ const benchmarkRandomWalk = () => renderMulti(() => {
   for (let pb of pageBreadcrumbs) {
     linkTitles.push(pb.innerText)
   }
-  linkTitles = linkTitles.filter(x => store.pagesByTitle[x] && store.pages[store.pagesByTitle[x]] && store.pages[store.pagesByTitle[x]].title)
+  linkTitles = linkTitles.filter(x => store.titles[x] && store.blox[store.titles[x]])
   const chosenTitle = linkTitles[Math.floor(Math.random() * (linkTitles.length - 1))]
   goto("pageTitle",chosenTitle)
 })
@@ -64,7 +62,7 @@ const benchmarkRenderAll = async () => {
   const stime = performance.now()
   let functionTime = 0
   let count = 0
-  for (let pageTitle in store.pagesByTitle) {
+  for (let pageTitle in store.titles) {
     const functionSTime = performance.now()
     gotoNoHistory("pageTitle",pageTitle)
     functionTime += performance.now() - functionSTime
@@ -78,10 +76,17 @@ const benchmarkRenderAll = async () => {
   notifyText(message,10)
 }
 
-
 const testAll = () => {
   testRoundTrip()
   benchmarkPageLoad()
   benchmarkRandomWalk()
   benchmarkRenderAll()
+}
+
+const benchmarkGen = () => {
+  const stime = performance.now()
+  for (let i = 0; i < 100; i++) {
+    generateInnerRefs()
+  }
+  console.log(`gen took ${performance.now() - stime}`)
 }

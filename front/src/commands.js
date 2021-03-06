@@ -2,6 +2,11 @@ const cpy = x => JSON.parse(JSON.stringify(x))
 
 /*
 Paralel difs are too much work. Switching to simpler single command buffer
+I feel like I had a specification for diffs, but I seem to have lost it.
+{d:string,i:string,s:number}
+d: string to delete backwards (keep string instead of length so it's reversible)
+i: string to insert forwards
+s: position. defaults to end of string
 
 ["cr"|"dl"|"df"|"mv", ]
 
@@ -10,23 +15,25 @@ Paralel difs are too much work. Switching to simpler single command buffer
 const applyDif = (string,difs) => {
   let result = string
   for (let dif of difs) {
-    let start = result.length
+    let end = result.length
     if (dif.s !== undefined) start = dif.s
-    const end = start + (((dif.d !== undefined) && dif.d.length) || 0)
+    const start = end - (((dif.d !== undefined) && dif.d.length) || 0)
     result = result.substring(0,start) + (dif.i || "") + result.substring(end)
   }
-  console.log(result)
+  // console.log(result)
   return result
 }
 
 const diff = (string,oldString) => { // todo real diff
-  return [{ s: 0,d: oldString,i: string }]
+  return [{ d: oldString,i: string }]
 }
 
 // useless function just for reference
+// actually because s defaults to end of string inverse diff only works if you know the store at this state
 const inverseDiff = (diff) => {
   const result = {}
   if (diff.s) result.s = diff.s
+  else diff.s = -diff.i.length
   if (diff.d) result.i = diff.d
   if (diff.i) result.d = diff.i
   return result
@@ -37,14 +44,61 @@ let edits = []
 let activeEdits = []
 
 const undoEdit = (...edit) => {
-
+  const time = Date.now()
+  activeEdits.push(edit)
+  print(edit)
+  // console.log(edit)
+  const [op,id,p1,p2,p3,p4] = edit
+  switch (op) {
+    case "dl":
+      const parent = store.blox[id].p
+      if (parent) {
+        store.blox[parent].k = store.blox[parent].k.filter(x => x !== id)
+      } else {
+        delete store.titles[store.blox[id].s]
+      }
+      delete store.blox[id]
+      break
+    case "cr":
+      store.blox[id] = {
+        ct: time,
+        s: ""
+      }
+      const parentId = p1,idx = p2
+      if (parentId) {
+        store.blox[id].p = parentId
+        if (!store.blox[parentId].k) store.blox[parentId].k = []
+        if (idx) {
+          store.blox[parentId].k.splice(idx,0,id)
+        } else {
+          store.blox[parentId].k.push(id)
+        }
+      }
+      break
+    case "mv":
+      const newParent = p1,nidx = p2,oldParent = p3,oidx = p4
+      const block = store.blox[id]
+      store.blox[oldParent].k = store.blox[oldParent].k.filter(x => x != id)
+      block.p = newParent
+      if (!store.blox[newParent].k) store.blox[newParent].k = []
+      store.blox[newParent].k.splice(nidx,0,id)
+      break
+    case "df":
+      const df = p1
+      const bloc = store.blox[id]
+      bloc.et = time
+      if (!bloc.p) delete store.titles[bloc.s]
+      bloc.s = applyDif(bloc.s,df)
+      if (!bloc.p) store.titles[bloc.s] = id
+      break
+  }
 }
 
 const doEdit = (...edit) => {
   const time = Date.now()
   activeEdits.push(edit)
   print(edit)
-  console.log(edit)
+  // console.log(edit)
   const [op,id,p1,p2,p3,p4] = edit
   switch (op) {
     case "dl":
@@ -105,13 +159,20 @@ const commitEdit = (...edit) => {
   commit()
 }
 
+const LOCAL_STORAGE_MAX = 4500000
 const saveStore = () => {
   const blox = store.blox
   const bloxText = JSON.stringify(blox)
   saveStoreToBasicBitchServer(bloxText)
+  const str = JSON.stringify(store)
+  try {
+    localStorage.setItem('store',str)
+  } catch (e) {
+    // mainly catch localstorage size limit
+    localStorage.removeItem('store')
+  }
   const transaction = idb.transaction(["stores"],"readwrite")
   const storeStore = transaction.objectStore("stores")
-  const str = JSON.stringify(store)
   const req = storeStore.put({
     graphName: store.graphName,
     store: str

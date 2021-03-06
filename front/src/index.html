@@ -1,73 +1,102 @@
 <script>
+  let idb = null
+  let store = null
+  let r
+
   const basicBitchServerUrl = "http://localhost:3000"
 
   let user
   let userText = localStorage.getItem("user")
   let usingLocalStore = true
+
+
+  let startFn = () => gotoNoHistory("dailyNotes")
+
+  let dataLoaded = false
+  let scriptsLoaded = false
+  const setDataLoaded = () => {
+    if (scriptsLoaded)
+      start()
+    dataLoaded = true
+  }
+
+  const start = () => {
+    user.graphName = store.graphName
+    saveUser()
+    startFn()
+    debouncedSaveStore()
+  }
+
   if (userText) {
     user = JSON.parse(userText)
-    const headers = new Headers()
-    headers.set('passwordhash',user.passwordHash)
-    if (user.settings.commitId) headers.set('commitid',user.settings.commitId)
-    let reqUrl = `${basicBitchServerUrl}/startup/${user.settings.graphName}`
-    fetch(reqUrl,{ method: 'POST',headers: headers }).then(async (res) => {
-      if (res.status === 304) {
-        console.log(`already up to date`)
-        return
-      }
-      if (res.status !== 200) {
-        console.log(`STORE NOT ON SERVER`)
-        return
-      }
-      usingLocalStore = false
-      res.json().then(blox => {
-        console.log('got blox')
-        hydrateFromBlox(user.settings.graphName,blox)
-        setTimeout(generateInnerOuterRefs,160)
-        start() // todo catch code loading after this
-        debouncedSaveStore()
+    if (user.passwordHash) {
+      const headers = new Headers()
+      headers.set('passwordhash',user.passwordHash)
+      if (user.settings.commitId) headers.set('commitid',user.settings.commitId)
+      let reqUrl = `${basicBitchServerUrl}/startup/${user.settings.graphName}`
+      fetch(reqUrl,{ method: 'POST',headers: headers }).then(async (res) => {
+        if (res.status === 304) {
+          console.log(`already up to date`)
+          return
+        }
+        if (res.status !== 200) {
+          console.log(`STORE NOT ON SERVER`)
+          return
+        }
+        usingLocalStore = false
+        res.json().then(blox => {
+          console.log('got blox')
+          hydrateFromBlox(user.settings.graphName,blox)
+          setTimeout(generateInnerOuterRefs,160)
+          start() // todo catch code loading after this
+          debouncedSaveStore()
+        })
       })
-    })
-  } else {
-    user = { settings: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
-  }
+    }
 
-  let store = null
-  let idb = null
-  const r = indexedDB.open("microroam",5)// I had this as line 1, saves ~5ms start time, don't now cause I'm lazy
+    const lsStore = localStorage.getItem('store')
+    if (lsStore) {
+      store = JSON.parse(lsStore)
+      setDataLoaded()
+      r = indexedDB.open("microroam",5)
+      r.onsuccess = (e1) => idb = e1.target.result
+    } else {
+      r = indexedDB.open("microroam",5)
+      r.onsuccess = (e1) => {
+        console.log("normal success")
+        idb = e1.target.result
+        if (usingLocalStore === true) {
+          try {
+            idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
+              if (usingLocalStore === true) {
+                if (e.target.result) {
+                  store = JSON.parse(e.target.result.store)
+                  setDataLoaded()
+                } else {
+                  console.log("adding default graph")
 
-  r.onsuccess = (e1) => {
-    console.log("normal success")
-    idb = e1.target.result
-    if (usingLocalStore === true) {
-      try {
-        idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
-          if (usingLocalStore === true) {
-            if (e.target.result) {
-              store = JSON.parse(e.target.result.store)
-              setDataLoaded()
-            } else {
-              console.log("adding default graph")
-              fetch("./default-store.json").then(text => {
-                if (usingLocalStore) {
-                  text.json().then(json => {
-                    if (usingLocalStore === true) {
-                      store = json
-                      user.graphName = json.graphName
-                      startFn = () => gotoNoHistory("pageTitle","Welcome to Micro Roam")
-                    }
-                    setDataLoaded()
-                  })
                 }
-              })
+              }
             }
+          } catch (e) {
+
           }
         }
-      } catch (e) {
-
       }
     }
+  } else {
+    user = { settings: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
+    fetch("./default-store.json").then(text => {
+      text.json().then(json => {
+        store = json
+        startFn = () => gotoNoHistory("pageTitle","Welcome to Micro Roam")
+        setDataLoaded()
+      })
+    })
+    r = indexedDB.open("microroam",5)
+    r.onsuccess = (e1) => idb = e1.target.result
   }
+
   r.onupgradeneeded = (event) => {
     console.log("upgradeneeded")
     const db = r.result
@@ -99,23 +128,6 @@
       You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
   }
 
-
-  let startFn = () => gotoNoHistory("dailyNotes")
-
-  let dataLoaded = false
-  let scriptsLoaded = false
-  const setDataLoaded = () => {
-    if (scriptsLoaded)
-      start()
-    dataLoaded = true
-  }
-
-  const start = () => {
-    user.graphName = store.graphName
-    saveUser()
-    startFn()
-    debouncedSaveStore()
-  }
 </script>
 
 <body class="dark">
@@ -345,7 +357,7 @@
 
   <!-- now rendering is done, loading interactive scripts-->
 
-  <script src="io.js"></script>
-  <script src="test.js"></script>
-  <script src="terminal.js"></script>
+  <script src="io.js" async></script>
+  <script src="test.js" async></script>
+  <script src="terminal.js" async></script>
 </body>
