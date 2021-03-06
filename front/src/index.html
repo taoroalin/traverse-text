@@ -169,9 +169,9 @@
       <a id="download-button" tabindex="-1">
         Download
       </a>
-      <a id="options-button" tabindex="-1">
-        Options
-      </a>
+      <button id="signup-button" tabindex="-1">
+        Sign up
+      </button>
     </div>
 
     <div id="top-bar-hidden-hitbox" style="position:fixed;height:20px;width:100%;display:none;"></div>
@@ -204,24 +204,26 @@
     <div id="template-list" style="display:none"></div>
 
     <div id="login" style="display:none">
-      <p>login</p>
+      <p>Login</p>
       <form id="login-form">
         <input type="email" id="login-email" placeholder="email">
         <input type="password" id="login-password" placeholder="password">
-        <input type="submit" style="height:0px">
+        <input type="submit" style="height:0px" tabindex="-1">
       </form>
-      <button id="switch-to-signup">Sign Up</button>
+      <button id="switch-to-signup">Sign up</button>
+      <button class="exit-to-main">Back</button>
     </div>
 
     <div id="signup" style="display:none">
-      <p>sign up</p>
+      <p>Sign up</p>
       <form id="signup-form">
         <input type="email" id="signup-email" placeholder="email">
         <input type="text" id="signup-username" placeholder="username">
         <input type="password" id="signup-password" placeholder="password">
-        <input type="submit" style="height:0px">
+        <input type="submit" style="height:0px" tabindex="-1">
       </form>
       <button id="switch-to-login">Login</button>
+      <button class="exit-to-main">Back</button>
     </div>
   </div>
 

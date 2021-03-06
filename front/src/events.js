@@ -590,6 +590,9 @@ document.addEventListener("click",(event) => {
     goto("pageTitle",closestBreadcrumbPage.dataset.title)
   } else if (closestBreadcrumbBlock) {
     goto("block",closestBreadcrumbBlock.dataset.id)
+  } else if (event.target.className == "exit-to-main") {
+    signupElement.style.display = "none"
+    loginElement.style.display = "none"
   }
 
   // this is at the bottom so that autocomplete suggestion click handler still knows where the link is. 
@@ -728,11 +731,27 @@ const preprocessNewStore = () => {
 }
 
 switchToSignup.addEventListener('click',() => {
-  signupElement.style.display = "block"
-  loginElement.style.display = "none"
+  focusSignup()
 })
 
 switchToLogin.addEventListener('click',() => {
-  signupElement.style.display = "none"
-  loginElement.style.display = "block"
+  focusLogin()
 })
+
+signupButton.addEventListener('click',(event) => {
+  focusSignup()
+  event.stopPropagation()
+  event.preventDefault()
+})
+
+const focusSignup = () => {
+  signupElement.style.display = "block"
+  loginElement.style.display = "none"
+  signupEmailElement.focus()
+}
+
+const focusLogin = () => {
+  loginElement.style.display = "block"
+  signupElement.style.display = "none"
+  loginEmailElement.focus()
+}
