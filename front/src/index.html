@@ -27,6 +27,16 @@
     debouncedSaveStore()
   }
 
+  const invalidateLocal = () => {
+    const r = indexedDB.deleteDatabase("microroam")
+    console.error(`Local replica invalid. Resetting from server`)
+    user.settings.commitId = undefined
+    user.settings.syncCommitId = undefined
+    localStorage.setItem("user",JSON.stringify(user))
+    localStorage.removeItem('store')
+    window.location.href = window.location.href
+  }
+
   if (userText) {
     user = JSON.parse(userText)
     if (user.passwordHash) {
@@ -56,8 +66,12 @@
 
     const lsStore = localStorage.getItem('store')
     if (lsStore) {
-      store = JSON.parse(lsStore)
-      setDataLoaded()
+      try {
+        store = JSON.parse(lsStore)
+        setDataLoaded()
+      } catch (e) {
+        invalidateLocal()
+      }
       r = indexedDB.open("microroam",5)
       r.onsuccess = (e1) => idb = e1.target.result
     } else {
@@ -70,8 +84,12 @@
             idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
               if (usingLocalStore === true) {
                 if (e.target.result) {
-                  store = JSON.parse(e.target.result.store)
-                  setDataLoaded()
+                  try {
+                    store = JSON.parse(e.target.result.store)
+                    setDataLoaded()
+                  } catch (e) {
+                    invalidateLocal()
+                  }
                 } else {
                   console.log("adding default graph")
 

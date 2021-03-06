@@ -11,8 +11,8 @@ const nolog = () => {
 const flash = benchmarkRenderAll
 
 const reset = () => {
-  const r = indexedDB.deleteDatabase("microroam")
   localStorage.removeItem("user")
+  const r = indexedDB.deleteDatabase("microroam")
   window.location.href = window.location.href
 }
 

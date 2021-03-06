@@ -161,12 +161,18 @@ const commitEdit = (...edit) => {
 
 const LOCAL_STORAGE_MAX = 4500000
 const saveStore = () => {
+  // stringify blox, then stringify rest of store and insert blox string to avoid re-stringifying blox
   const blox = store.blox
   const bloxText = JSON.stringify(blox)
+  let fullString = "{"
+  for (let key in store) {
+    if (key !== 'blox' && store[key] !== undefined)
+      fullString += '"' + key + '":' + JSON.stringify(store[key]) + ","
+  }
+  fullString += '"blox":' + bloxText + '}'
   saveStoreToBasicBitchServer(bloxText)
-  const str = JSON.stringify(store)
   try {
-    localStorage.setItem('store',str)
+    localStorage.setItem('store',fullString)
   } catch (e) {
     // mainly catch localstorage size limit
     localStorage.removeItem('store')
@@ -175,7 +181,7 @@ const saveStore = () => {
   const storeStore = transaction.objectStore("stores")
   const req = storeStore.put({
     graphName: store.graphName,
-    store: str
+    store: fullString
   })
   req.onsuccess = () => {
     console.log("saved")
