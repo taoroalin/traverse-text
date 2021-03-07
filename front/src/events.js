@@ -309,16 +309,28 @@ document.addEventListener("keydown",(event) => {
   if (dragSelect) {
     let did = false
     if ((event.key === "c" || event.key === "x") && event.ctrlKey) {
-
+      let text = ""
       console.log("copy blocks")
+      const id = dragSelect.root.dataset.id
+      if (dragSelect.rooted) {
+        text = blocToMd(id)
+      } else {
+        const kids = store.blox[id].k
+        for (let i = dragSelect.startIdx; i < dragSelect.endIdx + 1; i++) {
+          text += blocToMd(kids[i])
+        }
+      }
       clipboardData = {
         dragSelect: {
-          root: dragSelect.root.dataset.id,
+          root: id,
           startIdx: dragSelect.startIdx,
           endIdx: dragSelect.endIdx,
           rooted: dragSelect.rooted
         },
+        text
       }
+      console.log(clipboardData)
+      navigator.clipboard.writeText(text)
       did = true
     }
     if (event.key === "Backspace" || event.key === "Delete" || (event.key === "x" && event.ctrlKey)) {
@@ -444,14 +456,6 @@ document.addEventListener("keydown",(event) => {
           event.preventDefault()
         }
         break
-      case "v":
-        if (event.ctrlKey) {
-          if (clipboardData) {
-            pasteBlocks()
-            event.preventDefault()
-          }
-        }
-        break
       case "c":
         if (event.ctrlKey) { // LEGITTODO copy md text and check paste text against, 
           clipboardData = null
@@ -507,6 +511,19 @@ document.addEventListener("keydown",(event) => {
         }
       }
     }
+  }
+})
+
+document.addEventListener('paste',(event) => {
+  console.log(event)
+  if (clipboardData) {
+    const clipboardText = event.clipboardData.getData('text')
+    console.log(clipboardText)
+    console.log(clipboardData.text)
+    if (clipboardText.replaceAll(/\r/g,"") == clipboardData.text) {
+      pasteBlocks()
+      event.preventDefault()
+    } else clipboardData = undefined
   }
 })
 

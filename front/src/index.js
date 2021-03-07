@@ -63,11 +63,12 @@ const renderSessionState = () => {
 
   if (sessionState.isFocused) {
     focusIdPosition()
+  } else {
+    focusBlockStart(document.querySelector(".block"))
   }
 
   pageFrameOuter.scrollTop = sessionState.scroll || 0
 
-  focusBlockStart(document.querySelector(".block"))
 }
 
 const gotoNoHistory = (commandName,...command) => {
@@ -283,13 +284,14 @@ if (dataLoaded) start()
 scriptsLoaded = true
 
 
+// const f = (n,text = "") => {
+//   return "hi" + text + n + " says hello to " + n + " and " + n
+// }
 // const ptest = () => {
 //   const t = performance.now()
-//   let y = undefined
-//   for (let i = 0; i < 10000000; i++) {
-//     if (y === undefined) y = []
-//     y.push(1)
-//     y = undefined
+//   let y = ""
+//   for (let i = 0; i < 100000; i++) {
+//     y = f(i,y)
 //   }
 //   console.log(`took ${performance.now() - t}`)
 // }

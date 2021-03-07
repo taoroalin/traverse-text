@@ -78,3 +78,41 @@ as a block, it will look like 2 blocks in markdown
 example store:
 
 */
+
+const blocToMd = (blocId) => {
+  let result = ""
+  const recurse = (blocId,level) => {
+    const bloc = store.blox[blocId]
+    if (bloc === undefined) console.log(blocId)
+    for (let i = 0; i < level; i++) {
+      result += "    "
+    }
+    result += "- " + bloc.s.replaceAll(/\(\(([a-zA-Z0-9\-_]+)\)\)/g,(match,group) => {
+      const b = store.blox[group]
+      if (b) {
+        return '"' + store.blox[group].s + '"'
+      } else {
+        return match
+      }
+    }
+    ) + "\n"
+    for (let childId of bloc.k || []) {
+      recurse(childId,level + 1)
+    }
+  }
+  recurse(blocId,0)
+  return result
+}
+
+const storeToMdObjects = () => {
+  const result = []
+  for (let title in store.titles) {
+    const page = store.blox[store.titles[title]]
+    let text = ""
+    for (let k of page.k || []) {
+      text += blocToMd(k)
+    }
+    result.push({ fullName: title + ".md",text })
+  }
+  return result
+}

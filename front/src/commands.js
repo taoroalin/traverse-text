@@ -21,13 +21,16 @@ const applyDif = (string,dif) => {
 }
 
 const unapplyDif = (string,dif) => {
-  let start = string.length + (((dif.i !== undefined) && dif.i.length) || 0)
-  if (dif.s !== undefined) start = dif.s
-  const end = start + (((dif.i !== undefined) && dif.i.length) || 0)
-  result = string.substring(0,start) + (dif.d || "") + string.substring(end)
-  console.log(dif)
-  console.log(`was "${string}" now "${result}"`)
-  return result
+  const dLen = (((dif.d !== undefined) && dif.d.length) || 0)
+  const iLen = (((dif.i !== undefined) && dif.i.length) || 0)
+  if (dif.s !== undefined) {
+    const start = dif.s - dLen
+    const end = start + iLen
+    return string.substring(0,start) + (dif.d || "") + string.substring(end)
+  } else {
+    const start = string.length - dLen - iLen
+    return string.substring(0,start) + (dif.d || "")
+  }
 }
 
 const diff = (string,oldString) => { // todo real diff
@@ -47,15 +50,17 @@ const inverseDiff = (diff) => {
 
 
 let edits = []
+let editsSessionStates = []
 let activeEdits = []
 
 const undoEdit = () => {
   const time = Date.now()
   const commit = edits.pop()
+  sessionState = editsSessionStates.pop()
   print(commit)
   // console.log(edit)
-  for (let edit of commit.edits) {
-
+  for (let i = commit.edits.length - 1; i >= 0; i--) {
+    const edit = commit.edits[i]
     const [op,id,p1,p2,p3,p4] = edit
     switch (op) {
       case "cr":
@@ -182,6 +187,7 @@ const doEdit = (...edit) => {
 const commit = () => {
   const newId = newUUID()
   edits.push({ id: newId,t: Date.now(),edits: activeEdits })
+  editsSessionStates.push(cpy(sessionState))
   store.commitId = newId
   user.settings.commitId = newId
   activeEdits = []
