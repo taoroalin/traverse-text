@@ -19,7 +19,7 @@ const reset = () => {
 const blank = (name = "default") => {
   store = blankStore()
   store.graphName = name
-  user = cpy(blankUser)
+  user = { settings: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
   user.graphName = name
   saveUser()
   debouncedSaveStore()

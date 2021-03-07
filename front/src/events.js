@@ -187,9 +187,17 @@ document.addEventListener("input",(event) => {
         string = string.substring(0,sessionState.position - 1) + string.substring(sessionState.position)
       }
     }
-    store.blox[sessionState.focusId].s = string // todo commit changes on word boundaries
 
-    setFocusedBlockString(string)
+    let diff = { d: store.blox[sessionState.focusId].s,i: string }
+    if (event.data !== null) {
+      if (event.data.length === 1 && event.inputType === "insertText") {
+        if (sessionState.position === string.length)
+          diff = { i: event.data }
+        else diff = { i: event.data,s: sessionState.position - 1 }
+      }
+    }
+
+    setFocusedBlockString(string,diff)
 
     if (editingTitle) {
       const matchingTitles = titleExactFullTextSearch(editingTitle)
@@ -263,6 +271,13 @@ const globalHotkeys = {
   "daily notes": {
     key: "d",alt: true,fn: () => {
       goto("dailyNotes")
+    }
+  },"undo": {
+    key: "z",control: true,fn: () => {
+      if (edits.length > 0) {
+        undoEdit()
+        renderSessionState()
+      }
     }
   },
   "terminal": {

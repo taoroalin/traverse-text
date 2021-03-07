@@ -141,14 +141,18 @@ const focusIdPosition = () => {
   scanElement(focusBlockBody)
 }
 
-const setFocusedBlockString = (string) => {
+const setFocusedBlockString = (string,diff) => {
   focusBlockBody.innerHTML = ""
   const fragment = document.createDocumentFragment()
   const refTitles = renderBlockBody(fragment,string)
   focusBlockBody.appendChild(fragment)
   focusIdPosition()
   updateCursorInfo()
-  macros.write(sessionState.focusId,string,refTitles)
+  if (diff !== undefined) {
+    commitEdit('df',sessionState.focusId,diff)
+  } else {
+    macros.write(sessionState.focusId,string,refTitles)
+  }
 }
 
 const getEditingSimpleSpan = (className) => {
@@ -270,6 +274,7 @@ const saveUser = () => {
   if (user.topBar === "visible") showTopBar()
   else hideTopBar()
   localStorage.setItem("user",JSON.stringify(user))
+  saveSettingsToBasicBitchServer()
 }
 
 

@@ -12,20 +12,26 @@ s: position. defaults to end of string
 
 */
 
-const applyDif = (string,difs) => {
-  let result = string
-  for (let dif of difs) {
-    let end = result.length
-    if (dif.s !== undefined) start = dif.s
-    const start = end - (((dif.d !== undefined) && dif.d.length) || 0)
-    result = result.substring(0,start) + (dif.i || "") + result.substring(end)
-  }
-  // console.log(result)
+const applyDif = (string,dif) => {
+  // not using dif.s||result.length because dif.s could be 0
+  let end = string.length
+  if (dif.s !== undefined) end = dif.s
+  const start = end - (((dif.d !== undefined) && dif.d.length) || 0)
+  return string.substring(0,start) + (dif.i || "") + string.substring(end)
+}
+
+const unapplyDif = (string,dif) => {
+  let start = string.length + (((dif.i !== undefined) && dif.i.length) || 0)
+  if (dif.s !== undefined) start = dif.s
+  const end = start + (((dif.i !== undefined) && dif.i.length) || 0)
+  result = string.substring(0,start) + (dif.d || "") + string.substring(end)
+  console.log(dif)
+  console.log(`was "${string}" now "${result}"`)
   return result
 }
 
 const diff = (string,oldString) => { // todo real diff
-  return [{ d: oldString,i: string }]
+  return { d: oldString,i: string }
 }
 
 // useless function just for reference
@@ -43,19 +49,89 @@ const inverseDiff = (diff) => {
 let edits = []
 let activeEdits = []
 
-const undoEdit = (...edit) => {
+const undoEdit = () => {
   const time = Date.now()
-  activeEdits.push(edit)
-  print(edit)
+  const commit = edits.pop()
+  print(commit)
   // console.log(edit)
+  for (let edit of commit.edits) {
+
+    const [op,id,p1,p2,p3,p4] = edit
+    switch (op) {
+      case "cr":
+        const parent = store.blox[id].p
+        if (parent) {
+          store.blox[parent].k = store.blox[parent].k.filter(x => x !== id)
+        }
+        delete store.blox[id]
+        break
+      case "dl":
+        store.blox[id] = p1
+        const parentId = p1.p,idx = p2
+        if (parentId) {
+          if (!store.blox[parentId].k) store.blox[parentId].k = []
+          if (idx) {
+            store.blox[parentId].k.splice(idx,0,id)
+          } else {
+            store.blox[parentId].k.push(id)
+          }
+        }
+        break
+      case "mv":
+        const oldParent = p1,oidx = p2,newParent = p3,nidx = p4
+        const block = store.blox[id]
+        store.blox[oldParent].k = store.blox[oldParent].k.filter(x => x != id)
+        block.p = newParent
+        if (!store.blox[newParent].k) store.blox[newParent].k = []
+        store.blox[newParent].k.splice(nidx,0,id)
+        break
+      case "df":
+        const df = p1
+        const bloc = store.blox[id]
+        bloc.et = time
+        if (!bloc.p) delete store.titles[bloc.s]
+        bloc.s = unapplyDif(bloc.s,df)
+        if (!bloc.p) store.titles[bloc.s] = id
+        break
+    }
+  }
+}
+
+const doEditCacheStuff = (edit) => {
+  const [op,id,p1,p2,p3,p4] = edit
+  switch (op) {
+    case 'dl':
+      if (!p1.p) {
+        delete store.titles[p1.s]
+      }
+      const refsOut = store.forwardRefs[id]
+      if (refsOut) {
+        for (let ref of refsOut) {
+          const backRefs = store.refs[ref]
+          if (backRefs.length === 1) {
+            delete store.refs[ref]
+          } else {
+            store.refs[ref] = backRefs.filter(x => x != id)
+          }
+        }
+      }
+      const refsIn = store.refs[id]
+      if (refsIn) {
+        // todo turn refs to dead pages into plaintext
+      }
+      break
+    case 'df':
+      break
+  }
+}
+
+const doEditBlox = (edit,time) => {
   const [op,id,p1,p2,p3,p4] = edit
   switch (op) {
     case "dl":
       const parent = store.blox[id].p
       if (parent) {
         store.blox[parent].k = store.blox[parent].k.filter(x => x !== id)
-      } else {
-        delete store.titles[store.blox[id].s]
       }
       delete store.blox[id]
       break
@@ -76,7 +152,7 @@ const undoEdit = (...edit) => {
       }
       break
     case "mv":
-      const newParent = p1,nidx = p2,oldParent = p3,oidx = p4
+      const newParent = p1,nidx = p2,oldParent = p3
       const block = store.blox[id]
       store.blox[oldParent].k = store.blox[oldParent].k.filter(x => x != id)
       block.p = newParent
@@ -99,50 +175,8 @@ const doEdit = (...edit) => {
   activeEdits.push(edit)
   print(edit)
   // console.log(edit)
-  const [op,id,p1,p2,p3,p4] = edit
-  switch (op) {
-    case "dl":
-      const parent = store.blox[id].p
-      if (parent) {
-        store.blox[parent].k = store.blox[parent].k.filter(x => x !== id)
-      } else {
-        delete store.titles[store.blox[id].s]
-      }
-      delete store.blox[id]
-      break
-    case "cr":
-      store.blox[id] = {
-        ct: time,
-        s: ""
-      }
-      const parentId = p1,idx = p2
-      if (parentId) {
-        store.blox[id].p = parentId
-        if (!store.blox[parentId].k) store.blox[parentId].k = []
-        if (idx) {
-          store.blox[parentId].k.splice(idx,0,id)
-        } else {
-          store.blox[parentId].k.push(id)
-        }
-      }
-      break
-    case "mv":
-      const newParent = p1,nidx = p2,oldParent = p3,oidx = p4
-      const block = store.blox[id]
-      store.blox[oldParent].k = store.blox[oldParent].k.filter(x => x != id)
-      block.p = newParent
-      if (!store.blox[newParent].k) store.blox[newParent].k = []
-      store.blox[newParent].k.splice(nidx,0,id)
-      break
-    case "df":
-      const df = p1
-      const bloc = store.blox[id]
-      bloc.et = time
-      if (!bloc.p) delete store.titles[bloc.s]
-      bloc.s = applyDif(bloc.s,df)
-      if (!bloc.p) store.titles[bloc.s] = id
-      break
-  }
+  doEditBlox(edit,time)
+  doEditCacheStuff(edit)
 }
 
 const commit = () => {
@@ -255,7 +289,10 @@ macros.nocommit = {
     return copyBlock(oldId,parentId,idx)
   },
   delete: (id) => {
-    doEdit("dl",id,cpy(store.blox[id]))
+    const bloc = store.blox[id]
+    let idx = undefined
+    if (bloc.p) idx = store.blox[bloc.p].k.indexOf(id)
+    doEdit("dl",id,cpy(bloc),idx)
   },
   write: (id,string) => {
     doEdit("df",id,diff(string,store.blox[id].s))

@@ -71,6 +71,8 @@ loginForm.addEventListener("submit",async (event) => {
   const response = await fetch(`${basicBitchServerUrl}/auth`,{ method: "POST",headers: { passwordHash: passwordHash } })
   if (response.status === 200) {
     user = await response.json()
+    saveUser()
+    invalidateLocal()
     console.log(user)
   } else {
     notifyText("Don't know that username + password.")
@@ -99,6 +101,8 @@ signupForm.addEventListener("submit",async (event) => {
   if (response.status === 200) {
     console.log(response)
     user = await response.json()
+    saveUser()
+    invalidateLocal()
     console.log(`signed up`)
   } else {
     const responseText = await response.json()

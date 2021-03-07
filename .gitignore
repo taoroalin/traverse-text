@@ -10,3 +10,4 @@ back_c_rocks/c_micro_roam
 **/*.a
 
 **/user-data/**
+front/public/**

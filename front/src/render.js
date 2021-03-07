@@ -65,26 +65,28 @@ const renderBlock = (parentNode,uid,idx) => {
 
 const renderBreadcrumb = (parent,blockId) => {
   const list = []
-  while (true) {
-    blockId = store.blox[blockId].p
-    if (store.blox[blockId].p) {
-      list.push({ string: store.blox[blockId].s,id: blockId })
-    } else {
-      list.push({ title: store.blox[blockId].s,id: blockId })
-      break
+  if (store.blox[blockId].p) {
+    while (true) {
+      blockId = store.blox[blockId].p
+      if (store.blox[blockId].p) {
+        list.push({ string: store.blox[blockId].s,id: blockId })
+      } else {
+        list.push({ title: store.blox[blockId].s,id: blockId })
+        break
+      }
     }
-  }
-  const node = breadcrumbPageTemplate.cloneNode(true)
-  const title = list[list.length - 1].title
-  renderBlockBody(node,title)
-  node.dataset.title = title
-  parent.appendChild(node)
-  for (let i = list.length - 2; i >= 0; i--) {
-    const node = breadcrumbBlockTemplate.cloneNode(true)
-    const nodeBody = node.children[1]
-    renderBlockBody(nodeBody,list[i].string,true)
-    node.dataset.id = list[i].id
+    const node = breadcrumbPageTemplate.cloneNode(true)
+    const title = list[list.length - 1].title
+    renderBlockBody(node,title)
+    node.dataset.title = title
     parent.appendChild(node)
+    for (let i = list.length - 2; i >= 0; i--) {
+      const node = breadcrumbBlockTemplate.cloneNode(true)
+      const nodeBody = node.children[1]
+      renderBlockBody(nodeBody,list[i].string,true)
+      node.dataset.id = list[i].id
+      parent.appendChild(node)
+    }
   }
 }
 

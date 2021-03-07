@@ -10,11 +10,11 @@ try {
 
 console.log("building")
 
-const regexScriptImport = /<script src="([^":]+)"><\/script>/g
-const scriptReplacer = (match,fname) => {
+const regexScriptImport = /<script src="([^":]+)"( async)?><\/script>/g
+const scriptReplacer = (match,fname,async) => {
   const js = fs.readFileSync("./src/" + fname,"utf8")
   const min = UglifyJS.minify(js).code
-  return `\n<script>\n${min}\n</script>\n`
+  return `\n<script${async || ""}>\n${min}\n</script>\n`
 }
 
 const regexStyleImport = /<link rel="stylesheet" href="([^":]+)">/g
@@ -24,7 +24,7 @@ const styleReplacer = (match,fname) => {
 }
 
 const html = fs.readFileSync("./src/index.html","utf8")
-const result = html.replace(regexScriptImport,scriptReplacer).replace(regexStyleImport,styleReplacer).replace(/<\/script>\s*<script>/g,"")
+const result = html.replace(regexScriptImport,scriptReplacer).replace(regexStyleImport,styleReplacer).replace(/<\/script>\s*<script( async)?>/g,"")
 // todo use minify(text, {toplevel:true}) for more mangling
 // todo minify inline
 

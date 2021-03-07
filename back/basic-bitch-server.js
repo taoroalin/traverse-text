@@ -1,8 +1,7 @@
 const http = require('http')
 const fs = require('fs')
 const { Worker } = require('worker_threads')
-const zlib = require('zlib')
-const stream = require('stream')
+
 // crypto and cluster are node built-in modules to consider. cluster lets you have multiple identical processes and round-robin distributes requests among them
 const { performance } = require('perf_hooks')
 // todo use session keys instead of holding onto password hash everywhere for more security
@@ -210,7 +209,7 @@ http.createServer((req,res) => {
       writeStream = fs.createWriteStream(`../user-data/blox/${match[2]}.json`)
       req.pipe(writeStream)
       req.on("end",() => {
-        compressionWorker.postMessage(['compress',match[2]])
+        if (isUsingCompression) compressionWorker.postMessage(['compress',match[2]])
         res.writeHead(200)
         res.end()
       })
@@ -237,7 +236,7 @@ http.createServer((req,res) => {
         res.setHeader('Encoding','br')
         fileReadStream = fs.createReadStream(`../user-data/blox-br/${match[2]}.json.br`)
         fileReadStream.pipe(res)
-      } {
+      } else {
         fileReadStream = fs.createReadStream(`../user-data/blox/${match[2]}.json`)
         fileReadStream.pipe(res)
       }
@@ -278,7 +277,7 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      if (userAccount.userReadable.readGraphs[settings.graphName] === undefined) {
+      if (userAccount.userReadable.readStores[settings.graphName] === undefined) {
         res.writeHead(403)
         res.write("You don't have access to that default graph")
         res.end()
