@@ -152,7 +152,7 @@ const setFocusedBlockString = (string,diff) => {
   if (diff !== undefined) {
     commitEdit('df',sessionState.focusId,diff)
   } else {
-    macros.write(sessionState.focusId,string,refTitles)
+    macros.write(sessionState.focusId,string)
   }
 }
 
@@ -267,7 +267,7 @@ const showTopBar = () => {
   topBarHiddenHitbox.style.display = "none"
 }
 const hideTopBar = () => {
-  topBar.style.marginTop = "-46px"
+  topBar.style.marginTop = "-43px"
   topBarHiddenHitbox.style.display = "block"
 }
 const saveUser = () => {
@@ -284,15 +284,12 @@ if (dataLoaded) start()
 scriptsLoaded = true
 
 
-// const f = (n,text = "") => {
-//   return "hi" + text + n + " says hello to " + n + " and " + n
-// }
-// const ptest = () => {
-//   const t = performance.now()
-//   let y = ""
-//   for (let i = 0; i < 100000; i++) {
-//     y = f(i,y)
-//   }
-//   console.log(`took ${performance.now() - t}`)
-// }
+const ptest = () => {
+  const t = performance.now()
+
+  for (let i = 0; i < 100; i++) {
+    hydrateFromBlox('testgraph',store.blox)
+  }
+  console.log(`took ${performance.now() - t}`)
+}
 // ptest()

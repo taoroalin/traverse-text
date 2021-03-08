@@ -191,8 +191,10 @@ const commit = () => {
   store.commitId = newId
   user.settings.commitId = newId
   activeEdits = []
-  debouncedSaveStore()
-  saveUser()
+  setTimeout(() => {
+    debouncedSaveStore()
+    saveUser()
+  },0)
 }
 const commitEdit = (...edit) => {
   doEdit(...edit)

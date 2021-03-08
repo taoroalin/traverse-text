@@ -178,14 +178,16 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
       }
     } else if (match[3]) {
       refTitles.push(match[3])
-      const tagElement = tagTemplate.cloneNode(true)
+      const tagElement = document.createElement('span')
+      tagElement.className = "tag"
       tagElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(tagElement)
     } else if (match[4]) {
       const blockId = match[4]
       const block = store.blox[blockId]
       if (block) {
-        const blockRefElement = blockRefTemplate.cloneNode(true)
+        const blockRefElement = document.createElement('span')
+        blockRefElement.className = 'block-ref'
         blockRefElement.innerText = block.s
         blockRefElement.dataset.id = blockId
         stackTop.appendChild(blockRefElement)
@@ -198,7 +200,8 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
-        const boldElement = boldTemplate.cloneNode(true)
+        const boldElement = document.createElement('span')
+        boldElement.className = 'bold'
         stackTop.appendChild(boldElement)
         boldElement.appendChild(newTextNode("**"))
         stack.push(boldElement)
@@ -210,11 +213,12 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
-        const boldElement = highlightTemplate.cloneNode(true)
-        stackTop.appendChild(boldElement)
-        boldElement.appendChild(newTextNode("^^"))
-        stack.push(boldElement)
-        stackTop = boldElement
+        const highlightElement = document.createElement('span')
+        highlightElement.className = 'highlight'
+        stackTop.appendChild(highlightElement)
+        highlightElement.appendChild(newTextNode("^^"))
+        stack.push(highlightElement)
+        stackTop = highlightElement
       }
     } else if (match[7]) {
       if (stackTop.className === "italic") {
@@ -222,27 +226,32 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
-        const boldElement = italicTemplate.cloneNode(true)
-        stackTop.appendChild(boldElement)
-        boldElement.appendChild(newTextNode("__"))
-        stack.push(boldElement)
-        stackTop = boldElement
+        const italicElement = document.createElement('span')
+        italicElement.className = 'italic'
+        stackTop.appendChild(italicElement)
+        italicElement.appendChild(newTextNode("__"))
+        stack.push(italicElement)
+        stackTop = italicElement
       }
     } else if (match[8]) {
-      const urlElement = urlTemplate.cloneNode(true)
+      const urlElement = document.createElement('span')
+      urlElement.className = 'url'
       urlElement.appendChild(newTextNode(match[0]))
       urlElement.href = match[8]
       stackTop.appendChild(urlElement)
     } else if (match[9]) {
-      const literalElement = literalTemplate.cloneNode(true)
+      const literalElement = document.createElement('span')
+      literalElement.className = 'literal'
       literalElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(literalElement)
     } else if (match[10]) {
-      const templateExpanderElement = templateExpanderTemplate.cloneNode(true)
+      const templateExpanderElement = document.createElement('span')
+      templateExpanderElement.className = 'template-expander'
       templateExpanderElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(templateExpanderElement)
     } else if (match[11]) {
-      const attributeElement = attributeTemplate.cloneNode(true)
+      const attributeElement = document.createElement('span')
+      attributeElement.className = 'attribute'
       attributeElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(attributeElement)
     } else if (match[12]) {
@@ -251,7 +260,8 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
-        const codeBlockElement = codeBlockTemplate.cloneNode(true)
+        const codeBlockElement = document.createElement('div')
+        codeBlockElement.className = 'code-block'
         codeBlockElement.appendChild(newTextNode(match[0]))
         stackTop.appendChild(codeBlockElement)
         stack.push(codeBlockElement)

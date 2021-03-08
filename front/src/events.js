@@ -122,6 +122,7 @@ const autocomplete = () => {
   } else {
     const textNode = editingLink.children[1].childNodes[0]
     const string = origString.slice(0,textNode.startIdx) + focusSuggestion.dataset.title + origString.slice(textNode.endIdx)
+    console.log(string)
     sessionState.position = textNode.startIdx + focusSuggestion.dataset.title.length + 2
     setFocusedBlockString(string)
   }
@@ -180,33 +181,36 @@ document.addEventListener("input",(event) => {
     // reparse block and insert cursor into correct position while typing
 
     let string = focusBlockBody.innerText
-    if (event.data === "[") {
-      const pageRefClosesMissingOpens = event.target.querySelectorAll(".page-ref-close-missing-open")
-      let broke = false
-      for (let x of pageRefClosesMissingOpens) {
-        console.log(x)
-        if (x.childNodes[0].startIdx > sessionState.position) {
-          broke = true
-          break
+    let wasInputPlain = event.data !== null && event.data.length === 1 && event.inputType === "insertText"
+    if (event.data !== null) {
+      if (event.data === "[") {
+        const pageRefClosesMissingOpens = event.target.querySelectorAll(".page-ref-close-missing-open")
+        let broke = false
+        for (let x of pageRefClosesMissingOpens) {
+          console.log(x)
+          if (x.childNodes[0].startIdx > sessionState.position) {
+            broke = true
+            break
+          }
         }
-      }
-      if (!broke)
-        string = string.substring(0,sessionState.position) + "]" + string.substring(sessionState.position)
-    } else if (event.data === "]") {
-      if (string[sessionState.position] === "]") {
-        string = string.substring(0,sessionState.position - 1) + string.substring(sessionState.position)
+        if (!broke) {
+          string = string.substring(0,sessionState.position) + "]" + string.substring(sessionState.position)
+          wasInputPlain = false
+        }
+      } else if (event.data === "]") {
+        if (string[sessionState.position] === "]") {
+          string = string.substring(0,sessionState.position - 1) + string.substring(sessionState.position)
+          wasInputPlain = false
+        }
       }
     }
 
     let diff = { d: store.blox[sessionState.focusId].s,i: string }
-    if (event.data !== null) {
-      if (event.data.length === 1 && event.inputType === "insertText") {
-        if (sessionState.position === string.length)
-          diff = { i: event.data }
-        else diff = { i: event.data,s: sessionState.position - 1 }
-      }
+    if (wasInputPlain) {
+      if (sessionState.position === string.length)
+        diff = { i: event.data }
+      else diff = { i: event.data,s: sessionState.position - 1 }
     }
-
     setFocusedBlockString(string,diff)
 
     if (editingTitle) {

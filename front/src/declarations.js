@@ -60,16 +60,6 @@ const notificationTemplate = getTemp("notification")
 
 // Block parsing Templates
 const pageRefTemplate = getTemp("page-ref")
-const tagTemplate = getTemp("tag")
-const urlTemplate = getTemp("url")
-const blockRefTemplate = getTemp("block-ref")
-const boldTemplate = getTemp("bold")
-const italicTemplate = getTemp("italic")
-const highlightTemplate = getTemp("highlight")
-const literalTemplate = getTemp("literal")
-const templateExpanderTemplate = getTemp("template-expander")
-const attributeTemplate = getTemp("attribute")
-const codeBlockTemplate = getTemp("code-block")
 
 // login/signup
 const loginForm = document.getElementById("login-form")

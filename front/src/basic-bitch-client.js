@@ -5,8 +5,8 @@ const saveStoreToBasicBitchServer = async (blox) => {
   const headers = new Headers()
   headers.set('passwordhash',user.passwordHash)
   const syncCommitId = user.settings.commitId
-  headers.set('commitid',user.settings.commitId)
-  headers.set('syncedcommitid',syncCommitId)
+  headers.set('commitid',syncCommitId)
+  headers.set('synccommitid',user.settings.syncCommitId)
   const response = await fetch(`${basicBitchServerUrl}/put/${store.graphName}`,
     {
       method: "POST",body: blox,
