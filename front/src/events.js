@@ -41,6 +41,16 @@ const downloadHandler = () => {
   downloadButton.setAttribute('download',`${store.graphName}-${formatDateYMD(new Date(Date.now()))}.json`)
 }
 
+const downloadMd = () => {
+  console.log("download md")
+  const data = storeToMdZip()
+  const url = URL.createObjectURL(data)
+  const anchor = document.createElement("a")
+  anchor.setAttribute('href',url)
+  anchor.setAttribute('download',`${store.graphName}-md-${formatDateYMD(new Date(Date.now()))}.zip`)
+  anchor.click()
+}
+
 const expandTemplate = () => {
   const id = focusSuggestion.dataset.id
   const block = store.blox[sessionState.focusId]
@@ -762,14 +772,6 @@ const preprocessNewStore = () => {
   }))
 }
 
-switchToSignup.addEventListener('click',() => {
-  focusSignup()
-})
-
-switchToLogin.addEventListener('click',() => {
-  focusLogin()
-})
-
 signupButton.addEventListener('click',(event) => {
   focusSignup()
   event.stopPropagation()
@@ -787,3 +789,7 @@ const focusLogin = () => {
   signupElement.style.display = "none"
   loginEmailElement.focus()
 }
+
+switchToSignup.addEventListener('click',focusSignup)
+
+switchToLogin.addEventListener('click',focusLogin)

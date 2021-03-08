@@ -70,3 +70,16 @@ const literalTemplate = getTemp("literal")
 const templateExpanderTemplate = getTemp("template-expander")
 const attributeTemplate = getTemp("attribute")
 const codeBlockTemplate = getTemp("code-block")
+
+// login/signup
+const loginForm = document.getElementById("login-form")
+const loginEmailElement = document.getElementById("login-email")
+const loginPasswordElement = document.getElementById("login-password")
+const signupForm = document.getElementById("signup-form")
+
+const signupUsernameElement = document.getElementById("signup-username")
+const signupEmailElement = document.getElementById("signup-email")
+const signupPasswordElement = document.getElementById("signup-password")
+
+// de-OOP-ing apis
+const textEncoder = new TextEncoder()

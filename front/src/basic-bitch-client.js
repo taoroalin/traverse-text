@@ -15,17 +15,25 @@ const saveStoreToBasicBitchServer = async (blox) => {
   if (response.status === 200 || response.status === 304) {
     user.settings.syncCommitId = syncCommitId
     store.syncCommitId = syncCommitId
+    console.log(`save confirmed in ${performance.now() - putSentTime}`)
+  } else {
+    console.warn(`failed to save to server`)
   }
-  console.log(`save confirmed in ${performance.now() - putSentTime}`)
 }
 
 const getStoreFromBasicBitchServer = async (graphName) => {
   const getSentTime = performance.now()
   const response = await fetch(`${basicBitchServerUrl}/get/${graphName}`,
     { headers: { passwordHash: user.passwordHash } })
-  const blox = await response.json()
-  console.log(`got in ${performance.now() - getSentTime}`)
-  hydrateFromBlox(graphName,blox)
+  switch (reponse.status) {
+    case 200:
+      const blox = await response.json()
+      hydrateFromBlox(graphName,blox)
+      console.log(`got in ${performance.now() - getSentTime}`)
+      break
+    default:
+      console.warn(`failed to get store`)
+  }
 }
 
 const saveSettingsToBasicBitchServer = async () => {
@@ -45,7 +53,7 @@ const beginPepper = "CeoPPOv9rIq6O7YiYlSFX"
 const endPepper = "Rzw1dagomQGpoo2s7iGE3lYL2yruaJDGrUk6bFCvz"
 const hashPassword = async (password,email) => {
   const saltAndPeppered = `${beginPepper}${password}${middlePepper}${email}${endPepper}`
-  const buffer = new TextEncoder().encode(saltAndPeppered)
+  const buffer = TextEncoder.encode(saltAndPeppered)
   const hashed = await crypto.subtle.digest("SHA-512",buffer)
   const passwordHashBuffer = new Uint8Array(hashed)
   let passwordHash = ""
@@ -56,10 +64,6 @@ const hashPassword = async (password,email) => {
   passwordHash = passwordHash.replaceAll("/","-").replaceAll("+","_").replaceAll("=","")
   return passwordHash
 }
-
-const loginForm = document.getElementById("login-form")
-const loginEmailElement = document.getElementById("login-email")
-const loginPasswordElement = document.getElementById("login-password")
 
 loginForm.addEventListener("submit",async (event) => {
   event.preventDefault()
@@ -79,10 +83,6 @@ loginForm.addEventListener("submit",async (event) => {
   }
 })
 
-const signupForm = document.getElementById("signup-form")
-const signupUsernameElement = document.getElementById("signup-username")
-const signupEmailElement = document.getElementById("signup-email")
-const signupPasswordElement = document.getElementById("signup-password")
 
 signupForm.addEventListener("submit",async (event) => {
   event.preventDefault()

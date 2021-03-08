@@ -116,3 +116,7 @@ const storeToMdObjects = () => {
   }
   return result
 }
+
+const storeToMdZip = () => {
+  return filesToZip(storeToMdObjects())
+}
