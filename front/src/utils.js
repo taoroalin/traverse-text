@@ -1,3 +1,18 @@
+// deepcopy for JSON-ifiables, but faster than JSON.parse . JSON.stringify
+const cpy = (x) => {
+  if (typeof x === "object") {
+    if (x instanceof Array) {
+      return x.map(cpy)
+    } else {
+      const result = {}
+      for (let key in x) {
+        result[key] = cpy(x[key])
+      }
+      return result
+    }
+  } else return x
+}
+
 const monthNames = [
   "January",
   "February",

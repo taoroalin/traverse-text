@@ -1,5 +1,3 @@
-const cpy = x => JSON.parse(JSON.stringify(x))
-
 /*
 Paralel difs are too much work. Switching to simpler single command buffer
 I feel like I had a specification for diffs, but I seem to have lost it.
@@ -36,18 +34,6 @@ const unapplyDif = (string,dif) => {
 const diff = (string,oldString) => { // todo real diff
   return { d: oldString,i: string }
 }
-
-// useless function just for reference
-// actually because s defaults to end of string inverse diff only works if you know the store at this state
-const inverseDiff = (diff) => {
-  const result = {}
-  if (diff.s) result.s = diff.s
-  else diff.s = -diff.i.length
-  if (diff.d) result.i = diff.d
-  if (diff.i) result.d = diff.i
-  return result
-}
-
 
 let edits = []
 let editsSessionStates = []
@@ -126,6 +112,7 @@ const doEditCacheStuff = (edit) => {
       }
       break
     case 'df':
+      setLinks(id)
       break
   }
 }
@@ -168,7 +155,7 @@ const doEditBlox = (edit,time) => {
       const df = p1
       const bloc = store.blox[id]
       bloc.et = time
-      if (!bloc.p) delete store.titles[bloc.s]
+      if (!bloc.p) delete store.titles[bloc.s] // todo move this to cacheStuff, but need access to before & after there
       bloc.s = applyDif(bloc.s,df)
       if (!bloc.p) store.titles[bloc.s] = id
       break

@@ -122,96 +122,118 @@ const roamJsonToStore = (graphName,text) => {
   return store
 }
 
+const gcPage = (pageId) => {
+  const page = store.blox[pageId]
+  const refs = store.refs[pageId]
+  if ((page.k === undefined || page.k.length === 0) && (refs === undefined || refs.length === 0)) {
+    macros.nocommit.delete(pageId)
+  }
+}
+
 // 1             2              3   4         5         6       7
 // page-ref-open page-ref-close tag block-ref attribute literal code-block
 const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(^[\/a-zA-Z0-9_-]+)::|`([^`]+)`|```/g
 
-const generateRefs = () => {
-  const stime = performance.now()
-  store.refs = {}
-  store.forwardRefs = {}
-  for (let blocId in store.blox) {
-    const bloc = store.blox[blocId]
-    const text = bloc.s
-    const doRef = (ref) => {
-      if (ref in store.refs) store.refs[ref].push(blocId)
-      else store.refs[ref] = [blocId]
-      if (blocId in store.forwardRefs) store.forwardRefs[blocId].push(ref)
-      else store.forwardRefs[blocId] = [ref]
+const setLinks = (blocId) => {
+  for (let ref of store.forwardRefs[blocId] || []) {
+    store.refs[ref] = store.refs[ref].filter(x => x !== blocId)
+    gcPage(ref)
+  }
+  const forwardRefs = []
+  store.forwardRefs[blocId] = forwardRefs
+  const doRef = (ref) => {
+    if (ref in store.refs) store.refs[ref].push(blocId)
+    else store.refs[ref] = [blocId]
+    forwardRefs.push(ref)
+  }
+  const doTitle = (title) => {
+    let ref = store.titles[title]
+    if (ref === undefined) {
+      ref = macros.nocommit.createPage(title) // todo manage the commit on this one. Need some standard for when to commit / when to do
     }
-    const matches = text.matchAll(parseRegexJustLinks)
-    // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
+    doRef(ref)
+  }
 
-    let idx = 0
-    let stackTop = undefined // s is string, t is type
-    let stack = []
+  const bloc = store.blox[blocId]
+  const text = bloc.s
+  const matches = text.matchAll(parseRegexJustLinks)
+  // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
-    for (let match of matches) {
-      if (stack.length === 0 || stackTop.t === "cb") {
-        if (match[1]) {
-          const pageRefElement = { t: "pr",s: "" }
-          stack.push(pageRefElement)
-          stackTop = stack[stack.length - 1]
-        } else if (match[3]) {
-          const ref = store.titles[match[3]]
-          if (ref) doRef(ref)
-        } else if (match[5]) {
-          const ref = store.titles[match[5]]
-          if (ref) doRef(ref)
-        } else if (match[4]) {
-          doRef(match[4])
-        } else if (match[7]) {
-          if (stackTop && stackTop.t === "cb") {
-            stack.pop()
-          } else {
-            const codeBlockElement = { t: 'cb',s: "" }
-            stack.push(codeBlockElement)
-            stackTop = stack[stack.length - 1]
-          }
-        }
-      } else {
-        stackTop.s = stackTop.s + text.substring(idx,match.index)
-        idx = match.index
-        if (match[1]) {
-          const pageRefElement = { t: "pr",s: "" }
-          stackTop.s = stackTop.s + "[["
-          stack.push(pageRefElement)
-          stackTop = stack[stack.length - 1]
-        } else if (match[2]) {
-          let s = "]]"
-          if (stackTop.t === "pr") {
-            s = stackTop.s + "]]"
-            const ref = store.titles[stackTop.s]
-            if (ref) doRef(ref)
-            stack.pop()
-            stackTop = stack[stack.length - 1]
-          }
-          if (stackTop !== undefined) stackTop.s = stackTop.s + s
-        } else if (match[3]) {
-          const ref = store.titles[match[3]]
-          if (ref) doRef(ref)
-          stackTop.s = stackTop.s + match[0]
-        } else if (match[5]) {
-          stackTop.s = stackTop.s + match[0]
-          const ref = store.titles[match[5]]
-          if (ref) doRef(ref)
-        } else if (match[4]) {
-          doRef(match[4])
-          stackTop.s = stackTop.s + match[0]
-        } else if (match[7]) {
-          if (stackTop && stackTop.t === "cb") {
-            stack.pop()
-          } else {
-            const codeBlockElement = { t: 'cb',s: "" }
-            stack.push(codeBlockElement)
-            stackTop = stack[stack.length - 1]
-          }
+  let idx = 0
+  let stackTop = undefined // s is string, t is type
+  let stack = []
+
+  for (let match of matches) {
+    if (stack.length === 0 || stackTop.t === "cb") {
+      if (match[1]) {
+        const pageRefElement = { t: "pr",s: "" }
+        stack.push(pageRefElement)
+        stackTop = stack[stack.length - 1]
+      } else if (match[3]) {
+        doTitle(match[3])
+      } else if (match[5]) {
+        doTitle(match[5])
+      } else if (match[4]) {
+        doRef(match[4])
+      } else if (match[7]) {
+        if (stackTop && stackTop.t === "cb") {
+          stack.pop()
         } else {
-          stackTop.s = stackTop.s + match[0]
+          const codeBlockElement = { t: 'cb',s: "" }
+          stack.push(codeBlockElement)
+          stackTop = stack[stack.length - 1]
         }
       }
-      idx = match.index + match[0].length
+    } else {
+      stackTop.s = stackTop.s + text.substring(idx,match.index)
+      idx = match.index
+      if (match[1]) {
+        const pageRefElement = { t: "pr",s: "" }
+        stackTop.s = stackTop.s + "[["
+        stack.push(pageRefElement)
+        stackTop = stack[stack.length - 1]
+      } else if (match[2]) {
+        let s = "]]"
+        if (stackTop.t === "pr") {
+          s = stackTop.s + "]]"
+          doTitle([stackTop.s])
+          stack.pop()
+          stackTop = stack[stack.length - 1]
+        }
+        if (stackTop !== undefined) stackTop.s = stackTop.s + s
+      } else if (match[3]) {
+        doTitle(match[3])
+        stackTop.s = stackTop.s + match[0]
+      } else if (match[5]) {
+        stackTop.s = stackTop.s + match[0]
+        const ref = store.titles[match[5]]
+        doTitle(match[5])
+      } else if (match[4]) {
+        doRef(match[4])
+        stackTop.s = stackTop.s + match[0]
+      } else if (match[7]) {
+        if (stackTop && stackTop.t === "cb") {
+          stack.pop()
+        } else {
+          const codeBlockElement = { t: 'cb',s: "" }
+          stack.push(codeBlockElement)
+          stackTop = stack[stack.length - 1]
+        }
+      } else {
+        stackTop.s = stackTop.s + match[0]
+      }
     }
+    idx = match.index + match[0].length
+  }
+  if (forwardRefs.length === 0) delete store.forwardRefs[blocId]
+}
+
+const generateRefs = () => {
+  const stime = performance.now()
+  if (store.refs === undefined) store.refs = {}
+  if (store.forwardRefs === undefined) store.forwardRefs = {}
+  for (let blocId in store.blox) {
+    setLinks(blocId)
   }
   console.log(`gen refs took ${performance.now() - stime}`)
   return store
