@@ -17,6 +17,14 @@ const compress = (fileName) => {
   })
 }
 
+const compressPublic = () => {
+  const fileNames = fs.readdirSync("./public")
+  for (let fileName of fileNames) {
+    if (fileName.match(/\.[a-z]+$/))
+      compress(fileName)
+  }
+}
+
 try {
   var UglifyJS = require("uglify-js")
 } catch (e) {
@@ -25,8 +33,24 @@ try {
 
 console.log("building")
 
-const build = () => {
+const buildWorker = (workerName = 'worker') => {
+  // copy worker & splice in importScripts. 
+  // dead code now, but I'll use it if I add back in workers
+  let workerFile = fs.readFileSync(`./src/${workerName}.js","utf8`)
+  workerFile = workerFile.replace(/importScripts\(([^\)]+)\)/g,(match,namesText) => {
+    const names = namesText.match(/"([^"]+)"/g)
+    console.log(names)
+    let result = ""
+    for (let name of names) {
+      result += "\n" + fs.readFileSync("./src/" + name.substring(1,name.length - 1),"utf8") + "\n"
+    }
+    return result
+  })
+  workerFile = UglifyJS.minify(workerFile).code
+  fs.writeFileSync("./public/worker.js",workerFile)
+}
 
+const build = () => {
 
   const regexScriptImport = /<script src="([^":]+)"( async)?><\/script>/g
   const scriptReplacer = (match,fname,async) => {
@@ -48,37 +72,17 @@ const build = () => {
 
   fs.writeFileSync("./public/index.html",result)
 
-
-  // copy worker & splice in importScripts. only for when I'm actually using a worker
-  // let workerFile = fs.readFileSync("./src/worker.js","utf8")
-  // workerFile = workerFile.replace(/importScripts\(([^\)]+)\)/g,(match,namesText) => {
-  //   const names = namesText.match(/"([^"]+)"/g)
-  //   console.log(names)
-  //   let result = ""
-  //   for (let name of names) {
-  //     result += "\n" + fs.readFileSync("./src/" + name.substring(1,name.length - 1),"utf8") + "\n"
-  //   }
-  //   return result
-  // })
-  // workerFile = UglifyJS.minify(workerFile).code
-  // fs.writeFileSync("./public/worker.js",workerFile)
-
   fs.copyFile("./src/favicon.ico","./public/favicon.ico",() => { })
   fs.copyFile("./src/default-store.json","./public/default-store.json",() => { })
   fs.copyFile("./src/test.js","./public/test.js",() => { })
-
-  const fileNames = fs.readdirSync("./public")
-  console.log(fileNames)
-  for (let fileName of fileNames) {
-    compress(fileName)
-  }
-
-  // console.log(`took ${performance.now() - stime}`)
 }
 build()
 
-console.log(JSON.stringify(process.argv))
-if (process.argv.length > 0 && process.argv[0] === 'serve') {
+if (process.argv.includes('compress')) {
+  compressPublic()
+}
+
+if (process.argv.includes('serve')) {
   const { exec } = require("child_process")
   exec("node serve.js ./public")
 }
