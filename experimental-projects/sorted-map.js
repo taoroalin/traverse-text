@@ -1,3 +1,7 @@
+/*
+I have a lot of profiling to do here. Need to know (preferably in JSON) the exact time/size curves for array.splice, member access inside tree, binary search array, linear search array
+*/
+
 const BTREE_FAN_BITS = 6
 
 const examplebtree = [{ k: 6,l: [{ k: 3,v: "value" },{}] }]

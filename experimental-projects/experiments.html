@@ -1,11 +1,2 @@
-<script>
-  const ptest = () => {
-    const t = performance.now()
-    let y = 0
-    let ob = { "hi": true,"zi": false }
-    for (let i = 0; i < 10000000; i++) {
-      if (ob["hi"] === undefined) y += 1
-    }
-    console.log(`took ${performance.now() - t}`)
-  }
-  ptest()</script>
+<script src="sorted-map.js">
+</script>
