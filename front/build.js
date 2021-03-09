@@ -1,6 +1,21 @@
-// const { performance } = require('perf_hooks')
-// const stime = performance.now()
-const fs = require("fs")
+const fs = require('fs')
+const zlib = require('zlib')
+const stream = require('stream')
+
+const { performance } = require('perf_hooks')
+
+const compress = (fileName) => {
+  const cpystime = performance.now()
+  const compressor = zlib.createBrotliCompress({ params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 11,[zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } })
+  const source = fs.createReadStream(`./public/${fileName}`)
+  const target = fs.createWriteStream(`./public-br/${fileName}.br`)
+  stream.pipeline(source,compressor,target,(err) => {
+    if (err) {
+      console.log("failed to compress:",err)
+    }
+    console.log(performance.now() - cpystime)
+  })
+}
 
 try {
   var UglifyJS = require("uglify-js")
@@ -27,7 +42,7 @@ const build = () => {
   }
 
   const html = fs.readFileSync("./src/index.html","utf8")
-  const result = html.replace(regexScriptImport,scriptReplacer).replace(regexStyleImport,styleReplacer).replace(/<\/script>\s*<script( async)?>/g,"")
+  const result = html.replace(regexScriptImport,scriptReplacer).replace(regexStyleImport,styleReplacer).replace(/<\/script>\s*<script( async)?>/g,"").replace(/\r?\n\s*/g,"\n")
   // todo use minify(text, {toplevel:true}) for more mangling
   // todo minify inline
 
@@ -51,6 +66,12 @@ const build = () => {
   fs.copyFile("./src/favicon.ico","./public/favicon.ico",() => { })
   fs.copyFile("./src/default-store.json","./public/default-store.json",() => { })
   fs.copyFile("./src/test.js","./public/test.js",() => { })
+
+  const fileNames = fs.readdirSync("./public")
+  console.log(fileNames)
+  for (let fileName of fileNames) {
+    compress(fileName)
+  }
 
   // console.log(`took ${performance.now() - stime}`)
 }

@@ -1,13 +1,3 @@
-**/node_modules/**
-**/package-lock.json
-
-back_node_level/prod-db/**
-back_node_level/test-db/**
-back_c_rocks/prod-db/**
-back_c_rocks/test-db/**
-back_c_rocks/include/**
-back_c_rocks/c_micro_roam
-**/*.a
-
 **/user-data/**
 front/public/**
+front/public-br/**

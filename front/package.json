@@ -1,8 +1,0 @@
-{
-  "scripts": {
-    "dev": "cd src && live-server --no-css-inject",
-    "build": "node build.js",
-    "build:watch": "nodemon --watch build.js --watch src build.js",
-    "serve": "cd public && live-server --no-css-inject"
-  }
-}
