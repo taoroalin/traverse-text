@@ -53,7 +53,7 @@ const updateCursorInfo = () => {
   focusNode = getSelection().focusNode
   focusOffset = getSelection().focusOffset
 
-  focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`) || templateList.querySelector(`.template__suggestion[data-selected="true"]`)
+  focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`) || templateList.querySelector(`.template__suggestion[data-selected="true"]`) || inlineCommandList.querySelector(`.command__suggestion[data-selected="true"]`)
 
   focusSearchResult = searchResultList.querySelector(`.search-result[data-selected="true"]`)
 
@@ -90,6 +90,8 @@ const updateCursorInfo = () => {
       editingTemplateExpander = getEditingSimpleSpan("template-expander")
 
       editingUrlElement = getEditingSimpleSpan("url")
+
+      editingCommandElement = getEditingSimpleSpan("command")
 
     } else
       sessionState.isFocused = false

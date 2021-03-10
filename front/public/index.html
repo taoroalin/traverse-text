@@ -174,8 +174,9 @@ setTimeout(() => topBar.className = "top-bar-transition",200)
 <div id="page-frame">
 </div>
 </div>
-<div id="autocomplete-list" style="display:none"></div>
 <!-- inline styles on this site are all edited directly by js -->
+<div id="autocomplete-list" style="display:none"></div>
+<div id="command-list" style="display:none"></div>
 <div id="search-result-list" style="display:none"></div>
 <div id="template-list" style="display:none"></div>
 <div id="login" style="display:none">
@@ -348,7 +349,8 @@ border-radius: 100px;
 flex-grow: 1;
 }
 #autocomplete-list,
-#template-list {
+#template-list,
+#command-list {
 position: absolute;
 display: flex;
 flex-direction: column;
@@ -358,11 +360,13 @@ border-radius: 5px;
 box-shadow: 0 0 8px var(--shadow);
 }
 .autocomplete__suggestion[data-selected="true"],
+.command__suggestion[data-selected="true"],
 .template__suggestion[data-selected="true"] {
 background-color: var(--click);
 }
 .autocomplete__suggestion,
-.template__suggestion {
+.template__suggestion,
+.command__suggestion {
 padding: 7px;
 cursor: pointer;
 border-radius: 5px;
@@ -637,6 +641,9 @@ class="page-ref__brackets"></span></span>
 <template id="autocomplete__suggestion">
 <div class="autocomplete__suggestion"></div>
 </template>
+<template id="command__suggestion">
+<div class="command__suggestion"></div>
+</template>
 <template id="template__suggestion">
 <div class="template__suggestion"></div>
 </template>
@@ -655,6 +662,7 @@ class="breadcrumb-block__body"></span></span>
 </template>
 <script>
 let editingTemplateExpander = null
+let editingCommandElement = null
 let editingLink = null
 let editingTitle = null
 let focusNode = null
@@ -677,6 +685,8 @@ const searchResultList = document.getElementById("search-result-list")
 searchResultList.dataset.templateName = "search-result"
 const autocompleteList = document.getElementById("autocomplete-list")
 autocompleteList.dataset.templateName = "autocomplete__suggestion"
+const inlineCommandList = document.getElementById("command-list")
+inlineCommandList.dataset.templateName = "command__suggestion"
 const templateList = document.getElementById("template-list")
 templateList.dataset.templateName = "template__suggestion"
 const switchToLogin = document.getElementById("switch-to-login")
@@ -691,9 +701,7 @@ const blockTemplate = getTemp("block")
 const backrefListTemplate = getTemp("backref-list")
 const blockFocusFrameTemplate = getTemp("block-focus-frame")
 const pageBreakTemplate = getTemp("page-break")
-const suggestionTemplate = getTemp("autocomplete__suggestion")
 const searchResultTemplate = getTemp("search-result")
-const templateSuggestionTemplate = getTemp("template__suggestion")
 const breadcrumbBlockTemplate = getTemp("breadcrumb-block")
 const breadcrumbPageTemplate = getTemp("breadcrumb-page")
 const backrefFrameTemplate = getTemp("backref-frame")
@@ -708,8 +716,50 @@ const signupForm = document.getElementById("signup-form")
 const signupUsernameElement = document.getElementById("signup-username")
 const signupEmailElement = document.getElementById("signup-email")
 const signupPasswordElement = document.getElementById("signup-password")
-// de-OOP-ing apis
 const textEncoder = new TextEncoder()
+const lruCreate = (max) => {
+const result = new Map()
+result.max = max
+return result
+}
+const lruGet = (cache,key) => {
+const val = cache.get(key)
+if (val !== undefined) {
+cache.delete(key)
+cache.set(key,val)
+}
+return val
+}
+const lruPut = (cache,key,val) => {
+if (cache.size === cache.max) {
+cache.delete(cache.keys().next().value)
+}
+cache.set(key,val)
+}
+const lruSCreate = (max) => {
+const result = new Map()
+result.max = max
+result.cur = 0
+return result
+}
+const lruSGet = (cache,key) => {
+const val = cache.get(key)
+if (val !== undefined) {
+cache.delete(key)
+cache.set(key,val)
+}
+return val.val
+}
+const lruSPut = (cache,key,val,size) => {
+cache.cur += size
+while (cache.cur >= cache.max) {
+const k = cache.keys().next().value
+const v = cache.get(k)
+cache.cur -= v.size
+cache.delete(k)
+}
+cache.set(key,{ size,val })
+}
 // deepcopy for JSON-ifiables, but faster than JSON.parse . JSON.stringify
 const cpy = (x) => {
 if (typeof x === "object") {
@@ -1061,6 +1111,50 @@ const result = macros.nocommit[k](...args)
 commit()
 return result
 }
+}
+// inline commands are completely different than commands. They're things the user can do to the current block they're editing
+const inlineCommands = {
+todo: () => {
+const position = editingCommandElement.firstChild.startIdx + 8
+editingCommandElement.remove()
+updateCursorInfo()
+let string = focusBlockBody.innerText
+string = "[[TODO]]" + string
+sessionState.position = position
+setFocusedBlockString(string)
+},
+today: () => {
+const dateString = "[[" + formatDate(new Date(Date.now())) + "]]"
+sessionState.position = editingCommandElement.firstChild.startIdx + dateString.length
+editingCommandElement.innerText = dateString
+setFocusedBlockString(focusBlockBody.innerText)
+},
+tomorrow: () => {
+const dateString = "[[" + formatDate(new Date(Date.now() + 86400000)) + "]]"
+sessionState.position = editingCommandElement.firstChild.startIdx + dateString.length
+editingCommandElement.innerText = dateString
+setFocusedBlockString(focusBlockBody.innerText)
+},
+yesterday: () => {
+const dateString = "[[" + formatDate(new Date(Date.now() - 86400000)) + "]]"
+sessionState.position = editingCommandElement.firstChild.startIdx + dateString.length
+editingCommandElement.innerText = dateString
+setFocusedBlockString(focusBlockBody.innerText)
+},
+}
+let commandSearchCache = []
+const matchInlineCommand = (string) => {
+commandSearchCache = []
+for (let command in inlineCommands) {
+if (command.match(string)) {
+commandSearchCache.push({ string: command })
+}
+}
+return commandSearchCache
+}
+const execInlineCommand = () => {
+inlineCommandList.style.display = "none"
+inlineCommands[focusSuggestion.dataset.string]()
 }
 // blox or bloc means either block or page. they're almost the same, just one has a parent and the other doesn't, and linking syntax is different
 const blankStore = () => ({
@@ -1498,9 +1592,11 @@ setTimeout(() => {
 el.remove()
 },dur + 300)
 }
-// 1             2              3   4         5    6         7      8    9       10                11        12
-// page-ref-open page-ref-close tag block-ref bold highlight italic link literal template-expander attribute code-block
-const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)/g
+// 1             2              3   4         5    6         
+// page-ref-open page-ref-close tag block-ref bold highlight 
+// 7      8    9       10                11        12         13
+// italic link literal template-expander attribute code-block command
+const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|>(.*)/g
 const renderBlockBody = (parent,text,disableSpace = false) => {
 if (!disableSpace) {
 if (text[text.length - 1] !== " ") text += " " // add space because of getSelection.collapse() weirdness with end of contenteditable
@@ -1629,6 +1725,11 @@ stackTop.appendChild(codeBlockElement)
 stack.push(codeBlockElement)
 stackTop = codeBlockElement
 }
+} else if (match[13]) {
+const commandElement = document.createElement("span")
+commandElement.className = "command"
+commandElement.appendChild(newTextNode(match[0]))
+stackTop.appendChild(commandElement)
 }
 idx = match.index + match[0].length
 }
@@ -1810,7 +1911,7 @@ anchor.click()
 const expandTemplate = () => {
 const id = focusSuggestion.dataset.id
 const block = store.blox[sessionState.focusId]
-if (block.children === undefined || block.children.length === 0) {
+if (block.k === undefined || block.k.length === 0) {
 const parentId = store.blox[sessionState.focusId].p
 const childIds = store.blox[id].k
 const currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
@@ -1919,6 +2020,7 @@ document.addEventListener("input",(event) => {
 updateCursorInfo()
 autocompleteList.style.display = "none"
 templateList.style.display = "none"
+inlineCommandList.style.display = "none"
 if (sessionState.isFocused) {
 if (focusBlockBody.innerText === " " || focusBlockBody.innerText === "") {
 macros.write(sessionState.focusId,"")
@@ -1956,6 +2058,10 @@ diff = { i: event.data }
 else diff = { i: event.data,s: sessionState.position - 1 }
 }
 setFocusedBlockString(string,diff)
+if (editingCommandElement) {
+const matchingInlineCommands = matchInlineCommand(editingCommandElement.innerText.substring(1))
+renderResultSet(editingCommandElement,matchingInlineCommands,inlineCommandList,0)
+}
 if (editingTitle) {
 const matchingTitles = titleExactFullTextSearch(editingTitle)
 renderResultSet(editingLink,matchingTitles,autocompleteList,0)
@@ -2046,6 +2152,7 @@ terminalElement.style.display = "none"
 }
 document.addEventListener("keydown",(event) => {
 updateCursorInfo()
+console.log(focusSuggestion)
 for (let hotkeyName in globalHotkeys) {
 const hotkey = globalHotkeys[hotkeyName]
 if (event.key === hotkey.key &&
@@ -2118,6 +2225,12 @@ expandTemplate()
 event.preventDefault()
 }
 if (updownythingey(editingTemplateExpander,templateList,templateSearchCache,focusSuggestion)) event.preventDefault()
+} else if (inlineCommandList.style.display !== "none") {
+if (event.key === "Tab" || event.key === "Enter") {
+execInlineCommand()
+event.preventDefault()
+}
+if (updownythingey(editingCommandElement,inlineCommandList,commandSearchCache,focusSuggestion)) event.preventDefault()
 } else if (sessionState.isFocused) {
 let blocks
 let newActiveBlock
@@ -2360,6 +2473,8 @@ goto("block",closestBreadcrumbBlock.dataset.id)
 } else if (event.target.className == "exit-to-main") {
 signupElement.style.display = "none"
 loginElement.style.display = "none"
+} else if (event.target.className === "command__suggestion") {
+execInlineCommand()
 }
 // this is at the bottom so that autocomplete suggestion click handler still knows where the link is. 
 // todo have better tracking of active block
@@ -2661,13 +2776,14 @@ saveSettingsToBasicBitchServer()
 // Finally starting the program after everything's compiled
 if (dataLoaded) start()
 scriptsLoaded = true
-const ptest = () => {
-const t = performance.now()
-for (let i = 0; i < 100; i++) {
-hydrateFromBlox('testgraph',store.blox)
-}
-console.log(`took ${performance.now() - t}`)
-}
+// const ptest = () => {
+//   const t = performance.now()
+//   const m = new Map()
+//   for (let i = 0; i < 100000; i++) {
+//     m.set(i,i)
+//   }
+//   console.log(`took ${performance.now() - t}`)
+// }
 // ptest()
 </script>
 <!-- now rendering is done, loading interactive scripts-->
@@ -2721,7 +2837,7 @@ return temp
 const updateCursorInfo = () => {
 focusNode = getSelection().focusNode
 focusOffset = getSelection().focusOffset
-focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`) || templateList.querySelector(`.template__suggestion[data-selected="true"]`)
+focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`) || templateList.querySelector(`.template__suggestion[data-selected="true"]`) || inlineCommandList.querySelector(`.command__suggestion[data-selected="true"]`)
 focusSearchResult = searchResultList.querySelector(`.search-result[data-selected="true"]`)
 if (focusNode) {
 focusBlock = focusNode.parentNode.closest(".block")
@@ -2751,6 +2867,7 @@ editingLink = ref
 editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
 editingTemplateExpander = getEditingSimpleSpan("template-expander")
 editingUrlElement = getEditingSimpleSpan("url")
+editingCommandElement = getEditingSimpleSpan("command")
 } else
 sessionState.isFocused = false
 } else
@@ -3268,54 +3385,6 @@ generateInnerRefs()
 console.log(`gen took ${performance.now() - stime}`)
 }
 // terminal
-const log = () => {
-user.logging = true
-saveUser()
-}
-const nolog = () => {
-user.logging = false
-saveUser()
-}
-const flash = benchmarkRenderAll
-const reset = () => {
-localStorage.removeItem("user")
-const r = indexedDB.deleteDatabase("microroam")
-window.location.href = window.location.href
-}
-const blank = (name = "default") => {
-store = blankStore()
-store.graphName = name
-user = { settings: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
-user.graphName = name
-saveUser()
-debouncedSaveStore()
-goto("dailyNotes")
-}
-const pr = () => {
-console.log(JSON.stringify(store))
-}
-const downloadBinary = () => {
-const buffer = storeToBinary()
-const data = new Blob([buffer],{ type: 'application/x-micro-roam' })
-const url = URL.createObjectURL(data)
-const button = document.createElement("a")
-button.setAttribute('href',url)
-button.setAttribute('download',`${store.graphName}.mrm`)
-button.click()
-}
-const loadGraphminerNotes = () => {
-fetch("./graphminer-store.json").then(text => text.json().then(json => {
-store = json
-user.graphName = store.graphName
-saveUser()
-start()
-debouncedSaveStore()
-}))
-}
-const taonotes = loadGraphminerNotes
-const terminalCommands = {
-blank,reset,flash,log,page,nolog,pr,taonotes,downloadBinary
-}
 const log = () => {
 user.logging = true
 saveUser()

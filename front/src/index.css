@@ -167,7 +167,8 @@ a:visited {
 }
 
 #autocomplete-list,
-#template-list {
+#template-list,
+#command-list {
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -178,12 +179,14 @@ a:visited {
 }
 
 .autocomplete__suggestion[data-selected="true"],
+.command__suggestion[data-selected="true"],
 .template__suggestion[data-selected="true"] {
   background-color: var(--click);
 }
 
 .autocomplete__suggestion,
-.template__suggestion {
+.template__suggestion,
+.command__suggestion {
   padding: 7px;
   cursor: pointer;
   border-radius: 5px;

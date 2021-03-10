@@ -196,9 +196,9 @@
       </div>
     </div>
 
-
-    <div id="autocomplete-list" style="display:none"></div>
     <!-- inline styles on this site are all edited directly by js -->
+    <div id="autocomplete-list" style="display:none"></div>
+    <div id="command-list" style="display:none"></div>
     <div id="search-result-list" style="display:none"></div>
     <div id="template-list" style="display:none"></div>
 
@@ -294,6 +294,11 @@
     <div class="autocomplete__suggestion"></div>
   </template>
 
+
+  <template id="command__suggestion">
+    <div class="command__suggestion"></div>
+  </template>
+
   <template id="template__suggestion">
     <div class="template__suggestion"></div>
   </template>
@@ -316,6 +321,7 @@
   </template>
 
   <script src="declarations.js"></script>
+  <script src="front-back-shared.js"></script>
   <script src="utils.js"></script>
   <script src="commands.js"></script>
   <script src="store.js"></script>

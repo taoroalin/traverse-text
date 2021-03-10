@@ -1,5 +1,6 @@
 let editingTemplateExpander = null
 
+let editingCommandElement = null
 let editingLink = null
 let editingTitle = null
 let focusNode = null
@@ -33,6 +34,9 @@ searchResultList.dataset.templateName = "search-result"
 const autocompleteList = document.getElementById("autocomplete-list")
 autocompleteList.dataset.templateName = "autocomplete__suggestion"
 
+const inlineCommandList = document.getElementById("command-list")
+inlineCommandList.dataset.templateName = "command__suggestion"
+
 const templateList = document.getElementById("template-list")
 templateList.dataset.templateName = "template__suggestion"
 
@@ -50,9 +54,7 @@ const blockTemplate = getTemp("block")
 const backrefListTemplate = getTemp("backref-list")
 const blockFocusFrameTemplate = getTemp("block-focus-frame")
 const pageBreakTemplate = getTemp("page-break")
-const suggestionTemplate = getTemp("autocomplete__suggestion")
 const searchResultTemplate = getTemp("search-result")
-const templateSuggestionTemplate = getTemp("template__suggestion")
 const breadcrumbBlockTemplate = getTemp("breadcrumb-block")
 const breadcrumbPageTemplate = getTemp("breadcrumb-page")
 const backrefFrameTemplate = getTemp("backref-frame")
@@ -71,5 +73,4 @@ const signupUsernameElement = document.getElementById("signup-username")
 const signupEmailElement = document.getElementById("signup-email")
 const signupPasswordElement = document.getElementById("signup-password")
 
-// de-OOP-ing apis
 const textEncoder = new TextEncoder()

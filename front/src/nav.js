@@ -182,12 +182,12 @@ if (dataLoaded) start()
 scriptsLoaded = true
 
 
-const ptest = () => {
-  const t = performance.now()
-
-  for (let i = 0; i < 100; i++) {
-    hydrateFromBlox('testgraph',store.blox)
-  }
-  console.log(`took ${performance.now() - t}`)
-}
+// const ptest = () => {
+//   const t = performance.now()
+//   const m = new Map()
+//   for (let i = 0; i < 100000; i++) {
+//     m.set(i,i)
+//   }
+//   console.log(`took ${performance.now() - t}`)
+// }
 // ptest()

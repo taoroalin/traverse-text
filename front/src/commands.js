@@ -310,3 +310,50 @@ for (let k in macros.nocommit) {
     return result
   }
 }
+
+// inline commands are completely different than commands. They're things the user can do to the current block they're editing
+const inlineCommands = {
+  todo: () => {
+    const position = editingCommandElement.firstChild.startIdx + 8
+    editingCommandElement.remove()
+    updateCursorInfo()
+    let string = focusBlockBody.innerText
+    string = "[[TODO]]" + string
+    sessionState.position = position
+    setFocusedBlockString(string)
+  },
+  today: () => {
+    const dateString = "[[" + formatDate(new Date(Date.now())) + "]]"
+    sessionState.position = editingCommandElement.firstChild.startIdx + dateString.length
+    editingCommandElement.innerText = dateString
+    setFocusedBlockString(focusBlockBody.innerText)
+  },
+  tomorrow: () => {
+    const dateString = "[[" + formatDate(new Date(Date.now() + 86400000)) + "]]"
+    sessionState.position = editingCommandElement.firstChild.startIdx + dateString.length
+    editingCommandElement.innerText = dateString
+    setFocusedBlockString(focusBlockBody.innerText)
+  },
+  yesterday: () => {
+    const dateString = "[[" + formatDate(new Date(Date.now() - 86400000)) + "]]"
+    sessionState.position = editingCommandElement.firstChild.startIdx + dateString.length
+    editingCommandElement.innerText = dateString
+    setFocusedBlockString(focusBlockBody.innerText)
+  },
+}
+
+let commandSearchCache = []
+const matchInlineCommand = (string) => {
+  commandSearchCache = []
+  for (let command in inlineCommands) {
+    if (command.match(string)) {
+      commandSearchCache.push({ string: command })
+    }
+  }
+  return commandSearchCache
+}
+
+const execInlineCommand = () => {
+  inlineCommandList.style.display = "none"
+  inlineCommands[focusSuggestion.dataset.string]()
+}

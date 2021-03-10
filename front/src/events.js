@@ -54,7 +54,7 @@ const downloadMd = () => {
 const expandTemplate = () => {
   const id = focusSuggestion.dataset.id
   const block = store.blox[sessionState.focusId]
-  if (block.children === undefined || block.children.length === 0) {
+  if (block.k === undefined || block.k.length === 0) {
     const parentId = store.blox[sessionState.focusId].p
     const childIds = store.blox[id].k
     const currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
@@ -172,6 +172,7 @@ document.addEventListener("input",(event) => {
   updateCursorInfo()
   autocompleteList.style.display = "none"
   templateList.style.display = "none"
+  inlineCommandList.style.display = "none"
   if (sessionState.isFocused) {
     if (focusBlockBody.innerText === " " || focusBlockBody.innerText === "") {
       macros.write(sessionState.focusId,"")
@@ -212,6 +213,11 @@ document.addEventListener("input",(event) => {
       else diff = { i: event.data,s: sessionState.position - 1 }
     }
     setFocusedBlockString(string,diff)
+
+    if (editingCommandElement) {
+      const matchingInlineCommands = matchInlineCommand(editingCommandElement.innerText.substring(1))
+      renderResultSet(editingCommandElement,matchingInlineCommands,inlineCommandList,0)
+    }
 
     if (editingTitle) {
       const matchingTitles = titleExactFullTextSearch(editingTitle)
@@ -308,6 +314,7 @@ const globalHotkeys = {
 
 document.addEventListener("keydown",(event) => {
   updateCursorInfo()
+  console.log(focusSuggestion)
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
     if (event.key === hotkey.key &&
@@ -381,6 +388,12 @@ document.addEventListener("keydown",(event) => {
       event.preventDefault()
     }
     if (updownythingey(editingTemplateExpander,templateList,templateSearchCache,focusSuggestion)) event.preventDefault()
+  } else if (inlineCommandList.style.display !== "none") {
+    if (event.key === "Tab" || event.key === "Enter") {
+      execInlineCommand()
+      event.preventDefault()
+    }
+    if (updownythingey(editingCommandElement,inlineCommandList,commandSearchCache,focusSuggestion)) event.preventDefault()
   } else if (sessionState.isFocused) {
     let blocks
     let newActiveBlock
@@ -639,6 +652,8 @@ document.addEventListener("click",(event) => {
   } else if (event.target.className == "exit-to-main") {
     signupElement.style.display = "none"
     loginElement.style.display = "none"
+  } else if (event.target.className === "command__suggestion") {
+    execInlineCommand()
   }
 
   // this is at the bottom so that autocomplete suggestion click handler still knows where the link is. 

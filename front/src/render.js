@@ -129,9 +129,12 @@ const notifyText = (text,duration) => {
   },dur + 300)
 }
 
-// 1             2              3   4         5    6         7      8    9       10                11        12
-// page-ref-open page-ref-close tag block-ref bold highlight italic link literal template-expander attribute code-block
-const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)/g
+// 1             2              3   4         5    6         
+// page-ref-open page-ref-close tag block-ref bold highlight 
+
+// 7      8    9       10                11        12         13
+// italic link literal template-expander attribute code-block command
+const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|>(.*)/g
 
 const renderBlockBody = (parent,text,disableSpace = false) => {
   if (!disableSpace) {
@@ -267,6 +270,11 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
         stack.push(codeBlockElement)
         stackTop = codeBlockElement
       }
+    } else if (match[13]) {
+      const commandElement = document.createElement("span")
+      commandElement.className = "command"
+      commandElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(commandElement)
     }
     idx = match.index + match[0].length
   }
