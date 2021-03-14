@@ -64,6 +64,9 @@ const renderSessionState = () => {
   if (sessionState.isFocused) {
     focusIdPosition()
   } else {
+    sessionState.isFocused = true
+    sessionState.position = 0
+    sessionState.focusId = pageFrame.querySelector('.block').dataset.id
     focusBlockStart(document.querySelector(".block"))
   }
 
@@ -90,7 +93,7 @@ const gotoNoHistory = (commandName,...command) => {
 }
 
 const goto = (...command) => {
-  sessionState.scroll = pageFrameOuter.scrollTop // used to have updatecursorinfo here, think I don't need it?
+  sessionState.scroll = pageFrameOuter.scrollTop
 
   const oldSessionState = JSON.parse(JSON.stringify(sessionState))
 
@@ -182,12 +185,13 @@ if (dataLoaded) start()
 scriptsLoaded = true
 
 
-// const ptest = () => {
-//   const t = performance.now()
-//   const m = new Map()
-//   for (let i = 0; i < 100000; i++) {
-//     m.set(i,i)
-//   }
-//   console.log(`took ${performance.now() - t}`)
-// }
+const ptest = () => {
+  const rands = [...Array(100000)].map(x => Math.floor(Math.random() * 1000000000000))
+  const t = performance.now()
+  const d = Date.now()
+  for (let i = 0; i < 100000; i++) {
+    intToBase64(rands[i])
+  }
+  console.log(`took ${performance.now() - t}`)
+}
 // ptest()

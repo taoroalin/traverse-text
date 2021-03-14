@@ -211,7 +211,7 @@ scrollbar-width: none;
 --placeholder: #919191; */
 }
 .dark {
---background: #161616;
+--background: #1b1b1b;
 --click: rgb(100, 100, 100);
 --text: rgb(246, 246, 246);
 --link: #3f84c0;
@@ -1474,6 +1474,93 @@ if (bloc.p === undefined) store.titles[bloc.s] = id
 }
 generateRefs()
 }
+const getEditingSimpleSpan = (className) => {
+const elements = focusBlockBody.querySelectorAll("." + className)
+for (let temp of elements) {
+if (temp.childNodes[0].endIdx >= sessionState.position && temp.childNodes[0].startIdx < sessionState.position) {
+return temp
+}
+}
+}
+// todo call this less. right now it's called twice as much as necessary, costing 0.3ms per keystroke and making code ugly
+// todo also get rid of this entirely. it's a complete mess
+const updateCursorInfo = () => {
+focusNode = getSelection().focusNode
+focusOffset = getSelection().focusOffset
+focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`) || templateList.querySelector(`.template__suggestion[data-selected="true"]`) || inlineCommandList.querySelector(`.command__suggestion[data-selected="true"]`)
+focusSearchResult = searchResultList.querySelector(`.search-result[data-selected="true"]`)
+if (focusNode) {
+focusBlock = focusNode.parentNode.closest(".block")
+if (focusBlock) {
+sessionState.isFocused = true
+sessionState.focusId = focusBlock.dataset.id
+if (focusNode.className === "block__body") {
+sessionState.position = focusBlock.innerText.length * (focusOffset !== 0) // todo make this less jank
+} else {
+sessionState.position = focusOffset
+if (focusNode.startIdx) sessionState.position += focusNode.startIdx
+}
+focusBlockBody = focusBlock.children[1]
+editingLink = undefined
+const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
+const tags = focusBlockBody.querySelectorAll(".tag")
+for (let tag of tags) {
+if (tag.childNodes[0].endIdx >= sessionState.position && tag.childNodes[0].startIdx < sessionState.position) {
+editingLink = tag
+}
+}
+for (let ref of pageRefs) {
+if (ref.children[1].childNodes[0].endIdx >= sessionState.position && ref.children[1].childNodes[0].startIdx < sessionState.position) {
+editingLink = ref
+}
+}
+editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
+editingTemplateExpander = getEditingSimpleSpan("template-expander")
+editingUrlElement = getEditingSimpleSpan("url")
+editingCommandElement = getEditingSimpleSpan("command")
+} else
+sessionState.isFocused = false
+} else
+sessionState.isFocused = false
+}
+const focusIdPosition = () => {
+focusBlockBody = document.querySelector(`.block[data-id="${sessionState.focusId}"]>.block__body`) // todo this looks wrong
+const scanElement = (element) => {
+for (let el of element.childNodes) {
+if (el.nodeName === "#text") {
+if (el.textContent && sessionState.position >= el.startIdx && sessionState.position < el.startIdx + el.textContent.length) {
+scanResult = el
+try {
+// this does the thing correctly, but then throws an error, which I catch? todo investigate
+getSelection().collapse(el,sessionState.position - el.startIdx)
+return el
+} catch (error) {
+return el
+}
+}
+} else {
+const z = scanElement(el)
+if (z) return z
+}
+}
+}
+scanElement(focusBlockBody)
+}
+const setFocusedBlockString = (string,diff) => {
+let theString = string
+if (theString === undefined) {
+theString = store.blox[sessionState.focusId].string
+}
+focusBlockBody.innerHTML = ""
+renderBlockBodyToEdit(focusBlockBody,theString)
+focusIdPosition()
+updateCursorInfo()
+if (diff !== undefined) {
+commitEdit('df',sessionState.focusId,diff)
+} else {
+macros.write(sessionState.focusId,theString)
+}
+}
 const renderPage = (parentNode,uid) => {
 const page = store.blox[uid]
 const element = pageTemplate.cloneNode(true)
@@ -1597,13 +1684,14 @@ el.remove()
 // 7      8    9       10                11        12         13
 // italic link literal template-expander attribute code-block command
 const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|>(.*)/g
-const renderBlockBody = (parent,text,disableSpace = false) => {
+// Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
+const renderBlockBodyToEdit = (parent,text,disableSpace = false) => {
+parent.dataset.editmode = true
 if (!disableSpace) {
-if (text[text.length - 1] !== " ") text += " " // add space because of getSelection.collapse() weirdness with end of contenteditable
+if (text[text.length - 1] !== " ") text += " " // add space because browser creates new text node (bad) if we ever reach the end of ours
 }
 const stack = [parent]
 const matches = text.matchAll(parseRegex)
-// Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 let idx = 0
 let stackTop = parent
 const newTextNode = (string) => {
@@ -1612,7 +1700,6 @@ result.startIdx = idx
 result.endIdx = idx + string.length
 return result
 }
-const refTitles = []
 for (let match of matches) {
 stackTop.appendChild(newTextNode(text.substring(idx,match.index)))
 idx = match.index
@@ -1625,7 +1712,6 @@ stackTop = stack[stack.length - 1]
 } else if (match[2]) {
 if (stackTop.className === "page-ref__body") {
 stackTop.parentNode.children[2].appendChild(newTextNode("]]"))
-refTitles.push(stackTop.s)
 stack.pop()
 stackTop = stack[stack.length - 1]
 } else {
@@ -1635,7 +1721,6 @@ el.appendChild(newTextNode("]]"))
 stackTop.appendChild(el)
 }
 } else if (match[3]) {
-refTitles.push(match[3])
 const tagElement = document.createElement('span')
 tagElement.className = "tag"
 tagElement.appendChild(newTextNode(match[0]))
@@ -1744,7 +1829,132 @@ stackTop.children[0].className = stackTop.children[0].className + "-incomplete"
 stackTop.className = stackTop.className + "-incomplete"
 stackTop = stackTop.parentNode
 }
-return refTitles
+}
+const renderBlockBody = (parent,text) => {
+parent.dataset.editmode = false
+const stack = [parent]
+const matches = text.matchAll(parseRegex)
+let idx = 0
+let stackTop = parent
+const newTextNode = (string) => {
+const result = document.createTextNode(string)
+result.startIdx = idx
+result.endIdx = idx + string.length
+return result
+}
+for (let match of matches) {
+stackTop.appendChild(newTextNode(text.substring(idx,match.index)))
+idx = match.index
+if (match[1]) {
+const pageRefElement = pageRefTemplate.cloneNode(true)
+stackTop.appendChild(pageRefElement)
+stack.push(pageRefElement.children[1])
+stackTop = stack[stack.length - 1]
+} else if (match[2]) {
+if (stackTop.className === "page-ref__body") {
+stack.pop()
+stackTop = stack[stack.length - 1]
+} else {
+const el = document.createElement("span")
+el.appendChild(newTextNode("]]"))
+stackTop.appendChild(el)
+}
+} else if (match[3]) {
+const tagElement = document.createElement('span')
+tagElement.className = "tag"
+tagElement.appendChild(newTextNode(match[0]))
+stackTop.appendChild(tagElement)
+} else if (match[4]) {
+const blockId = match[4]
+const block = store.blox[blockId]
+if (block) {
+const blockRefElement = document.createElement('span')
+blockRefElement.className = 'block-ref'
+blockRefElement.innerText = block.s
+blockRefElement.dataset.id = blockId
+stackTop.appendChild(blockRefElement)
+} else {
+stackTop.appendChild(newTextNode(match[0]))
+}
+} else if (match[5]) {
+if (stackTop.className === "bold") {
+stack.pop()
+stackTop = stack[stack.length - 1]
+} else {
+const boldElement = document.createElement('span')
+boldElement.className = 'bold'
+stackTop.appendChild(boldElement)
+stack.push(boldElement)
+stackTop = boldElement
+}
+} else if (match[6]) {
+if (stackTop.className === "highlight") {
+stack.pop()
+stackTop = stack[stack.length - 1]
+} else {
+const highlightElement = document.createElement('span')
+highlightElement.className = 'highlight'
+stackTop.appendChild(highlightElement)
+stack.push(highlightElement)
+stackTop = highlightElement
+}
+} else if (match[7]) {
+if (stackTop.className === "italic") {
+stack.pop()
+stackTop = stack[stack.length - 1]
+} else {
+const italicElement = document.createElement('span')
+italicElement.className = 'italic'
+stackTop.appendChild(italicElement)
+stack.push(italicElement)
+stackTop = italicElement
+}
+} else if (match[8]) {
+const urlElement = document.createElement('span')
+urlElement.className = 'url'
+urlElement.appendChild(newTextNode(match[0]))
+urlElement.href = match[8]
+stackTop.appendChild(urlElement)
+} else if (match[9]) {
+const literalElement = document.createElement('span')
+literalElement.className = 'literal'
+literalElement.appendChild(newTextNode(match[9]))
+stackTop.appendChild(literalElement)
+} else if (match[10]) {
+const templateExpanderElement = document.createElement('span')
+templateExpanderElement.className = 'template-expander'
+templateExpanderElement.appendChild(newTextNode(match[0]))
+stackTop.appendChild(templateExpanderElement)
+} else if (match[11]) {
+const attributeElement = document.createElement('span')
+attributeElement.className = 'attribute'
+attributeElement.appendChild(newTextNode(match[0]))
+stackTop.appendChild(attributeElement)
+} else if (match[12]) {
+if (stackTop.className === "code-block") {
+stack.pop()
+stackTop = stack[stack.length - 1]
+} else {
+const codeBlockElement = document.createElement('div')
+codeBlockElement.className = 'code-block'
+stackTop.appendChild(codeBlockElement)
+stack.push(codeBlockElement)
+stackTop = codeBlockElement
+}
+} else if (match[13]) {
+const commandElement = document.createElement("span")
+commandElement.className = "command"
+commandElement.appendChild(newTextNode(match[0]))
+stackTop.appendChild(commandElement)
+}
+idx = match.index + match[0].length
+}
+stack[stack.length - 1].appendChild(newTextNode(text.substring(idx)))
+// this time I add back in starters in addition to removing classes
+while (stackTop !== parent) {
+stackTop.className = ""
+stackTop = stackTop.parentNode
+}
 }
 // API knowingly does not follow REST spec for CORS simplicity reasons
 const saveStoreToBasicBitchServer = async (blox) => {
@@ -2152,7 +2362,6 @@ terminalElement.style.display = "none"
 }
 document.addEventListener("keydown",(event) => {
 updateCursorInfo()
-console.log(focusSuggestion)
 for (let hotkeyName in globalHotkeys) {
 const hotkey = globalHotkeys[hotkeyName]
 if (event.key === hotkey.key &&
@@ -2542,6 +2751,21 @@ document.removeEventListener("mousemove",mouseMoveListener)
 dragSelectStartBlock = null
 }
 })
+document.addEventListener("focusin",(event) => {
+console.log(typeof event.target.dataset.editmode)
+if (event.target.dataset.editmode !== "true") {
+updateCursorInfo()
+console.log(sessionState.position)
+console.log(sessionState.focusId)
+setFocusedBlockString()
+}
+console.log(event)
+})
+// document.addEventListener("focusout",(event) => {
+//   if (event.target.className === "block__body" && event.target.dataset.editmode === "true") {
+//     renderBlockBody(focusBlockBody,store.blox[sessionState.focusId].s)
+//   }
+// })
 const showTopBarFn = () => {
 user.topBar = "visible"
 saveUser()
@@ -2678,6 +2902,9 @@ break
 if (sessionState.isFocused) {
 focusIdPosition()
 } else {
+sessionState.isFocused = true
+sessionState.position = 0
+sessionState.focusId = pageFrame.querySelector('.block').dataset.id
 focusBlockStart(document.querySelector(".block"))
 }
 pageFrameOuter.scrollTop = sessionState.scroll || 0
@@ -2776,103 +3003,18 @@ saveSettingsToBasicBitchServer()
 // Finally starting the program after everything's compiled
 if (dataLoaded) start()
 scriptsLoaded = true
-// const ptest = () => {
-//   const t = performance.now()
-//   const m = new Map()
-//   for (let i = 0; i < 100000; i++) {
-//     m.set(i,i)
-//   }
-//   console.log(`took ${performance.now() - t}`)
-// }
+const ptest = () => {
+const t = performance.now()
+for (let i = 0; i < 10000000; i++) {
+const str = i.toString()
+str.match(/^111/)
+}
+console.log(`took ${performance.now() - t}`)
+}
 // ptest()
 </script>
 <!-- now rendering is done, loading interactive scripts-->
 <script async>
-const focusIdPosition = () => {
-focusBlockBody = document.querySelector(`.block[data-id="${sessionState.focusId}"]>.block__body`) // todo this looks wrong
-const scanElement = (element) => {
-for (let el of element.childNodes) {
-if (el.nodeName === "#text") {
-if (el.textContent && sessionState.position >= el.startIdx && sessionState.position < el.startIdx + el.textContent.length) {
-scanResult = el
-try {
-// this does the thing correctly, but then throws an error, which I catch? todo investigate
-getSelection().collapse(el,sessionState.position - el.startIdx)
-return el
-} catch (error) {
-return el
-}
-}
-} else {
-const z = scanElement(el)
-if (z) return z
-}
-}
-}
-scanElement(focusBlockBody)
-}
-const setFocusedBlockString = (string,diff) => {
-focusBlockBody.innerHTML = ""
-const fragment = document.createDocumentFragment()
-const refTitles = renderBlockBody(fragment,string)
-focusBlockBody.appendChild(fragment)
-focusIdPosition()
-updateCursorInfo()
-if (diff !== undefined) {
-commitEdit('df',sessionState.focusId,diff)
-} else {
-macros.write(sessionState.focusId,string)
-}
-}
-const getEditingSimpleSpan = (className) => {
-const elements = focusBlockBody.querySelectorAll("." + className)
-for (let temp of elements) {
-if (temp.childNodes[0].endIdx >= sessionState.position && temp.childNodes[0].startIdx < sessionState.position) {
-return temp
-}
-}
-}
-// todo call this less. right now it's called twice as much as necessary, costing 0.3ms per keystroke and making code ugly
-// todo also get rid of this entirely. it's a complete mess
-const updateCursorInfo = () => {
-focusNode = getSelection().focusNode
-focusOffset = getSelection().focusOffset
-focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`) || templateList.querySelector(`.template__suggestion[data-selected="true"]`) || inlineCommandList.querySelector(`.command__suggestion[data-selected="true"]`)
-focusSearchResult = searchResultList.querySelector(`.search-result[data-selected="true"]`)
-if (focusNode) {
-focusBlock = focusNode.parentNode.closest(".block")
-if (focusBlock) {
-sessionState.isFocused = true
-sessionState.focusId = focusBlock.dataset.id
-if (focusNode.className === "block__body") {
-sessionState.position = focusBlock.innerText.length * (focusOffset !== 0) // todo make this less jank
-} else {
-sessionState.position = focusOffset
-if (focusNode.startIdx) sessionState.position += focusNode.startIdx
-}
-focusBlockBody = focusBlock.children[1]
-editingLink = undefined
-const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
-const tags = focusBlockBody.querySelectorAll(".tag")
-for (let tag of tags) {
-if (tag.childNodes[0].endIdx >= sessionState.position && tag.childNodes[0].startIdx < sessionState.position) {
-editingLink = tag
-}
-}
-for (let ref of pageRefs) {
-if (ref.children[1].childNodes[0].endIdx >= sessionState.position && ref.children[1].childNodes[0].startIdx < sessionState.position) {
-editingLink = ref
-}
-}
-editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
-editingTemplateExpander = getEditingSimpleSpan("template-expander")
-editingUrlElement = getEditingSimpleSpan("url")
-editingCommandElement = getEditingSimpleSpan("command")
-} else
-sessionState.isFocused = false
-} else
-sessionState.isFocused = false
-}
 // ROAM JSON  ROAM JSON  ROAM JSON  ROAM JSON  
 const roamBloxProps = {
 children: "k",

@@ -1,52 +1,57 @@
-let editingTemplateExpander = null
+// Cursor info. Raw info stored in JSON, DOM elements cached in lots of random vars
+let sessionState = { pageFrame: "dailyNotes",focusId: null,scroll: 0,position: null }
 
-let editingCommandElement = null
-let editingLink = null
-let editingTitle = null
+// these two stored for re-focusing dom nodes after they're moved
 let focusNode = null
 let focusOffset = null
 
+// accessing current block
 let focusBlock = null
+let focusBlockBody = null
+
+// accessing current editing spans
+let editingTemplateExpander = null
+let editingCommandElement = null
+let editingLink = null
+let editingTitle = null
 
 let focusSuggestion = null
-let focusSearchResult = null
-
-let sessionState = { pageFrame: "dailyNotes",focusId: null,scroll: 0,position: null }
 
 let dragSelectStartBlock = null
 let dragSelect = null
-
 let clipboardData = null
+
 
 const SEARCH_RESULT_LENGTH = 12
 
+const elById = (str) => document.getElementById(str)
+const getTemp = (str) => elById(str).content.firstElementChild
 
 // Singleton elements
-const pageFrame = document.getElementById("page-frame")
-const pageFrameOuter = document.getElementById("page-frame-outer")
-const searchInput = document.getElementById("search-input")
-const downloadButton = document.getElementById("download-button")
-const terminalElement = document.getElementById("terminal")
+const pageFrame = elById("page-frame")
+const pageFrameOuter = elById("page-frame-outer")
+const searchInput = elById("search-input")
+const downloadButton = elById("download-button")
+const terminalElement = elById("terminal")
 
-const searchResultList = document.getElementById("search-result-list")
+const searchResultList = elById("search-result-list")
 searchResultList.dataset.templateName = "search-result"
 
-const autocompleteList = document.getElementById("autocomplete-list")
+const autocompleteList = elById("autocomplete-list")
 autocompleteList.dataset.templateName = "autocomplete__suggestion"
 
-const inlineCommandList = document.getElementById("command-list")
+const inlineCommandList = elById("command-list")
 inlineCommandList.dataset.templateName = "command__suggestion"
 
-const templateList = document.getElementById("template-list")
+const templateList = elById("template-list")
 templateList.dataset.templateName = "template__suggestion"
 
-const switchToLogin = document.getElementById("switch-to-login")
-const switchToSignup = document.getElementById("switch-to-signup")
-const signupElement = document.getElementById("signup")
-const signupButton = document.getElementById("signup-button")
-const loginElement = document.getElementById("login")
+const switchToLogin = elById("switch-to-login")
+const switchToSignup = elById("switch-to-signup")
+const signupElement = elById("signup")
+const signupButton = elById("signup-button")
+const loginElement = elById("login")
 
-const getTemp = (str) => document.getElementById(str).content.firstElementChild
 
 // Templates
 const pageTemplate = getTemp("page")
@@ -64,13 +69,13 @@ const notificationTemplate = getTemp("notification")
 const pageRefTemplate = getTemp("page-ref")
 
 // login/signup
-const loginForm = document.getElementById("login-form")
-const loginEmailElement = document.getElementById("login-email")
-const loginPasswordElement = document.getElementById("login-password")
-const signupForm = document.getElementById("signup-form")
+const loginForm = elById("login-form")
+const loginEmailElement = elById("login-email")
+const loginPasswordElement = elById("login-password")
+const signupForm = elById("signup-form")
 
-const signupUsernameElement = document.getElementById("signup-username")
-const signupEmailElement = document.getElementById("signup-email")
-const signupPasswordElement = document.getElementById("signup-password")
+const signupUsernameElement = elById("signup-username")
+const signupEmailElement = elById("signup-email")
+const signupPasswordElement = elById("signup-password")
 
 const textEncoder = new TextEncoder()

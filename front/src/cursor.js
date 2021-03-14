@@ -1,5 +1,5 @@
 const focusIdPosition = () => {
-  focusBlockBody = document.querySelector(`.block[data-id="${sessionState.focusId}"]>.block__body`) // todo this looks wrong
+  focusBlockBody = document.querySelector(`.block[data-id="${sessionState.focusId}"]>.block__body`)
 
   const scanElement = (element) => {
     for (let el of element.childNodes) {
@@ -24,16 +24,18 @@ const focusIdPosition = () => {
 }
 
 const setFocusedBlockString = (string,diff) => {
+  let theString = string
+  if (theString === undefined) {
+    theString = store.blox[sessionState.focusId].s
+  }
   focusBlockBody.innerHTML = ""
-  const fragment = document.createDocumentFragment()
-  const refTitles = renderBlockBody(fragment,string)
-  focusBlockBody.appendChild(fragment)
+  renderBlockBodyToEdit(focusBlockBody,theString)
   focusIdPosition()
-  updateCursorInfo()
+  updateCursorSpanInfo()
   if (diff !== undefined) {
     commitEdit('df',sessionState.focusId,diff)
   } else {
-    macros.write(sessionState.focusId,string)
+    macros.write(sessionState.focusId,theString)
   }
 }
 
@@ -46,59 +48,67 @@ const getEditingSimpleSpan = (className) => {
   }
 }
 
-// todo call this less. right now it's called twice as much as necessary, costing 0.3ms per keystroke and making code ugly
-// todo also get rid of this entirely. it's a complete mess
-const updateCursorInfo = () => {
 
+const updateCursorPosition = () => {
   focusNode = getSelection().focusNode
   focusOffset = getSelection().focusOffset
-
-  focusSuggestion = autocompleteList.querySelector(`.autocomplete__suggestion[data-selected="true"]`) || templateList.querySelector(`.template__suggestion[data-selected="true"]`) || inlineCommandList.querySelector(`.command__suggestion[data-selected="true"]`)
-
-  focusSearchResult = searchResultList.querySelector(`.search-result[data-selected="true"]`)
-
-  if (focusNode) {
-    focusBlock = focusNode.parentNode.closest(".block")
-    if (focusBlock) {
-
-      sessionState.isFocused = true
-      sessionState.focusId = focusBlock.dataset.id
-
-      if (focusNode.className === "block__body") {
-        sessionState.position = focusBlock.innerText.length * (focusOffset !== 0) // todo make this less jank
-      } else {
-        sessionState.position = focusOffset
-        if (focusNode.startIdx) sessionState.position += focusNode.startIdx
-      }
-      focusBlockBody = focusBlock.children[1]
-
-      editingLink = undefined
-      const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
-      const tags = focusBlockBody.querySelectorAll(".tag")
-      for (let tag of tags) {
-        if (tag.childNodes[0].endIdx >= sessionState.position && tag.childNodes[0].startIdx < sessionState.position) {
-          editingLink = tag
-        }
-      }
-      for (let ref of pageRefs) {
-        if (ref.children[1].childNodes[0].endIdx >= sessionState.position && ref.children[1].childNodes[0].startIdx < sessionState.position) {
-          editingLink = ref
-        }
-      }
-      editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
-
-      editingTemplateExpander = getEditingSimpleSpan("template-expander")
-
-      editingUrlElement = getEditingSimpleSpan("url")
-
-      editingCommandElement = getEditingSimpleSpan("command")
-
-    } else
-      sessionState.isFocused = false
-
-  } else
-    sessionState.isFocused = false
-
+  const block = focusNode.parentNode.closest(".block")
+  sessionState.focusId = block.dataset.id
+  sessionState.position = (focusNode.startIdx || 0) + focusOffset
 }
 
+const resetFocusedBlockBody = () => {
+  focusBlockBody.innerText = ""
+  const oldBlockData = store.blox[sessionState.focusId]
+  if (oldBlockData !== undefined) renderBlockBody(focusBlockBody,oldBlockData.s)
+}
 
+const updateFocusFromNode = (node,position) => {
+  if (focusBlockBody) {
+    resetFocusedBlockBody()
+  }
+  if (position === -1) {
+    position = store.blox[node.dataset.id].s.length
+  }
+  focusBlock = node
+  focusBlockBody = focusBlock.children[1]
+  sessionState.focusId = focusBlock.dataset.id
+  sessionState.position = position
+
+  console.log(sessionState.position)
+  console.log(sessionState.focusId)
+
+  const text = store.blox[sessionState.focusId].s
+  focusBlockBody.innerText = ""
+  renderBlockBodyToEdit(focusBlockBody,text)
+  focusIdPosition()
+}
+
+const updateCursorSpanInfo = () => {
+  editingLink = undefined
+  const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
+  const tags = focusBlockBody.querySelectorAll(".tag")
+  for (let tag of tags) {
+    if (tag.childNodes[0].endIdx >= sessionState.position && tag.childNodes[0].startIdx < sessionState.position) {
+      editingLink = tag
+    }
+  }
+  for (let ref of pageRefs) {
+    if (ref.children[1].childNodes[0].endIdx >= sessionState.position && ref.children[1].childNodes[0].startIdx < sessionState.position) {
+      editingLink = ref
+    }
+  }
+  editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
+
+  editingTemplateExpander = getEditingSimpleSpan("template-expander")
+
+  editingUrlElement = getEditingSimpleSpan("url")
+
+  editingCommandElement = getEditingSimpleSpan("command")
+  if (editingCommandElement === undefined)
+    inlineCommandList.style.display = "none"
+  if (editingTemplateExpander === undefined)
+    templateList.style.display = "none"
+  if (editingLink === undefined)
+    autocompleteList.style.display = "none"
+}

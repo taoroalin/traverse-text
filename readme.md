@@ -2,6 +2,16 @@
 
 Fast note taking and sharing app inspired by Roam Research.
 
+# Mission
+
+Make your internet 10x+ faster.
+
+What does this mean exactly? It means making your experience of creating, browsing, sharing, and searching 10x faster. The main technologies behind this right now are _large scale client side text caching_ and _performance tuned JavaScript_. 
+
+How is the 10x dream achievable? JavaScript, which is engineered to run bloated frameworks, is now able to search through gigabytes of text per second. Fast internet connections, which normally transfer megabytes of dead weight JavaScript, can instead ship megabytes of related information to your computer up front and make it searchable instantaneously. It's possible to render 60 different pages of text per second, and open a link in as long as it takes to type 1 character into a terminal.
+
+Basically what it does: In the same compute + bandwidth a React site uses to render a text field, you download every public writing made by any of your friends, search it, and pretty-print the result.
+
 # Why did I make Micro Roam?
 
 I love Roam Research. I think that sort of freeform, linked text should be the default for everything we write. However, Roam Research doesn't have the engineering quality to be that default for most people, and from my conversations with them, the team at Roam is not heading in that direction.
@@ -50,10 +60,10 @@ Each person's own notes, called 'blox', is a are stored in one JSON string / obj
 
 When the client receives the 'blox', it creates the 'store', which contains the blox and indexing data. This takes 50-80ms. This indexing data makes the store 30% bigger than 'blox'. The indexing info exists only on the client in order to reduce the bandwidth requirements, and to elminate fragmented writes that would be required on the backend on indexes only the front end uses.
 
-blox uses terse keys to reduce size
+Terse JSON keys
 ```
-                string parent kids create-time edit-time create-user edit-user
-blox: {bloc-id:{s,     p,     k:[kid-id],   ct,         et,       cu,       edit-user }}
+                string parent kids       create-time edit-time create-user edit-user
+blox: {bloc-id:{s,     p,     k:[kid-id],ct,         et,       cu,         eu }}
 ```
 
 I originally stored the 'store' in indexeddb because it's supposed to have more capacity / reliability than localStorage, but it's slower so now I write to localStorage and indexedDB and only read from indexedDB if the localStorage didn't work.
@@ -91,4 +101,4 @@ exporting / importing markdown files
 
 making signup and login work and have good ui
 
-Test what css stuff is fast, and use that. (unfortunately it doesn't look like there's tons of room to improve here :( )
+Plan for non-editing blocs: have seperate class for editing bloc, still have contenteditable on noedit blocs, on focusin record position then rerender as editbloc

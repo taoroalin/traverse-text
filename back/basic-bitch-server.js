@@ -1,6 +1,8 @@
 const http = require('http')
 const fs = require('fs')
 const { Worker } = require('worker_threads')
+// front-back-shared is in the front folder because its easier to import from other paths in Node
+const shared = require('../front/src/front-back-shared.js')
 
 // crypto and cluster are node built-in modules to consider. cluster lets you have multiple identical processes and round-robin distributes requests among them
 const { performance } = require('perf_hooks')

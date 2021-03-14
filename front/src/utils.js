@@ -1,3 +1,6 @@
+const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
+const CHARS_16 = "0123456789ABCDEF"
+
 // deepcopy for JSON-ifiables, but faster than JSON.parse . JSON.stringify
 const cpy = (x) => {
   if (typeof x === "object") {
@@ -65,3 +68,33 @@ const formatInt = (int,digits) => {
 }
 
 const clamp = (x,min,max) => Math.max(min,Math.min(x,max))
+
+
+// this is v slow, 7M dates / s
+// not using bit shifts here because this needs to work with 64 bit ints and JS doesn't expose 64 bit bit-shifts
+const intToBase64 = (int) => {
+  let str = ""
+  while (int > 0) {
+    str = "" + CHARS_64[int % 64] + str
+    int = Math.floor(int / 64)
+  }
+  return str
+}
+
+const base64ToInt = (str) => {
+  let result = 0
+  for (let i = 0; i < str.length; i++) {
+    result += CHARS_64.indexOf(str[i]) * Math.pow(64,(str.length - i - 1))
+  }
+  return result
+}
+// console.log(intToBase64(Date.now()))
+// console.log(Date.now())
+// console.log(base64ToInt(intToBase64(Date.now())))
+
+// firefox rounds to 1ms. rounding is supposedly to protect against Specter and related vulnerabilities
+const ustime = () => {
+  const p = Math.floor((performance.timing.navigationStart + performance.now()) * 1000)
+  console.log(p)
+  return p
+}

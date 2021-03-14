@@ -1,19 +1,11 @@
 // Event Listener Helpers -----------------------------------------------------------------------------------------------
 
 const focusBlockEnd = (blockNode) => {
-  const body = blockNode.children[1]
-  const temp = document.createTextNode(" ")
-  body.appendChild(temp)
-  getSelection().collapse(temp,0)
-  temp.remove()
+  updateFocusFromNode(blockNode,-1)
 }
 
 const focusBlockStart = (blockNode) => {
-  const body = blockNode.children[1]
-  const temp = document.createTextNode(" ")
-  body.insertBefore(temp,body.firstChild)
-  getSelection().collapse(temp,0)
-  temp.remove()
+  updateFocusFromNode(blockNode,0)
 }
 
 const focusBlockVerticalOffset = (offset,block = focusBlock,start = false) => { // this closure feels weird, maybe shoudn't use this language feature?
@@ -169,11 +161,8 @@ const dedentFocusedBlock = () => {
 // Event listners --------------------------------------------------------------------------------------------------------
 
 document.addEventListener("input",(event) => {
-  updateCursorInfo()
-  autocompleteList.style.display = "none"
-  templateList.style.display = "none"
-  inlineCommandList.style.display = "none"
   if (sessionState.isFocused) {
+    updateCursorPosition()
     if (focusBlockBody.innerText === " " || focusBlockBody.innerText === "") {
       macros.write(sessionState.focusId,"")
       return
@@ -260,7 +249,7 @@ const globalHotkeys = {
   },
   "upload": {
     key: "d",control: true,fn: () => {
-      document.getElementById("upload-input").click()
+      elById("upload-input").click()
     }
   },
   "download": { key: "s",control: true,shift: true,fn: downloadHandler },
@@ -309,12 +298,15 @@ const globalHotkeys = {
         terminalElement.style.display = "none"
       }
     }
+  },
+  "p": {
+    key: "p",control: true,fn: () => {
+      console.log("at least it wasn't print")
+    }
   }
 }
 
 document.addEventListener("keydown",(event) => {
-  updateCursorInfo()
-  console.log(focusSuggestion)
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
     if (event.key === hotkey.key &&
@@ -494,14 +486,14 @@ document.addEventListener("keydown",(event) => {
   if (
     document.activeElement &&
     document.activeElement.id === "search-input"
-    && focusSearchResult
+    && focusSuggestion
   ) {
     if (event.key === "Enter" && !event.ctrlKey) {
-      if (focusSearchResult) {
-        if (focusSearchResult.dataset.title) {
-          goto("pageTitle",focusSearchResult.dataset.title)
+      if (focusSuggestion) {
+        if (focusSuggestion.dataset.title) {
+          goto("pageTitle",focusSuggestion.dataset.title)
         } else {
-          goto("block",focusSearchResult.dataset.id)
+          goto("block",focusSuggestion.dataset.id)
         }
         event.preventDefault()
         return
@@ -512,7 +504,7 @@ document.addEventListener("keydown",(event) => {
       return
     }
 
-    const didUpDowny = updownythingey(searchInput,searchResultList,exactFullTextSearchCache,focusSearchResult)
+    const didUpDowny = updownythingey(searchInput,searchResultList,exactFullTextSearchCache,focusSuggestion)
     if (didUpDowny) event.preventDefault()
   }
 
@@ -562,6 +554,7 @@ const updownythingey = (parent,list,cache,focused) => {
     const siblingToMoveTo = moveDirection === -1 ? focused.previousElementSibling : focused.nextElementSibling
     if (siblingToMoveTo) {
       siblingToMoveTo.dataset.selected = "true"
+      focusSuggestion = siblingToMoveTo
       delete focused.dataset.selected
     } else {
       const oldIdx = parseInt(list.dataset.resultStartIdx)
@@ -634,7 +627,7 @@ document.addEventListener("click",(event) => {
     focusSuggestion = event.target
     expandTemplate()
   } else if (event.target.id === "upload-button") {
-    document.getElementById("upload-input").click()
+    elById("upload-input").click()
   } else if (event.target.id === "daily-notes-button") {
     goto("dailyNotes")
   } else if (event.target.id === "options-button") {
@@ -658,7 +651,6 @@ document.addEventListener("click",(event) => {
 
   // this is at the bottom so that autocomplete suggestion click handler still knows where the link is. 
   // todo have better tracking of active block
-  updateCursorInfo()
 })
 
 
@@ -713,7 +705,6 @@ const mouseMoveListener = (event) => {
 }
 
 document.addEventListener("mousedown",(event) => {
-  updateCursorInfo()
   setDragSelected(false)
   dragSelect = null
   if (event.target.closest(".block")) {
@@ -726,6 +717,19 @@ document.addEventListener("mouseup",(event) => {
   if (dragSelectStartBlock !== null) {
     document.removeEventListener("mousemove",mouseMoveListener)
     dragSelectStartBlock = null
+  }
+})
+
+document.addEventListener("selectionchange",(event) => {
+  focusNode = getSelection().focusNode
+  focusOffset = getSelection().focusOffset
+  const currentFocusBlock = focusNode.parentNode.closest(".block")
+  if (currentFocusBlock && canWriteBloc(currentFocusBlock.dataset.id) && currentFocusBlock.dataset.id !== sessionState.focusId) {
+    const position = (focusNode.startIdx || 0) + focusOffset
+    updateFocusFromNode(currentFocusBlock,position)
+    console.log(event)
+  } else {
+    sessionState.isFocused = false
   }
 })
 
@@ -745,7 +749,7 @@ topBarHiddenHitbox.addEventListener("mouseout",() => {
   showTopBarTimeout = null
 })
 
-document.getElementById('upload-input').addEventListener('change',(event) => {
+elById('upload-input').addEventListener('change',(event) => {
   const file = event.target.files[0]
   console.log(file)
   const { name,ext: extension } = splitFileName(file.name)

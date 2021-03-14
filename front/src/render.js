@@ -83,7 +83,7 @@ const renderBreadcrumb = (parent,blockId) => {
     for (let i = list.length - 2; i >= 0; i--) {
       const node = breadcrumbBlockTemplate.cloneNode(true)
       const nodeBody = node.children[1]
-      renderBlockBody(nodeBody,list[i].string,true)
+      renderBlockBody(nodeBody,list[i].string)
       node.dataset.id = list[i].id
       parent.appendChild(node)
     }
@@ -103,7 +103,10 @@ const renderResultSet = (parent,resultSet,resultFrame,startIdx = 0) => {
     for (let i = startIdx; i < resultLength; i++) {
       matchingTitle = resultSet[i]
       const suggestion = resultTemplate.cloneNode(true)
-      if (i == startIdx) suggestion.dataset.selected = "true"
+      if (i == startIdx) {
+        focusSuggestion = suggestion
+        suggestion.dataset.selected = "true"
+      }
       suggestion.dataset.id = matchingTitle.id
       if (matchingTitle.title) {
         suggestion.dataset.title = matchingTitle.title
@@ -120,7 +123,7 @@ const renderResultSet = (parent,resultSet,resultFrame,startIdx = 0) => {
 const notifyText = (text,duration) => {
   const el = notificationTemplate.cloneNode(true)
   el.innerText = text
-  document.getElementById("app").appendChild(el)
+  elById("app").appendChild(el)
   setTimeout(() => el.style.top = "60px",50)
   const dur = (duration && duration * 1000) || 5000
   setTimeout(() => el.style.opacity = "0",dur)
@@ -135,14 +138,13 @@ const notifyText = (text,duration) => {
 // 7      8    9       10                11        12         13
 // italic link literal template-expander attribute code-block command
 const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|>(.*)/g
+// Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
-const renderBlockBody = (parent,text,disableSpace = false) => {
-  if (!disableSpace) {
-    if (text[text.length - 1] !== " ") text += " " // add space because of getSelection.collapse() weirdness with end of contenteditable
-  }
+const renderBlockBodyToEdit = (parent,text) => {
+  parent.dataset.editmode = true
+  if (text[text.length - 1] !== " ") text += " " // add space because browser creates new text node (bad) if we ever reach the end of ours
   const stack = [parent]
   const matches = text.matchAll(parseRegex)
-  // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
   let idx = 0
   let stackTop = parent
@@ -154,7 +156,6 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
     return result
   }
 
-  const refTitles = []
 
   for (let match of matches) {
 
@@ -170,7 +171,6 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
     } else if (match[2]) {
       if (stackTop.className === "page-ref__body") {
         stackTop.parentNode.children[2].appendChild(newTextNode("]]"))
-        refTitles.push(stackTop.s)
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
@@ -180,7 +180,6 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
         stackTop.appendChild(el)
       }
     } else if (match[3]) {
-      refTitles.push(match[3])
       const tagElement = document.createElement('span')
       tagElement.className = "tag"
       tagElement.appendChild(newTextNode(match[0]))
@@ -291,5 +290,140 @@ const renderBlockBody = (parent,text,disableSpace = false) => {
     stackTop.className = stackTop.className + "-incomplete"
     stackTop = stackTop.parentNode
   }
-  return refTitles
+}
+
+
+const renderBlockBody = (parent,text) => {
+  parent.dataset.editmode = false
+  const stack = [parent]
+  const matches = text.matchAll(parseRegex)
+
+  let idx = 0
+  let stackTop = parent
+
+  const newTextNode = (string) => {
+    const result = document.createTextNode(string)
+    result.startIdx = idx
+    result.endIdx = idx + string.length
+    return result
+  }
+
+  for (let match of matches) {
+
+    stackTop.appendChild(newTextNode(text.substring(idx,match.index)))
+    idx = match.index
+
+    if (match[1]) {
+      const pageRefElement = pageRefTemplate.cloneNode(true)
+      stackTop.appendChild(pageRefElement)
+      stack.push(pageRefElement.children[1])
+      stackTop = stack[stack.length - 1]
+    } else if (match[2]) {
+      if (stackTop.className === "page-ref__body") {
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const el = document.createElement("span")
+        el.appendChild(newTextNode("]]"))
+        stackTop.appendChild(el)
+      }
+    } else if (match[3]) {
+      const tagElement = document.createElement('span')
+      tagElement.className = "tag"
+      tagElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(tagElement)
+    } else if (match[4]) {
+      const blockId = match[4]
+      const block = store.blox[blockId]
+      if (block) {
+        const blockRefElement = document.createElement('span')
+        blockRefElement.className = 'block-ref'
+        blockRefElement.innerText = block.s
+        blockRefElement.dataset.id = blockId
+        stackTop.appendChild(blockRefElement)
+      } else {
+        stackTop.appendChild(newTextNode(match[0]))
+      }
+    } else if (match[5]) {
+      if (stackTop.className === "bold") {
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const boldElement = document.createElement('span')
+        boldElement.className = 'bold'
+        stackTop.appendChild(boldElement)
+        stack.push(boldElement)
+        stackTop = boldElement
+      }
+    } else if (match[6]) {
+      if (stackTop.className === "highlight") {
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const highlightElement = document.createElement('span')
+        highlightElement.className = 'highlight'
+        stackTop.appendChild(highlightElement)
+        stack.push(highlightElement)
+        stackTop = highlightElement
+      }
+    } else if (match[7]) {
+      if (stackTop.className === "italic") {
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const italicElement = document.createElement('span')
+        italicElement.className = 'italic'
+        stackTop.appendChild(italicElement)
+        stack.push(italicElement)
+        stackTop = italicElement
+      }
+    } else if (match[8]) {
+      const urlElement = document.createElement('span')
+      urlElement.className = 'url'
+      urlElement.appendChild(newTextNode(match[0]))
+      urlElement.href = match[8]
+      stackTop.appendChild(urlElement)
+    } else if (match[9]) {
+      const literalElement = document.createElement('span')
+      literalElement.className = 'literal'
+      literalElement.appendChild(newTextNode(match[9]))
+      stackTop.appendChild(literalElement)
+    } else if (match[10]) {
+      const templateExpanderElement = document.createElement('span')
+      templateExpanderElement.className = 'template-expander'
+      templateExpanderElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(templateExpanderElement)
+    } else if (match[11]) {
+      const attributeElement = document.createElement('span')
+      attributeElement.className = 'attribute'
+      attributeElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(attributeElement)
+    } else if (match[12]) {
+      if (stackTop.className === "code-block") {
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+      } else {
+        const codeBlockElement = document.createElement('div')
+        codeBlockElement.className = 'code-block'
+        stackTop.appendChild(codeBlockElement)
+        stack.push(codeBlockElement)
+        stackTop = codeBlockElement
+      }
+    } else if (match[13]) {
+      const commandElement = document.createElement("span")
+      commandElement.className = "command"
+      commandElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(commandElement)
+    }
+    idx = match.index + match[0].length
+  }
+
+  stack[stack.length - 1].appendChild(newTextNode(text.substring(idx)))
+
+  // this time I add back in starters in addition to removing classes
+  while (stackTop !== parent) {
+
+    stackTop.className = ""
+    stackTop = stackTop.parentNode
+  }
 }

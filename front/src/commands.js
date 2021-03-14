@@ -236,8 +236,6 @@ const print = (text) => {
   }
 }
 
-const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
-const CHARS_16 = "0123456789ABCDEF"
 const newUid = () => {
   let values = new Uint8Array(9)
   let result
@@ -316,7 +314,6 @@ const inlineCommands = {
   todo: () => {
     const position = editingCommandElement.firstChild.startIdx + 8
     editingCommandElement.remove()
-    updateCursorInfo()
     let string = focusBlockBody.innerText
     string = "[[TODO]]" + string
     sessionState.position = position
@@ -356,4 +353,8 @@ const matchInlineCommand = (string) => {
 const execInlineCommand = () => {
   inlineCommandList.style.display = "none"
   inlineCommands[focusSuggestion.dataset.string]()
+}
+
+const canWriteBloc = (blocId) => {
+  return true
 }
