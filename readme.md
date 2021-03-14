@@ -64,6 +64,12 @@ Terse JSON keys
 ```
                 string parent kids       create-time edit-time create-user edit-user
 blox: {bloc-id:{s,     p,     k:[kid-id],ct,         et,       cu,         eu }}
+
+graphs      last-commit-id is-public-readable
+graph-name:{l,             p}
+
+accounts user-readable email username password-hash readable-stores  writeable-stores  settings
+users   {u:           {e     u,       h             r:{graph-name:1} w:{graph-name:1}, s}
 ```
 
 I originally stored the 'store' in indexeddb because it's supposed to have more capacity / reliability than localStorage, but it's slower so now I write to localStorage and indexedDB and only read from indexedDB if the localStorage didn't work.

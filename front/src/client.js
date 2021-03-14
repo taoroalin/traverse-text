@@ -53,7 +53,7 @@ const beginPepper = "CeoPPOv9rIq6O7YiYlSFX"
 const endPepper = "Rzw1dagomQGpoo2s7iGE3lYL2yruaJDGrUk6bFCvz"
 const hashPassword = async (password,email) => {
   const saltAndPeppered = `${beginPepper}${password}${middlePepper}${email}${endPepper}`
-  const buffer = TextEncoder.encode(saltAndPeppered)
+  const buffer = textEncoder.encode(saltAndPeppered)
   const hashed = await crypto.subtle.digest("SHA-512",buffer)
   const passwordHashBuffer = new Uint8Array(hashed)
   let passwordHash = ""
