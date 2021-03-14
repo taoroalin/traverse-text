@@ -236,8 +236,8 @@ const globalHotkeys = {
     key: "b",
     control: true,
     fn: () => {
-      if (topBar.style.marginTop === "0px") user.topBar = "hidden"
-      else user.topBar = "visible"
+      if (topBar.style.marginTop === "0px") user.s.topBar = "hidden"
+      else user.s.topBar = "visible"
       saveUser()
     }
   },
@@ -257,10 +257,10 @@ const globalHotkeys = {
   "toggle color theme": {
     key: "m",control: true,fn: () => {
       if (document.body.className === "light") {
-        user.settings.theme = "dark"
+        user.s.theme = "dark"
         saveUser()
       } else {
-        user.settings.theme = "light"
+        user.s.theme = "light"
         saveUser()
       }
     }
@@ -735,14 +735,14 @@ document.addEventListener("selectionchange",(event) => {
 })
 
 const showTopBarFn = () => {
-  user.topBar = "visible"
+  user.s.topBar = "visible"
   saveUser()
 }
 let showTopBarTimeout = null
 
 topBarHiddenHitbox.addEventListener("mouseover",() => {
   clearTimeout(showTopBarTimeout)
-  showTopBarTimeout = setTimeout(showTopBarFn,700)
+  showTopBarTimeout = setTimeout(showTopBarFn,400)
 })
 
 topBarHiddenHitbox.addEventListener("mouseout",() => {
@@ -779,7 +779,7 @@ elById('upload-input').addEventListener('change',(event) => {
     })
   } else if (extension === "json") {
     file.text().then((text) => {
-      user.graphName = name
+      user.s.graphName = name
       store = roamJsonToStore(name,text)
       preprocessNewStore()
     })
@@ -788,12 +788,13 @@ elById('upload-input').addEventListener('change',(event) => {
   }
 })
 
-const preprocessNewStore = () => {
+const preprocessNewStore = async () => {
   startFn = () => gotoNoHistory("dailyNotes")
-  fetch("./default-store.json").then(text => text.json().then(json => {
-    mergeStore(json)
-    start()
-  }))
+  const response = await fetch("./default-store.json")
+  const json = await response.json()
+  mergeStore(json)
+  await addGraph()
+  start()
 }
 
 signupButton.addEventListener('click',(event) => {
@@ -817,3 +818,10 @@ const focusLogin = () => {
 switchToSignup.addEventListener('click',focusSignup)
 
 switchToLogin.addEventListener('click',focusLogin)
+
+signOutButton.addEventListener('click',() => {
+  if (isSynced()) reset()
+  else reallyWantToLeaveElement.style.display = "block"
+})
+
+reallyWantToLeaveElement.children[0].addEventListener('click',reset)

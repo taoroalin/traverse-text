@@ -1,0 +1,1004 @@
+{
+  "graphName": "default-micro-roam (4)",
+  "pages": {
+    "I7swK7y1x": {
+      "title": "Welcome to Micro Roam",
+      "children": [
+        "XIZN6JwWY",
+        "dw_X4KIEJ",
+        "RokDbINrC",
+        "NJS9MN73y",
+        "QgcV8z5WL",
+        "zLMuNLDBy",
+        "CP0D-O2nx",
+        "sj0YFblCl"
+      ],
+      "create-time": 1613101994274,
+      "backRefs": []
+    },
+    "2jdJb7t8w": {
+      "title": "Migrate from Roam Research with 2 clicks!",
+      "children": [
+        "VRKEwswEQ",
+        "T_8Y87K1K"
+      ],
+      "create-time": 1613321812971,
+      "backRefs": [
+        "dw_X4KIEJ"
+      ]
+    },
+    "xRlOJJJkp": {
+      "title": "Micro Roam",
+      "children": [
+        "Q6pknWD3T",
+        "uQBtvUEnO"
+      ],
+      "create-time": 1613321817867,
+      "backRefs": [
+        "rJEwNT4jg"
+      ]
+    },
+    "gpJwCWgLD": {
+      "title": "Page Links",
+      "children": [
+        "B4M3hWpdx",
+        "RJ-jPN1Jt"
+      ],
+      "create-time": 1613321821595,
+      "backRefs": [
+        "pvBsQAsDW",
+        "qvrocywph"
+      ]
+    },
+    "QlsUPjXCX": {
+      "title": "Tags",
+      "children": [
+        "NJjB51S-m",
+        "0vn6HDrfo"
+      ],
+      "create-time": 1613321825255,
+      "backRefs": [
+        "qvrocywph"
+      ]
+    },
+    "h8zNE0iXD": {
+      "title": "Keyboard Shortcuts",
+      "children": [
+        "KsofiFo8Q",
+        "EZR_jap_t"
+      ],
+      "create-time": 1613321829954,
+      "backRefs": [
+        "NJS9MN73y"
+      ]
+    },
+    "Fdb44w1Hx": {
+      "title": "Roam Research",
+      "children": [
+        "8mL1SxeZj",
+        "rbJuSReSf"
+      ],
+      "create-time": 1613407645320,
+      "backRefs": [
+        "e5qwu46yQ"
+      ]
+    },
+    "ReT_V51ix": {
+      "title": "Hashtags",
+      "children": [
+        "sEARVY31k",
+        "WP9pB4PUh"
+      ],
+      "create-time": 1613446058955,
+      "backRefs": [
+        "bmyDeXcMa"
+      ]
+    },
+    "RUBKg0Y_J": {
+      "title": "What you might miss from Roam Research",
+      "children": [],
+      "create-time": 1613630111440,
+      "backRefs": [
+        "ElFkVecKE"
+      ]
+    },
+    "E7j9h_h-z": {
+      "title": "Advantages of Micro Roam",
+      "children": [],
+      "create-time": 1613630360505,
+      "backRefs": [
+        "_OBgldEe6"
+      ]
+    },
+    "wgVcJQtQS": {
+      "title": "Page Link",
+      "children": [],
+      "create-time": 1613321821546,
+      "backRefs": []
+    },
+    "ubrXhxiXp": {
+      "title": "Tag",
+      "children": [],
+      "create-time": 1613321825244,
+      "backRefs": []
+    },
+    "orDyLI_Xj": {
+      "title": "February 24th, 2021",
+      ":create/time": 1614227407439,
+      "children": [
+        "hmE_DAVEI"
+      ]
+    }
+  },
+  "blocks": {
+    "XIZN6JwWY": {
+      "string": "All the core features of Roam Research, but 10X faster. ",
+      "create-time": 1613101994274,
+      "children": [],
+      "parent": "I7swK7y1x",
+      "backRefs": []
+    },
+    "dw_X4KIEJ": {
+      "string": "[[Migrate from Roam Research with 2 clicks!]]",
+      "create-time": 1613254747377,
+      "children": [
+        "e5qwu46yQ",
+        "rJEwNT4jg",
+        "_OBgldEe6",
+        "ElFkVecKE"
+      ],
+      ":block/refs": [
+        "2jdJb7t8w"
+      ],
+      "parent": "I7swK7y1x",
+      "backRefs": []
+    },
+    "e5qwu46yQ": {
+      "string": "Download JSON from [[Roam Research]] ( top-right-menu -> export-all -> JSON )",
+      "create-time": 1613105364889,
+      "children": [],
+      "edit-time": 1613407649420,
+      ":block/refs": [
+        "Fdb44w1Hx"
+      ],
+      "parent": "dw_X4KIEJ",
+      "backRefs": []
+    },
+    "rJEwNT4jg": {
+      "string": "Click \"Upload JSON\" in the top right of [[Micro Roam]]",
+      "create-time": 1613254826120,
+      "children": [],
+      ":block/refs": [
+        "xRlOJJJkp"
+      ],
+      "parent": "dw_X4KIEJ",
+      "backRefs": []
+    },
+    "_OBgldEe6": {
+      "string": "[[Advantages of Micro Roam]]",
+      "create-time": 1613630352655,
+      "children": [
+        "FF0MFrIM6",
+        "pD1EMDIy5",
+        "bocwhcpyC"
+      ],
+      ":block/refs": [
+        "E7j9h_h-z"
+      ],
+      "edit-time": 1613630360505,
+      "parent": "dw_X4KIEJ",
+      "backRefs": []
+    },
+    "FF0MFrIM6": {
+      "string": "Performance. ",
+      "create-time": 1613630361294,
+      "children": [
+        "IouwnhnEq",
+        "DngAMhVNx",
+        "ExF_LjRwN"
+      ],
+      ":block/refs": [],
+      "edit-time": 1613630582460,
+      "parent": "_OBgldEe6",
+      "backRefs": []
+    },
+    "IouwnhnEq": {
+      "string": "Micro Roam commits to loading 100% in under 1 second, always. It loads my graph (100k+ words) in 0.2 to 0.4 seconds. This allows you to write wherever you want, whenever you want, without disrupting your flow. ",
+      "create-time": 1613630583210,
+      "children": [
+        "YJnyqMJ7d"
+      ],
+      ":block/refs": [],
+      "edit-time": 1613631130348,
+      "parent": "FF0MFrIM6",
+      "backRefs": []
+    },
+    "YJnyqMJ7d": {
+      "string": "__browser extensions can slow down page load by up to 0.7 seconds. if you find the website slow even without browser extensions, please report an issue__ ",
+      "create-time": 1613630983873,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613631119341,
+      "parent": "IouwnhnEq",
+      "backRefs": []
+    },
+    "DngAMhVNx": {
+      "string": "Search all your pages and blocks in under 0.05 second",
+      "create-time": 1613630585160,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613630611001,
+      "parent": "FF0MFrIM6",
+      "backRefs": []
+    },
+    "ExF_LjRwN": {
+      "string": "Open 60 links per second (assuming you could click that fast)",
+      "create-time": 1613630615126,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613630644984,
+      "parent": "FF0MFrIM6",
+      "backRefs": []
+    },
+    "pD1EMDIy5": {
+      "string": "See markup __while you edit__. That means blocks don't move when you click on them, so you can edit faster.",
+      "create-time": 1613630548105,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613630733374,
+      "parent": "_OBgldEe6",
+      "backRefs": []
+    },
+    "bocwhcpyC": {
+      "string": "More features, like real-time cross graph linking, coming soon",
+      "create-time": 1613630522510,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613630756800,
+      "parent": "_OBgldEe6",
+      "backRefs": []
+    },
+    "ElFkVecKE": {
+      "string": "[[What you might miss from Roam Research]]",
+      "create-time": 1613629682061,
+      "children": [
+        "BtagfFPz_",
+        "cyjJC3-Sn"
+      ],
+      ":block/refs": [
+        "RUBKg0Y_J"
+      ],
+      "edit-time": 1613630111440,
+      "parent": "dw_X4KIEJ",
+      "backRefs": []
+    },
+    "BtagfFPz_": {
+      "string": "Roam Research has many features Micro Roam doesn't, like kanban boards, a date picker, tables, queries, and many more. I plan on implementing some of these in the future. If you want any feature, please ask. ",
+      "create-time": 1613630063467,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613630247739,
+      "parent": "ElFkVecKE",
+      "backRefs": []
+    },
+    "cyjJC3-Sn": {
+      "string": "Micro Roam treats ambiguous markup differently. Roam Research often picks the 'highest priority' out of multiple overlapping pieces of markup, whereas Micro treats them both as invalid. For instance, Roam Research sees ** bold text [[ Page Link? ** ]] as a link with no bold, whereas Micro Roam sees nothing.",
+      "create-time": 1613629701044,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613630261488,
+      "parent": "ElFkVecKE",
+      "backRefs": []
+    },
+    "RokDbINrC": {
+      "string": "Editing Text",
+      "create-time": 1613254864314,
+      "children": [
+        "Ja_IdH_2N",
+        "pvBsQAsDW",
+        "bmyDeXcMa",
+        "jcnmX8-34",
+        "yzZYXdAJf",
+        "qvrocywph"
+      ],
+      "parent": "I7swK7y1x",
+      "backRefs": []
+    },
+    "Ja_IdH_2N": {
+      "string": "You can create links and text decorations using text",
+      "create-time": 1613254896178,
+      "children": [],
+      "edit-time": 1613445980336,
+      ":block/refs": [],
+      "parent": "RokDbINrC",
+      "backRefs": []
+    },
+    "pvBsQAsDW": {
+      "string": "Double square brackets are [[Page Links]]",
+      "create-time": 1613102121753,
+      "children": [],
+      ":block/refs": [
+        "gpJwCWgLD"
+      ],
+      "edit-time": 1613446027888,
+      "parent": "RokDbINrC",
+      "backRefs": []
+    },
+    "bmyDeXcMa": {
+      "string": "#Hashtags are page links too, just like square brackets",
+      "create-time": 1613446026023,
+      "children": [],
+      ":block/refs": [
+        "ReT_V51ix"
+      ],
+      "edit-time": 1613446058955,
+      "parent": "RokDbINrC",
+      "backRefs": []
+    },
+    "jcnmX8-34": {
+      "string": "Surround text with double *, ^, or _ for **bold**, ^^highlighted^^,  or __Italic__",
+      "create-time": 1613102143572,
+      "children": [],
+      "edit-time": 1613634735932,
+      ":block/refs": [],
+      "parent": "RokDbINrC",
+      "backRefs": []
+    },
+    "yzZYXdAJf": {
+      "string": "Backquotes for `monospaced code`",
+      "create-time": 1613634737269,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613634753053,
+      "parent": "RokDbINrC",
+      "backRefs": []
+    },
+    "qvrocywph": {
+      "string": "Edit [[Page Links]], #Tags, and **styling** live - no waiting until you click out of the block",
+      "create-time": 1613102206085,
+      "children": [],
+      ":block/refs": [
+        "gpJwCWgLD",
+        "QlsUPjXCX"
+      ],
+      "parent": "RokDbINrC",
+      "backRefs": []
+    },
+    "NJS9MN73y": {
+      "string": "[[Keyboard Shortcuts]]",
+      "create-time": 1613102304704,
+      "children": [
+        "U3DjJ95X5",
+        "_I2n9koSE",
+        "nnVo-272O",
+        "5tkVxi4Jm",
+        "SItUn-ejl",
+        "BUnJien6o",
+        "PezRFJYtW",
+        "RWE71zH5Y",
+        "8_5x7L2oq",
+        "wAuIcZZNf",
+        "N7jFbmEDg",
+        "3LNqSCuXJ"
+      ],
+      ":block/refs": [
+        "h8zNE0iXD"
+      ],
+      "parent": "I7swK7y1x",
+      "backRefs": []
+    },
+    "U3DjJ95X5": {
+      "string": "Ctrl + U : Search",
+      "create-time": 1613102478500,
+      "children": [],
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "_I2n9koSE": {
+      "string": "Ctrl + O : Open link under cursor ",
+      "create-time": 1613102315942,
+      "children": [],
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "nnVo-272O": {
+      "string": "Alt + D : Open Daily notes",
+      "create-time": 1613102339058,
+      "children": [],
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "5tkVxi4Jm": {
+      "string": "Ctrl + M : Toggle dark theme",
+      "create-time": 1613102430976,
+      "children": [],
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "SItUn-ejl": {
+      "string": "Tab / Shift Tab : Nest / un-nest block",
+      "create-time": 1613102503317,
+      "children": [],
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "BUnJien6o": {
+      "string": "Alt + Shift + Arrow : Move block\n\n",
+      "create-time": 1613254604108,
+      "children": [],
+      "edit-time": 1613446131465,
+      ":block/refs": [],
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "PezRFJYtW": {
+      "string": "Enter : Add new block underneath",
+      "create-time": 1613446131463,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613446186004,
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "RWE71zH5Y": {
+      "string": "Ctrl + Enter : Add new block above",
+      "create-time": 1613446142046,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613446182141,
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "8_5x7L2oq": {
+      "string": "Shift + Enter : Add new line in block",
+      "create-time": 1613446156876,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613446175673,
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "wAuIcZZNf": {
+      "string": "Search bar keys:",
+      "create-time": 1613102363076,
+      "children": [
+        "KBFpCQto3",
+        "kC2YHH-k_"
+      ],
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "KBFpCQto3": {
+      "string": "Enter : Go to the exact page you typed ",
+      "create-time": 1613102401807,
+      "children": [],
+      "parent": "wAuIcZZNf",
+      "backRefs": []
+    },
+    "kC2YHH-k_": {
+      "string": "Tab : Go to the top autocomplete result ",
+      "create-time": 1613102414438,
+      "children": [],
+      "parent": "wAuIcZZNf",
+      "backRefs": []
+    },
+    "N7jFbmEDg": {
+      "string": "Ctrl + D : Upload JSON",
+      "create-time": 1613254670160,
+      "children": [],
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "3LNqSCuXJ": {
+      "string": "Ctrl + B : Hide / show top bar. ",
+      "create-time": 1613589447969,
+      "children": [
+        "yXFLmHK4V"
+      ],
+      ":block/refs": [],
+      "edit-time": 1613630820786,
+      "parent": "NJS9MN73y",
+      "backRefs": []
+    },
+    "yXFLmHK4V": {
+      "string": "Hover over the top of the screen to show the top bar again",
+      "create-time": 1613630824493,
+      "children": [],
+      ":block/refs": [],
+      "edit-time": 1613630858390,
+      "parent": "3LNqSCuXJ",
+      "backRefs": []
+    },
+    "VRKEwswEQ": {
+      "string": "",
+      "create-time": 1613321838382,
+      "children": [],
+      "parent": "2jdJb7t8w",
+      "backRefs": []
+    },
+    "Q6pknWD3T": {
+      "string": "",
+      "create-time": 1613407687938,
+      "children": [],
+      ":block/refs": [],
+      "parent": "xRlOJJJkp",
+      "backRefs": []
+    },
+    "B4M3hWpdx": {
+      "string": "",
+      "create-time": 1613407694061,
+      "children": [],
+      ":block/refs": [],
+      "parent": "gpJwCWgLD",
+      "backRefs": []
+    },
+    "NJjB51S-m": {
+      "string": "",
+      "create-time": 1613407695439,
+      "children": [],
+      ":block/refs": [],
+      "parent": "QlsUPjXCX",
+      "backRefs": []
+    },
+    "KsofiFo8Q": {
+      "string": "",
+      "create-time": 1613321832736,
+      "children": [],
+      "parent": "h8zNE0iXD",
+      "backRefs": []
+    },
+    "8mL1SxeZj": {
+      "string": "",
+      "create-time": 1613407645321,
+      "children": [],
+      ":block/refs": [],
+      "parent": "Fdb44w1Hx",
+      "backRefs": []
+    },
+    "sEARVY31k": {
+      "string": "",
+      "create-time": 1613446064061,
+      "children": [],
+      ":block/refs": [],
+      "parent": "ReT_V51ix",
+      "backRefs": []
+    },
+    "QgcV8z5WL": {
+      "string": "All the core features of Roam Research, but 10X faster. ",
+      "parent": "I7swK7y1x",
+      "create-time": 1613101994274,
+      "children": [],
+      "backRefs": []
+    },
+    "zLMuNLDBy": {
+      "string": "[[Migrate from Roam Research with 2 clicks!]]",
+      "parent": "I7swK7y1x",
+      "create-time": 1613254747377,
+      "children": [
+        "ItbTXXalb",
+        "C9L6omgUa",
+        "w8zlsrIVs",
+        "DghyW7hKe"
+      ],
+      "backRefs": [],
+      ":block/refs": []
+    },
+    "ItbTXXalb": {
+      "string": "Download JSON from [[Roam Research]] ( top-right-menu -> export-all -> JSON )",
+      "parent": "dw_X4KIEJ",
+      "create-time": 1613105364889,
+      "children": [],
+      "backRefs": [],
+      "edit-time": 1613407649420,
+      ":block/refs": []
+    },
+    "C9L6omgUa": {
+      "string": "Click \"Upload JSON\" in the top right of [[Micro Roam]]",
+      "parent": "dw_X4KIEJ",
+      "create-time": 1613254826120,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": []
+    },
+    "w8zlsrIVs": {
+      "string": "[[Advantages of Micro Roam]]",
+      "parent": "dw_X4KIEJ",
+      "create-time": 1613630352655,
+      "children": [
+        "KthSnSc6t",
+        "hyawBM5pR",
+        "gwsdf_HYd"
+      ],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613630360505
+    },
+    "KthSnSc6t": {
+      "string": "Performance. ",
+      "parent": "_OBgldEe6",
+      "create-time": 1613630361294,
+      "children": [
+        "b9p-rcU-7",
+        "B8oYkHWsz",
+        "IMxkr2ZHM"
+      ],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613630582460
+    },
+    "b9p-rcU-7": {
+      "string": "Micro Roam commits to loading 100% in under 1 second, always. It loads my graph (100k+ words) in 0.2 to 0.4 seconds. This allows you to write wherever you want, whenever you want, without disrupting your flow. ",
+      "parent": "FF0MFrIM6",
+      "create-time": 1613630583210,
+      "children": [
+        "DogWXXiMT"
+      ],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613631130348
+    },
+    "DogWXXiMT": {
+      "string": "__browser extensions can slow down page load by up to 0.7 seconds. if you find the website slow even without browser extensions, please report an issue__ ",
+      "parent": "IouwnhnEq",
+      "create-time": 1613630983873,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613631119341
+    },
+    "B8oYkHWsz": {
+      "string": "Search all your pages and blocks in under 0.05 second",
+      "parent": "FF0MFrIM6",
+      "create-time": 1613630585160,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613630611001
+    },
+    "IMxkr2ZHM": {
+      "string": "Open 60 links per second (assuming you could click that fast)",
+      "parent": "FF0MFrIM6",
+      "create-time": 1613630615126,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613630644984
+    },
+    "hyawBM5pR": {
+      "string": "See markup __while you edit__. That means blocks don't move when you click on them, so you can edit faster.",
+      "parent": "_OBgldEe6",
+      "create-time": 1613630548105,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613630733374
+    },
+    "gwsdf_HYd": {
+      "string": "More features, like real-time cross graph linking, coming soon",
+      "parent": "_OBgldEe6",
+      "create-time": 1613630522510,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613630756800
+    },
+    "DghyW7hKe": {
+      "string": "[[What you might miss from Roam Research]]",
+      "parent": "dw_X4KIEJ",
+      "create-time": 1613629682061,
+      "children": [
+        "u2WUBqelJ",
+        "FI8TiyaEd"
+      ],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613630111440
+    },
+    "u2WUBqelJ": {
+      "string": "Roam Research has many features Micro Roam doesn't, like kanban boards, a date picker, tables, queries, and many more. I plan on implementing some of these in the future. If you want any feature, please ask. ",
+      "parent": "ElFkVecKE",
+      "create-time": 1613630063467,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613630247739
+    },
+    "FI8TiyaEd": {
+      "string": "Micro Roam treats ambiguous markup differently. Roam Research often picks the 'highest priority' out of multiple overlapping pieces of markup, whereas Micro treats them both as invalid. For instance, Roam Research sees ** bold text [[ Page Link? ** ]] as a link with no bold, whereas Micro Roam sees nothing.",
+      "parent": "ElFkVecKE",
+      "create-time": 1613629701044,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613630261488
+    },
+    "CP0D-O2nx": {
+      "string": "Editing Text",
+      "parent": "I7swK7y1x",
+      "create-time": 1613254864314,
+      "children": [
+        "VDjVuFO4q",
+        "aWtlc6zIW",
+        "yfaFljvId",
+        "us4FZge0F",
+        "Sswmuiqrs",
+        "AdmmJSert"
+      ],
+      "backRefs": []
+    },
+    "VDjVuFO4q": {
+      "string": "You can create links and text decorations using text",
+      "parent": "RokDbINrC",
+      "create-time": 1613254896178,
+      "children": [],
+      "backRefs": [],
+      "edit-time": 1613445980336,
+      ":block/refs": []
+    },
+    "aWtlc6zIW": {
+      "string": "Double square brackets are [[Page Links]]",
+      "parent": "RokDbINrC",
+      "create-time": 1613102121753,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613446027888
+    },
+    "yfaFljvId": {
+      "string": "#Hashtags are page links too, just like square brackets",
+      "parent": "RokDbINrC",
+      "create-time": 1613446026023,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613446058955
+    },
+    "us4FZge0F": {
+      "string": "Surround text with double *, ^, or _ for **bold**, ^^highlighted^^,  or __Italic__",
+      "parent": "RokDbINrC",
+      "create-time": 1613102143572,
+      "children": [],
+      "backRefs": [],
+      "edit-time": 1613634735932,
+      ":block/refs": []
+    },
+    "Sswmuiqrs": {
+      "string": "Backquotes for `monospaced code`",
+      "parent": "RokDbINrC",
+      "create-time": 1613634737269,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613634753053
+    },
+    "AdmmJSert": {
+      "string": "Edit [[Page Links]], #Tags, and **styling** live - no waiting until you click out of the block",
+      "parent": "RokDbINrC",
+      "create-time": 1613102206085,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": []
+    },
+    "sj0YFblCl": {
+      "string": "[[Keyboard Shortcuts]]",
+      "parent": "I7swK7y1x",
+      "create-time": 1613102304704,
+      "children": [
+        "7KvuL1Cpi",
+        "D4v81N2s6",
+        "xihooQCCv",
+        "m_AspRiwI",
+        "lx-UZR9__",
+        "Lt1YVU7k4",
+        "wWXziBgc5",
+        "cSB3W9DPr",
+        "Fc2M0O5Rr",
+        "plWMXik9a",
+        "h0XcOZ5pu",
+        "esF5JHJui"
+      ],
+      "backRefs": [],
+      ":block/refs": []
+    },
+    "7KvuL1Cpi": {
+      "string": "Ctrl + U : Search",
+      "parent": "NJS9MN73y",
+      "create-time": 1613102478500,
+      "children": [],
+      "backRefs": []
+    },
+    "D4v81N2s6": {
+      "string": "Ctrl + O : Open link under cursor ",
+      "parent": "NJS9MN73y",
+      "create-time": 1613102315942,
+      "children": [],
+      "backRefs": []
+    },
+    "xihooQCCv": {
+      "string": "Alt + D : Open Daily notes",
+      "parent": "NJS9MN73y",
+      "create-time": 1613102339058,
+      "children": [],
+      "backRefs": []
+    },
+    "m_AspRiwI": {
+      "string": "Ctrl + M : Toggle dark theme",
+      "parent": "NJS9MN73y",
+      "create-time": 1613102430976,
+      "children": [],
+      "backRefs": []
+    },
+    "lx-UZR9__": {
+      "string": "Tab / Shift Tab : Nest / un-nest block",
+      "parent": "NJS9MN73y",
+      "create-time": 1613102503317,
+      "children": [],
+      "backRefs": []
+    },
+    "Lt1YVU7k4": {
+      "string": "Alt + Shift + Arrow : Move block\n\n",
+      "parent": "NJS9MN73y",
+      "create-time": 1613254604108,
+      "children": [],
+      "backRefs": [],
+      "edit-time": 1613446131465,
+      ":block/refs": []
+    },
+    "wWXziBgc5": {
+      "string": "Enter : Add new block underneath",
+      "parent": "NJS9MN73y",
+      "create-time": 1613446131463,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613446186004
+    },
+    "cSB3W9DPr": {
+      "string": "Ctrl + Enter : Add new block above",
+      "parent": "NJS9MN73y",
+      "create-time": 1613446142046,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613446182141
+    },
+    "Fc2M0O5Rr": {
+      "string": "Shift + Enter : Add new line in block",
+      "parent": "NJS9MN73y",
+      "create-time": 1613446156876,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613446175673
+    },
+    "plWMXik9a": {
+      "string": "Search bar keys:",
+      "parent": "NJS9MN73y",
+      "create-time": 1613102363076,
+      "children": [
+        "RUCCqysoI",
+        "CPvcvI2Yw"
+      ],
+      "backRefs": []
+    },
+    "RUCCqysoI": {
+      "string": "Enter : Go to the exact page you typed ",
+      "parent": "wAuIcZZNf",
+      "create-time": 1613102401807,
+      "children": [],
+      "backRefs": []
+    },
+    "CPvcvI2Yw": {
+      "string": "Tab : Go to the top autocomplete result ",
+      "parent": "wAuIcZZNf",
+      "create-time": 1613102414438,
+      "children": [],
+      "backRefs": []
+    },
+    "h0XcOZ5pu": {
+      "string": "Ctrl + D : Upload JSON",
+      "parent": "NJS9MN73y",
+      "create-time": 1613254670160,
+      "children": [],
+      "backRefs": []
+    },
+    "esF5JHJui": {
+      "string": "Ctrl + B : Hide / show top bar. ",
+      "parent": "NJS9MN73y",
+      "create-time": 1613589447969,
+      "children": [
+        "Lgg_-_euR"
+      ],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613630820786
+    },
+    "Lgg_-_euR": {
+      "string": "Hover over the top of the screen to show the top bar again",
+      "parent": "3LNqSCuXJ",
+      "create-time": 1613630824493,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": [],
+      "edit-time": 1613630858390
+    },
+    "T_8Y87K1K": {
+      "string": "",
+      "parent": "2jdJb7t8w",
+      "create-time": 1613321838382,
+      "children": [],
+      "backRefs": []
+    },
+    "uQBtvUEnO": {
+      "string": "",
+      "parent": "xRlOJJJkp",
+      "create-time": 1613407687938,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": []
+    },
+    "RJ-jPN1Jt": {
+      "string": "",
+      "parent": "gpJwCWgLD",
+      "create-time": 1613407694061,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": []
+    },
+    "0vn6HDrfo": {
+      "string": "",
+      "parent": "QlsUPjXCX",
+      "create-time": 1613407695439,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": []
+    },
+    "EZR_jap_t": {
+      "string": "",
+      "parent": "h8zNE0iXD",
+      "create-time": 1613321832736,
+      "children": [],
+      "backRefs": []
+    },
+    "rbJuSReSf": {
+      "string": "",
+      "parent": "Fdb44w1Hx",
+      "create-time": 1613407645321,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": []
+    },
+    "WP9pB4PUh": {
+      "string": "",
+      "parent": "ReT_V51ix",
+      "create-time": 1613446064061,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": []
+    },
+    "hmE_DAVEI": {
+      "string": "",
+      "parent": "orDyLI_Xj",
+      ":create/time": 1614227407441,
+      "children": [],
+      "backRefs": [],
+      ":block/refs": []
+    }
+  },
+  "pagesByTitle": {
+    "Welcome to Micro Roam": "I7swK7y1x",
+    "Migrate from Roam Research with 2 clicks!": "2jdJb7t8w",
+    "Micro Roam": "xRlOJJJkp",
+    "Page Links": "gpJwCWgLD",
+    "Tags": "QlsUPjXCX",
+    "Keyboard Shortcuts": "h8zNE0iXD",
+    "Roam Research": "Fdb44w1Hx",
+    "Hashtags": "ReT_V51ix",
+    "What you might miss from Roam Research": "RUBKg0Y_J",
+    "Advantages of Micro Roam": "E7j9h_h-z",
+    "Page Link": "wgVcJQtQS",
+    "Tag": "ubrXhxiXp",
+    "February 24th, 2021": "orDyLI_Xj"
+  },
+  "ownerRoamId": "default"
+}

@@ -21,7 +21,7 @@
   }
 
   const start = () => {
-    user.graphName = store.graphName
+    user.s.graphName = store.graphName
     saveUser()
     startFn()
     debouncedSaveStore()
@@ -30,8 +30,8 @@
   const invalidateLocal = () => {
     const r = indexedDB.deleteDatabase("microroam")
     console.error(`Local replica invalid. Resetting from server`)
-    user.settings.commitId = undefined
-    user.settings.syncCommitId = undefined
+    user.s.commitId = undefined
+    user.s.syncCommitId = undefined
     localStorage.setItem("user",JSON.stringify(user))
     localStorage.removeItem('store')
     window.location.href = window.location.href
@@ -39,11 +39,11 @@
 
   if (userText) {
     user = JSON.parse(userText)
-    if (user.passwordHash) {
+    if (user.h) {
       const headers = new Headers()
-      headers.set('passwordhash',user.passwordHash)
-      if (user.settings.commitId) headers.set('commitid',user.settings.commitId)
-      let reqUrl = `${basicBitchServerUrl}/startup/${user.settings.graphName}`
+      headers.set('h',user.h)
+      if (user.s.commitId) headers.set('commitid',user.s.commitId)
+      let reqUrl = `${basicBitchServerUrl}/startup/${user.s.graphName}`
       fetch(reqUrl,{ method: 'POST',headers: headers }).then(async (res) => {
         if (res.status === 304) {
           console.log(`already up to date`)
@@ -56,7 +56,7 @@
         usingLocalStore = false
         res.json().then(blox => {
           console.log('got blox')
-          hydrateFromBlox(user.settings.graphName,blox)
+          hydrateFromBlox(user.s.graphName,blox)
           setTimeout(generateInnerOuterRefs,160)
           start() // todo catch code loading after this
           debouncedSaveStore()
@@ -103,7 +103,7 @@
       }
     }
   } else {
-    user = { settings: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
+    user = { s: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
     fetch("./default-store.json").then(text => {
       text.json().then(json => {
         store = json
@@ -129,10 +129,10 @@
         console.log("new success")
         idb = event.target.result
         const storeStore = db.transaction(["stores"],"readonly").objectStore("stores")
-        storeStore.get(user.graphName).onsuccess = (e) => {
+        storeStore.get(user.s.graphName).onsuccess = (e) => {
           store = e.target.result.store
           const roamJSON = oldStoreToRoamJSON[db.version](store)
-          roamJsonToStore(user.graphName,roamJSON)
+          roamJsonToStore(user.s.graphName,roamJSON)
           saveStore()
           setDataLoaded()
         }
@@ -171,18 +171,21 @@
       <button id="signup-button" tabindex="-1">
         Sign up
       </button>
+      <button id="signout-button" tabindex="-1" style="display:none">
+        Sign Out
+      </button>
     </div>
 
     <div id="top-bar-hidden-hitbox" style="position:fixed;height:20px;width:100%;display:none;"></div>
 
     <script>
 
-      document.body.className = user.settings.theme
+      document.body.className = user.s.theme
 
       const topBar = document.getElementById("top-bar")
       const topBarHiddenHitbox = document.getElementById("top-bar-hidden-hitbox")
 
-      if (user.settings.topBar === 'visible') {
+      if (user.s.topBar === 'visible') {
         topBar.style.marginTop = "0px"
         topBarHiddenHitbox.style.display = "none"
       }
@@ -225,11 +228,16 @@
       <button id="switch-to-login">Login</button>
       <button class="exit-to-main">Back</button>
     </div>
+
+    <div id="really-want-to-leave" class="really-want-to" style="display:none">
+      Your data will be lost if you sign out now
+      <button>Continue</button>
+    </div>
   </div>
 
   <title>Micro Roam</title>
 
-  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="css.css">
 
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inconsolata">

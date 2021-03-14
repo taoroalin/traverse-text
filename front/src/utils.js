@@ -73,6 +73,7 @@ const clamp = (x,min,max) => Math.max(min,Math.min(x,max))
 // this is v slow, 7M dates / s
 // not using bit shifts here because this needs to work with 64 bit ints and JS doesn't expose 64 bit bit-shifts
 const intToBase64 = (int) => {
+  if (int === undefined) return
   let str = ""
   while (int > 0) {
     str = "" + CHARS_64[int % 64] + str

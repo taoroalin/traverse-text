@@ -16,7 +16,7 @@ const roamBloxProps = {
 const roamJsonToStore = (graphName,text) => {
   console.log("roamJsontostore")
   const stime = performance.now()
-  const now = Date.now()
+  const now = intToBase64(Date.now())
 
   const obj = JSON.parse(text)
 
@@ -31,7 +31,8 @@ const roamJsonToStore = (graphName,text) => {
     const newBlock = {
       s: block.string,
       p: parent,
-      ct: now,
+      ct: intToBase64(block["create-time"]) || now,
+      et: intToBase64(block["edit-time"]) || now,
     }
     store.blox[block.uid] = newBlock
 
@@ -94,7 +95,7 @@ const roamJsonToStore = (graphName,text) => {
 
   generateRefs()
   store.commitId = "MYVERYFIRSTCOMMITEVER"
-  user.settings.commitId = store.commitId
+  user.s.commitId = store.commitId
 
   console.log(`roamJsonToStore took ${performance.now() - stime}`)
   console.log(store)

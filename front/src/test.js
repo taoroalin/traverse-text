@@ -94,28 +94,22 @@ const benchmarkGen = () => {
 // terminal
 
 const log = () => {
-  user.logging = true
+  user.s.logging = true
   saveUser()
 }
 
 const nolog = () => {
-  user.logging = false
+  user.s.logging = false
   saveUser()
 }
 
 const flash = benchmarkRenderAll
 
-const reset = () => {
-  localStorage.removeItem("user")
-  const r = indexedDB.deleteDatabase("microroam")
-  window.location.href = window.location.href
-}
-
 const blank = (name = "default") => {
   store = blankStore()
   store.graphName = name
-  user = { settings: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
-  user.graphName = name
+  user = { s: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
+  user.s.graphName = name
   saveUser()
   debouncedSaveStore()
   goto("dailyNotes")
@@ -138,7 +132,7 @@ const downloadBinary = () => {
 const loadGraphminerNotes = () => {
   fetch("./graphminer-store.json").then(text => text.json().then(json => {
     store = json
-    user.graphName = store.graphName
+    user.s.graphName = store.graphName
     saveUser()
     start()
     debouncedSaveStore()

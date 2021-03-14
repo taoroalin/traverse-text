@@ -1,17 +1,23 @@
 const http = require('http')
 const fs = require('fs')
-const { Worker } = require('worker_threads')
-// front-back-shared is in the front folder because its easier to import from other paths in Node
+const zlib = require('zlib')
+const stream = require('stream')
 const shared = require('../front/src/front-back-shared.js')
+const { performance } = require('perf_hooks')
+// front-back-shared is in the front folder because its easier to import from other paths in Node
+
+const brCompressStream = (from,to) => {
+  const compressor = zlib.createBrotliCompress({ params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1,[zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } })
+  stream.pipeline(from,compressor,to,(err) => {
+    if (err) {
+      console.log("failed to compress:",err)
+    }
+  })
+}
+
 
 // crypto and cluster are node built-in modules to consider. cluster lets you have multiple identical processes and round-robin distributes requests among them
-const { performance } = require('perf_hooks')
 // todo use session keys instead of holding onto password hash everywhere for more security
-
-
-const isUsingCompression = false
-
-const compressionWorker = new Worker('./compression-worker.js')
 
 const hashRegex = /^[a-zA-Z0-9_\-]{80,90}$/
 
@@ -20,9 +26,9 @@ let accountsByHash = {}
 let accountsByUsername = {}
 let accountsByEmail = {}
 for (let account of accounts) {
-  accountsByHash[account.userReadable.passwordHash] = account
-  accountsByEmail[account.userReadable.email] = account
-  accountsByUsername[account.userReadable.username] = account
+  accountsByHash[account.u.h] = account
+  accountsByEmail[account.u.e] = account
+  accountsByUsername[account.u.u] = account
 }
 
 
@@ -125,7 +131,7 @@ http.createServer((req,res) => {
       res.end()
       return
     }
-    const hash = accountDetails.passwordHash
+    const hash = accountDetails.h
     if (hash === undefined || accountsByHash[hash] !== undefined || hash.match(hashRegex) === null) {
       res.writeHead(401)
       res.write("Invalid password hash")
@@ -133,7 +139,7 @@ http.createServer((req,res) => {
       log("Invalid password hash")
       return
     }
-    const email = accountDetails.email
+    const email = accountDetails.e
     if (email === undefined || accountsByEmail[email] !== undefined) {
       res.writeHead(401)
       res.write("Email already in use")
@@ -141,7 +147,7 @@ http.createServer((req,res) => {
       log("Email already in use")
       return
     }
-    const username = accountDetails.username
+    const username = accountDetails.u
     if (username === undefined ||
       accountsByUsername[username] !== undefined ||
       (typeof username !== "string") ||
@@ -153,13 +159,13 @@ http.createServer((req,res) => {
       return
     }
     const storedAccountDetails = {
-      userReadable: {
-        email: accountDetails.email,
-        username: accountDetails.username,
-        passwordHash: accountDetails.passwordHash,
-        readStores: {},
-        writeStores: {},
-        settings: accountDetails.settings,
+      u: {
+        e: accountDetails.e,
+        u: accountDetails.u,
+        h: accountDetails.h,
+        r: {},
+        w: {},
+        s: accountDetails.s || {},
       },
     }
     accounts.push(storedAccountDetails)
@@ -167,12 +173,12 @@ http.createServer((req,res) => {
     accountsByHash[hash] = storedAccountDetails
     accountsByUsername[username] = storedAccountDetails
     debouncedSaveAccounts()
-    res.write(JSON.stringify(storedAccountDetails.userReadable))
+    res.write(JSON.stringify(storedAccountDetails.u))
     res.end()
     // todo verify email
     return
   }
-  const passwordHash = req.headers.passwordhash
+  const passwordHash = req.headers.h
   if (passwordHash === undefined || !(typeof passwordHash === "string") || passwordHash.match(hashRegex) === null) {
     res.writeHead(401)
     res.end()
@@ -184,7 +190,7 @@ http.createServer((req,res) => {
     res.end()
     return
   }
-  log('user ' + userAccount.userReadable.email)
+  log('user ' + userAccount.u.e)
   let writeStream
   let fileReadStream
   let graphMetadata
@@ -195,53 +201,48 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      if (userAccount.userReadable.writeStores[match[2]] === undefined) {
+      if (userAccount.u.w[match[2]] === undefined) {
         res.writeHead(403)
         res.end()
         return
       }
-      if (req.headers.commitid !== undefined && graphs[match[2]].commitId === req.headers.commitid) {
+      if (req.headers.commitid !== undefined && graphs[match[2]].l === req.headers.commitid) {
         res.writeHead(304)
         res.end()
         return
       }
-      graphs[match[2]].commitId = req.headers.commitid
+      graphs[match[2]].l = req.headers.commitid
       debouncedSaveGraphs()
       // todo add coordination between threads using err.code==='EBUSY'?
-      writeStream = fs.createWriteStream(`../user-data/blox/${match[2]}.json`)
-      req.pipe(writeStream)
+      writeStream = fs.createWriteStream(`../user-data/blox-br/${match[2]}.json.br`)
+      brCompressStream(req,writeStream)
       req.on("end",() => {
-        if (isUsingCompression) compressionWorker.postMessage(['compress',match[2]])
         res.writeHead(200)
         res.end()
       })
       // console.log(`wrote ${match[2]}`)
       return
     case "get":
-      if (userAccount.userReadable.readStores[match[2]] === undefined) {
+      if (userAccount.u.r[match[2]] === undefined) {
         res.writeHead(403)
         res.end()
         return
       }
       graphMetadata = graphs[match[2]]
-      if (match[3] && match[3] === graphMetadata.commitId) {
+      if (match[3] && match[3] === graphMetadata.l) {
         res.writeHead(304)
         res.end()
         return
       }
-      if (graphMetadata.commitId === undefined) {
+
+      if (graphMetadata.l === undefined) {
         res.writeHead(404)
         res.end()
         return
       }
-      if (graphMetadata.commitId === graphMetadata.brCommitId) {
-        res.setHeader('Encoding','br')
-        fileReadStream = fs.createReadStream(`../user-data/blox-br/${match[2]}.json.br`)
-        fileReadStream.pipe(res)
-      } else {
-        fileReadStream = fs.createReadStream(`../user-data/blox/${match[2]}.json`)
-        fileReadStream.pipe(res)
-      }
+      res.setHeader('Content-Encoding','br')
+      fileReadStream = fs.createReadStream(`../user-data/blox-br/${match[2]}.json.br`)
+      fileReadStream.pipe(res)
       // console.log(`get ${match[2]}`)
       return
     case "creategraph":
@@ -252,21 +253,20 @@ http.createServer((req,res) => {
         res.write("That graph name already taken.")
         return
       }
-      graphs[match[2]] = { commitId: match[3] }
-      writeStream = fs.createWriteStream(`../user-data/blox/${match[2]}.json`)
-      req.pipe(writeStream)
-      userAccount.userReadable.writeStores[match[2]] = true
-      userAccount.userReadable.readStores[match[2]] = true
+      graphs[match[2]] = { l: match[3] }
+      writeStream = fs.createWriteStream(`../user-data/blox-br/${match[2]}.json.br`)
+      brCompressStream(req,writeStream)
+      userAccount.u.w[match[2]] = 1
+      userAccount.u.r[match[2]] = 1
       debouncedSaveAccounts()
       debouncedSaveGraphs()
       req.on("end",() => {
-        if (isUsingCompression) compressionWorker.postMessage(['compress',match[2]])
         res.writeHead(200)
         res.end()
       })
       return
     case "auth":
-      res.write(JSON.stringify(userAccount.userReadable))
+      res.write(JSON.stringify(userAccount.u))
       res.end()
       // console.log("auth")
       return
@@ -279,13 +279,7 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      if (userAccount.userReadable.readStores[settings.graphName] === undefined) {
-        res.writeHead(403)
-        res.write("You don't have access to that default graph")
-        res.end()
-        return
-      }
-      userAccount.userReadable.settings = settings
+      userAccount.u.s = settings
       debouncedSaveAccounts()
       res.writeHead(200)
       res.end()
@@ -296,35 +290,35 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      const readableUserData = userAccount.userReadable
+      const readableUserData = userAccount.u
       res.setHeader('user',JSON.stringify(readableUserData))
 
-      const graphName = readableUserData.settings.graphName
-      if (fs.existsSync(`../user-data/blox/${match[2]}.json`) === false) {
+      const graphName = readableUserData.s.graphName
+      if (fs.existsSync(`../user-data/blox-br/${match[2]}.json.br`) === false) {
         res.writeHead(404)
         res.end()
         return
       }
-      if (req.headers.commitid !== undefined && req.headers.commitid === graphs[graphName].commitId) {
+      if (req.headers.commitid !== undefined && req.headers.commitid === graphs[graphName].l) {
         res.writeHead(304)
+        res.end()
+        return
+      }
+      if (readableUserData.r[graphName] === undefined) {
+        res.writeHead(403)
         res.end()
         return
       }
       // todo validate this
       graphMetadata = graphs[graphName]
-      if (!graphMetadata.commitId) {
+      if (!graphMetadata.l) {
         res.writeHead(404)
         res.end()
         return
       }
-      if (graphMetadata.commitId === graphMetadata.brCommitId) {
-        res.setHeader('Encoding','br')
-        fileReadStream = fs.createReadStream(`../user-data/blox/${graphName}.json.br`)
-        fileReadStream.pipe(res)
-      } else {
-        fileReadStream = fs.createReadStream(`../user-data/blox/${graphName}.json`)
-        fileReadStream.pipe(res)
-      }
+      res.setHeader('Content-Encoding','br')
+      fileReadStream = fs.createReadStream(`../user-data/blox-br/${graphName}.json.br`)
+      fileReadStream.pipe(res)
       return
     default:
       res.writeHead(400)

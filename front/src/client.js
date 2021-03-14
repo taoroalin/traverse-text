@@ -1,19 +1,25 @@
-// API knowingly does not follow REST spec for CORS simplicity reasons
+// API knowingly does not follow REST spec because CORS sucks and this isn't CRUD
+
+const reset = () => {
+  localStorage.clear()
+  const r = indexedDB.deleteDatabase("microroam")
+  window.location.href = window.location.href
+}
 
 const saveStoreToBasicBitchServer = async (blox) => {
   const putSentTime = performance.now()
   const headers = new Headers()
-  headers.set('passwordhash',user.passwordHash)
-  const syncCommitId = user.settings.commitId
+  headers.set('h',user.h)
+  const syncCommitId = user.s.commitId
   headers.set('commitid',syncCommitId)
-  headers.set('synccommitid',user.settings.syncCommitId)
+  headers.set('synccommitid',user.s.syncCommitId)
   const response = await fetch(`${basicBitchServerUrl}/put/${store.graphName}`,
     {
       method: "POST",body: blox,
       headers
     })
   if (response.status === 200 || response.status === 304) {
-    user.settings.syncCommitId = syncCommitId
+    user.s.syncCommitId = syncCommitId
     store.syncCommitId = syncCommitId
     console.log(`save confirmed in ${performance.now() - putSentTime}`)
   } else {
@@ -24,7 +30,7 @@ const saveStoreToBasicBitchServer = async (blox) => {
 const getStoreFromBasicBitchServer = async (graphName) => {
   const getSentTime = performance.now()
   const response = await fetch(`${basicBitchServerUrl}/get/${graphName}`,
-    { headers: { passwordHash: user.passwordHash } })
+    { headers: { passwordHash: user.h } })
   switch (reponse.status) {
     case 200:
       const blox = await response.json()
@@ -38,8 +44,8 @@ const getStoreFromBasicBitchServer = async (graphName) => {
 
 const saveSettingsToBasicBitchServer = async () => {
   const headers = new Headers()
-  headers.set('passwordhash',user.passwordHash)
-  headers.set('body',JSON.stringify(user.settings))
+  headers.set('h',user.h)
+  headers.set('body',JSON.stringify(user.s))
   const response = await fetch(`${basicBitchServerUrl}/settings`,
     { headers })
   if (response.status !== 200) {
@@ -72,7 +78,7 @@ loginForm.addEventListener("submit",async (event) => {
   const password = loginPasswordElement.value
   loginPasswordElement.value = ""
   const passwordHash = await hashPassword(password,email)
-  const response = await fetch(`${basicBitchServerUrl}/auth`,{ method: "POST",headers: { passwordHash: passwordHash } })
+  const response = await fetch(`${basicBitchServerUrl}/auth`,{ method: "POST",headers: { h: passwordHash } })
   if (response.status === 200) {
     user = await response.json()
     saveUser()
@@ -93,7 +99,7 @@ signupForm.addEventListener("submit",async (event) => {
   const password = signupPasswordElement.value
   signupPasswordElement.value = ""
   const passwordHash = await hashPassword(password,email)
-  const jsonBody = JSON.stringify({ passwordHash,username,email,settings: user.settings })
+  const jsonBody = JSON.stringify({ h: passwordHash,u: username,e: email,s: user.s })
   console.log(jsonBody)
   const headers = new Headers()
   headers.set('body',jsonBody)
@@ -112,14 +118,14 @@ signupForm.addEventListener("submit",async (event) => {
 
 const addGraph = async () => {
   const headers = new Headers()
-  headers.set('passwordhash',user.passwordHash)
-  headers.set('commitid',user.settings.commitId)
-  const syncCommitId = user.settings.commitId
+  headers.set('h',user.h)
+  headers.set('commitid',user.s.commitId)
+  const syncCommitId = user.s.commitId
   const response = await fetch(`${basicBitchServerUrl}/creategraph/${store.graphName}`,{ headers,method: 'POST',body: JSON.stringify(store.blox) })
   if (!response.ok) {
     notifyText("failed to add graph")
     return
   }
-  user.settings.syncCommitId = syncCommitId
+  user.s.syncCommitId = syncCommitId
   store.syncCommitId = syncCommitId
 }

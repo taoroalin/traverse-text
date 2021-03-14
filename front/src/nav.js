@@ -172,9 +172,17 @@ const hideTopBar = () => {
   topBarHiddenHitbox.style.display = "block"
 }
 const saveUser = () => {
-  document.body.className = user.settings.theme
-  if (user.topBar === "visible") showTopBar()
+  document.body.className = user.s.theme
+  if (user.s.topBar === "visible") showTopBar()
   else hideTopBar()
+
+  if (user.h) {
+    signOutButton.style.display = "block"
+    signupButton.style.display = "none"
+  } else {
+    signOutButton.style.display = "none"
+    signupButton.style.display = "block"
+  }
   localStorage.setItem("user",JSON.stringify(user))
   saveSettingsToBasicBitchServer()
 }
@@ -189,9 +197,7 @@ const ptest = () => {
   const rands = [...Array(100000)].map(x => Math.floor(Math.random() * 1000000000000))
   const t = performance.now()
   const d = Date.now()
-  for (let i = 0; i < 100000; i++) {
-    intToBase64(rands[i])
-  }
+  rands.sort()
   console.log(`took ${performance.now() - t}`)
 }
 // ptest()

@@ -52,6 +52,9 @@ const signupElement = elById("signup")
 const signupButton = elById("signup-button")
 const loginElement = elById("login")
 
+const signOutButton = elById("signout-button")
+const reallyWantToLeaveElement = elById("really-want-to-leave")
+
 
 // Templates
 const pageTemplate = getTemp("page")

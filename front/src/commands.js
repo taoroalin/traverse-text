@@ -10,6 +10,8 @@ s: position. defaults to end of string
 
 */
 
+const isSynced = () => user.s.commitId === user.s.syncCommitId
+
 const applyDif = (string,dif) => {
   // not using dif.s||result.length because dif.s could be 0
   let end = string.length
@@ -176,7 +178,7 @@ const commit = () => {
   edits.push({ id: newId,t: Date.now(),edits: activeEdits })
   editsSessionStates.push(cpy(sessionState))
   store.commitId = newId
-  user.settings.commitId = newId
+  user.s.commitId = newId
   activeEdits = []
   setTimeout(() => {
     debouncedSaveStore()
@@ -224,14 +226,14 @@ const saveStore = () => {
 let saveStoreTimeout = null
 
 const debouncedSaveStore = () => {
-  if (user.settings.commitId !== user.settings.syncCommitId) {
+  if (user.s.commitId !== user.s.syncCommitId) {
     clearTimeout(saveStoreTimeout)
     saveStoreTimeout = setTimeout(saveStore,300)
   }
 }
 
 const print = (text) => {
-  if (user.logging) {
+  if (user.s.logging) {
     console.log(text)
   }
 }
