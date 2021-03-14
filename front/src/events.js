@@ -723,14 +723,15 @@ document.addEventListener("mouseup",(event) => {
 document.addEventListener("selectionchange",(event) => {
   focusNode = getSelection().focusNode
   focusOffset = getSelection().focusOffset
-  const currentFocusBlock = focusNode.parentNode.closest(".block")
-  if (currentFocusBlock && canWriteBloc(currentFocusBlock.dataset.id) && currentFocusBlock.dataset.id !== sessionState.focusId) {
-    const position = (focusNode.startIdx || 0) + focusOffset
-    updateFocusFromNode(currentFocusBlock,position)
-    console.log(event)
-  } else {
-    sessionState.isFocused = false
-  }
+  if (focusNode) {
+    const currentFocusBlock = focusNode.parentNode.closest(".block")
+    if (currentFocusBlock && canWriteBloc(currentFocusBlock.dataset.id)) {
+      if (currentFocusBlock.dataset.id !== sessionState.focusId) {
+        const position = (focusNode.startIdx || 0) + focusOffset
+        updateFocusFromNode(currentFocusBlock,position)
+      }
+    } else sessionState.isFocused = false
+  } else sessionState.isFocused = false
 })
 
 const showTopBarFn = () => {

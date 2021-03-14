@@ -64,6 +64,8 @@ const resetFocusedBlockBody = () => {
 }
 
 const updateFocusFromNode = (node,position) => {
+  sessionState.isFocused = true
+  console.log(`setting sesion state to ${sessionState.isFocused}`)
   if (focusBlockBody) {
     resetFocusedBlockBody()
   }
