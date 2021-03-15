@@ -819,9 +819,21 @@ switchToSignup.addEventListener('click',focusSignup)
 
 switchToLogin.addEventListener('click',focusLogin)
 
+const rwlClickOutListener = (event) => {
+  console.log("rwlclick")
+  if (event.target.closest('.really-want-to') === null) {
+    reallyWantToLeaveElement.style.display = "none"
+    document.removeEventListener('click',rwlClickOutListener)
+  }
+}
+
 signOutButton.addEventListener('click',() => {
   if (isSynced()) reset()
-  else reallyWantToLeaveElement.style.display = "block"
+  else {
+    reallyWantToLeaveElement.style.display = "flex"
+    document.addEventListener('click',(event) => rwlClickOutListener(event))
+    event.stopPropagation()
+  }
 })
 
 reallyWantToLeaveElement.children[0].addEventListener('click',reset)

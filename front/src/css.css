@@ -93,20 +93,8 @@ a:visited {
   color: var(--link);
 }
 
-.notification {
-  text-align: center;
-  min-width: 300px;
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  top: -40px; /* transitions to more px */
-  margin-top: 0px;
-  opacity: 1;
-  transition: top 0.25s ease-out, opacity 0.2s linear;
-  padding: 20px;
-  background-color: var(--notification);
-  border-radius: 8px;
-}
+/* Main Vew Styles ------------------------------------------------------------------------*/
+/* ----------------------------------------------------------------------------------------*/
 
 /* singular element styles --------------------------------------------------------------------------------------- */
 
@@ -210,82 +198,6 @@ a:visited {
   padding: 7px;
   cursor: pointer;
   border-radius: 5px;
-}
-
-/* Login / Signup styles ------------------------------------------------------------------------*/
-
-#login,
-#signup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--background);
-  text-align: center;
-}
-
-#login-form,
-#signup-form {
-  position: fixed;
-  top: 28%;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 13px 20px 20px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-#login input,
-#signup input {
-  background-color: var(--background);
-  color: var(--text);
-  font-size: 1.4em;
-  border-radius: 3px;
-  display: block;
-  padding: 4px;
-  /* border:1px solid var(--border); */
-  margin-bottom: 13px;
-}
-
-#login button,
-#signup button {
-  position: fixed;
-  bottom: 19%;
-  left: 50%;
-  transform: translateX(-50%);
-  display: block;
-  padding: 4px;
-  border-radius: 3px;
-  background-color: var(--background);
-  color: var(--placeholder);
-}
-#login button:focus,
-#signup button:focus {
-  font-weight: bold;
-}
-
-#login p,
-#signup p {
-  left: 50%;
-  font-size: 1.7em;
-  color: var(--placeholder);
-  padding: 4px;
-  margin-bottom: 20px;
-  margin-top: 65px;
-}
-
-#login .exit-to-main, #signup .exit-to-main{
-  bottom:9%;
-}
-
-.really-want-to{
-  position:fixed;
-  top:30%;
-  right:50%;
-  transform:translateX(50%);
 }
 
 
@@ -463,4 +375,110 @@ a:visited {
   padding: 8px;
   background-color: black;
   color: white;
+}
+
+/* Popup / other view styles  -----------------------------------------------------------*/
+/* --------------------------------------------------------------------------------------*/
+
+.notification {
+  text-align: center;
+  min-width: 300px;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: -40px; /* transitions to more px */
+  margin-top: 0px;
+  opacity: 1;
+  transition: top 0.25s ease-out, opacity 0.2s linear;
+  padding: 20px;
+  background-color: var(--notification);
+  border-radius: 8px;
+}
+
+/* Login / Signup styles ------------------------------------------------------------------------*/
+
+#login,
+#signup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--background);
+  text-align: center;
+}
+
+#login-form,
+#signup-form {
+  position: fixed;
+  top: 28%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 13px 20px 20px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+#login input,
+#signup input {
+  background-color: var(--background);
+  color: var(--text);
+  font-size: 1.4em;
+  border-radius: 3px;
+  display: block;
+  padding: 4px;
+  /* border:1px solid var(--border); */
+  margin-bottom: 13px;
+}
+
+#login button,
+#signup button {
+  position: fixed;
+  bottom: 19%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: block;
+  padding: 4px;
+  border-radius: 3px;
+  background-color: var(--background);
+  color: var(--placeholder);
+}
+#login button:focus,
+#signup button:focus {
+  font-weight: bold;
+}
+
+#login p,
+#signup p {
+  left: 50%;
+  font-size: 1.7em;
+  color: var(--placeholder);
+  padding: 4px;
+  margin-bottom: 20px;
+  margin-top: 65px;
+}
+
+#login .exit-to-main, #signup .exit-to-main{
+  bottom:9%;
+}
+
+.really-want-to{
+  padding:80px;
+  position:fixed;
+  top:30%;
+  right:50%;
+  transform:translateX(50%);
+  background-color:var(--background);
+  box-shadow: 0 0 2px var(--shadow);
+  border-radius:8px;
+  text-align: center;
+  /* display:flex; */
+  flex-direction: column;
+}
+
+.really-want-to button{
+  margin-top:30px;
+  display:block;
 }

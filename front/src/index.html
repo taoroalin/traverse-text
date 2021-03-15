@@ -9,7 +9,6 @@
   let userText = localStorage.getItem("user")
   let usingLocalStore = true
 
-
   let startFn = () => gotoNoHistory("dailyNotes")
 
   let dataLoaded = false
@@ -24,7 +23,8 @@
     user.s.graphName = store.graphName
     saveUser()
     startFn()
-    debouncedSaveStore()
+    if (user.h && user.s.commitId !== user.s.syncCommitId)
+      debouncedSaveStore()
   }
 
   const invalidateLocal = () => {
