@@ -227,7 +227,7 @@ document.addEventListener("input",(event) => {
   } else if (event.target.className === "page__title") {
     console.log("edit title")
     const pageId = event.target.parentNode.dataset.id
-    macros.write(pageId,event.target.innerText)
+    macros.writePageTitle(pageId,event.target.innerText)
   }
 })
 
@@ -284,7 +284,7 @@ const globalHotkeys = {
   },"undo": {
     key: "z",control: true,fn: () => {
       if (edits.length > 0) {
-        undoEdit()
+        undo()
         renderSessionState()
       }
     }
@@ -419,8 +419,8 @@ document.addEventListener("keydown",(event) => {
             blocks = Array.from(document.querySelectorAll(".block"))
             newActiveBlock = blocks[blocks.indexOf(focusBlock) - 1]
             focusBlock.remove()
-            focusBlockEnd(newActiveBlock)
             macros.delete(sessionState.focusId)
+            focusBlockEnd(newActiveBlock)
             event.preventDefault()
           }
         }
@@ -489,15 +489,13 @@ document.addEventListener("keydown",(event) => {
     && focusSuggestion
   ) {
     if (event.key === "Enter" && !event.ctrlKey) {
-      if (focusSuggestion) {
-        if (focusSuggestion.dataset.title) {
-          goto("pageTitle",focusSuggestion.dataset.title)
-        } else {
-          goto("block",focusSuggestion.dataset.id)
-        }
-        event.preventDefault()
-        return
+      if (focusSuggestion.dataset.title) {
+        goto("pageTitle",focusSuggestion.dataset.title)
+      } else {
+        goto("block",focusSuggestion.dataset.id)
       }
+      event.preventDefault()
+      return
     } else if (event.key === "Enter" && event.ctrlKey) {
       goto("pageTitle",event.target.value)
       event.preventDefault()
@@ -531,6 +529,7 @@ document.addEventListener("keydown",(event) => {
       }
     }
   }
+  print(sessionState)
 })
 
 document.addEventListener('paste',(event) => {

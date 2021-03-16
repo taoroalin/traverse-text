@@ -82,6 +82,11 @@ The code is arranged by when it is run, not what part of the system it's in. All
 
 All event handling for non-permanent elements (anything without id) is done through global documend event handlers which switch on the target element. I did this because I thought it would speed up rendering (when you click a link, event handler runs once, but block renderer runs 100 times, so move code from renderer to event handler). Still might move towards a more normal structure.
 
+## Pulling in other text sources
+
+I plan to pull in text from a lot of different sites such as blogs, twitter, ect, so that their full text can be referenced and searched from within Micro Roam.
+
+Key point is that it doesn't crawl between sites on its own. You find a site you like on your own, and it brings in that specific site.
 
 ## Templating
 

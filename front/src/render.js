@@ -301,11 +301,13 @@ const renderBlockBody = (parent,text) => {
   let idx = 0
   let stackTop = parent
 
+  let lastTextNode = null
+
   const newTextNode = (string) => {
-    const result = document.createTextNode(string)
-    result.startIdx = idx
-    result.endIdx = idx + string.length
-    return result
+    lastTextNode = document.createTextNode(string)
+    lastTextNode.startIdx = idx
+    lastTextNode.endIdx = idx + string.length
+    return lastTextNode
   }
 
   for (let match of matches) {
@@ -322,6 +324,7 @@ const renderBlockBody = (parent,text) => {
       if (stackTop.className === "page-ref__body") {
         stack.pop()
         stackTop = stack[stack.length - 1]
+        lastTextNode.endIdx += 2
       } else {
         const el = document.createElement("span")
         el.appendChild(newTextNode("]]"))
@@ -348,6 +351,7 @@ const renderBlockBody = (parent,text) => {
       if (stackTop.className === "bold") {
         stack.pop()
         stackTop = stack[stack.length - 1]
+        lastTextNode.endIdx += 2
       } else {
         const boldElement = document.createElement('span')
         boldElement.className = 'bold'
@@ -359,6 +363,7 @@ const renderBlockBody = (parent,text) => {
       if (stackTop.className === "highlight") {
         stack.pop()
         stackTop = stack[stack.length - 1]
+        lastTextNode.endIdx += 2
       } else {
         const highlightElement = document.createElement('span')
         highlightElement.className = 'highlight'
@@ -370,6 +375,8 @@ const renderBlockBody = (parent,text) => {
       if (stackTop.className === "italic") {
         stack.pop()
         stackTop = stack[stack.length - 1]
+        lastTextNode.endIdx += 2
+
       } else {
         const italicElement = document.createElement('span')
         italicElement.className = 'italic'

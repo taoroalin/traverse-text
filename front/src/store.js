@@ -255,12 +255,14 @@ const mergeStore = (otherStore) => {
 
 const escapeRegex = (string) => string.replaceAll(/([\[\]\(\)])/g,"\\$1").replaceAll("\\\\","")
 
+const newSearchRegex = (string) => new RegExp(escapeRegex(string),"i")
+
 const searchRefCountWeight = 0.05
 const pageOverBlockWeight = 1
 
 let titleExactFullTextSearchCache = []
 const titleExactFullTextSearch = (string) => {
-  const regex = new RegExp(escapeRegex(string),"i")
+  const regex = newSearchRegex(string)
   titleExactFullTextSearchCache = []
   for (let title in store.titles) {
     const id = store.titles[title]
@@ -280,7 +282,7 @@ const titleExactFullTextSearch = (string) => {
 
 let exactFullTextSearchCache = []
 const exactFullTextSearch = (string) => {
-  const regex = new RegExp(escapeRegex(string),"i")
+  const regex = newSearchRegex(string)
   exactFullTextSearchCache = []
   for (let id in store.blox) {
     const bloc = store.blox[id]
@@ -303,6 +305,7 @@ const exactFullTextSearch = (string) => {
 
 let templateSearchCache = []
 const searchTemplates = (string) => {
+  const searchRegex = newSearchRegex(string)
   const templatePageId = store.titles["roam/templates"]
   const templatePage = store.blox[templatePageId]
   templateSearchCache = []
@@ -310,15 +313,14 @@ const searchTemplates = (string) => {
     const fn = (blockId) => {
       const block = store.blox[blockId]
       console.log(block.s)
-      const match = block.s.match(/^([^ \r\n]+)/)
+      const match = block.s.match(searchRegex)
       console.log(match)
       if (match) {
-        if (match[1].length >= string.length && match[1].substring(0,string.length).toLowerCase() === string.toLowerCase()) {
-          templateSearchCache.push({
-            id: blockId,
-            string: match[1]
-          })
-        }
+        templateSearchCache.push({
+          id: blockId,
+          string: block.s,
+          idx: match.idx
+        })
       }
     }
     if (store.refs[templatePageId]) {
@@ -329,6 +331,10 @@ const searchTemplates = (string) => {
       for (let blockId of store.blox[templatePageId].k)
         fn(blockId)
     }
+    console.log(templateSearchCache)
+    templateSearchCache = templateSearchCache.sort((a,b) => b.idx - a.idx)
+    console.log(templateSearchCache)
+
   }
   return templateSearchCache
 }

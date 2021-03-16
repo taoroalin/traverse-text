@@ -194,10 +194,8 @@ scriptsLoaded = true
 
 
 const ptest = () => {
-  const rands = [...Array(100000)].map(x => Math.floor(Math.random() * 1000000000000))
-  const t = performance.now()
-  const d = Date.now()
-  rands.sort()
-  console.log(`took ${performance.now() - t}`)
+  const t2 = performance.now()
+  JSON.stringify(store.blox)
+  console.log(`JSON took ${performance.now() - t2}`)
 }
 // ptest()

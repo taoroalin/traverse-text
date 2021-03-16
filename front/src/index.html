@@ -20,7 +20,6 @@
   }
 
   const start = () => {
-    user.s.graphName = store.graphName
     saveUser()
     startFn()
     if (user.h && user.s.commitId !== user.s.syncCommitId)
@@ -58,7 +57,7 @@
           console.log('got blox')
           hydrateFromBlox(user.s.graphName,blox)
           setTimeout(generateInnerOuterRefs,160)
-          start() // todo catch code loading after this
+          setDataLoaded() // todo catch code loading after this
           debouncedSaveStore()
         })
       })

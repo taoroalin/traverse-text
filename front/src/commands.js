@@ -41,52 +41,71 @@ let edits = []
 let editsSessionStates = []
 let activeEdits = []
 
-const undoEdit = () => {
-  const time = Date.now()
+const undoEditCacheStuff = (edit) => {
+  const [op,id,p1,p2,p3,p4] = edit
+  console.log(edit)
+  switch (op) {
+    case 'cr':
+      if (p1 === undefined) {
+        delete store.titles[p1.s]
+      }
+      break
+    case 'df':
+      setLinks(id)
+      break
+  }
+}
+
+const undoEdit = (edit) => {
+
+  // console.log(edit)
+  const [op,id,p1,p2,p3,p4] = edit
+  switch (op) {
+    case "cr":
+      const parent = store.blox[id].p
+      if (parent) {
+        store.blox[parent].k = store.blox[parent].k.filter(x => x !== id)
+      }
+      delete store.blox[id]
+      break
+    case "dl":
+      store.blox[id] = p1
+      const parentId = p1.p,idx = p2
+      if (parentId) {
+        if (!store.blox[parentId].k) store.blox[parentId].k = []
+        if (idx) {
+          store.blox[parentId].k.splice(idx,0,id)
+        } else {
+          store.blox[parentId].k.push(id)
+        }
+      }
+      break
+    case "mv":
+      const oldParent = p1,oidx = p2,newParent = p3,nidx = p4
+      const block = store.blox[id]
+      store.blox[oldParent].k = store.blox[oldParent].k.filter(x => x != id)
+      block.p = newParent
+      if (!store.blox[newParent].k) store.blox[newParent].k = []
+      store.blox[newParent].k.splice(nidx,0,id)
+      break
+    case "df":
+      const df = p1
+      const bloc = store.blox[id]
+      bloc.et = commit.time
+      if (!bloc.p) delete store.titles[bloc.s]
+      bloc.s = unapplyDif(bloc.s,df)
+      if (!bloc.p) store.titles[bloc.s] = id
+      break
+  }
+}
+
+const undo = () => {
   const commit = edits.pop()
   sessionState = editsSessionStates.pop()
-  print(commit)
-  // console.log(edit)
   for (let i = commit.edits.length - 1; i >= 0; i--) {
     const edit = commit.edits[i]
-    const [op,id,p1,p2,p3,p4] = edit
-    switch (op) {
-      case "cr":
-        const parent = store.blox[id].p
-        if (parent) {
-          store.blox[parent].k = store.blox[parent].k.filter(x => x !== id)
-        }
-        delete store.blox[id]
-        break
-      case "dl":
-        store.blox[id] = p1
-        const parentId = p1.p,idx = p2
-        if (parentId) {
-          if (!store.blox[parentId].k) store.blox[parentId].k = []
-          if (idx) {
-            store.blox[parentId].k.splice(idx,0,id)
-          } else {
-            store.blox[parentId].k.push(id)
-          }
-        }
-        break
-      case "mv":
-        const oldParent = p1,oidx = p2,newParent = p3,nidx = p4
-        const block = store.blox[id]
-        store.blox[oldParent].k = store.blox[oldParent].k.filter(x => x != id)
-        block.p = newParent
-        if (!store.blox[newParent].k) store.blox[newParent].k = []
-        store.blox[newParent].k.splice(nidx,0,id)
-        break
-      case "df":
-        const df = p1
-        const bloc = store.blox[id]
-        bloc.et = time
-        if (!bloc.p) delete store.titles[bloc.s]
-        bloc.s = unapplyDif(bloc.s,df)
-        if (!bloc.p) store.titles[bloc.s] = id
-        break
-    }
+    undoEdit(edit)
+    undoEditCacheStuff(edit)
   }
 }
 
@@ -165,7 +184,7 @@ const doEditBlox = (edit,time) => {
 }
 
 const doEdit = (...edit) => {
-  const time = Date.now()
+  const time = intToBase64(Date.now())
   activeEdits.push(edit)
   print(edit)
   // console.log(edit)
@@ -175,7 +194,7 @@ const doEdit = (...edit) => {
 
 const commit = () => {
   const newId = newUUID()
-  edits.push({ id: newId,t: Date.now(),edits: activeEdits })
+  edits.push({ id: newId,t: intToBase64(Date.now()),edits: activeEdits })
   editsSessionStates.push(cpy(sessionState))
   store.commitId = newId
   user.s.commitId = newId
@@ -190,7 +209,6 @@ const commitEdit = (...edit) => {
   commit()
 }
 
-const LOCAL_STORAGE_MAX = 4500000
 const saveStore = () => {
   // stringify blox, then stringify rest of store and insert blox string to avoid re-stringifying blox
   const blox = store.blox
@@ -292,6 +310,18 @@ macros.nocommit = {
   write: (id,string) => {
     doEdit("df",id,diff(string,store.blox[id].s))
   },
+  writePageTitle: (id,string) => {
+    const oldString = store.blox[id].s
+    doEdit("df",id,diff(string,oldString))
+    for (let ref of store.refs[id] || []) {
+      const bloc = store.blox[ref]
+      const oldBlocString = bloc.s
+      const newBlocString = bloc.s.replaceAll(oldString,string)
+      console.log(oldBlocString)
+      console.log(newBlocString)
+      doEdit("df",ref,diff(newBlocString,oldBlocString))
+    }
+  },
   createPage: (title) => {
     const id = newUid()
     doEdit("cr",id)
@@ -357,6 +387,6 @@ const execInlineCommand = () => {
   inlineCommands[focusSuggestion.dataset.string]()
 }
 
-const canWriteBloc = (blocId) => {
+const canWriteBloc = (blocId) => { // todo implement readonly blocs
   return true
 }

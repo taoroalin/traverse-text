@@ -129,18 +129,7 @@ const downloadBinary = () => {
   button.click()
 }
 
-const loadGraphminerNotes = () => {
-  fetch("./graphminer-store.json").then(text => text.json().then(json => {
-    store = json
-    user.s.graphName = store.graphName
-    saveUser()
-    start()
-    debouncedSaveStore()
-  }))
-}
-
-const taonotes = loadGraphminerNotes
 
 const terminalCommands = {
-  blank,reset,flash,log,page,nolog,pr,taonotes,downloadBinary
+  blank,reset,flash,log,page,nolog,pr,downloadBinary
 }

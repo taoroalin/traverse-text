@@ -209,7 +209,7 @@ blocks with line breaks in them can split into two blocks
 
 const mdToStore = (files) => { // files: [{name, ext, fullName, text}]
 
-  const now = Date.now()
+  const now = intToBase64(Date.now())
 
   const oldStore = store
 
