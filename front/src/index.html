@@ -31,7 +31,7 @@
     console.error(`Local replica invalid. Resetting from server`)
     user.s.commitId = undefined
     user.s.syncCommitId = undefined
-    localStorage.setItem("user",JSON.stringify(user))
+    localStorage.setItem("user", JSON.stringify(user))
     localStorage.removeItem('store')
     window.location.href = window.location.href
   }
@@ -40,10 +40,10 @@
     user = JSON.parse(userText)
     if (user.h) {
       const headers = new Headers()
-      headers.set('h',user.h)
-      if (user.s.commitId) headers.set('commitid',user.s.commitId)
+      headers.set('h', user.h)
+      if (user.s.commitId) headers.set('commitid', user.s.commitId)
       let reqUrl = `${basicBitchServerUrl}/startup/${user.s.graphName}`
-      fetch(reqUrl,{ method: 'POST',headers: headers }).then(async (res) => {
+      fetch(reqUrl, { method: 'POST', headers: headers }).then(async (res) => {
         if (res.status === 304) {
           console.log(`already up to date`)
           return
@@ -55,8 +55,8 @@
         usingLocalStore = false
         res.json().then(blox => {
           console.log('got blox')
-          hydrateFromBlox(user.s.graphName,blox)
-          setTimeout(generateInnerOuterRefs,160)
+          hydrateFromBlox(user.s.graphName, blox)
+          setTimeout(generateInnerOuterRefs, 160)
           setDataLoaded() // todo catch code loading after this
           debouncedSaveStore()
         })
@@ -71,16 +71,16 @@
       } catch (e) {
         invalidateLocal()
       }
-      r = indexedDB.open("microroam",5)
+      r = indexedDB.open("microroam", 5)
       r.onsuccess = (e1) => idb = e1.target.result
     } else {
-      r = indexedDB.open("microroam",5)
+      r = indexedDB.open("microroam", 5)
       r.onsuccess = (e1) => {
         console.log("normal success")
         idb = e1.target.result
         if (usingLocalStore === true) {
           try {
-            idb.transaction(["stores"],"readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
+            idb.transaction(["stores"], "readonly").objectStore("stores").get(user.graphName).onsuccess = (e) => {
               if (usingLocalStore === true) {
                 if (e.target.result) {
                   try {
@@ -102,15 +102,15 @@
       }
     }
   } else {
-    user = { s: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
+    user = { s: { graphName: "default", theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light", topBar: "visible", logging: false, spellcheck: false } }
     fetch("./default-store.json").then(text => {
       text.json().then(json => {
         store = json
-        startFn = () => gotoNoHistory("pageTitle","Welcome to Micro Roam")
+        startFn = () => gotoNoHistory("pageTitle", "Welcome to Micro Roam")
         setDataLoaded()
       })
     })
-    r = indexedDB.open("microroam",5)
+    r = indexedDB.open("microroam", 5)
     r.onsuccess = (e1) => idb = e1.target.result
   }
 
@@ -119,7 +119,7 @@
     const db = r.result
     const stores = Array.from(db.objectStoreNames)
     if (!stores.includes("stores")) {
-      db.createObjectStore("stores",{ keyPath: "graphName" })
+      db.createObjectStore("stores", { keyPath: "graphName" })
     } else {
       console.log(event)
       console.log(db)
@@ -127,11 +127,11 @@
       r.onsuccess = () => {
         console.log("new success")
         idb = event.target.result
-        const storeStore = db.transaction(["stores"],"readonly").objectStore("stores")
+        const storeStore = db.transaction(["stores"], "readonly").objectStore("stores")
         storeStore.get(user.s.graphName).onsuccess = (e) => {
           store = e.target.result.store
           const roamJSON = oldStoreToRoamJSON[db.version](store)
-          roamJsonToStore(user.s.graphName,roamJSON)
+          roamJsonToStore(user.s.graphName, roamJSON)
           saveStore()
           setDataLoaded()
         }
@@ -188,7 +188,7 @@
         topBar.style.marginTop = "0px"
         topBarHiddenHitbox.style.display = "none"
       }
-      setTimeout(() => topBar.className = "top-bar-transition",200)
+      setTimeout(() => topBar.className = "top-bar-transition", 200)
     </script>
 
     <div id="terminal" contenteditable="true" style="display:none"></div>

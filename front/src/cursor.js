@@ -8,7 +8,7 @@ const focusIdPosition = () => {
           scanResult = el
           try {
             // this does the thing correctly, but then throws an error, which I catch? todo investigate
-            getSelection().collapse(el,sessionState.position - el.startIdx)
+            getSelection().collapse(el, sessionState.position - el.startIdx)
             return el
           } catch (error) {
             return el
@@ -23,19 +23,19 @@ const focusIdPosition = () => {
   scanElement(focusBlockBody)
 }
 
-const setFocusedBlockString = (string,diff) => {
+const setFocusedBlockString = (string, diff) => {
   let theString = string
   if (theString === undefined) {
     theString = store.blox[sessionState.focusId].s
   }
   focusBlockBody.innerHTML = ""
-  renderBlockBodyToEdit(focusBlockBody,theString)
+  renderBlockBodyToEdit(focusBlockBody, theString)
   focusIdPosition()
   updateCursorSpanInfo()
   if (diff !== undefined) {
-    commitEdit('df',sessionState.focusId,diff)
+    commitEdit('df', sessionState.focusId, diff)
   } else {
-    macros.write(sessionState.focusId,theString)
+    macros.write(sessionState.focusId, theString)
   }
 }
 
@@ -60,10 +60,10 @@ const updateCursorPosition = () => {
 const resetFocusedBlockBody = () => {
   focusBlockBody.innerText = ""
   const oldBlockData = store.blox[sessionState.focusId]
-  if (oldBlockData !== undefined) renderBlockBody(focusBlockBody,oldBlockData.s)
+  if (oldBlockData !== undefined) renderBlockBody(focusBlockBody, oldBlockData.s)
 }
 
-const updateFocusFromNode = (node,position) => {
+const updateFocusFromNode = (node, position) => {
   sessionState.isFocused = true
   console.log(`setting sesion state to ${sessionState.isFocused}`)
   if (focusBlockBody) {
@@ -82,7 +82,7 @@ const updateFocusFromNode = (node,position) => {
 
   const text = store.blox[sessionState.focusId].s
   focusBlockBody.innerText = ""
-  renderBlockBodyToEdit(focusBlockBody,text)
+  renderBlockBodyToEdit(focusBlockBody, text)
   focusIdPosition()
 }
 

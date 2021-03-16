@@ -6,11 +6,11 @@ const shared = require('../front/src/front-back-shared.js')
 const { performance } = require('perf_hooks')
 // front-back-shared is in the front folder because its easier to import from other paths in Node
 
-const brCompressStream = (from,to) => {
-  const compressor = zlib.createBrotliCompress({ params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1,[zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } })
-  stream.pipeline(from,compressor,to,(err) => {
+const brCompressStream = (from, to) => {
+  const compressor = zlib.createBrotliCompress({ params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } })
+  stream.pipeline(from, compressor, to, (err) => {
     if (err) {
-      console.log("failed to compress:",err)
+      console.log("failed to compress:", err)
     }
   })
 }
@@ -38,7 +38,7 @@ let toLog = ""
 
 let logTimeout = null
 const doLog = () => {
-  fs.appendFile("../user-data/log.txt",toLog,(err) => {
+  fs.appendFile("../user-data/log.txt", toLog, (err) => {
     if (err !== null) {
       console.log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
       return
@@ -51,7 +51,7 @@ const doLog = () => {
 const log = (str) => {
   toLog += str + "\n"
   if (logTimeout === null) {
-    logTimeout = setTimeout(doLog,50)
+    logTimeout = setTimeout(doLog, 50)
   }
 }
 
@@ -60,7 +60,7 @@ let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
 
 let saveGraphsTimeout = null
 const saveGraphs = () => {
-  fs.writeFile("../user-data/graphs.json",JSON.stringify(graphs),(err) => {
+  fs.writeFile("../user-data/graphs.json", JSON.stringify(graphs), (err) => {
     if (err !== null) {
       log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
       return
@@ -71,14 +71,14 @@ const saveGraphs = () => {
 
 const debouncedSaveGraphs = () => {
   if (saveGraphsTimeout === null) {
-    saveGraphsTimeout = setTimeout(saveGraphs,50)
+    saveGraphsTimeout = setTimeout(saveGraphs, 50)
   }
 }
 
 
 // todo create under different name and rename because rename is atomic, whereas a concurrent process could crash halfway through writeFile, leaving partial file
 const saveAccounts = () => {
-  fs.writeFile("../user-data/accounts.json",JSON.stringify(accounts),(err) => {
+  fs.writeFile("../user-data/accounts.json", JSON.stringify(accounts), (err) => {
     if (err !== null) {
       log(`CRITICAL ERROR ACCOUNT SAVE FAILURE`)
       return
@@ -90,15 +90,15 @@ const saveAccounts = () => {
 let saveAccountsTimeout = null
 const debouncedSaveAccounts = () => {
   if (saveAccountsTimeout === null) {
-    saveAccountsTimeout = setTimeout(saveAccounts,50)
+    saveAccountsTimeout = setTimeout(saveAccounts, 50)
   }
 }
 
 // I had json in body, but that caused timing issues because I want to change end listener, but couldn't to it fast enough because the end event happens so fast. Switched to putting all JSON made for immediate parsing in header
-http.createServer((req,res) => {
-  res.setHeader('Access-Control-Expose-Headers','*')
-  res.setHeader('Access-Control-Allow-Origin','*')
-  res.setHeader('Access-Control-Allow-Headers','*')
+http.createServer((req, res) => {
+  res.setHeader('Access-Control-Expose-Headers', '*')
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Headers', '*')
   // nodejs automatically lowercases all header keys because they're officially supposed to be case insensitive
   // I have to send out header keys captialized because some people need that, though
   if (req.headers["access-control-request-headers"] !== undefined) {
@@ -106,7 +106,7 @@ http.createServer((req,res) => {
     res.end()
     return
   }
-  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
+  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup|issue)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
   log(req.url)
   if (match === null) {
     res.writeHead(404)
@@ -165,7 +165,7 @@ http.createServer((req,res) => {
         h: accountDetails.h,
         r: {},
         w: {},
-        s: accountDetails.s || {},
+        s: accountDetails.s,
       },
     }
     accounts.push(storedAccountDetails)
@@ -177,6 +177,8 @@ http.createServer((req,res) => {
     res.end()
     // todo verify email
     return
+  } else if (match[1] === "issue") {
+    fs.appendFile('../user-data/issues.txt', req.headers.body, () => { })
   }
   const passwordHash = req.headers.h
   if (passwordHash === undefined || !(typeof passwordHash === "string") || passwordHash.match(hashRegex) === null) {
@@ -215,8 +217,8 @@ http.createServer((req,res) => {
       debouncedSaveGraphs()
       // todo add coordination between threads using err.code==='EBUSY'?
       writeStream = fs.createWriteStream(`../user-data/blox-br/${match[2]}.json.br`)
-      brCompressStream(req,writeStream)
-      req.on("end",() => {
+      brCompressStream(req, writeStream)
+      req.on("end", () => {
         res.writeHead(200)
         res.end()
       })
@@ -240,7 +242,7 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      res.setHeader('Content-Encoding','br')
+      res.setHeader('Content-Encoding', 'br')
       fileReadStream = fs.createReadStream(`../user-data/blox-br/${match[2]}.json.br`)
       fileReadStream.pipe(res)
       // console.log(`get ${match[2]}`)
@@ -255,12 +257,12 @@ http.createServer((req,res) => {
       }
       graphs[match[2]] = { l: match[3] }
       writeStream = fs.createWriteStream(`../user-data/blox-br/${match[2]}.json.br`)
-      brCompressStream(req,writeStream)
+      brCompressStream(req, writeStream)
       userAccount.u.w[match[2]] = 1
       userAccount.u.r[match[2]] = 1
       debouncedSaveAccounts()
       debouncedSaveGraphs()
-      req.on("end",() => {
+      req.on("end", () => {
         res.writeHead(200)
         res.end()
       })
@@ -291,7 +293,7 @@ http.createServer((req,res) => {
         return
       }
       const readableUserData = userAccount.u
-      res.setHeader('user',JSON.stringify(readableUserData))
+      res.setHeader('user', JSON.stringify(readableUserData))
 
       const graphName = readableUserData.s.graphName
       if (fs.existsSync(`../user-data/blox-br/${match[2]}.json.br`) === false) {
@@ -316,7 +318,7 @@ http.createServer((req,res) => {
         res.end()
         return
       }
-      res.setHeader('Content-Encoding','br')
+      res.setHeader('Content-Encoding', 'br')
       fileReadStream = fs.createReadStream(`../user-data/blox-br/${graphName}.json.br`)
       fileReadStream.pipe(res)
       return

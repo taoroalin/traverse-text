@@ -13,7 +13,7 @@ const roamBloxProps = {
   ":block/refs": "",
 }
 
-const roamJsonToStore = (graphName,text) => {
+const roamJsonToStore = (graphName, text) => {
   console.log("roamJsontostore")
   const stime = performance.now()
   const now = intToBase64(Date.now())
@@ -27,7 +27,7 @@ const roamJsonToStore = (graphName,text) => {
   if (obj[0][":edit/user"]) store.ownerRoamId = obj[0][":edit/user"][":user/uid"]
   ownerRoamId = store.ownerRoamId
 
-  const addBlock = (block,parent) => {
+  const addBlock = (block, parent) => {
     const ct = intToBase64(block["create-time"]) || now
     const newBlock = {
       s: block.string,
@@ -47,7 +47,7 @@ const roamJsonToStore = (graphName,text) => {
 
     if (block.children) {
       newBlock.k = block.children.map(child => child.uid)
-      block.children.forEach((child) => addBlock(child,block.uid))
+      block.children.forEach((child) => addBlock(child, block.uid))
     }
     for (let prop in block) {
       if (prop in roamBloxProps) { } else {
@@ -91,7 +91,7 @@ const roamJsonToStore = (graphName,text) => {
       for (let i = 0; i < page.children.length; i++) {
         const child = page.children[i]
         kids.push(child.uid)
-        addBlock(child,page.uid)
+        addBlock(child, page.uid)
       }
     }
   }
@@ -111,9 +111,9 @@ const storeToRoamJSON = (store) => {
 
   const blockIdToJSON = (blockId) => {
     const block = store.blox[blockId]
-    const result = { uid: blockId,string: block.s,"create-time": block.ct,"edit-time": block.et }
+    const result = { uid: blockId, string: block.s, "create-time": block.ct, "edit-time": block.et }
     const roamProps = store.roamProps[blockId]
-    if (roamProps) Object.assign(result,roamProps)
+    if (roamProps) Object.assign(result, roamProps)
 
     if (block.k) result.children = block.k.map(blockIdToJSON)
 
@@ -131,9 +131,9 @@ const storeToRoamJSON = (store) => {
     const pageId = store.titles[title]
     const page = store.blox[pageId]
     const roamProps = store.roamProps[pageId]
-    const jsonPage = { uid: pageId,title: page.s,"edit-time": page.et,"create-time": page.ct }
+    const jsonPage = { uid: pageId, title: page.s, "edit-time": page.et, "create-time": page.ct }
     roamJSON.push(jsonPage)
-    Object.assign(jsonPage,roamProps)
+    Object.assign(jsonPage, roamProps)
     if (page.k) {
       jsonPage.children = page.k.map(blockIdToJSON)
     }
@@ -156,7 +156,7 @@ const oldStoreToRoamJSON = {
     const blockIdToJSON = (blockId) => {
       const result = { uid: blockId }
       const block = store.blocks[blockId]
-      Object.assign(result,block)
+      Object.assign(result, block)
 
       if (block.children) result.children = block.children.map(blockIdToJSON)
 
@@ -179,7 +179,7 @@ const oldStoreToRoamJSON = {
       const page = store.pages[pageId]
       const jsonPage = { uid: pageId }
       roamJSON.push(jsonPage)
-      Object.assign(jsonPage,page)
+      Object.assign(jsonPage, page)
       delete jsonPage.backRefs
       if (page.children) {
         jsonPage.children = page.children.map(blockIdToJSON)
@@ -227,7 +227,7 @@ const mdToStore = (files) => { // files: [{name, ext, fullName, text}]
     const title = file.name
     const text = file.text
     const pageId = getPageId(title)
-    const page = { "create-time": now,title: title }
+    const page = { "create-time": now, title: title }
     store.pages[pageId] = page
     store.pagesByTitle[title] = pageId
     if (text.length > 0) {
@@ -236,7 +236,7 @@ const mdToStore = (files) => { // files: [{name, ext, fullName, text}]
       const addBlock = (string) => {
         const blockId = newUid()
         blockStringIndex[string] = blockId // overwrite previous string when multiple have the same :(
-        const block = { "create-time": now,string }
+        const block = { "create-time": now, string }
         store.blocks[blockId] = block
         page.children.push(blockId)
       }
@@ -246,7 +246,7 @@ const mdToStore = (files) => { // files: [{name, ext, fullName, text}]
       let idx = 2 // skip first block break, "- "
 
       for (let blockBreak of blockBreaks) {
-        addBlock(text.substring(idx,blockBreak.index))
+        addBlock(text.substring(idx, blockBreak.index))
         idx = blockBreak.index + blockBreak[0].length
       }
       addBlock(text.substring(idx))
@@ -281,13 +281,13 @@ example store:
 
 const blocToMd = (blocId) => {
   let result = ""
-  const recurse = (blocId,level) => {
+  const recurse = (blocId, level) => {
     const bloc = store.blox[blocId]
     if (bloc === undefined) console.log(blocId)
     for (let i = 0; i < level; i++) {
       result += "    "
     }
-    result += "- " + bloc.s.replaceAll(/\(\(([a-zA-Z0-9\-_]+)\)\)/g,(match,group) => {
+    result += "- " + bloc.s.replaceAll(/\(\(([a-zA-Z0-9\-_]+)\)\)/g, (match, group) => {
       const b = store.blox[group]
       if (b) {
         return '"' + store.blox[group].s + '"'
@@ -297,10 +297,10 @@ const blocToMd = (blocId) => {
     }
     ) + "\n"
     for (let childId of bloc.k || []) {
-      recurse(childId,level + 1)
+      recurse(childId, level + 1)
     }
   }
-  recurse(blocId,0)
+  recurse(blocId, 0)
   return result
 }
 
@@ -312,7 +312,7 @@ const storeToMdObjects = () => {
     for (let k of page.k || []) {
       text += blocToMd(k)
     }
-    result.push({ fullName: title + ".md",text })
+    result.push({ fullName: title + ".md", text })
   }
   return result
 }
@@ -337,7 +337,7 @@ const CRC_32_MAGIC = 0xab045452
 
 const splitFileName = (fileName) => {
   const match = fileName.match(/\.([a-z]+)$/)
-  return { name: fileName.substring(0,match.index),ext: match[1] }
+  return { name: fileName.substring(0, match.index), ext: match[1] }
 }
 
 const zipToFiles = (buffer) => {
@@ -353,7 +353,7 @@ const zipToFiles = (buffer) => {
     }
     const sigInt = (new Uint32Array(sigBuf))[0]
     if (sigInt === LOCAL_FILE_SIGNATURE) {
-      const compressionMethod = (new Uint16Array(buffer,8,1))[0]
+      const compressionMethod = (new Uint16Array(buffer, 8, 1))[0]
       if (compressionMethod === 0) {
 
         const dumbArray = new ArrayBuffer(12)
@@ -370,15 +370,15 @@ const zipToFiles = (buffer) => {
           break
         }
         const decoder = new TextDecoder()
-        const fullName = decoder.decode(new Uint8Array(buffer,idx + 30,fileNameSize))
-        const { name,ext } = splitFileName(fullName)
-        const text = decoder.decode(new Uint8Array(buffer,idx + 30 + fileNameSize,rawSize))
-        result.push({ name,ext,text,fullName })
+        const fullName = decoder.decode(new Uint8Array(buffer, idx + 30, fileNameSize))
+        const { name, ext } = splitFileName(fullName)
+        const text = decoder.decode(new Uint8Array(buffer, idx + 30 + fileNameSize, rawSize))
+        result.push({ name, ext, text, fullName })
         idx += 30 + fileNameSize + rawSize
 
       } else {
         console.log(compressionMethod)
-        notifyText("Micro Roam can't handle .zip files that are actually compressed. use a .json file or an uncompressed .zip file, like ones exported by Roam Research or Micro Roam",10)
+        notifyText("Micro Roam can't handle .zip files that are actually compressed. use a .json file or an uncompressed .zip file, like ones exported by Roam Research or Micro Roam", 10)
         return
       }
     } else if (sigInt === END_CENTRAL_DIR_SIGNATURE) {
@@ -407,7 +407,7 @@ const makeCRCTable = () => {
   }
 }
 
-function crc32(buf,start,end) {
+function crc32(buf, start, end) {
   if (crcTable === null) makeCRCTable()
   let crc = -1
   for (let i = start; i < end; i++) {
@@ -427,13 +427,13 @@ const dateUnixToMsDosFormat = (date) => {
   return result
 }
 
-const writeU16ToU8Array = (u8,idx,number) => {
+const writeU16ToU8Array = (u8, idx, number) => {
   // apparently the bit shifts are << and >>>, NOT >> because that one converts to signed after *facepalm*
   u8[idx] = number << 24 >>> 24
   u8[idx + 1] = number << 16 >>> 24
 }
 
-const writeIntToU8Array = (u8,idx,int) => {
+const writeIntToU8Array = (u8, idx, int) => {
   u8[idx] = int << 24 >>> 24
   u8[idx + 1] = int << 16 >>> 24
   u8[idx + 2] = int << 8 >>> 24
@@ -444,21 +444,21 @@ const ZIP_VERSION = 10
 
 const blankLocalHeader = new Uint8Array(30)
 {
-  writeIntToU8Array(blankLocalHeader,0,LOCAL_FILE_SIGNATURE)
-  writeIntToU8Array(blankLocalHeader,14,CRC_32_MAGIC)
+  writeIntToU8Array(blankLocalHeader, 0, LOCAL_FILE_SIGNATURE)
+  writeIntToU8Array(blankLocalHeader, 14, CRC_32_MAGIC)
 
   // todo make sure version, ect are exactly right
-  writeU16ToU8Array(blankLocalHeader,4,ZIP_VERSION)
+  writeU16ToU8Array(blankLocalHeader, 4, ZIP_VERSION)
 }
 
 const blankCentralHeader = new Uint8Array(46)
 {
-  writeIntToU8Array(blankCentralHeader,0,CENTRAL_FILE_SIGNATURE)
-  writeU16ToU8Array(blankCentralHeader,4,16) // my name is BeOS :)
-  writeU16ToU8Array(blankCentralHeader,6,ZIP_VERSION)
+  writeIntToU8Array(blankCentralHeader, 0, CENTRAL_FILE_SIGNATURE)
+  writeU16ToU8Array(blankCentralHeader, 4, 16) // my name is BeOS :)
+  writeU16ToU8Array(blankCentralHeader, 6, ZIP_VERSION)
 }
 
-const copyBuffer = (b1,s1,b2,s2,l) => {
+const copyBuffer = (b1, s1, b2, s2, l) => {
   // could be optimized by switching to u64 for long stretches
   for (let i = 0; i < l; i++) {
     b2[s2 + i] = b1[s1 + i]
@@ -485,21 +485,21 @@ const filesToZip = (files) => {
   let idx = 0
   for (let file of files) {
     const headerStart = idx
-    copyBuffer(blankLocalHeader,0,u8,idx,blankLocalHeader.length)
-    writeU16ToU8Array(u8,headerStart + 10,createTimeMsDosFormat)
-    writeU16ToU8Array(u8,headerStart + 12,createTimeMsDosFormat)
+    copyBuffer(blankLocalHeader, 0, u8, idx, blankLocalHeader.length)
+    writeU16ToU8Array(u8, headerStart + 10, createTimeMsDosFormat)
+    writeU16ToU8Array(u8, headerStart + 12, createTimeMsDosFormat)
     idx += blankLocalHeader.length
     const nameU8 = u8.subarray(idx)
-    const { read: nameLen } = textEncoder.encodeInto(file.fullName,nameU8)
+    const { read: nameLen } = textEncoder.encodeInto(file.fullName, nameU8)
     idx += nameLen
     const textU8 = u8.subarray(idx)
-    const { read: textLen } = textEncoder.encodeInto(file.text,textU8)
-    const crc = crc32(u8,idx,idx + textLen)
-    writeIntToU8Array(u8,headerStart + 14,crc)
+    const { read: textLen } = textEncoder.encodeInto(file.text, textU8)
+    const crc = crc32(u8, idx, idx + textLen)
+    writeIntToU8Array(u8, headerStart + 14, crc)
     idx += textLen
-    writeIntToU8Array(u8,headerStart + 18,textLen)
-    writeIntToU8Array(u8,headerStart + 22,textLen)
-    writeU16ToU8Array(u8,headerStart + 26,nameLen)
+    writeIntToU8Array(u8, headerStart + 18, textLen)
+    writeIntToU8Array(u8, headerStart + 22, textLen)
+    writeU16ToU8Array(u8, headerStart + 26, nameLen)
   }
 
   //   writeU16ToU8Array(blankCentralHeader,12,createTimeMsDosFormat)

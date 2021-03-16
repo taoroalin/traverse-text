@@ -1,14 +1,14 @@
 // Event Listener Helpers -----------------------------------------------------------------------------------------------
 
 const focusBlockEnd = (blockNode) => {
-  updateFocusFromNode(blockNode,-1)
+  updateFocusFromNode(blockNode, -1)
 }
 
 const focusBlockStart = (blockNode) => {
-  updateFocusFromNode(blockNode,0)
+  updateFocusFromNode(blockNode, 0)
 }
 
-const focusBlockVerticalOffset = (offset,block = focusBlock,start = false) => { // this closure feels weird, maybe shoudn't use this language feature?
+const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => { // this closure feels weird, maybe shoudn't use this language feature?
   const blocks = Array.from(document.querySelectorAll(".block"))
   const newActiveBlock = blocks[blocks.indexOf(block) + offset]
   if (newActiveBlock) {
@@ -27,10 +27,10 @@ const getChildren = (node) => {
 const downloadHandler = () => {
   console.log("download")
   const json = storeToRoamJSON(store)
-  const data = new Blob([json],{ type: 'text/json' })
+  const data = new Blob([json], { type: 'text/json' })
   const url = URL.createObjectURL(data)
-  downloadButton.setAttribute('href',url)
-  downloadButton.setAttribute('download',`${store.graphName}-${formatDateYMD(new Date(Date.now()))}.json`)
+  downloadButton.setAttribute('href', url)
+  downloadButton.setAttribute('download', `${store.graphName}-${formatDateYMD(new Date(Date.now()))}.json`)
 }
 
 const downloadMd = () => {
@@ -38,8 +38,8 @@ const downloadMd = () => {
   const data = storeToMdZip()
   const url = URL.createObjectURL(data)
   const anchor = document.createElement("a")
-  anchor.setAttribute('href',url)
-  anchor.setAttribute('download',`${store.graphName}-md-${formatDateYMD(new Date(Date.now()))}.zip`)
+  anchor.setAttribute('href', url)
+  anchor.setAttribute('download', `${store.graphName}-md-${formatDateYMD(new Date(Date.now()))}.zip`)
   anchor.click()
 }
 
@@ -50,14 +50,14 @@ const expandTemplate = () => {
     const parentId = store.blox[sessionState.focusId].p
     const childIds = store.blox[id].k
     const currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
-    macros.nocommit.delete(sessionState.focusId,false)
+    macros.nocommit.delete(sessionState.focusId, false)
     const parentNode = focusBlock.parentNode
     focusBlock.remove()
     for (let i = 0; i < childIds.length; i++) {
       const childId = childIds[i]
       const idx = currentIdx + i
-      const newId = macros.nocommit.copyBlock(childId,parentId,idx)
-      const e = renderBlock(parentNode,newId,idx)
+      const newId = macros.nocommit.copyBlock(childId, parentId, idx)
+      const e = renderBlock(parentNode, newId, idx)
       if (i === 0) {
         focusBlockEnd(e)
       }
@@ -81,15 +81,15 @@ const pasteBlocks = () => {
   }
 
   if (clipboardData.dragSelect.rooted) {
-    const newId = macros.nocommit.copyBlock(clipboardData.dragSelect.root,parentId,currentIdx)
-    const e = renderBlock(parentNode,newId,currentIdx)
+    const newId = macros.nocommit.copyBlock(clipboardData.dragSelect.root, parentId, currentIdx)
+    const e = renderBlock(parentNode, newId, currentIdx)
     focusBlockEnd(e)
   } else {
     let lastNode = null
     for (let i = 0; i < clipboardData.dragSelect.endIdx + 1 - clipboardData.dragSelect.startIdx; i++) {
       const blockId = store.blox[clipboardData.dragSelect.root].k[i + clipboardData.dragSelect.startIdx]
-      const newId = macros.nocommit.copyBlock(blockId,parentId,i + currentIdx)
-      const e = renderBlock(parentNode,newId,i + currentIdx)
+      const newId = macros.nocommit.copyBlock(blockId, parentId, i + currentIdx)
+      const e = renderBlock(parentNode, newId, i + currentIdx)
       lastNode = e
     }
     focusBlockEnd(lastNode)
@@ -103,17 +103,17 @@ const autocomplete = () => {
     const textNode = editingLink.childNodes[0]
     // check for the exact inverse of tag regex to see if this would be a valid tag, otherwise make it a ref  
     if (/[^\/a-zA-Z0-9_-]/.test(focusSuggestion.dataset.title)) {
-      const string = origString.slice(0,textNode.startIdx) + "[[" + focusSuggestion.dataset.title + "]]" + origString.slice(textNode.endIdx)
+      const string = origString.slice(0, textNode.startIdx) + "[[" + focusSuggestion.dataset.title + "]]" + origString.slice(textNode.endIdx)
       sessionState.position = textNode.startIdx + focusSuggestion.dataset.title.length + 4
       setFocusedBlockString(string)
     } else {
-      const string = origString.slice(0,textNode.startIdx) + "#" + focusSuggestion.dataset.title + origString.slice(textNode.endIdx)
+      const string = origString.slice(0, textNode.startIdx) + "#" + focusSuggestion.dataset.title + origString.slice(textNode.endIdx)
       sessionState.position = textNode.startIdx + focusSuggestion.dataset.title.length + 1
       setFocusedBlockString(string)
     }
   } else {
     const textNode = editingLink.children[1].childNodes[0]
-    const string = origString.slice(0,textNode.startIdx) + focusSuggestion.dataset.title + origString.slice(textNode.endIdx)
+    const string = origString.slice(0, textNode.startIdx) + focusSuggestion.dataset.title + origString.slice(textNode.endIdx)
     console.log(string)
     sessionState.position = textNode.startIdx + focusSuggestion.dataset.title.length + 2
     setFocusedBlockString(string)
@@ -128,9 +128,9 @@ const indentFocusedBlock = () => {
     const newParentId = olderSibling.dataset.id
     console.log(newParentId)
     const idx = (store.blox[newParentId].k && store.blox[newParentId].k.length) || 0
-    macros.move(bid,newParentId,idx)
+    macros.move(bid, newParentId, idx)
     olderSibling.children[2].appendChild(focusBlock)
-    getSelection().collapse(focusNode,focusOffset)
+    getSelection().collapse(focusNode, focusOffset)
   }
 }
 
@@ -141,17 +141,17 @@ const dedentFocusedBlock = () => {
   if (parentBlock) {
     const grandparentId = parentBlock.p
     const idx = store.blox[grandparentId].k.indexOf(parentId)
-    macros.move(bid,grandparentId,idx + 1)
+    macros.move(bid, grandparentId, idx + 1)
     const parentNode = focusBlock.parentNode.parentNode
     const grandparentChildren = parentNode.parentNode
     const cousin = parentNode.nextElementSibling
     if (cousin) {
-      grandparentChildren.insertBefore(focusBlock,cousin)
+      grandparentChildren.insertBefore(focusBlock, cousin)
     } else {
       grandparentChildren.appendChild(focusBlock)
     }
 
-    getSelection().collapse(focusNode,focusOffset)
+    getSelection().collapse(focusNode, focusOffset)
   } else {
     // notifyText("can't dedent from page root", 2) // don't need error message here?
   }
@@ -160,11 +160,11 @@ const dedentFocusedBlock = () => {
 
 // Event listners --------------------------------------------------------------------------------------------------------
 
-document.addEventListener("input",(event) => {
+document.addEventListener("input", (event) => {
   if (sessionState.isFocused) {
     updateCursorPosition()
     if (focusBlockBody.innerText === " " || focusBlockBody.innerText === "") {
-      macros.write(sessionState.focusId,"")
+      macros.write(sessionState.focusId, "")
       return
     }
 
@@ -184,50 +184,50 @@ document.addEventListener("input",(event) => {
           }
         }
         if (!broke) {
-          string = string.substring(0,sessionState.position) + "]" + string.substring(sessionState.position)
+          string = string.substring(0, sessionState.position) + "]" + string.substring(sessionState.position)
           wasInputPlain = false
         }
       } else if (event.data === "]") {
         if (string[sessionState.position] === "]") {
-          string = string.substring(0,sessionState.position - 1) + string.substring(sessionState.position)
+          string = string.substring(0, sessionState.position - 1) + string.substring(sessionState.position)
           wasInputPlain = false
         }
       }
     }
 
-    let diff = { d: store.blox[sessionState.focusId].s,i: string }
+    let diff = { d: store.blox[sessionState.focusId].s, i: string }
     if (wasInputPlain) {
       if (sessionState.position === string.length)
         diff = { i: event.data }
-      else diff = { i: event.data,s: sessionState.position - 1 }
+      else diff = { i: event.data, s: sessionState.position - 1 }
     }
-    setFocusedBlockString(string,diff)
+    setFocusedBlockString(string, diff)
 
     if (editingCommandElement) {
       const matchingInlineCommands = matchInlineCommand(editingCommandElement.innerText.substring(1))
-      renderResultSet(editingCommandElement,matchingInlineCommands,inlineCommandList,0)
+      renderResultSet(editingCommandElement, matchingInlineCommands, inlineCommandList, 0)
     }
 
     if (editingTitle) {
       const matchingTitles = titleExactFullTextSearch(editingTitle)
-      renderResultSet(editingLink,matchingTitles,autocompleteList,0)
+      renderResultSet(editingLink, matchingTitles, autocompleteList, 0)
     }
 
     if (editingTemplateExpander) {
       console.log("editingTemplateExpander")
       const editingTemplateText = editingTemplateExpander.innerText.substring(2)
       const matchingTemplates = searchTemplates(editingTemplateText)
-      renderResultSet(editingTemplateExpander,matchingTemplates,templateList,0)
+      renderResultSet(editingTemplateExpander, matchingTemplates, templateList, 0)
     }
 
   } else if (event.target.id === "search-input") {
     const matchingTitles = exactFullTextSearch(event.target.value)
-    renderResultSet(searchInput,matchingTitles,searchResultList,0)
+    renderResultSet(searchInput, matchingTitles, searchResultList, 0)
 
   } else if (event.target.className === "page__title") {
     console.log("edit title")
     const pageId = event.target.parentNode.dataset.id
-    macros.writePageTitle(pageId,event.target.innerText)
+    macros.writePageTitle(pageId, event.target.innerText)
   }
 })
 
@@ -242,20 +242,20 @@ const globalHotkeys = {
     }
   },
   "escape": {
-    key: "Escape",fn: () => {
+    key: "Escape", fn: () => {
       autocompleteList.style.display = "none"
       templateList.style.display = "none"
     }
   },
   "upload": {
-    key: "d",control: true,fn: () => {
+    key: "d", control: true, fn: () => {
       elById("upload-input").click()
     }
   },
-  "download": { key: "s",control: true,shift: true,fn: downloadHandler },
-  "save": { key: "s",control: true,fn: debouncedSaveStore },
+  "download": { key: "s", control: true, shift: true, fn: downloadHandler },
+  "save": { key: "s", control: true, fn: debouncedSaveStore },
   "toggle color theme": {
-    key: "m",control: true,fn: () => {
+    key: "m", control: true, fn: () => {
       if (document.body.className === "light") {
         user.s.theme = "dark"
         saveUser()
@@ -266,23 +266,23 @@ const globalHotkeys = {
     }
   },
   "search": {
-    key: "u",control: true,fn: () => {
+    key: "u", control: true, fn: () => {
       if (topBar.style.marginTop !== "0px") topBar.style.marginTop = "0px"
       searchInput.focus()
     }
   },
   "open": {
-    key: "o",control: true,fn: (event) => {
-      if (editingTitle) goto("pageTitle",editingTitle)
+    key: "o", control: true, fn: (event) => {
+      if (editingTitle) goto("pageTitle", editingTitle)
       else if (editingUrlElement) editingUrlElement.click()
     }
   },
   "daily notes": {
-    key: "d",alt: true,fn: () => {
+    key: "d", alt: true, fn: () => {
       goto("dailyNotes")
     }
-  },"undo": {
-    key: "z",control: true,fn: () => {
+  }, "undo": {
+    key: "z", control: true, fn: () => {
       if (edits.length > 0) {
         undo()
         renderSessionState()
@@ -290,7 +290,7 @@ const globalHotkeys = {
     }
   },
   "terminal": {
-    key: "i",control: true,alt: true,fn: () => {
+    key: "i", control: true, alt: true, fn: () => {
       if (terminalElement.style.display === "none") {
         terminalElement.style.display = "block"
         terminalElement.focus()
@@ -300,13 +300,13 @@ const globalHotkeys = {
     }
   },
   "p": {
-    key: "p",control: true,fn: () => {
+    key: "p", control: true, fn: () => {
       console.log("at least it wasn't print")
     }
   }
 }
 
-document.addEventListener("keydown",(event) => {
+document.addEventListener("keydown", (event) => {
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
     if (event.key === hotkey.key &&
@@ -349,12 +349,12 @@ document.addEventListener("keydown",(event) => {
     if (event.key === "Backspace" || event.key === "Delete" || (event.key === "x" && event.ctrlKey)) {
       console.log(dragSelect)
       if (dragSelect.rooted) {
-        focusBlockVerticalOffset(-1,dragSelect.root)
+        focusBlockVerticalOffset(-1, dragSelect.root)
         macros.nocommit.delete(dragSelect.root.dataset.id)
         document.querySelectorAll(`.block[data-id="${dragSelect.root.dataset.id}"]`).forEach(x => x.remove())
       } else {
         const childNodes = getChildren(dragSelect.root)
-        focusBlockVerticalOffset(-1,childNodes[dragSelect.startIdx])
+        focusBlockVerticalOffset(-1, childNodes[dragSelect.startIdx])
         console.log(`cnl ${childNodes.length} start ${dragSelect.startIdx} end ${dragSelect.endIdx}`)
         // iterate backwards so the idxs don't shift underneath you
         for (let i = dragSelect.endIdx; i >= dragSelect.startIdx; i--) {
@@ -373,19 +373,19 @@ document.addEventListener("keydown",(event) => {
       autocomplete()
       event.preventDefault()
     }
-    if (updownythingey(editingLink,autocompleteList,titleExactFullTextSearchCache,focusSuggestion)) event.preventDefault()
+    if (updownythingey(editingLink, autocompleteList, titleExactFullTextSearchCache, focusSuggestion)) event.preventDefault()
   } else if (templateList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       expandTemplate()
       event.preventDefault()
     }
-    if (updownythingey(editingTemplateExpander,templateList,templateSearchCache,focusSuggestion)) event.preventDefault()
+    if (updownythingey(editingTemplateExpander, templateList, templateSearchCache, focusSuggestion)) event.preventDefault()
   } else if (inlineCommandList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       execInlineCommand()
       event.preventDefault()
     }
-    if (updownythingey(editingCommandElement,inlineCommandList,commandSearchCache,focusSuggestion)) event.preventDefault()
+    if (updownythingey(editingCommandElement, inlineCommandList, commandSearchCache, focusSuggestion)) event.preventDefault()
   } else if (sessionState.isFocused) {
     let blocks
     let newActiveBlock
@@ -398,8 +398,8 @@ document.addEventListener("keydown",(event) => {
           }
           console.log(idx)
           const newBlockUid = newUid()
-          commitEdit("cr",newBlockUid,store.blox[sessionState.focusId].p,idx)
-          const newBlockElement = renderBlock(focusBlock.parentNode,newBlockUid,idx)
+          commitEdit("cr", newBlockUid, store.blox[sessionState.focusId].p, idx)
+          const newBlockElement = renderBlock(focusBlock.parentNode, newBlockUid, idx)
           newBlockElement.children[1].focus()
           event.preventDefault()
         }
@@ -431,11 +431,11 @@ document.addEventListener("keydown",(event) => {
           const parentElement = focusBlock.parentNode
           const currentIdx = store.blox[parentId].children.indexOf(sessionState.focusId)
           if (focusBlock.nextElementSibling) {
-            macros.move(sessionState.focusId,parentId,currentIdx + 1)
+            macros.move(sessionState.focusId, parentId, currentIdx + 1)
             if (focusBlock.nextElementSibling.nextElementSibling) {
-              parentElement.insertBefore(focusBlock,focusBlock.nextElementSibling.nextElementSibling)
+              parentElement.insertBefore(focusBlock, focusBlock.nextElementSibling.nextElementSibling)
             } else parentElement.appendChild(focusBlock)
-            getSelection().collapse(focusNode,focusOffset)
+            getSelection().collapse(focusNode, focusOffset)
             event.preventDefault()
           }
         } else if (!event.shiftKey && !event.altKey) {
@@ -449,9 +449,9 @@ document.addEventListener("keydown",(event) => {
           const parentElement = focusBlock.parentNode
           const currentIdx = store.blox[parentId].children.indexOf(sessionState.focusId)
           if (focusBlock.previousElementSibling) {
-            macros.move(sessionState.focusId,parentId,currentIdx - 1)
-            parentElement.insertBefore(focusBlock,focusBlock.previousElementSibling)
-            getSelection().collapse(focusNode,focusOffset)
+            macros.move(sessionState.focusId, parentId, currentIdx - 1)
+            parentElement.insertBefore(focusBlock, focusBlock.previousElementSibling)
+            getSelection().collapse(focusNode, focusOffset)
             event.preventDefault()
           }
         } else if (!event.shiftKey && !event.altKey) {
@@ -471,7 +471,7 @@ document.addEventListener("keydown",(event) => {
         if (event.shiftKey && event.altKey) {
           indentFocusedBlock()
         } else if (sessionState.position === focusBlockBody.innerText.length) {
-          focusBlockVerticalOffset(1,focusBlock,true)
+          focusBlockVerticalOffset(1, focusBlock, true)
           event.preventDefault()
         }
         break
@@ -490,19 +490,19 @@ document.addEventListener("keydown",(event) => {
   ) {
     if (event.key === "Enter" && !event.ctrlKey) {
       if (focusSuggestion.dataset.title) {
-        goto("pageTitle",focusSuggestion.dataset.title)
+        goto("pageTitle", focusSuggestion.dataset.title)
       } else {
-        goto("block",focusSuggestion.dataset.id)
+        goto("block", focusSuggestion.dataset.id)
       }
       event.preventDefault()
       return
     } else if (event.key === "Enter" && event.ctrlKey) {
-      goto("pageTitle",event.target.value)
+      goto("pageTitle", event.target.value)
       event.preventDefault()
       return
     }
 
-    const didUpDowny = updownythingey(searchInput,searchResultList,exactFullTextSearchCache,focusSuggestion)
+    const didUpDowny = updownythingey(searchInput, searchResultList, exactFullTextSearchCache, focusSuggestion)
     if (didUpDowny) event.preventDefault()
   }
 
@@ -532,20 +532,20 @@ document.addEventListener("keydown",(event) => {
   print(sessionState)
 })
 
-document.addEventListener('paste',(event) => {
+document.addEventListener('paste', (event) => {
   console.log(event)
   if (clipboardData) {
     const clipboardText = event.clipboardData.getData('text')
     console.log(clipboardText)
     console.log(clipboardData.text)
-    if (clipboardText.replaceAll(/\r/g,"") == clipboardData.text) {
+    if (clipboardText.replaceAll(/\r/g, "") == clipboardData.text) {
       pasteBlocks()
       event.preventDefault()
     } else clipboardData = undefined
   }
 })
 
-const updownythingey = (parent,list,cache,focused) => {
+const updownythingey = (parent, list, cache, focused) => {
   // todo factor this so the same logic works on search all, block, title, and template
   const moveDirection = ((event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey)) && -1) ||
     ((event.key === "ArrowDown" || event.key === "Tab") && 1)
@@ -557,8 +557,8 @@ const updownythingey = (parent,list,cache,focused) => {
       delete focused.dataset.selected
     } else {
       const oldIdx = parseInt(list.dataset.resultStartIdx)
-      const newIdx = clamp(oldIdx + moveDirection * SEARCH_RESULT_LENGTH,0,cache.length - SEARCH_RESULT_LENGTH)
-      renderResultSet(parent,cache,list,newIdx)
+      const newIdx = clamp(oldIdx + moveDirection * SEARCH_RESULT_LENGTH, 0, cache.length - SEARCH_RESULT_LENGTH)
+      renderResultSet(parent, cache, list, newIdx)
       if (moveDirection === -1) {
         delete list.firstElementChild.dataset.selected
         list.lastElementChild.dataset.selected = true
@@ -573,21 +573,29 @@ const getPageTitleOfNode = (node) => {
   if (tag) return tag.innerText.substring(1)
 
   const attribute = node.closest(".attribute")
-  if (attribute) return attribute.innerText.substring(0,attribute.innerText.length - 2)
+  if (attribute) return attribute.innerText.substring(0, attribute.innerText.length - 2)
 
   const pageRef = node.closest(".page-ref")
-  if (pageRef) return pageRef.children[1].innerText
+  if (pageRef) {
+    const block = node.closest('.block')
+    const id = block.dataset.id
+    if (focusBlock === block) {
+      return pageRef.children[1].innerText
+    } else {
+      return store.blox[id].s.substring(pageRef.startIdx, pageRef.endIdx)
+    }
+  }
 
   return undefined
 }
-
 // The single event handler model has some problems. The cases need to appear in the same order they are nested in the DOM
 // maybe this should be click instead of mousedown
-document.addEventListener("mousedown",(event) => {
+document.addEventListener("mousedown", (event) => {
 
   const clickedPageTitle = getPageTitleOfNode(event.target)
+  console.log(clickedPageTitle)
   if (clickedPageTitle) {
-    goto("pageTitle",clickedPageTitle)
+    goto("pageTitle", clickedPageTitle)
     return
   }
 
@@ -595,9 +603,9 @@ document.addEventListener("mousedown",(event) => {
 
   if (event.target.className === "search-result") {
     if (event.target.dataset.title) {
-      goto("pageTitle",event.target.dataset.title)
+      goto("pageTitle", event.target.dataset.title)
     } else {
-      goto("block",event.target.dataset.id)
+      goto("block", event.target.dataset.id)
     }
     return
   } else if (event.target.id !== "search-input") {
@@ -609,9 +617,9 @@ document.addEventListener("mousedown",(event) => {
 
   // markup
   if (closestBullet) {
-    goto("block",closestBullet.parentNode.dataset.id)
+    goto("block", closestBullet.parentNode.dataset.id)
   } else if (event.target.className === "block-ref") {
-    goto("block",event.target.dataset.id)
+    goto("block", event.target.dataset.id)
   } else if (event.target.className === "url") { // using spans with event handlers as links because they play nice with contenteditable
     const link = document.createElement("a")
     link.target = "_blank"
@@ -637,11 +645,11 @@ document.addEventListener("mousedown",(event) => {
     event.target.dataset.selected = true
     autocomplete()
   } else if (event.target.id === "help-button") {
-    goto("pageTitle","Welcome to Micro Roam")
+    goto("pageTitle", "Welcome to Micro Roam")
   } else if (closestBreadcrumbPage) {
-    goto("pageTitle",closestBreadcrumbPage.dataset.title)
+    goto("pageTitle", closestBreadcrumbPage.dataset.title)
   } else if (closestBreadcrumbBlock) {
-    goto("block",closestBreadcrumbBlock.dataset.id)
+    goto("block", closestBreadcrumbBlock.dataset.id)
   } else if (event.target.className == "exit-to-main") {
     signupElement.style.display = "none"
     loginElement.style.display = "none"
@@ -654,7 +662,7 @@ document.addEventListener("mousedown",(event) => {
 })
 
 
-const commonAncestorNode = (a,b) => {
+const commonAncestorNode = (a, b) => {
   const aList = []
   while (a.dataset.id !== undefined) {
     aList.push(a.dataset.id)
@@ -669,8 +677,8 @@ const commonAncestorNode = (a,b) => {
       const parentChildIds = store.blox[b.dataset.id].k
       const bidx = parentChildIds ? parentChildIds.indexOf(cbid) : -1
       const aidx = parentChildIds ? parentChildIds.indexOf(caid) : -1
-      const e = Math.max(aidx,bidx)
-      return { root: b,startIdx: Math.max(Math.min(aidx,bidx),0),endIdx: e === -1 ? parentChildIds.length : e,rooted: bidx === -1 || aidx === -1 }
+      const e = Math.max(aidx, bidx)
+      return { root: b, startIdx: Math.max(Math.min(aidx, bidx), 0), endIdx: e === -1 ? parentChildIds.length : e, rooted: bidx === -1 || aidx === -1 }
     }
     b = b.parentNode.parentNode
   }
@@ -694,7 +702,7 @@ const mouseMoveListener = (event) => {
   const blockNode = event.target.closest(".block")
   if (blockNode && blockNode !== dragSelectStartBlock) {
     getSelection().empty()
-    const can = commonAncestorNode(dragSelectStartBlock,blockNode)
+    const can = commonAncestorNode(dragSelectStartBlock, blockNode)
     if (can) {
       dragSelect = can
       setDragSelected(true)
@@ -704,23 +712,23 @@ const mouseMoveListener = (event) => {
   }
 }
 
-document.addEventListener("mousedown",(event) => {
+document.addEventListener("mousedown", (event) => {
   setDragSelected(false)
   dragSelect = null
   if (event.target.closest(".block")) {
-    document.addEventListener("mousemove",mouseMoveListener)
+    document.addEventListener("mousemove", mouseMoveListener)
     dragSelectStartBlock = event.target.closest(".block")
   }
 })
 
-document.addEventListener("mouseup",(event) => {
+document.addEventListener("mouseup", (event) => {
   if (dragSelectStartBlock !== null) {
-    document.removeEventListener("mousemove",mouseMoveListener)
+    document.removeEventListener("mousemove", mouseMoveListener)
     dragSelectStartBlock = null
   }
 })
 
-document.addEventListener("selectionchange",(event) => {
+document.addEventListener("selectionchange", (event) => {
   focusNode = getSelection().focusNode
   focusOffset = getSelection().focusOffset
   if (focusNode) {
@@ -728,7 +736,7 @@ document.addEventListener("selectionchange",(event) => {
     if (currentFocusBlock && canWriteBloc(currentFocusBlock.dataset.id)) {
       if (currentFocusBlock.dataset.id !== sessionState.focusId) {
         const position = (focusNode.startIdx || 0) + focusOffset
-        updateFocusFromNode(currentFocusBlock,position)
+        updateFocusFromNode(currentFocusBlock, position)
       }
     } else sessionState.isFocused = false
   } else sessionState.isFocused = false
@@ -740,30 +748,30 @@ const showTopBarFn = () => {
 }
 let showTopBarTimeout = null
 
-topBarHiddenHitbox.addEventListener("mouseover",() => {
+topBarHiddenHitbox.addEventListener("mouseover", () => {
   clearTimeout(showTopBarTimeout)
-  showTopBarTimeout = setTimeout(showTopBarFn,400)
+  showTopBarTimeout = setTimeout(showTopBarFn, 400)
 })
 
-topBarHiddenHitbox.addEventListener("mouseout",() => {
+topBarHiddenHitbox.addEventListener("mouseout", () => {
   clearTimeout(showTopBarTimeout)
   showTopBarTimeout = null
 })
 
-elById('upload-input').addEventListener('change',(event) => {
+elById('upload-input').addEventListener('change', (event) => {
   const file = event.target.files[0]
   console.log(file)
-  const { name,ext: extension } = splitFileName(file.name)
+  const { name, ext: extension } = splitFileName(file.name)
   console.log(`name ${name} extension ${extension}`)
   if (extension === "zip") {
     file.arrayBuffer().then((buffer) => {
       const files = zipToFiles(buffer)
       console.log(files)
       if (files.length === 1 && files[0].ext === "json") {
-        store = roamJsonToStore(files[0].name,files[0].text)
+        store = roamJsonToStore(files[0].name, files[0].text)
         preprocessNewStore()
       } else {
-        notifyText("Markdown import doesn't work yet. Upload a .json file, or a .zip file containing a .json file instead.",12)
+        notifyText("Markdown import doesn't work yet. Upload a .json file, or a .zip file containing a .json file instead.", 12)
         throw new Error("md import doesn't work")
         const mds = []
         for (let file of files) {
@@ -780,7 +788,7 @@ elById('upload-input').addEventListener('change',(event) => {
   } else if (extension === "json") {
     file.text().then((text) => {
       user.s.graphName = name
-      store = roamJsonToStore(name,text)
+      store = roamJsonToStore(name, text)
       preprocessNewStore()
     })
   } else {
@@ -797,7 +805,7 @@ const preprocessNewStore = async () => {
   start()
 }
 
-signupButton.addEventListener('click',(event) => {
+signupButton.addEventListener('click', (event) => {
   focusSignup()
   event.stopPropagation()
   event.preventDefault()
@@ -815,25 +823,25 @@ const focusLogin = () => {
   loginEmailElement.focus()
 }
 
-switchToSignup.addEventListener('click',focusSignup)
+switchToSignup.addEventListener('click', focusSignup)
 
-switchToLogin.addEventListener('click',focusLogin)
+switchToLogin.addEventListener('click', focusLogin)
 
 const rwlClickOutListener = (event) => {
   console.log("rwlclick")
   if (event.target.closest('.really-want-to') === null) {
     reallyWantToLeaveElement.style.display = "none"
-    document.removeEventListener('click',rwlClickOutListener)
+    document.removeEventListener('click', rwlClickOutListener)
   }
 }
 
-signOutButton.addEventListener('click',() => {
+signOutButton.addEventListener('click', () => {
   if (isSynced()) reset()
   else {
     reallyWantToLeaveElement.style.display = "flex"
-    document.addEventListener('click',(event) => rwlClickOutListener(event))
+    document.addEventListener('click', (event) => rwlClickOutListener(event))
     event.stopPropagation()
   }
 })
 
-reallyWantToLeaveElement.children[0].addEventListener('click',reset)
+reallyWantToLeaveElement.children[0].addEventListener('click', reset)

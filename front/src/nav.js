@@ -8,7 +8,7 @@ const renderSessionState = () => {
 
   // clear screen
   searchResultList.style.display = "none"
-  pageFrameOuter.removeEventListener("scroll",dailyNotesInfiniteScrollListener)
+  pageFrameOuter.removeEventListener("scroll", dailyNotesInfiniteScrollListener)
   pageFrame.innerHTML = ""
   searchInput.value = ""
 
@@ -19,25 +19,25 @@ const renderSessionState = () => {
       if (existingPage === undefined) {
         existingPage = macros.createPage(sessionState.page)
       }
-      renderPage(pageFrame,existingPage)
+      renderPage(pageFrame, existingPage)
       break
     case "block":
       const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
       pageFrame.appendChild(blockFocusFrame)
-      renderBreadcrumb(blockFocusFrame.children[0],sessionState.block)
-      renderBlock(blockFocusFrame.children[1],sessionState.block)
+      renderBreadcrumb(blockFocusFrame.children[0], sessionState.block)
+      renderBlock(blockFocusFrame.children[1], sessionState.block)
       const backRefs = store.refs[sessionState.block]
       if (backRefs) {
-        backRefs.sort((a,b) => store.blox[b].et - store.blox[a].et)
+        backRefs.sort((a, b) => store.blox[b].et - store.blox[a].et)
         const backrefsListElement = backrefListTemplate.cloneNode(true)
         blockFocusFrame.children[2].appendChild(backrefsListElement)
         for (let backref of backRefs) {
-          renderBlock(backrefsListElement.children[1],backref)
+          renderBlock(backrefsListElement.children[1], backref)
         }
       }
       break
     case "dailyNotes":
-      pageFrameOuter.addEventListener("scroll",dailyNotesInfiniteScrollListener)
+      pageFrameOuter.addEventListener("scroll", dailyNotesInfiniteScrollListener)
       sessionState.oldestDate = new Date(Date.now())
       let numNotesLoaded = 0
       if (store.titles[formatDate(sessionState.oldestDate)] === undefined) {
@@ -46,7 +46,7 @@ const renderSessionState = () => {
       for (let i = 0; i < 1000; i++) {
         const daysNotes = store.titles[formatDate(sessionState.oldestDate)]
         if (daysNotes) {
-          renderPage(pageFrame,daysNotes)
+          renderPage(pageFrame, daysNotes)
           pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
           numNotesLoaded += 1
           if (numNotesLoaded >= initialDailyNotes) {
@@ -74,7 +74,7 @@ const renderSessionState = () => {
 
 }
 
-const gotoNoHistory = (commandName,...command) => {
+const gotoNoHistory = (commandName, ...command) => {
   switch (commandName) {
     case "dailyNotes":
       sessionState.pageFrame = "dailyNotes"
@@ -101,18 +101,18 @@ const goto = (...command) => {
   sessionState.scroll = 0
   gotoNoHistory(...command)
   setTimeout(() => {
-    history.replaceState(oldSessionState,"Micro Roam")
+    history.replaceState(oldSessionState, "Micro Roam")
     // todo use page title, in more places than just this because apparently here's not often supported
-    history.pushState(sessionState,"Micro Roam")
-  },0)
+    history.pushState(sessionState, "Micro Roam")
+  }, 0)
 }
 
 const gotoReplaceHistory = (...command) => {
   gotoNoHistory(...command)
-  history.replaceState(sessionState,"Micro Roam")
+  history.replaceState(sessionState, "Micro Roam")
 }
 
-window.addEventListener("popstate",(event) => {
+window.addEventListener("popstate", (event) => {
   console.log(event.state)
   if (event.state) {
     sessionState = event.state
@@ -129,7 +129,7 @@ const dailyNotesInfiniteScrollListener = () => {
       sessionState.oldestDate.setDate(sessionState.oldestDate.getDate() - 1)
       const daysNotes = store.titles[formatDate(sessionState.oldestDate)]
       if (daysNotes) {
-        renderPage(pageFrame,daysNotes)
+        renderPage(pageFrame, daysNotes)
         pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
         break
       }
@@ -142,19 +142,19 @@ const parseStackTrace = (string) => {
   const result = []
   const matches = string.matchAll(/([^ ]+) \(([^\)]+):([0-9]+):([0-9]+)\)(?:\n|$)/g)
   for (let match of matches) {
-    result.push({ function: match[1],file: match[2],line: match[3],column: match[4] })
+    result.push({ function: match[1], file: match[2], line: match[3], column: match[4] })
   }
   return result
 }
-const logError = (message,url,lineNumber,columnNumber,error) => {
-  const errorInfo = { line: lineNumber,file: url,stack: parseStackTrace(error.stack),message,column: columnNumber }
+const logError = (message, url, lineNumber, columnNumber, error) => {
+  const errorInfo = { line: lineNumber, file: url, stack: parseStackTrace(error.stack), message, column: columnNumber }
   const existingErrors = localStorage.getItem("error_log")
   if (existingErrors) {
     const z = JSON.parse(existingErrors)
     z.push(errorInfo)
-    localStorage.setItem("error_log",JSON.stringify(z))
+    localStorage.setItem("error_log", JSON.stringify(z))
   } else {
-    localStorage.setItem("error_log",JSON.stringify([errorInfo]))
+    localStorage.setItem("error_log", JSON.stringify([errorInfo]))
   }
   // todo send error to server at this point
   return false // we don't actually "catch" the error, we just report that it happened. The error is still an error
@@ -183,7 +183,7 @@ const saveUser = () => {
     signOutButton.style.display = "none"
     signupButton.style.display = "block"
   }
-  localStorage.setItem("user",JSON.stringify(user))
+  localStorage.setItem("user", JSON.stringify(user))
   saveSettingsToBasicBitchServer()
 }
 

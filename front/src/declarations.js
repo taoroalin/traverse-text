@@ -1,5 +1,5 @@
 // Cursor info. Raw info stored in JSON, DOM elements cached in lots of random vars
-let sessionState = { pageFrame: "dailyNotes",focusId: null,scroll: 0,position: null }
+let sessionState = { pageFrame: "dailyNotes", focusId: null, scroll: 0, position: null }
 
 // these two stored for re-focusing dom nodes after they're moved
 let focusNode = null

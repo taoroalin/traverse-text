@@ -1,4 +1,4 @@
-const renderPage = (parentNode,uid,hasBackrefs = true) => {
+const renderPage = (parentNode, uid, hasBackrefs = true) => {
   const page = store.blox[uid]
   const element = pageTemplate.cloneNode(true)
   const title = element.firstElementChild
@@ -14,12 +14,12 @@ const renderPage = (parentNode,uid,hasBackrefs = true) => {
   let children = page.k
   if (!children || children.length === 0) { // todo set standards for when lists can be empty to reduce ambiguity
     const newId = newUid()
-    commitEdit("cr",newId,uid,0)
+    commitEdit("cr", newId, uid, 0)
     children = page.k
   }
 
   for (let child of children) {
-    renderBlock(body,child)
+    renderBlock(body, child)
   }
 
   const refs = store.refs[uid]
@@ -30,8 +30,8 @@ const renderPage = (parentNode,uid,hasBackrefs = true) => {
     console.log(refs.map(x => store.blox[x]))
     for (let backref of refs) {
       const backrefFrame = backrefFrameTemplate.cloneNode(true)
-      renderBreadcrumb(backrefFrame.children[0],backref)
-      renderBlock(backrefFrame.children[1],backref)
+      renderBreadcrumb(backrefFrame.children[0], backref)
+      renderBlock(backrefFrame.children[1], backref)
       backrefsListElement.children[1].appendChild(backrefFrame)
     }
   }
@@ -40,7 +40,7 @@ const renderPage = (parentNode,uid,hasBackrefs = true) => {
   return element
 }
 
-const renderBlock = (parentNode,uid,idx) => {
+const renderBlock = (parentNode, uid, idx) => {
   const element = blockTemplate.cloneNode(true)
   const body = element.children[1]
   const childrenContainer = element.children[2]
@@ -49,49 +49,49 @@ const renderBlock = (parentNode,uid,idx) => {
   body.dataset.id = uid
 
   const string = store.blox[uid].s
-  renderBlockBody(body,string)
+  renderBlockBody(body, string)
 
   const children = store.blox[uid].k
   for (let child of children || []) {
-    renderBlock(childrenContainer,child)
+    renderBlock(childrenContainer, child)
   }
 
   if (idx !== undefined && parentNode.children.length >= idx) {
-    parentNode.insertBefore(element,parentNode.children[idx])
+    parentNode.insertBefore(element, parentNode.children[idx])
   } else {
     parentNode.appendChild(element)
   }
   return element
 }
 
-const renderBreadcrumb = (parent,blockId) => {
+const renderBreadcrumb = (parent, blockId) => {
   const list = []
   if (store.blox[blockId].p) {
     while (true) {
       blockId = store.blox[blockId].p
       if (store.blox[blockId].p) {
-        list.push({ string: store.blox[blockId].s,id: blockId })
+        list.push({ string: store.blox[blockId].s, id: blockId })
       } else {
-        list.push({ title: store.blox[blockId].s,id: blockId })
+        list.push({ title: store.blox[blockId].s, id: blockId })
         break
       }
     }
     const node = breadcrumbPageTemplate.cloneNode(true)
     const title = list[list.length - 1].title
-    renderBlockBody(node,title)
+    renderBlockBody(node, title)
     node.dataset.title = title
     parent.appendChild(node)
     for (let i = list.length - 2; i >= 0; i--) {
       const node = breadcrumbBlockTemplate.cloneNode(true)
       const nodeBody = node.children[1]
-      renderBlockBody(nodeBody,list[i].string)
+      renderBlockBody(nodeBody, list[i].string)
       node.dataset.id = list[i].id
       parent.appendChild(node)
     }
   }
 }
 
-const renderResultSet = (parent,resultSet,resultFrame,startIdx = 0) => {
+const renderResultSet = (parent, resultSet, resultFrame, startIdx = 0) => {
   const resultTemplate = getTemp(resultFrame.dataset.templateName)
   if (resultSet.length > 0) {
     resultFrame.innerHTML = ""
@@ -100,7 +100,7 @@ const renderResultSet = (parent,resultSet,resultFrame,startIdx = 0) => {
     resultFrame.style.top = rect.bottom
     resultFrame.style.left = rect.left
     resultFrame.dataset.resultStartIdx = startIdx
-    const resultLength = Math.min(resultSet.length,startIdx + SEARCH_RESULT_LENGTH)
+    const resultLength = Math.min(resultSet.length, startIdx + SEARCH_RESULT_LENGTH)
     for (let i = startIdx; i < resultLength; i++) {
       matchingTitle = resultSet[i]
       const suggestion = resultTemplate.cloneNode(true)
@@ -111,26 +111,26 @@ const renderResultSet = (parent,resultSet,resultFrame,startIdx = 0) => {
       suggestion.dataset.id = matchingTitle.id
       if (matchingTitle.title) {
         suggestion.dataset.title = matchingTitle.title
-        suggestion.innerText = truncateElipsis(matchingTitle.title,50)
+        suggestion.innerText = truncateElipsis(matchingTitle.title, 50)
       } else {
         suggestion.dataset.string = matchingTitle.string
-        suggestion.innerText = truncateElipsis(matchingTitle.string,50)
+        suggestion.innerText = truncateElipsis(matchingTitle.string, 50)
       }
       resultFrame.appendChild(suggestion)
     }
   }
 }
 
-const notifyText = (text,duration) => {
+const notifyText = (text, duration) => {
   const el = notificationTemplate.cloneNode(true)
   el.innerText = text
   elById("app").appendChild(el)
-  setTimeout(() => el.style.top = "60px",50)
+  setTimeout(() => el.style.top = "60px", 50)
   const dur = (duration && duration * 1000) || 5000
-  setTimeout(() => el.style.opacity = "0",dur)
+  setTimeout(() => el.style.opacity = "0", dur)
   setTimeout(() => {
     el.remove()
-  },dur + 300)
+  }, dur + 300)
 }
 
 // 1             2              3   4         5    6         
@@ -141,7 +141,7 @@ const notifyText = (text,duration) => {
 const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|>(.*)/g
 // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
-const renderBlockBodyToEdit = (parent,text) => {
+const renderBlockBodyToEdit = (parent, text) => {
   parent.dataset.editmode = true
   if (text[text.length - 1] !== " ") text += " " // add space because browser creates new text node (bad) if we ever reach the end of ours
   const stack = [parent]
@@ -160,7 +160,7 @@ const renderBlockBodyToEdit = (parent,text) => {
 
   for (let match of matches) {
 
-    stackTop.appendChild(newTextNode(text.substring(idx,match.index)))
+    stackTop.appendChild(newTextNode(text.substring(idx, match.index)))
     idx = match.index
 
     if (match[1]) {
@@ -294,7 +294,7 @@ const renderBlockBodyToEdit = (parent,text) => {
 }
 
 
-const renderBlockBody = (parent,text) => {
+const renderBlockBody = (parent, text) => {
   parent.dataset.editmode = false
   const stack = [parent]
   const matches = text.matchAll(parseRegex)
@@ -313,16 +313,18 @@ const renderBlockBody = (parent,text) => {
 
   for (let match of matches) {
 
-    stackTop.appendChild(newTextNode(text.substring(idx,match.index)))
+    stackTop.appendChild(newTextNode(text.substring(idx, match.index)))
     idx = match.index
 
     if (match[1]) {
       const pageRefElement = pageRefTemplate.cloneNode(true)
+      pageRefElement.startIdx = idx + 2
       stackTop.appendChild(pageRefElement)
       stack.push(pageRefElement.children[1])
       stackTop = stack[stack.length - 1]
     } else if (match[2]) {
       if (stackTop.className === "page-ref__body") {
+        stackTop.parentNode.endIdx = idx
         stack.pop()
         stackTop = stack[stack.length - 1]
         lastTextNode.endIdx += 2

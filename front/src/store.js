@@ -64,7 +64,7 @@ const setLinks = (blocId) => {
   for (let match of matches) {
     if (stack.length === 0 || stackTop.t === "cb") {
       if (match[1]) {
-        const pageRefElement = { t: "pr",s: "" }
+        const pageRefElement = { t: "pr", s: "" }
         stack.push(pageRefElement)
         stackTop = stack[stack.length - 1]
       } else if (match[3]) {
@@ -77,16 +77,16 @@ const setLinks = (blocId) => {
         if (stackTop && stackTop.t === "cb") {
           stack.pop()
         } else {
-          const codeBlockElement = { t: 'cb',s: "" }
+          const codeBlockElement = { t: 'cb', s: "" }
           stack.push(codeBlockElement)
           stackTop = stack[stack.length - 1]
         }
       }
     } else {
-      stackTop.s = stackTop.s + text.substring(idx,match.index)
+      stackTop.s = stackTop.s + text.substring(idx, match.index)
       idx = match.index
       if (match[1]) {
-        const pageRefElement = { t: "pr",s: "" }
+        const pageRefElement = { t: "pr", s: "" }
         stackTop.s = stackTop.s + "[["
         stack.push(pageRefElement)
         stackTop = stack[stack.length - 1]
@@ -113,7 +113,7 @@ const setLinks = (blocId) => {
         if (stackTop && stackTop.t === "cb") {
           stack.pop()
         } else {
-          const codeBlockElement = { t: 'cb',s: "" }
+          const codeBlockElement = { t: 'cb', s: "" }
           stack.push(codeBlockElement)
           stackTop = stack[stack.length - 1]
         }
@@ -137,7 +137,7 @@ const generateRefs = () => {
   return store
 }
 
-const mergeLists = (list1,list2) => {
+const mergeLists = (list1, list2) => {
   for (let x of list2) {
     if (!list1.includes(x)) list1.push(x)
   }
@@ -153,7 +153,7 @@ const generateInnerRefs = () => {
     let id = blocId
     while (id) {
       if (!store.innerRefs[id]) store.innerRefs[id] = []
-      mergeLists(store.innerRefs[id],refs)
+      mergeLists(store.innerRefs[id], refs)
       id = store.blox[id].p
     }
   }
@@ -168,7 +168,7 @@ const generateOuterRefs = () => {
     const refs = store.forwardRefs[blocId]
     const fn = (id) => {
       if (!store.outerRefs[id]) store.outerRefs[id] = []
-      mergeLists(store.outerRefs[id],refs)
+      mergeLists(store.outerRefs[id], refs)
       for (let cid of store.blox[id].k || []) {
         fn(cid)
       }
@@ -198,7 +198,7 @@ const mergeStore = (otherStore) => {
     }
   }
 
-  const transferBlock = (blockId,parentId) => {
+  const transferBlock = (blockId, parentId) => {
     const newBlockId = idTranslation[blockId] || blockId
     const block = otherStore.blox[blockId]
     const newBlock = {
@@ -210,7 +210,7 @@ const mergeStore = (otherStore) => {
       newBlock.k = []
       for (let childId of block.k) {
         let newChildId = idTranslation[childId] || childId
-        transferBlock(childId,newBlockId)
+        transferBlock(childId, newBlockId)
         newBlock.k.push(newChildId)
       }
     }
@@ -230,7 +230,7 @@ const mergeStore = (otherStore) => {
         newPage.k = []
         for (let blockId of kids) {
           const newBlockId = getNewId(blockId)
-          transferBlock(blockId,newPageId)
+          transferBlock(blockId, newPageId)
           newPage.k.push(newBlockId)
         }
       }
@@ -242,7 +242,7 @@ const mergeStore = (otherStore) => {
       }
       for (let childId of page.k) {
         const newChildId = idTranslation[childId] || childId
-        transferBlock(childId,newPageId)
+        transferBlock(childId, newPageId)
         existingPage.k.push(newChildId)
       }
     }
@@ -253,9 +253,9 @@ const mergeStore = (otherStore) => {
 
 // search
 
-const escapeRegex = (string) => string.replaceAll(/([\[\]\(\)])/g,"\\$1").replaceAll("\\\\","")
+const escapeRegex = (string) => string.replaceAll(/([\[\]\(\)])/g, "\\$1").replaceAll("\\\\", "")
 
-const newSearchRegex = (string) => new RegExp(escapeRegex(string),"i")
+const newSearchRegex = (string) => new RegExp(escapeRegex(string), "i")
 
 const searchRefCountWeight = 0.05
 const pageOverBlockWeight = 1
@@ -276,7 +276,7 @@ const titleExactFullTextSearch = (string) => {
       })
     }
   }
-  titleExactFullTextSearchCache.sort((a,b) => a.idx - b.idx)
+  titleExactFullTextSearchCache.sort((a, b) => a.idx - b.idx)
   return titleExactFullTextSearchCache
 }
 
@@ -298,7 +298,7 @@ const exactFullTextSearch = (string) => {
       exactFullTextSearchCache.push(matchObj)
     }
   }
-  exactFullTextSearchCache.sort((a,b) => a.idx - b.idx)
+  exactFullTextSearchCache.sort((a, b) => a.idx - b.idx)
   return exactFullTextSearchCache
 }
 
@@ -332,14 +332,14 @@ const searchTemplates = (string) => {
         fn(blockId)
     }
     console.log(templateSearchCache)
-    templateSearchCache = templateSearchCache.sort((a,b) => b.idx - a.idx)
+    templateSearchCache = templateSearchCache.sort((a, b) => b.idx - a.idx)
     console.log(templateSearchCache)
 
   }
   return templateSearchCache
 }
 
-const hydrateFromBlox = (graphName,blox) => {
+const hydrateFromBlox = (graphName, blox) => {
   store = blankStore()
   store.blox = blox
   store.graphName = graphName
@@ -351,7 +351,7 @@ const hydrateFromBlox = (graphName,blox) => {
 }
 
 const sortByLastEdited = (arr) => {
-  arr.sort((a,b) => {
+  arr.sort((a, b) => {
     if (store.blox[a].et > store.blox[b].et) {
       return -1
     }
