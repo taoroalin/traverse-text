@@ -195,7 +195,9 @@ scriptsLoaded = true
 
 const ptest = () => {
   const t2 = performance.now()
-  JSON.stringify(store.blox)
+  for (let i = 0; i < 1000; i++) {
+    focusIdPosition()
+  }
   console.log(`JSON took ${performance.now() - t2}`)
 }
 // ptest()

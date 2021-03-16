@@ -312,6 +312,7 @@ macros.nocommit = {
   },
   writePageTitle: (id,string) => {
     const oldString = store.blox[id].s
+    // create page first so that changing the backrefs will reference existing page instead of making new page
     doEdit("df",id,diff(string,oldString))
     for (let ref of store.refs[id] || []) {
       const bloc = store.blox[ref]

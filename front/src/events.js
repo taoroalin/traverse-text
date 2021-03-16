@@ -582,7 +582,8 @@ const getPageTitleOfNode = (node) => {
 }
 
 // The single event handler model has some problems. The cases need to appear in the same order they are nested in the DOM
-document.addEventListener("click",(event) => {
+// maybe this should be click instead of mousedown
+document.addEventListener("mousedown",(event) => {
 
   const clickedPageTitle = getPageTitleOfNode(event.target)
   if (clickedPageTitle) {

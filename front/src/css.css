@@ -7,6 +7,7 @@
   --placeholder: #919191; */
 }
 
+
 .dark {
   --background: #1b1b1b;
   --click: rgb(100, 100, 100);
@@ -15,6 +16,7 @@
   --brackets: #a7b6c2;
   --block-ref: rgb(63, 63, 63);
   --bullet: #758897;
+/* The inline svg has the same color as border and needs to be set manually because fuck */
   --border: #afbeca;
   --break: #838e97;
   --highlight: rgb(110, 93, 16);
@@ -257,7 +259,22 @@ a:visited {
 }
 
 .block__children {
-  margin-left: 25px;
+  margin-left: 22px;
+  position:relative;
+}
+.block__children::before{
+  display:block;
+  position:absolute;
+  /* content: url('data:image/svg+xml; utf8, <svg><line x1="0" y1="0" x2="0" y2="100%" stroke="black" /></svg>'); */
+  content:"\200B";
+  /* background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="100"><line x1="0" y1="0" x2="0" y2="100" stroke="grey" /></svg>'); */
+  top:2px;
+  height:calc(100% - 4px);
+  width:6px;
+  /* background-color:var(--border); */
+  transform:translateX(-34px);
+  border-left: 1px solid var(--border);
+  /* border-width: 0 0 0 1px; */
 }
 
 .block-focus-frame {
