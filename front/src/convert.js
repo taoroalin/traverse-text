@@ -28,11 +28,12 @@ const roamJsonToStore = (graphName,text) => {
   ownerRoamId = store.ownerRoamId
 
   const addBlock = (block,parent) => {
+    const ct = intToBase64(block["create-time"]) || now
     const newBlock = {
       s: block.string,
       p: parent,
-      ct: intToBase64(block["create-time"]) || now,
-      et: intToBase64(block["edit-time"]) || now,
+      ct: ct,
+      et: intToBase64(block["edit-time"]) || ct,
     }
     store.blox[block.uid] = newBlock
 
@@ -58,9 +59,11 @@ const roamJsonToStore = (graphName,text) => {
 
   for (let page of obj) {
     store.titles[page.title] = page.uid
+    const ct = intToBase64(page["create-time"]) || now
     const newPage = {
       s: page.title,
-      ct: now,
+      ct: ct,
+      et: intToBase64(page["edit-time"]) || ct,
     }
     store.blox[page.uid] = newPage
 

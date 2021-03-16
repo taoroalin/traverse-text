@@ -1,4 +1,4 @@
-const renderPage = (parentNode,uid) => {
+const renderPage = (parentNode,uid,hasBackrefs = true) => {
   const page = store.blox[uid]
   const element = pageTemplate.cloneNode(true)
   const title = element.firstElementChild
@@ -23,10 +23,11 @@ const renderPage = (parentNode,uid) => {
   }
 
   const refs = store.refs[uid]
-  if (refs && refs.length > 0) {
+  if (hasBackrefs && refs && refs.length > 0) {
     const backrefsListElement = backrefListTemplate.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
-    refs.sort((a,b) => store.blox[b].et - store.blox[a].et)
+    sortByLastEdited(refs)
+    console.log(refs.map(x => store.blox[x]))
     for (let backref of refs) {
       const backrefFrame = backrefFrameTemplate.cloneNode(true)
       renderBreadcrumb(backrefFrame.children[0],backref)

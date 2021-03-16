@@ -249,6 +249,7 @@ a:visited {
 
 .block__body {
   padding: 5px 0;
+  /* white-space: pre-wrap; */
 }
 
 .block__bullet {
@@ -268,8 +269,8 @@ a:visited {
   /* content: url('data:image/svg+xml; utf8, <svg><line x1="0" y1="0" x2="0" y2="100%" stroke="black" /></svg>'); */
   content:"\200B";
   /* background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="100"><line x1="0" y1="0" x2="0" y2="100" stroke="grey" /></svg>'); */
-  top:2px;
-  height:calc(100% - 4px);
+  top:0;
+  height:100%;
   width:6px;
   /* background-color:var(--border); */
   transform:translateX(-34px);

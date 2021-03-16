@@ -349,3 +349,12 @@ const hydrateFromBlox = (graphName,blox) => {
   }
   generateRefs()
 }
+
+const sortByLastEdited = (arr) => {
+  arr.sort((a,b) => {
+    if (store.blox[a].et > store.blox[b].et) {
+      return -1
+    }
+    return 1
+  })
+}
