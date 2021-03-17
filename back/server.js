@@ -2,12 +2,31 @@ const http = require('http')
 const fs = require('fs')
 const zlib = require('zlib')
 const stream = require('stream')
-const shared = require('../front/src/front-back-shared.js')
+const os = require('os')
+const { lruMCreate, lruMGet, lruMPut, doEditBlox, applyDif, undoEditBlox, unapplyDif } = require('../front/src/front-back-shared.js')
 const { performance } = require('perf_hooks')
 // front-back-shared is in the front folder because its easier to import from other paths in Node
 
+const brotliCompressParams = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } }
+
+const bloxCache = lruMCreate()
+
+const storeBlox = (name, blox) => {
+  const string = JSON.stringify(blox)
+  zlib.brotliCompress(string, brotliCompressParams, (err, data) => {
+    if (err !== null) {
+      fs.writeFile(`../user-data/blox-br/${name}.json.br`, data, (err) => {
+        if (err !== null) {
+          log(err)
+          console.log(err)
+        }
+      })
+    }
+  })
+}
+
 const brCompressStream = (from, to) => {
-  const compressor = zlib.createBrotliCompress({ params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } })
+  const compressor = zlib.createBrotliCompress(brotliCompressParams)
   stream.pipeline(from, compressor, to, (err) => {
     if (err) {
       console.log("failed to compress:", err)
@@ -106,7 +125,7 @@ http.createServer((req, res) => {
     res.end()
     return
   }
-  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup|issue)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
+  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup|issue|edit)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
   log(req.url)
   if (match === null) {
     res.writeHead(404)
@@ -225,23 +244,27 @@ http.createServer((req, res) => {
       // console.log(`wrote ${match[2]}`)
       return
     case "get":
+      graphMetadata = graphs[match[2]]
+      if (graphMetadata === undefined) {
+        res.writeHead(404)
+        res.end()
+        return
+      }
       if (userAccount.u.r[match[2]] === undefined) {
         res.writeHead(403)
         res.end()
         return
       }
-      graphMetadata = graphs[match[2]]
+
+      const readableUserData = userAccount.u
+      res.setHeader('user', JSON.stringify(readableUserData))
+
       if (match[3] && match[3] === graphMetadata.l) {
         res.writeHead(304)
         res.end()
         return
       }
 
-      if (graphMetadata.l === undefined) {
-        res.writeHead(404)
-        res.end()
-        return
-      }
       res.setHeader('Content-Encoding', 'br')
       fileReadStream = fs.createReadStream(`../user-data/blox-br/${match[2]}.json.br`)
       fileReadStream.pipe(res)
@@ -285,42 +308,6 @@ http.createServer((req, res) => {
       debouncedSaveAccounts()
       res.writeHead(200)
       res.end()
-      return
-    case "startup":
-      if (match[2] === undefined) {
-        res.writeHead(400)
-        res.end()
-        return
-      }
-      const readableUserData = userAccount.u
-      res.setHeader('user', JSON.stringify(readableUserData))
-
-      const graphName = readableUserData.s.graphName
-      if (fs.existsSync(`../user-data/blox-br/${match[2]}.json.br`) === false) {
-        res.writeHead(404)
-        res.end()
-        return
-      }
-      if (req.headers.commitid !== undefined && req.headers.commitid === graphs[graphName].l) {
-        res.writeHead(304)
-        res.end()
-        return
-      }
-      if (readableUserData.r[graphName] === undefined) {
-        res.writeHead(403)
-        res.end()
-        return
-      }
-      // todo validate this
-      graphMetadata = graphs[graphName]
-      if (!graphMetadata.l) {
-        res.writeHead(404)
-        res.end()
-        return
-      }
-      res.setHeader('Content-Encoding', 'br')
-      fileReadStream = fs.createReadStream(`../user-data/blox-br/${graphName}.json.br`)
-      fileReadStream.pipe(res)
       return
     default:
       res.writeHead(400)

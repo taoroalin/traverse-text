@@ -1,3 +1,7 @@
+const canWriteBloc = (blocId) => { // todo implement readonly blocs
+  return true
+}
+
 /*
 Paralel difs are too much work. Switching to simpler single command buffer
 I feel like I had a specification for diffs, but I seem to have lost it.
@@ -11,27 +15,6 @@ s: position. defaults to end of string
 */
 
 const isSynced = () => user.s.commitId === user.s.syncCommitId
-
-const applyDif = (string, dif) => {
-  // not using dif.s||result.length because dif.s could be 0
-  let end = string.length
-  if (dif.s !== undefined) end = dif.s
-  const start = end - (((dif.d !== undefined) && dif.d.length) || 0)
-  return string.substring(0, start) + (dif.i || "") + string.substring(end)
-}
-
-const unapplyDif = (string, dif) => {
-  const dLen = (((dif.d !== undefined) && dif.d.length) || 0)
-  const iLen = (((dif.i !== undefined) && dif.i.length) || 0)
-  if (dif.s !== undefined) {
-    const start = dif.s - dLen
-    const end = start + iLen
-    return string.substring(0, start) + (dif.d || "") + string.substring(end)
-  } else {
-    const start = string.length - dLen - iLen
-    return string.substring(0, start) + (dif.d || "")
-  }
-}
 
 const diff = (string, oldString) => { // todo real diff
   return { d: oldString, i: string }
@@ -52,49 +35,12 @@ const undoEditCacheStuff = (edit) => {
       break
     case 'df':
       setLinks(id)
-      break
-  }
-}
-
-const undoEdit = (edit) => {
-
-  // console.log(edit)
-  const [op, id, p1, p2, p3, p4] = edit
-  switch (op) {
-    case "cr":
-      const parent = store.blox[id].p
-      if (parent) {
-        store.blox[parent].k = store.blox[parent].k.filter(x => x !== id)
-      }
-      delete store.blox[id]
-      break
-    case "dl":
-      store.blox[id] = p1
-      const parentId = p1.p, idx = p2
-      if (parentId) {
-        if (!store.blox[parentId].k) store.blox[parentId].k = []
-        if (idx) {
-          store.blox[parentId].k.splice(idx, 0, id)
-        } else {
-          store.blox[parentId].k.push(id)
-        }
-      }
-      break
-    case "mv":
-      const oldParent = p1, oidx = p2, newParent = p3, nidx = p4
-      const block = store.blox[id]
-      store.blox[oldParent].k = store.blox[oldParent].k.filter(x => x != id)
-      block.p = newParent
-      if (!store.blox[newParent].k) store.blox[newParent].k = []
-      store.blox[newParent].k.splice(nidx, 0, id)
-      break
-    case "df":
-      const df = p1
       const bloc = store.blox[id]
-      bloc.et = commit.time
-      if (!bloc.p) delete store.titles[bloc.s]
-      bloc.s = unapplyDif(bloc.s, df)
-      if (!bloc.p) store.titles[bloc.s] = id
+      if (bloc.p === undefined) {
+        const oldString = applyDif(bloc.s, p1) // this work could be deduplicated, but AAAAGGGGHHHH there's already so much coupling to deduplicate work!
+        delete store.titles[oldString]
+        store.titles[bloc.s] = id
+      }
       break
   }
 }
@@ -104,7 +50,7 @@ const undo = () => {
   sessionState = editsSessionStates.pop()
   for (let i = commit.edits.length - 1; i >= 0; i--) {
     const edit = commit.edits[i]
-    undoEdit(edit)
+    undoEdit(edit, store.blox)
     undoEditCacheStuff(edit)
   }
 }
@@ -134,51 +80,12 @@ const doEditCacheStuff = (edit) => {
       break
     case 'df':
       setLinks(id)
-      break
-  }
-}
-
-const doEditBlox = (edit, time) => {
-  const [op, id, p1, p2, p3, p4] = edit
-  switch (op) {
-    case "dl":
-      const parent = store.blox[id].p
-      if (parent) {
-        store.blox[parent].k = store.blox[parent].k.filter(x => x !== id)
-      }
-      delete store.blox[id]
-      break
-    case "cr":
-      store.blox[id] = {
-        ct: time,
-        s: ""
-      }
-      const parentId = p1, idx = p2
-      if (parentId) {
-        store.blox[id].p = parentId
-        if (!store.blox[parentId].k) store.blox[parentId].k = []
-        if (idx) {
-          store.blox[parentId].k.splice(idx, 0, id)
-        } else {
-          store.blox[parentId].k.push(id)
-        }
-      }
-      break
-    case "mv":
-      const newParent = p1, nidx = p2, oldParent = p3
-      const block = store.blox[id]
-      store.blox[oldParent].k = store.blox[oldParent].k.filter(x => x != id)
-      block.p = newParent
-      if (!store.blox[newParent].k) store.blox[newParent].k = []
-      store.blox[newParent].k.splice(nidx, 0, id)
-      break
-    case "df":
-      const df = p1
       const bloc = store.blox[id]
-      bloc.et = time
-      if (!bloc.p) delete store.titles[bloc.s] // todo move this to cacheStuff, but need access to before & after there
-      bloc.s = applyDif(bloc.s, df)
-      if (!bloc.p) store.titles[bloc.s] = id
+      if (bloc.p === undefined) {
+        const oldString = unapplyDif(bloc.s, p1) // this work could be deduplicated, but AAAAGGGGHHHH there's already so much coupling to deduplicate work!
+        delete store.titles[oldString]
+        store.titles[bloc.s] = id
+      }
       break
   }
 }
@@ -188,7 +95,7 @@ const doEdit = (...edit) => {
   activeEdits.push(edit)
   print(edit)
   // console.log(edit)
-  doEditBlox(edit, time)
+  doEditBlox(edit, store.blox, time)
   doEditCacheStuff(edit)
 }
 
@@ -375,8 +282,14 @@ const inlineCommands = {
 let commandSearchCache = []
 const matchInlineCommand = (string) => {
   commandSearchCache = []
+  let regex
+  try {
+    regex = newSearchRegex(string)
+  } catch (e) {
+    return commandSearchCache
+  }
   for (let command in inlineCommands) {
-    if (command.match(string)) {
+    if (command.match(regex)) {
       commandSearchCache.push({ string: command })
     }
   }
@@ -386,8 +299,4 @@ const matchInlineCommand = (string) => {
 const execInlineCommand = () => {
   inlineCommandList.style.display = "none"
   inlineCommands[focusSuggestion.dataset.string]()
-}
-
-const canWriteBloc = (blocId) => { // todo implement readonly blocs
-  return true
 }

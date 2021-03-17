@@ -305,10 +305,17 @@ const exactFullTextSearch = (string) => {
 
 let templateSearchCache = []
 const searchTemplates = (string) => {
-  const searchRegex = newSearchRegex(string)
   const templatePageId = store.titles["roam/templates"]
   const templatePage = store.blox[templatePageId]
   templateSearchCache = []
+  let searchRegex
+
+  try {
+    searchRegex = newSearchRegex(string)
+  } catch {
+    return templateSearchCache
+  }
+
   if (templatePage) {
     const fn = (blockId) => {
       const block = store.blox[blockId]

@@ -93,31 +93,29 @@ const renderBreadcrumb = (parent, blockId) => {
 
 const renderResultSet = (parent, resultSet, resultFrame, startIdx = 0) => {
   const resultTemplate = getTemp(resultFrame.dataset.templateName)
-  if (resultSet.length > 0) {
-    resultFrame.innerHTML = ""
-    resultFrame.style.display = "block"
-    const rect = parent.getBoundingClientRect()
-    resultFrame.style.top = rect.bottom
-    resultFrame.style.left = rect.left
-    resultFrame.dataset.resultStartIdx = startIdx
-    const resultLength = Math.min(resultSet.length, startIdx + SEARCH_RESULT_LENGTH)
-    for (let i = startIdx; i < resultLength; i++) {
-      matchingTitle = resultSet[i]
-      const suggestion = resultTemplate.cloneNode(true)
-      if (i == startIdx) {
-        focusSuggestion = suggestion
-        suggestion.dataset.selected = "true"
-      }
-      suggestion.dataset.id = matchingTitle.id
-      if (matchingTitle.title) {
-        suggestion.dataset.title = matchingTitle.title
-        suggestion.innerText = truncateElipsis(matchingTitle.title, 50)
-      } else {
-        suggestion.dataset.string = matchingTitle.string
-        suggestion.innerText = truncateElipsis(matchingTitle.string, 50)
-      }
-      resultFrame.appendChild(suggestion)
+  resultFrame.innerHTML = ""
+  resultFrame.style.display = "block"
+  const rect = parent.getBoundingClientRect()
+  resultFrame.style.top = rect.bottom
+  resultFrame.style.left = rect.left
+  resultFrame.dataset.resultStartIdx = startIdx
+  const resultLength = Math.min(resultSet.length, startIdx + SEARCH_RESULT_LENGTH)
+  for (let i = startIdx; i < resultLength; i++) {
+    matchingTitle = resultSet[i]
+    const suggestion = resultTemplate.cloneNode(true)
+    if (i == startIdx) {
+      focusSuggestion = suggestion
+      suggestion.dataset.selected = "true"
     }
+    suggestion.dataset.id = matchingTitle.id
+    if (matchingTitle.title) {
+      suggestion.dataset.title = matchingTitle.title
+      suggestion.innerText = truncateElipsis(matchingTitle.title, 50)
+    } else {
+      suggestion.dataset.string = matchingTitle.string
+      suggestion.innerText = truncateElipsis(matchingTitle.string, 50)
+    }
+    resultFrame.appendChild(suggestion)
   }
 }
 

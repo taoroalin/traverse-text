@@ -414,7 +414,6 @@ document.addEventListener("keydown", (event) => {
       case "Backspace":
         if (sessionState.position === 0) {
           const parent = store.blox[store.blox[sessionState.focusId].p]
-          console.log(parent.k)
           if (!(parent.p === undefined && parent.k.length === 1)) {
             blocks = Array.from(document.querySelectorAll(".block"))
             newActiveBlock = blocks[blocks.indexOf(focusBlock) - 1]

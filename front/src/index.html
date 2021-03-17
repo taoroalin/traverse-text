@@ -42,7 +42,7 @@
       const headers = new Headers()
       headers.set('h', user.h)
       if (user.s.commitId) headers.set('commitid', user.s.commitId)
-      let reqUrl = `${basicBitchServerUrl}/startup/${user.s.graphName}`
+      let reqUrl = `${basicBitchServerUrl}/get/${user.s.graphName}`
       fetch(reqUrl, { method: 'POST', headers: headers }).then(async (res) => {
         if (res.status === 304) {
           console.log(`already up to date`)
