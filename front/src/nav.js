@@ -132,7 +132,9 @@ const dailyNotesInfiniteScrollListener = () => {
       const daysNotes = store.titles[formatDate(sessionState.oldestDate)]
       if (daysNotes) {
         renderPage(pageFrame, daysNotes)
-        pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
+        const pageBreak = document.createElement("div")
+        pageBreak.className = "page-break"
+        pageFrame.appendChild(pageBreak)
         break
       }
     }
@@ -194,12 +196,13 @@ const saveUser = () => {
 if (dataLoaded) start()
 scriptsLoaded = true
 
-
+const extrastores = []
 const ptest = () => {
   const t2 = performance.now()
-  for (let i = 0; i < 1000; i++) {
-    focusIdPosition()
+  for (let i = 0; i < 100; i++) {
+
+    extrastores.push(JSON.parse(JSON.stringify(store)))
   }
-  console.log(`JSON took ${performance.now() - t2}`)
+  console.log(`new store took ${performance.now() - t2}`)
 }
 // ptest()

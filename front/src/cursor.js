@@ -9,7 +9,7 @@ const focusIdPosition = () => {
           try {
             // this does the thing correctly, but then throws an error, which I catch? todo investigate
             const placeToGo = sessionState.position - el.startIdx
-            console.log(placeToGo)
+            console.log(`startIdx ${el.startIdx} togo ${placeToGo}`)
             getSelection().collapse(el, placeToGo)
             return el
           } catch (error) {
@@ -67,7 +67,6 @@ const resetFocusedBlockBody = () => {
 
 const updateFocusFromNode = (node, position) => {
   sessionState.isFocused = true
-  console.log(`setting sesion state to ${sessionState.isFocused}`)
   if (focusBlockBody) {
     resetFocusedBlockBody()
   }
@@ -78,9 +77,6 @@ const updateFocusFromNode = (node, position) => {
   focusBlockBody = focusBlock.children[1]
   sessionState.focusId = focusBlock.dataset.id
   sessionState.position = position
-
-  console.log(sessionState.position)
-  console.log(sessionState.focusId)
 
   const text = store.blox[sessionState.focusId].s
   focusBlockBody.innerText = ""

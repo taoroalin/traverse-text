@@ -281,11 +281,24 @@ const globalHotkeys = {
     key: "d", alt: true, fn: () => {
       goto("dailyNotes")
     }
-  }, "undo": {
+  },
+  "undo": {
     key: "z", control: true, fn: () => {
       if (edits.length > 0) {
         undo()
         renderSessionState()
+      }
+    }
+  },
+  "delete block": {
+    key: "K", control: true, shift: true, fn: () => {
+      const bloc = store.blox[sessionState.focusId]
+      console.log("maybz deleting block")
+      if (bloc.k === undefined || bloc.k.length === 0) {
+        console.log("deleting block")
+        focusBlockVerticalOffset(-1)
+        macros.delete(sessionState.focusId)
+        focusBlock.remove()
       }
     }
   },
@@ -307,6 +320,7 @@ const globalHotkeys = {
 }
 
 document.addEventListener("keydown", (event) => {
+  console.log(event)
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
     if (event.key === hotkey.key &&
@@ -592,7 +606,6 @@ const getPageTitleOfNode = (node) => {
 document.addEventListener("mousedown", (event) => {
 
   const clickedPageTitle = getPageTitleOfNode(event.target)
-  console.log(clickedPageTitle)
   if (clickedPageTitle) {
     goto("pageTitle", clickedPageTitle)
     return

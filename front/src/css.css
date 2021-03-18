@@ -2,9 +2,6 @@
 * {
   outline: none;
   scrollbar-width: none;
-
-  /* --pop: #c2c2c2;
-  --placeholder: #919191; */
 }
 
 
@@ -16,7 +13,6 @@
   --brackets: #a7b6c2;
   --block-ref: rgb(63, 63, 63);
   --bullet: #758897;
-/* The inline svg has the same color as border and needs to be set manually because fuck */
   --border: #afbeca;
   --break: #838e97;
   --highlight: rgb(110, 93, 16);
@@ -129,7 +125,6 @@ a:visited {
   transition: margin-top 0.1s;
 }
 
-/* these have different paddings, but look the same because weird stuff. todo investigate */
 #top-bar a {
   padding: 14px 10px 10px;
   font-size: 0.9em;
@@ -249,7 +244,7 @@ a:visited {
 
 .block__body {
   padding: 5px 0;
-  /* white-space: pre-wrap; */
+  white-space: pre-wrap;
 }
 
 .block__bullet {
@@ -376,7 +371,6 @@ a:visited {
 .code-block {
   font-family: "Inconsolata";
   font-size: 1.15em;
-  /* display: block; */
 }
 
 .attribute {
@@ -447,7 +441,6 @@ a:visited {
   border-radius: 3px;
   display: block;
   padding: 4px;
-  /* border:1px solid var(--border); */
   margin-bottom: 13px;
 }
 
