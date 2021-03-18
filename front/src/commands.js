@@ -195,7 +195,6 @@ macros.nocommit = {
     const copyBlock = (oldId, parentId, idx) => {
       const newId = newUid()
       const block = store.blox[oldId]
-      console.log(`copying block ${block.s}`)
       doEdit("cr", newId, parentId, idx)
       doEdit("df", newId, diff(block.s, ""))
       if (block.k) {

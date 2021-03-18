@@ -63,13 +63,12 @@ const renderSessionState = () => {
       break
   }
 
-  if (sessionState.isFocused) {
-    focusIdPosition()
-  } else {
+  if (!sessionState.isFocused) {
     const firstBlockElement = pageFrame.querySelector('.block')
-    updateFocusFromNode(firstBlockElement, 0)
-    console.log("focusbeginningded")
+    sessionState.position = 0
+    sessionState.focusId = firstBlockElement.dataset.id
   }
+  focusIdPosition()
 
   pageFrameOuter.scrollTop = sessionState.scroll || 0
 

@@ -97,7 +97,7 @@ http.createServer((req, res) => {
     res.end()
     return
   }
-  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup|issue|edit)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
+  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup|issue|edit|error)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
   log(req.url)
   if (match === null) {
     res.writeHead(404)
@@ -170,6 +170,10 @@ http.createServer((req, res) => {
     return
   } else if (match[1] === "issue") {
     fs.appendFile('../user-data/issues.txt', req.headers.body, () => { })
+    return
+  } else if (match[1] === "error") {
+    fs.appendFile('../user-data/errors.txt', req.headers.body, () => { })
+    return
   }
   const passwordHash = req.headers.h
   if (passwordHash === undefined || !(typeof passwordHash === "string") || passwordHash.match(hashRegex) === null) {

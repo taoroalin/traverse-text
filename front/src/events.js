@@ -1,11 +1,17 @@
 // Event Listener Helpers -----------------------------------------------------------------------------------------------
 
 const focusBlockEnd = (blockNode) => {
-  updateFocusFromNode(blockNode, -1)
+  sessionState.focusId = blockNode.dataset.id
+  sessionState.position = store.blox[sessionState.focusId].s.length
+  focusIdPosition()
+  console.log("focusblockend")
 }
 
 const focusBlockStart = (blockNode) => {
-  updateFocusFromNode(blockNode, 0)
+  sessionState.focusId = blockNode.dataset.id
+  sessionState.position = 0
+  focusIdPosition()
+  console.log("focusblockstartt")
 }
 
 const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => { // this closure feels weird, maybe shoudn't use this language feature?
@@ -550,8 +556,6 @@ document.addEventListener('paste', (event) => {
   console.log(event)
   if (clipboardData) {
     const clipboardText = event.clipboardData.getData('text')
-    console.log(clipboardText)
-    console.log(clipboardData.text)
     if (clipboardText.replaceAll(/\r/g, "") == clipboardData.text) {
       pasteBlocks()
       event.preventDefault()
@@ -748,9 +752,10 @@ document.addEventListener("selectionchange", (event) => {
     const currentFocusBlock = focusNode.parentNode.closest(".block")
     if (currentFocusBlock && canWriteBloc(currentFocusBlock.dataset.id)) {
       sessionState.isFocused = true
+      sessionState.position = (focusNode.startIdx || 0) + focusOffset
       if (currentFocusBlock.dataset.id !== sessionState.focusId) {
-        const position = (focusNode.startIdx || 0) + focusOffset
-        updateFocusFromNode(currentFocusBlock, position)
+        sessionState.focusId = currentFocusBlock.dataset.id
+        focusIdPosition()
       }
       return
     }

@@ -1211,7 +1211,6 @@ copyBlock: (oldId, parentId, idx) => {
 const copyBlock = (oldId, parentId, idx) => {
 const newId = newUid()
 const block = store.blox[oldId]
-console.log(`copying block ${block.s}`)
 doEdit("cr", newId, parentId, idx)
 doEdit("df", newId, diff(block.s, ""))
 if (block.k) {
@@ -1667,7 +1666,20 @@ return 1
 })
 }
 const focusIdPosition = () => {
-focusBlockBody = document.querySelector(`.block[data-id="${sessionState.focusId}"]>.block__body`)
+const oldFocusId = focusBlock && focusBlock.dataset.id
+if (oldFocusId && oldFocusId !== sessionState.focusId) {
+focusBlockBody.textContent = ""
+renderBlockBody(focusBlockBody, store.blox[oldFocusId].s)
+}
+focusBlock = document.querySelector(`.block[data-id="${sessionState.focusId}"]`)
+focusBlockBody = focusBlock.children[1]
+if (focusBlock === undefined) {
+throw new Error(`tried to focus block that doesn't exist: ${sessionState.focusId}`)
+}
+sessionState.isFocused = true
+const text = store.blox[sessionState.focusId].s
+focusBlockBody.innerText = ""
+renderBlockBodyToEdit(focusBlockBody, text)
 const scanElement = (element) => {
 for (let el of element.childNodes) {
 if (el.nodeName === "#text") {
@@ -1685,21 +1697,19 @@ if (z) return z
 }
 }
 scanElement(focusBlockBody)
+updateCursorSpanInfo()
 }
 const setFocusedBlockString = (string, diff) => {
 let theString = string
 if (theString === undefined) {
 theString = store.blox[sessionState.focusId].s
 }
-focusBlockBody.innerHTML = ""
-renderBlockBodyToEdit(focusBlockBody, theString)
-focusIdPosition()
-updateCursorSpanInfo()
 if (diff !== undefined) {
 commitEdit('df', sessionState.focusId, diff)
 } else {
 macros.write(sessionState.focusId, theString)
 }
+focusIdPosition()
 }
 const getEditingSimpleSpan = (className) => {
 const elements = focusBlockBody.querySelectorAll("." + className)
@@ -1715,29 +1725,6 @@ focusOffset = getSelection().focusOffset
 const block = focusNode.parentNode.closest(".block")
 sessionState.focusId = block.dataset.id
 sessionState.position = (focusNode.startIdx || 0) + focusOffset
-}
-const resetFocusedBlockBody = () => {
-focusBlockBody.innerText = ""
-const oldBlockData = store.blox[sessionState.focusId]
-if (oldBlockData !== undefined) renderBlockBody(focusBlockBody, oldBlockData.s)
-}
-const updateFocusFromNode = (node, position) => {
-sessionState.isFocused = true
-if (focusBlockBody) {
-resetFocusedBlockBody()
-}
-if (position === -1) {
-position = store.blox[node.dataset.id].s.length
-}
-focusBlock = node
-focusBlockBody = focusBlock.children[1]
-sessionState.focusId = focusBlock.dataset.id
-sessionState.position = position
-const text = store.blox[sessionState.focusId].s
-focusBlockBody.innerText = ""
-renderBlockBodyToEdit(focusBlockBody, text)
-focusIdPosition()
-updateCursorSpanInfo()
 }
 const updateCursorSpanInfo = () => {
 editingLink = undefined
@@ -2294,10 +2281,16 @@ store.syncCommitId = syncCommitId
 }
 // Event Listener Helpers -----------------------------------------------------------------------------------------------
 const focusBlockEnd = (blockNode) => {
-updateFocusFromNode(blockNode, -1)
+sessionState.focusId = blockNode.dataset.id
+sessionState.position = store.blox[sessionState.focusId].s.length
+focusIdPosition()
+console.log("focusblockend")
 }
 const focusBlockStart = (blockNode) => {
-updateFocusFromNode(blockNode, 0)
+sessionState.focusId = blockNode.dataset.id
+sessionState.position = 0
+focusIdPosition()
+console.log("focusblockstartt")
 }
 const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => { // this closure feels weird, maybe shoudn't use this language feature?
 const blocks = Array.from(document.querySelectorAll(".block"))
@@ -2813,8 +2806,6 @@ document.addEventListener('paste', (event) => {
 console.log(event)
 if (clipboardData) {
 const clipboardText = event.clipboardData.getData('text')
-console.log(clipboardText)
-console.log(clipboardData.text)
 if (clipboardText.replaceAll(/\r/g, "") == clipboardData.text) {
 pasteBlocks()
 event.preventDefault()
@@ -2992,9 +2983,10 @@ if (focusNode) {
 const currentFocusBlock = focusNode.parentNode.closest(".block")
 if (currentFocusBlock && canWriteBloc(currentFocusBlock.dataset.id)) {
 sessionState.isFocused = true
+sessionState.position = (focusNode.startIdx || 0) + focusOffset
 if (currentFocusBlock.dataset.id !== sessionState.focusId) {
-const position = (focusNode.startIdx || 0) + focusOffset
-updateFocusFromNode(currentFocusBlock, position)
+sessionState.focusId = currentFocusBlock.dataset.id
+focusIdPosition()
 }
 return
 }
@@ -3160,13 +3152,12 @@ sessionState.oldestDate.getDate() - 1
 if (numNotesLoaded < initialDailyNotes) pageFrame.lastChild.remove()
 break
 }
-if (sessionState.isFocused) {
-focusIdPosition()
-} else {
+if (!sessionState.isFocused) {
 const firstBlockElement = pageFrame.querySelector('.block')
-updateFocusFromNode(firstBlockElement, 0)
-console.log("focusbeginningded")
+sessionState.position = 0
+sessionState.focusId = firstBlockElement.dataset.id
 }
+focusIdPosition()
 pageFrameOuter.scrollTop = sessionState.scroll || 0
 }
 const gotoNoHistory = (commandName, ...command) => {

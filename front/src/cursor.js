@@ -1,5 +1,21 @@
 const focusIdPosition = () => {
-  focusBlockBody = document.querySelector(`.block[data-id="${sessionState.focusId}"]>.block__body`)
+  const oldFocusId = focusBlock && focusBlock.dataset.id
+  if (oldFocusId && oldFocusId !== sessionState.focusId) {
+    focusBlockBody.textContent = ""
+    renderBlockBody(focusBlockBody, store.blox[oldFocusId].s)
+  }
+  focusBlock = document.querySelector(`.block[data-id="${sessionState.focusId}"]`)
+  focusBlockBody = focusBlock.children[1]
+
+  if (focusBlock === undefined) {
+    throw new Error(`tried to focus block that doesn't exist: ${sessionState.focusId}`)
+  }
+
+  sessionState.isFocused = true
+
+  const text = store.blox[sessionState.focusId].s
+  focusBlockBody.innerText = ""
+  renderBlockBodyToEdit(focusBlockBody, text)
 
   const scanElement = (element) => {
     for (let el of element.childNodes) {
@@ -18,6 +34,7 @@ const focusIdPosition = () => {
     }
   }
   scanElement(focusBlockBody)
+  updateCursorSpanInfo()
 }
 
 const setFocusedBlockString = (string, diff) => {
@@ -26,15 +43,13 @@ const setFocusedBlockString = (string, diff) => {
     theString = store.blox[sessionState.focusId].s
   }
 
-  focusBlockBody.innerHTML = ""
-  renderBlockBodyToEdit(focusBlockBody, theString)
-  focusIdPosition()
-  updateCursorSpanInfo()
   if (diff !== undefined) {
     commitEdit('df', sessionState.focusId, diff)
   } else {
     macros.write(sessionState.focusId, theString)
   }
+
+  focusIdPosition()
 }
 
 const getEditingSimpleSpan = (className) => {
@@ -53,32 +68,6 @@ const updateCursorPosition = () => {
   const block = focusNode.parentNode.closest(".block")
   sessionState.focusId = block.dataset.id
   sessionState.position = (focusNode.startIdx || 0) + focusOffset
-}
-
-const resetFocusedBlockBody = () => {
-  focusBlockBody.innerText = ""
-  const oldBlockData = store.blox[sessionState.focusId]
-  if (oldBlockData !== undefined) renderBlockBody(focusBlockBody, oldBlockData.s)
-}
-
-const updateFocusFromNode = (node, position) => {
-  sessionState.isFocused = true
-  if (focusBlockBody) {
-    resetFocusedBlockBody()
-  }
-  if (position === -1) {
-    position = store.blox[node.dataset.id].s.length
-  }
-  focusBlock = node
-  focusBlockBody = focusBlock.children[1]
-  sessionState.focusId = focusBlock.dataset.id
-  sessionState.position = position
-
-  const text = store.blox[sessionState.focusId].s
-  focusBlockBody.innerText = ""
-  renderBlockBodyToEdit(focusBlockBody, text)
-  focusIdPosition()
-  updateCursorSpanInfo()
 }
 
 const updateCursorSpanInfo = () => {
