@@ -47,7 +47,9 @@ const renderSessionState = () => {
         const daysNotes = store.titles[formatDate(sessionState.oldestDate)]
         if (daysNotes) {
           renderPage(pageFrame, daysNotes)
-          pageFrame.appendChild(pageBreakTemplate.cloneNode(true))
+          const pageBreak = document.createElement("div")
+          pageBreak.className = "page-break"
+          pageFrame.appendChild(pageBreak)
           numNotesLoaded += 1
           if (numNotesLoaded >= initialDailyNotes) {
             break

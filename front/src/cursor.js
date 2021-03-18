@@ -8,7 +8,9 @@ const focusIdPosition = () => {
           scanResult = el
           try {
             // this does the thing correctly, but then throws an error, which I catch? todo investigate
-            getSelection().collapse(el, sessionState.position - el.startIdx)
+            const placeToGo = sessionState.position - el.startIdx
+            console.log(placeToGo)
+            getSelection().collapse(el, placeToGo)
             return el
           } catch (error) {
             return el

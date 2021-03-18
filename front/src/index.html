@@ -273,10 +273,6 @@
     </div>
   </template>
 
-  <template id="page-break">
-    <div class="page-break"></div>
-  </template>
-
   <template id="block-focus-frame">
     <div class="block-focus-frame">
       <div class="block-focus-frame__breadcrumb"></div>
@@ -297,10 +293,22 @@
         class="page-ref__brackets"></span></span>
   </template>
 
+  <template id="breadcrumb-page">
+    <span class="breadcrumb-page"></span>
+  </template>
+
+  <template id="notification">
+    <div class="notification"></div>
+  </template>
+
+  <template id="breadcrumb-block">
+    <span class="breadcrumb-block"><span class="breadcrumb-block__arrow">-></span><span
+        class="breadcrumb-block__body"></span></span>
+  </template>
+
   <template id="autocomplete__suggestion">
     <div class="autocomplete__suggestion"></div>
   </template>
-
 
   <template id="command__suggestion">
     <div class="command__suggestion"></div>
@@ -314,18 +322,6 @@
     <div class="search-result"></div>
   </template>
 
-  <template id="breadcrumb-block">
-    <span class="breadcrumb-block"><span class="breadcrumb-block__arrow">-></span><span
-        class="breadcrumb-block__body"></span></span>
-  </template>
-
-  <template id="breadcrumb-page">
-    <span class="breadcrumb-page"></span>
-  </template>
-
-  <template id="notification">
-    <div class="notification"></div>
-  </template>
 
   <script src="declarations.js"></script>
   <script src="front-back-shared.js"></script>
@@ -342,6 +338,7 @@
   <script src="nav.js"></script>
 
   <!-- now rendering is done, loading interactive scripts-->
+  <!-- THIS COMMENT IS FUNCTIONAL because it stops the script inliner from combining the scripts above and below it -->
 
   <script src="convert.js" async></script>
   <script src="test.js" async></script>
