@@ -2,19 +2,17 @@ const focusIdPosition = () => {
   focusBlockBody = document.querySelector(`.block[data-id="${sessionState.focusId}"]>.block__body`)
 
   const scanElement = (element) => {
+    console.log(`scanning element`)
+    console.log(element)
     for (let el of element.childNodes) {
       if (el.nodeName === "#text") {
-        if (el.textContent && sessionState.position >= el.startIdx && sessionState.position < el.startIdx + el.textContent.length) {
+        console.log("found text")
+        if (sessionState.position >= (el.startIdx || 0) && sessionState.position <= (el.startIdx || 0) + el.textContent.length) {
           scanResult = el
-          try {
-            // this does the thing correctly, but then throws an error, which I catch? todo investigate
-            const placeToGo = sessionState.position - el.startIdx
-            console.log(`startIdx ${el.startIdx} togo ${placeToGo}`)
-            getSelection().collapse(el, placeToGo)
-            return el
-          } catch (error) {
-            return el
-          }
+          const placeToGo = sessionState.position - el.startIdx
+          console.log(`startIdx ${el.startIdx} togo ${placeToGo}`)
+          getSelection().collapse(el, placeToGo)
+          return el
         }
       } else {
         const z = scanElement(el)
@@ -30,6 +28,7 @@ const setFocusedBlockString = (string, diff) => {
   if (theString === undefined) {
     theString = store.blox[sessionState.focusId].s
   }
+
   focusBlockBody.innerHTML = ""
   renderBlockBodyToEdit(focusBlockBody, theString)
   focusIdPosition()

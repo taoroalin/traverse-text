@@ -94,6 +94,7 @@ const renderBreadcrumb = (parent, blockId) => {
 const renderResultSet = (parent, resultSet, resultFrame, startIdx = 0) => {
   if (resultSet.length === 0) {
     resultFrame.style.display = "none"
+    focusSuggestion = null
     return
   }
   const resultTemplate = getTemp(resultFrame.dataset.templateName)
@@ -145,7 +146,7 @@ const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|
 
 const renderBlockBodyToEdit = (parent, text) => {
   parent.dataset.editmode = true
-  if (text[text.length - 1] !== " ") text += " " // add space because browser creates new text node (bad) if we ever reach the end of ours
+  // if (text[text.length - 1] !== "\u200A") text += "\u200A" // add space because browser creates new text node (bad) if we ever reach the end of ours
   const stack = [parent]
   const matches = text.matchAll(parseRegex)
 

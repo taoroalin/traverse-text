@@ -66,10 +66,9 @@ const renderSessionState = () => {
   if (sessionState.isFocused) {
     focusIdPosition()
   } else {
-    sessionState.isFocused = true
-    sessionState.position = 0
-    sessionState.focusId = pageFrame.querySelector('.block').dataset.id
-    focusBlockStart(document.querySelector(".block"))
+    const firstBlockElement = pageFrame.querySelector('.block')
+    updateFocusFromNode(firstBlockElement, 0)
+    console.log("focusbeginningded")
   }
 
   pageFrameOuter.scrollTop = sessionState.scroll || 0
@@ -200,7 +199,6 @@ const extrastores = []
 const ptest = () => {
   const t2 = performance.now()
   for (let i = 0; i < 100; i++) {
-
     extrastores.push(JSON.parse(JSON.stringify(store)))
   }
   console.log(`new store took ${performance.now() - t2}`)

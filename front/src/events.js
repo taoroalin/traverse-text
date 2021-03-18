@@ -320,7 +320,6 @@ const globalHotkeys = {
 }
 
 document.addEventListener("keydown", (event) => {
-  console.log(event)
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
     if (event.key === hotkey.key &&
@@ -496,21 +495,17 @@ document.addEventListener("keydown", (event) => {
     }
   }
 
-  if (
-    document.activeElement &&
-    document.activeElement.id === "search-input"
-    && focusSuggestion
-  ) {
-    if (event.key === "Enter" && !event.ctrlKey) {
-      if (focusSuggestion.dataset.title) {
-        goto("pageTitle", focusSuggestion.dataset.title)
+  if (document.activeElement && document.activeElement.id === "search-input") {
+    if (event.key === "Enter") {
+      if (!event.ctrlKey && focusSuggestion) {
+        if (focusSuggestion.dataset.title) {
+          goto("pageTitle", focusSuggestion.dataset.title)
+        } else {
+          goto("block", focusSuggestion.dataset.id)
+        }
       } else {
-        goto("block", focusSuggestion.dataset.id)
+        goto("pageTitle", event.target.value)
       }
-      event.preventDefault()
-      return
-    } else if (event.key === "Enter" && event.ctrlKey) {
-      goto("pageTitle", event.target.value)
       event.preventDefault()
       return
     }
