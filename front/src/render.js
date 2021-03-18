@@ -92,6 +92,10 @@ const renderBreadcrumb = (parent, blockId) => {
 }
 
 const renderResultSet = (parent, resultSet, resultFrame, startIdx = 0) => {
+  if (resultSet.length === 0) {
+    resultFrame.style.display = "none"
+    return
+  }
   const resultTemplate = getTemp(resultFrame.dataset.templateName)
   resultFrame.innerHTML = ""
   resultFrame.style.display = "block"
@@ -136,7 +140,7 @@ const notifyText = (text, duration) => {
 
 // 7      8    9       10                11        12         13
 // italic link literal template-expander attribute code-block command
-const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|>(.*)/g
+const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|\\(.*)/g
 // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
 const renderBlockBodyToEdit = (parent, text) => {
