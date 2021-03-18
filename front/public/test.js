@@ -1,6 +1,6 @@
 const testRoundTrip = () => {
   const jsonOutput = storeToRoamJSON(store)
-  store = roamJsonToStore(store.graphName,jsonOutput)
+  store = roamJsonToStore(store.graphName, jsonOutput)
   const jsonOutput2 = storeToRoamJSON(store)
   const eq = jsonOutput === jsonOutput2
   if (!eq) {
@@ -22,20 +22,20 @@ const createPageTest = () => {
 
 // todo switch this to async with empty promise?
 let testSTime
-const renderMulti = (f,state = undefined,reps = 100,recurse = false) => {
+const renderMulti = (f, state = undefined, reps = 100, recurse = false) => {
   if (!recurse) {
     testSTime = performance.now()
   }
   if (reps > 0) {
     const exit = f(state)
     if (!exit)
-      setTimeout(() => renderMulti(f,state,reps - 1,true),0)
+      setTimeout(() => renderMulti(f, state, reps - 1, true), 0)
   } else {
     console.log(`test func took ${performance.now() - testSTime}`)
   }
 }
 
-const benchmarkPageLoad = () => renderMulti(() => goto("pageTitle","Welcome to Micro Roam"))
+const benchmarkPageLoad = () => renderMulti(() => goto("pageTitle", "Welcome to Micro Roam"))
 
 
 let benchmarkRandomWalkSTime = null
@@ -55,7 +55,7 @@ const benchmarkRandomWalk = () => renderMulti(() => {
   }
   linkTitles = linkTitles.filter(x => store.titles[x] && store.blox[store.titles[x]])
   const chosenTitle = linkTitles[Math.floor(Math.random() * (linkTitles.length - 1))]
-  goto("pageTitle",chosenTitle)
+  goto("pageTitle", chosenTitle)
 })
 
 const benchmarkRenderAll = async () => {
@@ -64,16 +64,16 @@ const benchmarkRenderAll = async () => {
   let count = 0
   for (let pageTitle in store.titles) {
     const functionSTime = performance.now()
-    gotoNoHistory("pageTitle",pageTitle)
+    gotoNoHistory("pageTitle", pageTitle)
     functionTime += performance.now() - functionSTime
     count += 1
-    await new Promise(resolve => setTimeout(resolve,0))
+    await new Promise(resolve => setTimeout(resolve, 0))
   }
   const duration = performance.now() - stime
   const message = `rendered ${count} pages in ${Math.round(duration)}ms, avg ${Math.round(duration / count)}ms
   function time avg ${Math.round(functionTime / count)}`
   console.log(message)
-  notifyText(message,10)
+  notifyText(message, 10)
 }
 
 const testAll = () => {
@@ -94,28 +94,22 @@ const benchmarkGen = () => {
 // terminal
 
 const log = () => {
-  user.logging = true
+  user.s.logging = true
   saveUser()
 }
 
 const nolog = () => {
-  user.logging = false
+  user.s.logging = false
   saveUser()
 }
 
 const flash = benchmarkRenderAll
 
-const reset = () => {
-  localStorage.removeItem("user")
-  const r = indexedDB.deleteDatabase("microroam")
-  window.location.href = window.location.href
-}
-
 const blank = (name = "default") => {
   store = blankStore()
   store.graphName = name
-  user = { settings: { graphName: "default",theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light",topBar: "visible",logging: false,spellcheck: false } }
-  user.graphName = name
+  user = { s: { graphName: "default", theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light", topBar: "visible", logging: false, spellcheck: false } }
+  user.s.graphName = name
   saveUser()
   debouncedSaveStore()
   goto("dailyNotes")
@@ -127,26 +121,20 @@ const pr = () => {
 
 const downloadBinary = () => {
   const buffer = storeToBinary()
-  const data = new Blob([buffer],{ type: 'application/x-micro-roam' })
+  const data = new Blob([buffer], { type: 'application/x-micro-roam' })
   const url = URL.createObjectURL(data)
   const button = document.createElement("a")
-  button.setAttribute('href',url)
-  button.setAttribute('download',`${store.graphName}.mrm`)
+  button.setAttribute('href', url)
+  button.setAttribute('download', `${store.graphName}.mrm`)
   button.click()
 }
 
-const loadGraphminerNotes = () => {
-  fetch("./graphminer-store.json").then(text => text.json().then(json => {
-    store = json
-    user.graphName = store.graphName
-    saveUser()
-    start()
-    debouncedSaveStore()
-  }))
+const monitor = (string) => {
+  const js = `setInterval(()=>console.log(${string}), 500)`
+  eval(js)
 }
 
-const taonotes = loadGraphminerNotes
 
 const terminalCommands = {
-  blank,reset,flash,log,page,nolog,pr,taonotes,downloadBinary
+  blank, reset, flash, log, page, nolog, pr, downloadBinary, monitor
 }

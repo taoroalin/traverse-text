@@ -509,3 +509,10 @@ const filesToZip = (files) => {
   console.log(`filestozip ${performance.now() - mstime}`)
   return blob
 }
+
+//@module
+try {
+  exports.roamJsonToStore = roamJsonToStore
+} catch (e) {
+
+}

@@ -1,39 +1,11 @@
 const http = require('http')
 const fs = require('fs')
-const zlib = require('zlib')
-const stream = require('stream')
 const os = require('os')
+const common = require('./common.js')
 const { lruMCreate, lruMGet, lruMPut, doEditBlox, applyDif, undoEditBlox, unapplyDif } = require('../front/src/front-back-shared.js')
-const { performance } = require('perf_hooks')
 // front-back-shared is in the front folder because its easier to import from other paths in Node
 
-const brotliCompressParams = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } }
-
 const bloxCache = lruMCreate()
-
-const storeBlox = (name, blox) => {
-  const string = JSON.stringify(blox)
-  zlib.brotliCompress(string, brotliCompressParams, (err, data) => {
-    if (err !== null) {
-      fs.writeFile(`../user-data/blox-br/${name}.json.br`, data, (err) => {
-        if (err !== null) {
-          log(err)
-          console.log(err)
-        }
-      })
-    }
-  })
-}
-
-const brCompressStream = (from, to) => {
-  const compressor = zlib.createBrotliCompress(brotliCompressParams)
-  stream.pipeline(from, compressor, to, (err) => {
-    if (err) {
-      console.log("failed to compress:", err)
-    }
-  })
-}
-
 
 // crypto and cluster are node built-in modules to consider. cluster lets you have multiple identical processes and round-robin distributes requests among them
 // todo use session keys instead of holding onto password hash everywhere for more security
@@ -236,7 +208,7 @@ http.createServer((req, res) => {
       debouncedSaveGraphs()
       // todo add coordination between threads using err.code==='EBUSY'?
       writeStream = fs.createWriteStream(`../user-data/blox-br/${match[2]}.json.br`)
-      brCompressStream(req, writeStream)
+      common.brCompressStream(req, writeStream)
       req.on("end", () => {
         res.writeHead(200)
         res.end()
@@ -280,7 +252,7 @@ http.createServer((req, res) => {
       }
       graphs[match[2]] = { l: match[3] }
       writeStream = fs.createWriteStream(`../user-data/blox-br/${match[2]}.json.br`)
-      brCompressStream(req, writeStream)
+      common.brCompressStream(req, writeStream)
       userAccount.u.w[match[2]] = 1
       userAccount.u.r[match[2]] = 1
       debouncedSaveAccounts()

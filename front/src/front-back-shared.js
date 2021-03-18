@@ -181,6 +181,7 @@ const lruMPut = (cache, key, val, size) => {
   cache.set(key, val)
 }
 
+//@module
 try {
   exports.applyDif = applyDif
   exports.unapplyDif = unapplyDif
