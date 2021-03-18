@@ -265,9 +265,15 @@ const inlineCommands = {
     sessionState.position = position
     setFocusedBlockString(string)
   },
+  "page link": () => {
+    inlineCommandReplaceString("[[]]", -2)
+  },
   today: () => {
     inlineCommandReplaceString("[[" + formatDate(new Date(Date.now())) + "]]")
-
+  },
+  "current time": () => {
+    const now = new Date(Date.now())
+    inlineCommandReplaceString(formatTime(now))
   },
   tomorrow: () => {
     inlineCommandReplaceString("[[" + getTomorrowDateString() + "]]")
@@ -281,8 +287,14 @@ const inlineCommands = {
   "last week": () => {
     inlineCommandReplaceString("[[" + getLastWeekDateString() + "]]")
   },
-  "page link": () => {
-    inlineCommandReplaceString("[[]]", -2)
+  bold: () => {
+    inlineCommandReplaceString("****", -2)
+  },
+  italic: () => {
+    inlineCommandReplaceString("____", -2)
+  },
+  highlight: () => {
+    inlineCommandReplaceString("^^^^", -2)
   }
 }
 

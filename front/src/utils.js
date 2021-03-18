@@ -45,6 +45,10 @@ const formatDate = (date) =>
     date.getDate()
   )}, ${date.getFullYear()}`
 
+const formatTime = (date) => {
+  return date.getHours() + ":" + date.getMinutes()
+}
+
 const unFormatDate = (string) => {
   const match = string.match(/([a-zA-Z]+) ([0-9]{1,2})(?:st|nd|rd|th), ([0-9]{4})/)
   if (match && monthNames.includes(match[1])) {
