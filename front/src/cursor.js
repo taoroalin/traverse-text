@@ -2,11 +2,8 @@ const focusIdPosition = () => {
   focusBlockBody = document.querySelector(`.block[data-id="${sessionState.focusId}"]>.block__body`)
 
   const scanElement = (element) => {
-    console.log(`scanning element`)
-    console.log(element)
     for (let el of element.childNodes) {
       if (el.nodeName === "#text") {
-        console.log("found text")
         if (sessionState.position >= (el.startIdx || 0) && sessionState.position <= (el.startIdx || 0) + el.textContent.length) {
           scanResult = el
           const placeToGo = sessionState.position - el.startIdx
@@ -81,6 +78,7 @@ const updateFocusFromNode = (node, position) => {
   focusBlockBody.innerText = ""
   renderBlockBodyToEdit(focusBlockBody, text)
   focusIdPosition()
+  updateCursorSpanInfo()
 }
 
 const updateCursorSpanInfo = () => {

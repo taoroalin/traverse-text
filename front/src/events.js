@@ -477,6 +477,8 @@ document.addEventListener("keydown", (event) => {
         } else if (sessionState.position === 0) {
           focusBlockVerticalOffset(-1)
           event.preventDefault()
+        } else { // have to adjust sessionState.position manually because no updateCursorPosition at the head of keydown anymore. instead all cursor updates come from oninput, onselectionchange, key left/right, and scripts that change position
+          sessionState.position -= 1
         }
         break
       case "ArrowRight":
@@ -485,6 +487,8 @@ document.addEventListener("keydown", (event) => {
         } else if (sessionState.position === focusBlockBody.innerText.length) {
           focusBlockVerticalOffset(1, focusBlock, true)
           event.preventDefault()
+        } else {
+          sessionState.position += 1
         }
         break
       case "c":
@@ -516,16 +520,18 @@ document.addEventListener("keydown", (event) => {
 
   if (terminalElement.style.display !== "none") {
     if (event.key === "Enter" && !event.ctrlKey && !event.shiftKey && !event.altKey) {
-      const tc = terminalCommands[event.target.innerText]
-      if (tc) {
-        tc()
+      const string = event.target.innerText
+      const first = string.match(/^[a-z]+/)
+      if (first && terminalCommands[first[0]]) {
+        const fn = terminalCommands[first[0]]
+        fn(string.substring(first[0].length))
         event.preventDefault()
         terminalElement.style.display = "none"
         terminalElement.innerHTML = ""
       }
       else {
         try {
-          eval(event.target.innerText)
+          eval(string)
           if (!event.ctrlKey) {
             terminalElement.style.display = "none"
             terminalElement.innerHTML = ""
@@ -741,12 +747,15 @@ document.addEventListener("selectionchange", (event) => {
   if (focusNode) {
     const currentFocusBlock = focusNode.parentNode.closest(".block")
     if (currentFocusBlock && canWriteBloc(currentFocusBlock.dataset.id)) {
+      sessionState.isFocused = true
       if (currentFocusBlock.dataset.id !== sessionState.focusId) {
         const position = (focusNode.startIdx || 0) + focusOffset
         updateFocusFromNode(currentFocusBlock, position)
-      } else sessionState.isFocused = true
-    } else sessionState.isFocused = false
-  } else sessionState.isFocused = false
+      }
+      return
+    }
+  }
+  sessionState.isFocused = false
 })
 
 document.addEventListener("visibilitychange", (event) => {

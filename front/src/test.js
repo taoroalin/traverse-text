@@ -129,7 +129,12 @@ const downloadBinary = () => {
   button.click()
 }
 
+const monitor = (string) => {
+  const js = `setInterval(()=>console.log(${string}), 500)`
+  eval(js)
+}
+
 
 const terminalCommands = {
-  blank, reset, flash, log, page, nolog, pr, downloadBinary
+  blank, reset, flash, log, page, nolog, pr, downloadBinary, monitor
 }
