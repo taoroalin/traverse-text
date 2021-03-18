@@ -53,21 +53,41 @@ const unFormatDate = (string) => {
 }
 
 // const formatDateId = (date) => `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`
-const formatDateYMD = (date) => `${date.getFullYear()}-${formatInt(date.getMonth() + 1,2)}-${formatInt(date.getDate(),2)}`
+const formatDateYMD = (date) => `${date.getFullYear()}-${formatInt(date.getMonth() + 1, 2)}-${formatInt(date.getDate(), 2)}`
 
-const truncateElipsis = (text,limit = 40) => {
+const truncateElipsis = (text, limit = 40) => {
   if (text.length > limit) {
-    return text.substring(0,limit - 3) + "..."
+    return text.substring(0, limit - 3) + "..."
   }
   return text
 }
 
-const formatInt = (int,digits) => {
+const getTomorrowDateString = () => {
+  return formatDate(new Date(Date.now() + 86400000))
+}
+
+const getYesterdayDateString = () => {
+  return formatDate(new Date(Date.now() - 86400000))
+}
+
+const getLastWeekDateString = () => {
+  const obj = new Date(Date.now())
+  obj.setDate(obj.getDate() - 7)
+  return formatDate(obj)
+}
+
+const getNextWeekDateString = () => {
+  const obj = new Date(Date.now())
+  obj.setDate(obj.getDate() + 7)
+  return formatDate(obj)
+}
+
+const formatInt = (int, digits) => {
   const raw = int.toString()
   return ("0".repeat(digits - raw.length) + raw)
 }
 
-const clamp = (x,min,max) => Math.max(min,Math.min(x,max))
+const clamp = (x, min, max) => Math.max(min, Math.min(x, max))
 
 
 // this is v slow, 7M dates / s
@@ -85,7 +105,7 @@ const intToBase64 = (int) => {
 const base64ToInt = (str) => {
   let result = 0
   for (let i = 0; i < str.length; i++) {
-    result += CHARS_64.indexOf(str[i]) * Math.pow(64,(str.length - i - 1))
+    result += CHARS_64.indexOf(str[i]) * Math.pow(64, (str.length - i - 1))
   }
   return result
 }

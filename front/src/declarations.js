@@ -55,6 +55,10 @@ const loginElement = elById("login")
 const signOutButton = elById("signout-button")
 const reallyWantToLeaveElement = elById("really-want-to-leave")
 
+const uploadInput = elById('upload-input')
+
+const appElement = elById('app')
+
 
 // Templates
 const pageTemplate = getTemp("page")

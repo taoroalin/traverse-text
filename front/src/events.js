@@ -249,7 +249,7 @@ const globalHotkeys = {
   },
   "upload": {
     key: "d", control: true, fn: () => {
-      elById("upload-input").click()
+      uploadInput.click()
     }
   },
   "download": { key: "s", control: true, shift: true, fn: downloadHandler },
@@ -634,7 +634,7 @@ document.addEventListener("mousedown", (event) => {
     focusSuggestion = event.target
     expandTemplate()
   } else if (event.target.id === "upload-button") {
-    elById("upload-input").click()
+    uploadInput.click()
   } else if (event.target.id === "daily-notes-button") {
     goto("dailyNotes")
   } else if (event.target.id === "options-button") {
@@ -736,10 +736,20 @@ document.addEventListener("selectionchange", (event) => {
       if (currentFocusBlock.dataset.id !== sessionState.focusId) {
         const position = (focusNode.startIdx || 0) + focusOffset
         updateFocusFromNode(currentFocusBlock, position)
-      }
+      } else sessionState.isFocused = true
     } else sessionState.isFocused = false
   } else sessionState.isFocused = false
 })
+
+document.addEventListener("visibilitychange", (event) => {
+  console.log("focusin");
+}, false)
+
+document.addEventListener("visibilitychange", (event) => {
+  console.log("focusout")
+}, true)
+
+// ID-ED ELEMENT EVENT LISTENERS ----------------------------------------------------------
 
 const showTopBarFn = () => {
   user.s.topBar = "visible"
@@ -757,7 +767,7 @@ topBarHiddenHitbox.addEventListener("mouseout", () => {
   showTopBarTimeout = null
 })
 
-elById('upload-input').addEventListener('change', (event) => {
+uploadInput.addEventListener('change', (event) => {
   const file = event.target.files[0]
   console.log(file)
   const { name, ext: extension } = splitFileName(file.name)

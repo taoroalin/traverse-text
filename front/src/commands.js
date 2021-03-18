@@ -249,6 +249,12 @@ for (let k in macros.nocommit) {
   }
 }
 
+const inlineCommandReplaceString = (string, offset = 0) => {
+  sessionState.position = editingCommandElement.firstChild.startIdx + string.length + offset
+  editingCommandElement.innerText = string
+  setFocusedBlockString(focusBlockBody.innerText)
+}
+
 // inline commands are completely different than commands. They're things the user can do to the current block they're editing
 const inlineCommands = {
   todo: () => {
@@ -260,23 +266,24 @@ const inlineCommands = {
     setFocusedBlockString(string)
   },
   today: () => {
-    const dateString = "[[" + formatDate(new Date(Date.now())) + "]]"
-    sessionState.position = editingCommandElement.firstChild.startIdx + dateString.length
-    editingCommandElement.innerText = dateString
-    setFocusedBlockString(focusBlockBody.innerText)
+    inlineCommandReplaceString("[[" + formatDate(new Date(Date.now())) + "]]")
+
   },
   tomorrow: () => {
-    const dateString = "[[" + formatDate(new Date(Date.now() + 86400000)) + "]]"
-    sessionState.position = editingCommandElement.firstChild.startIdx + dateString.length
-    editingCommandElement.innerText = dateString
-    setFocusedBlockString(focusBlockBody.innerText)
+    inlineCommandReplaceString("[[" + getTomorrowDateString() + "]]")
   },
   yesterday: () => {
-    const dateString = "[[" + formatDate(new Date(Date.now() - 86400000)) + "]]"
-    sessionState.position = editingCommandElement.firstChild.startIdx + dateString.length
-    editingCommandElement.innerText = dateString
-    setFocusedBlockString(focusBlockBody.innerText)
+    inlineCommandReplaceString("[[" + getYesterdayDateString() + "]]")
   },
+  "next week": () => {
+    inlineCommandReplaceString("[[" + getNextWeekDateString() + "]]")
+  },
+  "last week": () => {
+    inlineCommandReplaceString("[[" + getLastWeekDateString() + "]]")
+  },
+  "page link": () => {
+    inlineCommandReplaceString("[[]]", -2)
+  }
 }
 
 let commandSearchCache = []
