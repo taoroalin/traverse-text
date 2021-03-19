@@ -105,92 +105,36 @@ const doEditBlox = (edit, blox, time) => {
   }
 }
 
-const lruCreate = (max) => {
-  const result = new Map()
-  result.max = max
-  return result
-}
-
-const lruGet = (cache, key) => {
-  const val = cache.get(key)
-  if (val !== undefined) {
-    cache.delete(key)
-    cache.set(key, val)
+class LruCache {
+  constructor(fetcher, maxProcessMemory = 1500000000) {
+    this.maxProcessMemory = maxProcessMemory
+    this.fetcher = fetcher
+    this.map = new Map()
   }
-  return val
-}
-
-const lruPut = (cache, key, val) => {
-  if (cache.size === cache.max) {
-    cache.delete(cache.keys().next().value)
-  }
-  cache.set(key, val)
-}
-
-
-const lruSCreate = (max) => {
-  const result = new Map()
-  result.max = max
-  result.cur = 0
-  return result
-}
-
-const lruSGet = (cache, key) => {
-  const val = cache.get(key)
-  if (val !== undefined) {
-    cache.delete(key)
-    cache.set(key, val)
-  }
-  return val.val
-}
-
-const lruSPut = (cache, key, val, size) => {
-  cache.cur += size
-  while (cache.cur >= cache.max) {
-    const k = cache.keys().next().value
-    const v = cache.get(k)
-    cache.cur -= v.size
-    cache.delete(k)
-  }
-  cache.set(key, { size, val })
-}
-
-const lruMCreate = (maxProcessMemory = 1500000000) => {
-  const result = new Map()
-  result.maxProcessMemory = maxProcessMemory
-  return result
-}
-
-const lruMGet = (cache, key) => {
-  const val = cache.get(key)
-  if (val !== undefined) {
-    cache.delete(key)
-    cache.set(key, val)
-  }
-  return val
-}
-
-const lruMPut = (cache, key, val, size) => {
-  if (!cache.get(key)) {
-    if (process.memoryUsage().heapUsed > cache.maxProcessMemory) {
-      const k = cache.keys().next().value
-      const v = cache.get(k)
-      cache.delete(k)
+  async get(key) {
+    const val = this.map.get(key)
+    if (val !== undefined) {
+      cache.delete(key)
+      cache.set(key, val)
+      return val
+    } else {
+      const fetched = await this.fetcher(key)
+      if (fetched) {
+        cache.set(key, fetched)
+      }
+      return fetched
     }
   }
-  cache.set(key, val)
 }
 
-//@module
+//@module this tag means the front end build script will cut out everything past here
 try {
   exports.applyDif = applyDif
   exports.unapplyDif = unapplyDif
   exports.doEditBlox = doEditBlox
   exports.undoEditBlox = undoEditBlox
 
-  exports.lruMCreate = lruMCreate
-  exports.lruMGet = lruMGet
-  exports.lruMPut = lruMPut
+  exports.LruCache = LruCache
 } catch (e) {
 
 }

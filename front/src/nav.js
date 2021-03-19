@@ -67,6 +67,8 @@ const renderSessionState = () => {
     const firstBlockElement = pageFrame.querySelector('.block')
     sessionState.position = 0
     sessionState.focusId = firstBlockElement.dataset.id
+  } else {
+    console.log("thing happened")
   }
   focusIdPosition()
 

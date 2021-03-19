@@ -173,6 +173,11 @@
       <button id="signout-button" tabindex="-1" style="display:none">
         Sign Out
       </button>
+      <!-- <svg id="top-hamburger" width="25" height="25">
+        <circle cx="12.5" cy="6" r="2.1" fill="var(--bullet)" />
+        <circle cx="12.5" cy="12.5" r="2.1" fill="var(--bullet)" />
+        <circle cx="12.5" cy="19" r="2.1" fill="var(--bullet)" />
+      </svg> -->
     </div>
 
     <div id="top-bar-hidden-hitbox" style="position:fixed;height:20px;width:100%;display:none;"></div>
@@ -326,6 +331,7 @@
   <script src="declarations.js"></script>
   <script src="front-back-shared.js"></script>
   <script src="utils.js"></script>
+  <script src="inline-commands.js"></script>
   <script src="commands.js"></script>
   <script src="store.js"></script>
   <script src="cursor.js"></script>
@@ -337,8 +343,7 @@
   <script src="events.js"></script>
   <script src="nav.js"></script>
 
-  <!-- now rendering is done, loading interactive scripts-->
-  <!-- THIS COMMENT IS FUNCTIONAL because it stops the script inliner from combining the scripts above and below it -->
+  <!-- THIS COMMENT IS FUNCTIONAL because it stops the script inliner from combining the scripts above and below it so the bottom ones can load after the page renders-->
 
   <script src="convert.js" async></script>
   <script src="test.js" async></script>

@@ -53,6 +53,9 @@ const saveSettingsToBasicBitchServer = async () => {
   }
 }
 
+const saveEditsToBasicBitchServer = () => {
+
+}
 
 const middlePepper = "76pCgT0lW6ES9yjt01MeH"
 const beginPepper = "CeoPPOv9rIq6O7YiYlSFX"

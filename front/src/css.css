@@ -125,6 +125,12 @@ a:visited {
   transition: margin-top 0.1s;
 }
 
+#top-hamburger{
+  padding:10px 10px 5px;
+  cursor:pointer;
+}
+
+
 #top-bar a {
   padding: 14px 10px 10px;
   font-size: 0.9em;

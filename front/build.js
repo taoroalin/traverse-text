@@ -1,6 +1,7 @@
 const fs = require('fs')
 const zlib = require('zlib')
 const stream = require('stream')
+const minify = require('html-minifier').minify;
 
 const { performance } = require('perf_hooks')
 
@@ -25,12 +26,6 @@ const compressPublic = () => {
   }
 }
 
-try {
-  var UglifyJS = require("uglify-js")
-} catch (e) {
-  var UglifyJS = { minify: (code) => ({ code }) }
-}
-
 console.log("building")
 
 const buildWorker = (workerName = 'worker') => {
@@ -46,7 +41,6 @@ const buildWorker = (workerName = 'worker') => {
     }
     return result
   })
-  workerFile = UglifyJS.minify(workerFile).code
   fs.writeFileSync("./public/worker.js", workerFile)
 }
 
@@ -56,8 +50,7 @@ const build = () => {
   const scriptReplacer = (match, fname, async) => {
     let js = fs.readFileSync("./src/" + fname, "utf8")
     js = js.replace(/\/\/@module(.|\n|\r)*$/, "")
-    const min = UglifyJS.minify(js).code
-    return `\n<script${async || ""}>\n${min}\n</script>\n`
+    return `\n<script${async || ""}>\n${js}\n</script>\n`
   }
 
   const regexStyleImport = /<link rel="stylesheet" href="([^":]+)">/g
@@ -71,7 +64,9 @@ const build = () => {
   // todo use minify(text, {toplevel:true}) for more mangling
   // todo minify inline
 
-  fs.writeFileSync("./public/index.html", result)
+  const htmlmin = minify(result, { collapseWhitespace: true, minifyJS: true, minifyCSS: true, removeComments: true, removeOptionalTags: true, removeRedundantAttributes: true, useShortDoctype: true })
+
+  fs.writeFileSync("./public/index.html", htmlmin)
 
   fs.copyFile("./src/favicon.ico", "./public/favicon.ico", () => { })
   fs.copyFile("./src/default-store.json", "./public/default-store.json", () => { })

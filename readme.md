@@ -18,9 +18,11 @@ I love Roam Research. I think that sort of freeform, linked text should be the d
 
 # The Stack
 
-This project is made with *System Complexity*, in mind. That means instead of writing your own code to be elegant, you write code such that the entire project, including the platform, libraries, frameworks, as a whole is as as simple as possible. Currently the dependencies are:
+This project is made with *System Complexity*, in mind. That means instead of writing your own code to be elegant, you write code such that the entire project, including the platform, libraries, frameworks, as a whole is as as simple as possible.
 
-I chose my tech stack, JS and Node w/o NPM, because the language is familiar and it allows me to spend my time writing code, not reading documentation, and it can achieve reasonable performance. Tech I'm considering down the road includes more HTML Canvas, C, C++, SycllaDB, PostgreSQL, NGINX, and JAI.
+I chose my tech stack, JS and Node, because the language is familiar and it allows me to spend my time writing code, not reading documentation, and it can achieve reasonable performance. Tech I'm considering down the road includes more HTML Canvas, C, C++, SycllaDB, PostgreSQL, NGINX, and JAI.
+
+I'm currently using 1 npm package: html-minifier, because it's trivial to remove from the project and would be an extreme amount of work to recreate myself.
 
 # Intentional differences compared to Roam
 

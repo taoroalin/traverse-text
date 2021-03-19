@@ -2,10 +2,12 @@ const http = require('http')
 const fs = require('fs')
 const os = require('os')
 const common = require('./common.js')
-const { lruMCreate, lruMGet, lruMPut, doEditBlox, applyDif, undoEditBlox, unapplyDif } = require('../front/src/front-back-shared.js')
+const { LruCache, doEditBlox, applyDif, undoEditBlox, unapplyDif } = require('../front/src/front-back-shared.js')
 // front-back-shared is in the front folder because its easier to import from other paths in Node
 
-const bloxCache = lruMCreate()
+const bloxCache = new LruCache(async (key) => {
+  return await new Promise((resolve, err) => common.loadBlox(key, resolve))
+})
 
 // crypto and cluster are node built-in modules to consider. cluster lets you have multiple identical processes and round-robin distributes requests among them
 // todo use session keys instead of holding onto password hash everywhere for more security
@@ -85,8 +87,24 @@ const debouncedSaveAccounts = () => {
   }
 }
 
+const canAccountWriteBlox = (userAccount, graphName) => {
+  return userAccount.u.w[graphName]
+}
+
+const canAccountReadBlox = (userAccount, graphName) => {
+  return graphs[graphName].p || userAccount.u.r[graphName]
+}
+
+const getReqHeaderBody = (req) => {
+  try {
+    return JSON.parse(req.headers.body)
+  } catch (e) {
+    return null
+  }
+}
+
 // I had json in body, but that caused timing issues because I want to change end listener, but couldn't to it fast enough because the end event happens so fast. Switched to putting all JSON made for immediate parsing in header
-http.createServer((req, res) => {
+http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Expose-Headers', '*')
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Headers', '*')
@@ -97,7 +115,7 @@ http.createServer((req, res) => {
     res.end()
     return
   }
-  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup|issue|edit|error)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
+  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup|edit|issue|error)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
   log(req.url)
   if (match === null) {
     res.writeHead(404)
@@ -106,12 +124,9 @@ http.createServer((req, res) => {
     return
   }
   if (match[1] === "signup") {
-    let accountDetails
-    const bdy = req.headers.body
-    try {
-      accountDetails = JSON.parse(bdy)
-    } catch (e) {
-      log('bdy ' + bdy)
+    let accountDetails = getReqHeaderBody(req)
+    if (accountDetails === null) {
+      log('bdy ' + req.headers.body)
       res.writeHead(401)
       res.write(`invalid json ${bdy}`)
       res.end()
@@ -198,11 +213,12 @@ http.createServer((req, res) => {
         res.end()
         return
       }
-      if (userAccount.u.w[match[2]] === undefined) {
+      if (!canAccountWriteBlox(userAccount, match[2])) {
         res.writeHead(403)
         res.end()
         return
       }
+
       if (req.headers.commitid !== undefined && graphs[match[2]].l === req.headers.commitid) {
         res.writeHead(304)
         res.end()
@@ -226,7 +242,7 @@ http.createServer((req, res) => {
         res.end()
         return
       }
-      if (userAccount.u.r[match[2]] === undefined) {
+      if (!canAccountReadBlox(userAccount, match[2])) {
         res.writeHead(403)
         res.end()
         return
@@ -272,10 +288,8 @@ http.createServer((req, res) => {
       // console.log("auth")
       return
     case "settings":
-      let settings
-      try {
-        settings = JSON.parse(req.headers.body)
-      } catch {
+      let settings = getReqHeaderBody(req)
+      if (settings === null) {
         res.writeHead(400)
         res.end()
         return
@@ -285,6 +299,17 @@ http.createServer((req, res) => {
       res.writeHead(200)
       res.end()
       return
+    case "edit":
+      if (!canAccountWriteBlox(userAccount, match[2])) {
+        res.write(403)
+        res.end()
+        return
+      }
+      const blox = await bloxCache.get(match[2])
+      const edit = getReqHeaderBody(req)
+      doEditBlox(edit, blox)
+      common.storeBlox(match[2], JSON.stringify(blox))
+      break
     default:
       res.writeHead(400)
       res.write(`waat? ${req.url}`)
@@ -308,4 +333,4 @@ response codes
 451 unavailable for legal reasons
 429 too many requests
 
- */
+*/
