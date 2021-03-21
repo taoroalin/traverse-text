@@ -20,9 +20,13 @@ const diff = (string, oldString) => { // todo real diff
   return { d: oldString, i: string }
 }
 
-let edits = []
-let editsSessionStates = []
-let activeEdits = []
+let undoCommitList = []
+let undoCommitSessionStateList = []
+let undoCommitInProgress = []
+
+let masterCommitList = []
+let masterCommitInProgress = []
+
 
 const undoEditCacheStuff = (edit) => {
   const [op, id, p1, p2, p3, p4] = edit
@@ -46,8 +50,8 @@ const undoEditCacheStuff = (edit) => {
 }
 
 const undo = () => {
-  const commit = edits.pop()
-  sessionState = editsSessionStates.pop()
+  const commit = undoCommitList.pop()
+  sessionState = undoCommitSessionStateList.pop()
   for (let i = commit.edits.length - 1; i >= 0; i--) {
     const edit = commit.edits[i]
     undoEdit(edit, store.blox)
@@ -92,7 +96,8 @@ const doEditCacheStuff = (edit) => {
 
 const doEdit = (...edit) => {
   const time = intToBase64(Date.now())
-  activeEdits.push(edit)
+  undoCommitInProgress.push(edit)
+  masterCommitInProgress.push(edit)
   print(edit)
   // console.log(edit)
   doEditBlox(edit, store.blox, time)
@@ -101,16 +106,17 @@ const doEdit = (...edit) => {
 
 const commit = () => {
   const newId = newUUID()
-  edits.push({ id: newId, t: intToBase64(Date.now()), edits: activeEdits })
-  editsSessionStates.push(cpy(sessionState))
+  undoCommitList.push({ id: newId, t: intToBase64(Date.now()), edits: undoCommitInProgress })
+  undoCommitSessionStateList.push(cpy(sessionState))
   store.commitId = newId
   user.s.commitId = newId
-  activeEdits = []
+  undoCommitInProgress = []
   setTimeout(() => {
     debouncedSaveStore()
     saveUser()
   }, 0)
 }
+
 const commitEdit = (...edit) => {
   doEdit(...edit)
   commit()
@@ -141,6 +147,7 @@ const saveStoreStringLocal = (string) => {
   } catch (e) {
     // mainly catch localstorage size limit
     localStorage.removeItem('store')
+    console.error(`Local Storage Failure: ${e}`)
   }
   const transaction = idb.transaction(["stores"], "readwrite")
   const storeStore = transaction.objectStore("stores")
@@ -162,7 +169,7 @@ let saveStoreTimeout = null
 const debouncedSaveStore = () => {
   if (user.s.commitId !== user.s.syncCommitId) {
     clearTimeout(saveStoreTimeout)
-    saveStoreTimeout = setTimeout(saveStore, 300)
+    saveStoreTimeout = setTimeout(saveStoreIncremental, 300)
   }
 }
 
@@ -172,28 +179,34 @@ const print = (text) => {
   }
 }
 
-const newUid = () => {
-  let values = new Uint8Array(9)
-  let result
-  do {
-    crypto.getRandomValues(values)
-    result = ""
-    for (let i = 0; i < 9; i++) {
-      result += CHARS_64[values[i] % 64]
-    }
-  } while (store.blox[result] !== undefined)
-  return result
+let newUid
+{
+  let UidRandomContainer = new Uint8Array(9)
+  newUid = () => {
+    let result
+    do {
+      crypto.getRandomValues(UidRandomContainer)
+      result = ""
+      for (let i = 0; i < 9; i++) {
+        result += CHARS_64[UidRandomContainer[i] % 64]
+      }
+    } while (store.blox[result] !== undefined)
+    return result
+  }
 }
 
 // I'm using base64 126 bit UUIDs instead because they're less length in JSON and they are more ergonomic to write in markup like ((uuid)) if I ever want to do that
-const newUUID = () => { // this is 126 bits, 21xbase64
-  let values = new Uint8Array(21)
-  crypto.getRandomValues(values)
-  let result = ""
-  for (let i = 0; i < 21; i++) {
-    result += CHARS_64[values[i] % 64]
+let newUUID
+{
+  let UuidRandomContainer = new Uint8Array(21)
+  newUUID = () => { // this is 126 bits, 21xbase64
+    crypto.getRandomValues(UuidRandomContainer)
+    let result = ""
+    for (let i = 0; i < 21; i++) {
+      result += CHARS_64[UuidRandomContainer[i] % 64]
+    }
+    return result
   }
-  return result
 }
 
 

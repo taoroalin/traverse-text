@@ -106,7 +106,7 @@ const doEditBlox = (edit, blox, time) => {
 }
 
 class LruCache {
-  constructor(fetcher, maxProcessMemory = 1500000000) {
+  constructor(fetcher, maxProcessMemory = 1500000000) { // 1.5GB
     this.maxProcessMemory = maxProcessMemory
     this.fetcher = fetcher
     this.map = new Map()
@@ -114,18 +114,20 @@ class LruCache {
   async get(key) {
     const val = this.map.get(key)
     if (val !== undefined) {
-      cache.delete(key)
-      cache.set(key, val)
+      this.map.delete(key)
+      this.map.set(key, val)
       return val
     } else {
       const fetched = await this.fetcher(key)
       if (fetched) {
-        cache.set(key, fetched)
+        this.map.set(key, fetched)
       }
       return fetched
     }
   }
 }
+
+const promisify = (fn) => (...args) => new Promise((resolve, err) => fn(...args, resolve))
 
 //@module this tag means the front end build script will cut out everything past here
 try {
@@ -133,7 +135,7 @@ try {
   exports.unapplyDif = unapplyDif
   exports.doEditBlox = doEditBlox
   exports.undoEditBlox = undoEditBlox
-
+  exports.promisify = promisify
   exports.LruCache = LruCache
 } catch (e) {
 

@@ -1,0 +1,1 @@
+ab -k -c 20 -n 250 -H "h:nannadsndafnnnsddsksdfkdfjdfdkjdfkdffdkjdfkdkdfdfkjdfkj" -H "u:testy" -H "e:testy@testy.testy" -H "s:{}" "http://localhost:3000/signup"

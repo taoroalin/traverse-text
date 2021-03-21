@@ -6,6 +6,25 @@ const reset = () => {
   window.location.href = window.location.href
 }
 
+const syncEditsWithBasicBitchServer = async () => {
+  const headers = new Headers()
+  headers.set('h', user.h)
+  const newCommitId = newUUID()
+  const commit = { id: newCommitId, t: intToBase64(Date.now()), edits: masterCommitInProgress }
+  masterCommitInProgress = []
+  headers.set('body', JSON.stringify(commit))
+  headers.set('synccommitid', user.s.syncCommitId)
+  const response = await fetch(`${basicBitchServerUrl}/edit/${store.graphName}`, { headers })
+  if (response.status === 200) {
+    user.s.syncCommitId = newCommitId
+  } else if (response.status === 409) {
+    console.log("conflicting edit")
+    invalidateLocal()
+  } else {
+    masterCommitInProgress = [...commit.edits, ...masterCommitInProgress]
+  }
+}
+
 const saveStoreToBasicBitchServer = async (blox) => {
   const putSentTime = performance.now()
   const headers = new Headers()
@@ -51,10 +70,6 @@ const saveSettingsToBasicBitchServer = async () => {
   if (response.status !== 200) {
     console.log("failed to save settings")
   }
-}
-
-const saveEditsToBasicBitchServer = () => {
-
 }
 
 const middlePepper = "76pCgT0lW6ES9yjt01MeH"
@@ -105,6 +120,7 @@ signupForm.addEventListener("submit", async (event) => {
   const jsonBody = JSON.stringify({ h: passwordHash, u: username, e: email, s: user.s })
   console.log(jsonBody)
   const headers = new Headers()
+  alert(jsonBody)
   headers.set('body', jsonBody)
   const response = await fetch(`${basicBitchServerUrl}/signup`, { method: "POST", headers })
   if (response.status === 200) {

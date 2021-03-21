@@ -196,12 +196,11 @@ const saveUser = () => {
 if (dataLoaded) start()
 scriptsLoaded = true
 
-const extrastores = []
 const ptest = () => {
   const t2 = performance.now()
-  for (let i = 0; i < 100; i++) {
-    extrastores.push(JSON.parse(JSON.stringify(store)))
+  for (let i = 0; i < 1000; i++) {
+    newUUID()
   }
-  console.log(`new store took ${performance.now() - t2}`)
+  console.log(`new store took ${(performance.now() - t2) / 1000}`)
 }
 // ptest()

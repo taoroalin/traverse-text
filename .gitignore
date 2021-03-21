@@ -1,4 +1,5 @@
 **/user-data/**
+**/user-data-backup/**
 front/public/**
 front/public-br/**
 test-data/graphminer-current-old.json

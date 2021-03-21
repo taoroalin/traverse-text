@@ -2,12 +2,10 @@ const http = require('http')
 const fs = require('fs')
 const os = require('os')
 const common = require('./common.js')
-const { LruCache, doEditBlox, applyDif, undoEditBlox, unapplyDif } = require('../front/src/front-back-shared.js')
+const { LruCache, promisify, doEditBlox, applyDif, undoEditBlox, unapplyDif } = require('../front/src/front-back-shared.js')
 // front-back-shared is in the front folder because its easier to import from other paths in Node
 
-const bloxCache = new LruCache(async (key) => {
-  return await new Promise((resolve, err) => common.loadBlox(key, resolve))
-})
+const bloxCache = new LruCache((key) => common.loadBlox(key))
 
 // crypto and cluster are node built-in modules to consider. cluster lets you have multiple identical processes and round-robin distributes requests among them
 // todo use session keys instead of holding onto password hash everywhere for more security
@@ -32,7 +30,7 @@ let toLog = ""
 let logTimeout = null
 const doLog = () => {
   fs.appendFile("../user-data/log.txt", toLog, (err) => {
-    if (err !== null) {
+    if (err) {
       console.log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
       return
     }
@@ -54,7 +52,7 @@ let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
 let saveGraphsTimeout = null
 const saveGraphs = () => {
   fs.writeFile("../user-data/graphs.json", JSON.stringify(graphs), (err) => {
-    if (err !== null) {
+    if (err) {
       log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
       return
     }
@@ -72,7 +70,7 @@ const debouncedSaveGraphs = () => {
 // todo create under different name and rename because rename is atomic, whereas a concurrent process could crash halfway through writeFile, leaving partial file
 const saveAccounts = () => {
   fs.writeFile("../user-data/accounts.json", JSON.stringify(accounts), (err) => {
-    if (err !== null) {
+    if (err) {
       log(`CRITICAL ERROR ACCOUNT SAVE FAILURE`)
       return
     }
@@ -108,6 +106,7 @@ http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Expose-Headers', '*')
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Headers', '*')
+  res.setHeader('Access-Control-Expose-Headers', 'commitid')
   // nodejs automatically lowercases all header keys because they're officially supposed to be case insensitive
   // I have to send out header keys captialized because some people need that, though
   if (req.headers["access-control-request-headers"] !== undefined) {
@@ -257,6 +256,7 @@ http.createServer(async (req, res) => {
         return
       }
 
+      res.setHeader('commitid', graphMetadata.l)
       res.setHeader('Content-Encoding', 'br')
       fileReadStream = fs.createReadStream(`../user-data/blox-br/${match[2]}.json.br`)
       fileReadStream.pipe(res)
@@ -301,15 +301,26 @@ http.createServer(async (req, res) => {
       return
     case "edit":
       if (!canAccountWriteBlox(userAccount, match[2])) {
-        res.write(403)
+        res.writeHead(403)
+        res.end()
+        return
+      }
+      if (req.headers.synccommitid !== graphs[match[2]].l) {
+        res.writeHead(409)
         res.end()
         return
       }
       const blox = await bloxCache.get(match[2])
-      const edit = getReqHeaderBody(req)
-      doEditBlox(edit, blox)
-      common.storeBlox(match[2], JSON.stringify(blox))
-      break
+      const commit = getReqHeaderBody(req)
+      for (let edit of commit.edits) {
+        doEditBlox(edit, blox, commit.t)
+      }
+      graphs[match[2]].l = commit.id
+      debouncedSaveGraphs()
+      common.asyncStoreBloxString(match[2], JSON.stringify(blox))
+      res.writeHead(200)
+      res.end()
+      return
     default:
       res.writeHead(400)
       res.write(`waat? ${req.url}`)

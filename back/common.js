@@ -2,29 +2,28 @@ const fs = require('fs')
 const fsPromises = fs.promises
 const zlib = require('zlib')
 const stream = require('stream')
+const { LruCache, promisify, doEditBlox, applyDif, undoEditBlox, unapplyDif } = require('../front/src/front-back-shared.js')
 
 const brotliCompressParams = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } }
 
-exports.storeBlox = (name, bloxString) => {
-  const string = JSON.stringify(bloxString)
-  zlib.brotliCompress(string, brotliCompressParams, (err, data) => {
-    if (err !== null) {
+exports.asyncStoreBloxString = promisify((name, bloxString, callback) => {
+  zlib.brotliCompress(bloxString, brotliCompressParams, (err, data) => {
+    if (!err) {
       fs.writeFile(`../user-data/blox-br/${name}.json.br`, data, (err) => {
-        if (err !== null) {
-          log(err)
+        if (err) {
           console.log(err)
         }
+        callback()
       })
     }
   })
-}
+})
 
-exports.loadBlox = (name, callback) => {
-  fs.readFile(`../user-data/blox-br/${name}.json.br`, (err) => {
-    if (err === null) return null
+exports.loadBlox = promisify((name, callback) => {
+  fs.readFile(`../user-data/blox-br/${name}.json.br`, (err, string) => {
+    if (err) return null
     zlib.brotliDecompress(string, (err, data) => {
-      if (err === null) {
-        log(err)
+      if (err) {
         console.log(err)
         callback(null)
         return
@@ -33,7 +32,7 @@ exports.loadBlox = (name, callback) => {
       callback(json)
     })
   })
-}
+})
 
 exports.brCompressStream = (from, to) => {
   const compressor = zlib.createBrotliCompress(brotliCompressParams)

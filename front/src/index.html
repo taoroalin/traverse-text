@@ -55,6 +55,8 @@
         usingLocalStore = false
         res.json().then(blox => {
           console.log('got blox')
+          user.s.syncCommitId = res.headers.get('commitid')
+          saveUser() // todo don't save user as much
           hydrateFromBlox(user.s.graphName, blox)
           setTimeout(generateInnerOuterRefs, 160)
           setDataLoaded() // todo catch code loading after this
