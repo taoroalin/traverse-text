@@ -68,7 +68,7 @@ const renderSessionState = () => {
     sessionState.position = 0
     sessionState.focusId = firstBlockElement.dataset.id
   } else {
-    console.log("thing happened")
+    console.log(`SESSION STATE ALREADY FOCUSED ON ${sessionState.focusId}`)
   }
   focusIdPosition()
 

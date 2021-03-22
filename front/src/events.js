@@ -290,7 +290,7 @@ const globalHotkeys = {
   },
   "undo": {
     key: "z", control: true, fn: () => {
-      if (edits.length > 0) {
+      if (undoCommitList.length > 0) {
         undo()
         renderSessionState()
       }

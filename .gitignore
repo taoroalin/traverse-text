@@ -7,3 +7,4 @@ roam-stash/**
 test-data/**
 **/node_modules/**
 **/package-lock.json
+front/src/fonts/**

@@ -54,7 +54,7 @@ const undo = () => {
   sessionState = undoCommitSessionStateList.pop()
   for (let i = commit.edits.length - 1; i >= 0; i--) {
     const edit = commit.edits[i]
-    undoEdit(edit, store.blox)
+    undoEditBlox(edit, store.blox)
     undoEditCacheStuff(edit)
   }
 }

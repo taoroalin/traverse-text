@@ -7,6 +7,9 @@ const reset = () => {
 }
 
 const syncEditsWithBasicBitchServer = async () => {
+  if (masterCommitInProgress.length === 0) {
+    return
+  }
   const headers = new Headers()
   headers.set('h', user.h)
   const newCommitId = newUUID()

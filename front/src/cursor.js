@@ -1,9 +1,10 @@
 const focusIdPosition = () => {
   const oldFocusId = focusBlock && focusBlock.dataset.id
-  if (oldFocusId && oldFocusId !== sessionState.focusId) {
+  if (oldFocusId && oldFocusId !== sessionState.focusId && focusBlock.isConnected) {
     focusBlockBody.textContent = ""
     renderBlockBody(focusBlockBody, store.blox[oldFocusId].s)
   }
+
   focusBlock = document.querySelector(`.block[data-id="${sessionState.focusId}"]`)
   focusBlockBody = focusBlock.children[1]
 
