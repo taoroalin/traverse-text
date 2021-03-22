@@ -1,0 +1,1 @@
+rm -r ../user-data && rm -r ../server-log && cp ../user-data-empty ../user-data && cp ../server-log-empty ../server-log

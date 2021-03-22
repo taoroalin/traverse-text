@@ -187,8 +187,13 @@ const saveUser = () => {
     signOutButton.style.display = "none"
     signupButton.style.display = "block"
   }
-  localStorage.setItem("user", JSON.stringify(user))
+  saveUserJustLocalStorage()
   saveSettingsToBasicBitchServer()
+}
+
+const saveUserJustLocalStorage = () => {
+  localStorage.setItem("user", JSON.stringify(user))
+
 }
 
 

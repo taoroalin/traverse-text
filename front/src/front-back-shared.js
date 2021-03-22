@@ -105,8 +105,17 @@ const doEditBlox = (edit, blox, time) => {
   }
 }
 
+let getProcessMemory
+try {
+  performance.memory.heapUsed
+  getProcessMemory = () => (performance.memory && performance.memory.heapUsed)
+} catch (e) {
+  process.memoryUsage().heapUsed
+  getProcessMemory = () => process.memoryUsage().heapUsed
+}
+
 class LruCache {
-  constructor(fetcher, maxProcessMemory = 1500000000) { // 1.5GB
+  constructor(fetcher, maxProcessMemory = 1_500_000_000) {
     this.maxProcessMemory = maxProcessMemory
     this.fetcher = fetcher
     this.map = new Map()
@@ -122,6 +131,12 @@ class LruCache {
       if (fetched) {
         this.map.set(key, fetched)
       }
+      if (getProcessMemory() > this.maxProcessMemory) {
+        for (const item of this.map) {
+          this.map.delete(item[0])
+          break
+        }
+      }
       return fetched
     }
   }
@@ -129,7 +144,7 @@ class LruCache {
 
 const promisify = (fn) => (...args) => new Promise((resolve, err) => fn(...args, resolve))
 
-//@module this tag means the front end build script will cut out everything past here
+//~frontskip this tag means the front end build script will cut out everything between here and the next ~
 try {
   exports.applyDif = applyDif
   exports.unapplyDif = unapplyDif
@@ -140,3 +155,4 @@ try {
 } catch (e) {
 
 }
+//~

@@ -1,15 +1,14 @@
 const http = require('http')
 const fs = require('fs')
-const os = require('os')
 const common = require('./common.js')
-const { LruCache, promisify, doEditBlox, applyDif, undoEditBlox, unapplyDif } = require('../front/src/front-back-shared.js')
-// front-back-shared is in the front folder because its easier to import from other paths in Node
+const { performance } = require('perf_hooks')
+const { LruCache, promisify, doEditBlox, undoEditBlox } = require('../front/src/front-back-shared.js')
+// front-back-shared is in the front folder because its easier to import from other paths in Node than browser
 
 const bloxCache = new LruCache((key) => common.loadBlox(key))
 
-// crypto and cluster are node built-in modules to consider. cluster lets you have multiple identical processes and round-robin distributes requests among them
-// todo use session keys instead of holding onto password hash everywhere for more security
 
+// todo use session keys instead of holding onto password hash everywhere for more security
 const hashRegex = /^[a-zA-Z0-9_\-]{80,90}$/
 
 let accounts = JSON.parse(fs.readFileSync(`../user-data/accounts.json`))
@@ -23,15 +22,13 @@ for (let account of accounts) {
 }
 
 
-// todo find a good abstraction for saving whenever something changes or every 50ms.
 let toLog = ""
-// {graphname:{ommitId}}
 
 let logTimeout = null
 const doLog = () => {
-  fs.appendFile("../user-data/log.txt", toLog, (err) => {
+  fs.appendFile("../server-log/log.txt", toLog, (err) => {
     if (err) {
-      console.log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
+      console.log(`ERROR LOG SAVE FAILURE`)
       return
     }
   })
@@ -39,6 +36,7 @@ const doLog = () => {
   logTimeout = null
 }
 
+// todo find a good abstraction for saving whenever something changes or every 50ms instead of copy-pasting every time
 const log = (str) => {
   toLog += str + "\n"
   if (logTimeout === null) {
@@ -47,7 +45,7 @@ const log = (str) => {
 }
 
 let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
-// {graphname:{ommitId}}
+// {graphname:{commitId}}
 
 let saveGraphsTimeout = null
 const saveGraphs = () => {
@@ -101,14 +99,16 @@ const getReqHeaderBody = (req) => {
   }
 }
 
+
 // I had json in body, but that caused timing issues because I want to change end listener, but couldn't to it fast enough because the end event happens so fast. Switched to putting all JSON made for immediate parsing in header
 http.createServer(async (req, res) => {
+  const gotReqTime = performance.now()
   res.setHeader('Access-Control-Expose-Headers', '*')
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Headers', '*')
   res.setHeader('Access-Control-Expose-Headers', 'commitid')
   // nodejs automatically lowercases all header keys because they're officially supposed to be case insensitive
-  // I have to send out header keys captialized because some people need that, though
+  // I had to send out header keys captialized because some clients need that, though
   if (req.headers["access-control-request-headers"] !== undefined) {
     res.writeHead(200)
     res.end()
@@ -285,7 +285,6 @@ http.createServer(async (req, res) => {
     case "auth":
       res.write(JSON.stringify(userAccount.u))
       res.end()
-      // console.log("auth")
       return
     case "settings":
       let settings = getReqHeaderBody(req)
@@ -322,14 +321,13 @@ http.createServer(async (req, res) => {
       res.end()
       return
     default:
-      res.writeHead(400)
-      res.write(`waat? ${req.url}`)
-      res.end()
+      console.log(`REGEX / SWITCH CASE MISMATCH`)
       return
   }
 }).listen(3000)
 
-/**
+/*
+
 response codes
 
 200 ok

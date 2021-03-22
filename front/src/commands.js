@@ -113,7 +113,7 @@ const commit = () => {
   undoCommitInProgress = []
   setTimeout(() => {
     debouncedSaveStore()
-    saveUser()
+    saveUserJustLocalStorage()
   }, 0)
 }
 

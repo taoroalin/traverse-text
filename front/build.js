@@ -49,7 +49,7 @@ const build = () => {
   const regexScriptImport = /<script src="([^":]+)"( async)?><\/script>/g
   const scriptReplacer = (match, fname, async) => {
     let js = fs.readFileSync("./src/" + fname, "utf8")
-    js = js.replace(/\/\/@module(.|\n|\r)*$/, "")
+    js = js.replace(/\/\/~frontskip([^~]|\n|\r)*~/, "")
     js = js.replace(/^[ \t]*(print|console.log)[^\n]+\r?\n/, "") // remove all console.log or print
     return `\n<script${async || ""}>\n${js}\n</script>\n`
   }
