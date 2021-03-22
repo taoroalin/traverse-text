@@ -250,7 +250,7 @@ http.createServer(async (req, res) => {
       const readableUserData = userAccount.u
       res.setHeader('user', JSON.stringify(readableUserData))
 
-      if (match[3] && match[3] === graphMetadata.l) {
+      if (req.headers.commitid && req.headers.commitid === graphMetadata.l) {
         res.writeHead(304)
         res.end()
         return

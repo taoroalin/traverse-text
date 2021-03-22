@@ -1,4 +1,4 @@
-const focusIdPosition = () => {
+const prepFocusIdForCursor = () => {
   if (focusBlock &&
     focusBlock.isConnected &&
     focusBlock.dataset.id !== sessionState.focusId) {
@@ -19,6 +19,10 @@ const focusIdPosition = () => {
   const text = store.blox[sessionState.focusId].s
   focusBlockBody.innerText = ""
   renderBlockBodyToEdit(focusBlockBody, text)
+}
+
+const focusIdPosition = () => {
+  prepFocusIdForCursor()
 
   const scanElement = (element) => {
     for (let el of element.childNodes) {
@@ -37,6 +41,14 @@ const focusIdPosition = () => {
     }
   }
   scanElement(focusBlockBody)
+  updateCursorSpanInfo()
+}
+
+const selectIdWholeNode = (node) => {
+  prepFocusIdForCursor()
+
+  //todo ......
+
   updateCursorSpanInfo()
 }
 

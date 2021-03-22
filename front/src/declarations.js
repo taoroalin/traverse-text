@@ -73,6 +73,7 @@ const notificationTemplate = getTemp("notification")
 
 // Block parsing Templates
 const pageRefTemplate = getTemp("page-ref")
+const imageEmbedTemplate = getTemp("image-embed")
 
 // login/signup
 const loginForm = elById("login-form")

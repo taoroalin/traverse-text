@@ -41,7 +41,7 @@
     if (user.h) {
       const headers = new Headers()
       headers.set('h', user.h)
-      if (user.s.commitId) headers.set('commitid', user.s.commitId)
+      if (user.s.syncCommitId) headers.set('commitid', user.s.syncCommitId)
       let reqUrl = `${basicBitchServerUrl}/get/${user.s.graphName}`
       fetch(reqUrl, { method: 'POST', headers: headers }).then(async (res) => {
         if (res.status === 304) {
@@ -53,9 +53,9 @@
           return
         }
         usingLocalStore = false
+        user.s.syncCommitId = res.headers.get('commitid')
         res.json().then(blox => {
           console.log('got blox')
-          user.s.syncCommitId = res.headers.get('commitid')
           hydrateFromBlox(user.s.graphName, blox)
           setDataLoaded()
         })
@@ -295,6 +295,10 @@
   <template id="page-ref">
     <span class="page-ref"><span class="page-ref__brackets"></span><span class="page-ref__body"></span><span
         class="page-ref__brackets"></span></span>
+  </template>
+
+  <template id="image-embed">
+    <img class="image-embed">
   </template>
 
   <template id="breadcrumb-page">

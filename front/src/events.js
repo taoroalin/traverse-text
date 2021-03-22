@@ -672,6 +672,9 @@ document.addEventListener("mousedown", (event) => {
     loginElement.style.display = "none"
   } else if (event.target.className === "command__suggestion") {
     execInlineCommand()
+  } else if (event.target.className === "image-embed") {
+    focusBlockStart(event.target.closest(".block"))
+    event.preventDefault()
   }
 
   // this is at the bottom so that autocomplete suggestion click handler still knows where the link is. 

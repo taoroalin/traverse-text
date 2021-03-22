@@ -136,12 +136,12 @@ const notifyText = (text, duration) => {
   }, dur + 300)
 }
 
-// 1             2              3   4         5    6         
-// page-ref-open page-ref-close tag block-ref bold highlight 
+// 1             2              3   4         5    6         7
+// page-ref-open page-ref-close tag block-ref bold highlight italic
 
-// 7      8    9       10                11        12         13
-// italic link literal template-expander attribute code-block command
-const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|\\(.*)/g
+// 8    9       10                11        12         13      14-15
+// link literal template-expander attribute code-block command image-embed
+const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|\\(.*)|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)/g
 // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
 const renderBlockBodyToEdit = (parent, text) => {
@@ -278,6 +278,11 @@ const renderBlockBodyToEdit = (parent, text) => {
       commandElement.className = "command"
       commandElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(commandElement)
+    } else if (match[14] !== undefined && match[15] !== undefined) {
+      const imageJustTextElement = document.createElement("span")
+      imageJustTextElement.className = "image-full-text"
+      imageJustTextElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(imageJustTextElement)
     }
     idx = match.index + match[0].length
   }
@@ -427,6 +432,11 @@ const renderBlockBody = (parent, text) => {
       commandElement.className = "command"
       commandElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(commandElement)
+    } else if (match[14] !== undefined && match[15] !== undefined) { // image is 14-15
+      const imageElement = imageEmbedTemplate.cloneNode(true)
+      imageElement.alt = match[14]
+      imageElement.src = match[15]
+      stackTop.appendChild(imageElement)
     }
     idx = match.index + match[0].length
   }
