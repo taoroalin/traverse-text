@@ -141,8 +141,13 @@ const notifyText = (text, duration) => {
 
 // 8    9       10                11        12         13      14-15
 // link literal template-expander attribute code-block command image-embed
-const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|\\(.*)|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)/g
+
+// 16            17          18  19
+// compute-start compute-end and or
+const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|\\(.*)|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)|({{)|(}})|(and)|(or)/g
 // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
+
+// I'm very impressed with JS regex performance! that regex eats my string at 900M chars/s!
 
 const renderBlockBodyToEdit = (parent, text) => {
   parent.dataset.editmode = true
@@ -283,6 +288,19 @@ const renderBlockBodyToEdit = (parent, text) => {
       imageJustTextElement.className = "image-full-text"
       imageJustTextElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(imageJustTextElement)
+    } else if (match[16]) {
+      const computeStartElement = document.createElement("span")
+      computeStartElement.appendChild(newTextNode("{{"))
+      stackTop.appendChild(computeStartElement)
+    } else if (match[17]) {
+      const computeEndElement = document.createElement("span")
+      computeEndElement.appendChild(newTextNode("}}"))
+      stackTop.appendChild(computeEndElement)
+    } else {
+      const uselessElement = document.createElement("span")
+      uselessElement.className = "irrelevent-token"
+      uselessElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(uselessElement)
     }
     idx = match.index + match[0].length
   }
@@ -437,16 +455,143 @@ const renderBlockBody = (parent, text) => {
       imageElement.alt = match[14]
       imageElement.src = match[15]
       stackTop.appendChild(imageElement)
+    } else if (match[16]) {
+      const computeFailedElement = computeFailedTemplate.cloneNode(true)
+      computeFailedElement.startIdx = idx + 2
+      stackTop.appendChild(computeFailedElement)
+      computeFailedElement.children[0].appendChild(newTextNode("{{"))
+      stack.push(computeFailedElement.children[1])
+      stackTop = stack[stack.length - 1]
+    } else if (match[17]) {
+      if (stackTop.className === "compute-failed__body") {
+        const el = stackTop.parentNode
+        el.endIdx = idx
+        el.text = text.substring(el.startIdx, el.endIdx)
+        el.children[2].appendChild(newTextNode("}}"))
+        transformComputeElement(el)
+        stack.pop()
+        stackTop = stack[stack.length - 1]
+        lastTextNode.endIdx += 2
+      } else {
+        const el = document.createElement("span")
+        el.appendChild(newTextNode("}}"))
+        stackTop.appendChild(el)
+      }
+    } else if (match[18]) {
+      const andElement = document.createElement('span')
+      andElement.className = 'compute-and'
+      andElement.appendChild(newTextNode("and"))
+      stackTop.appendChild(andElement)
+    } else if (match[19]) {
+      const andElement = document.createElement('span')
+      andElement.className = 'compute-or'
+      andElement.appendChild(newTextNode("or"))
+      stackTop.appendChild(andElement)
     }
     idx = match.index + match[0].length
   }
 
   stack[stack.length - 1].appendChild(newTextNode(text.substring(idx)))
 
-  // this time I add back in starters in addition to removing classes
+  // todo handle unmatched elements
   while (stackTop !== parent) {
 
     stackTop.className = ""
     stackTop = stackTop.parentNode
   }
 }
+
+const transformComputeElement = (el) => {
+  const seq = el.children[1].children
+  const firstEl = seq[0]
+  const pageTitle = getPageTitleOfNode(firstEl)
+  if (pageTitle === undefined) {
+    return
+  }
+  switch (pageTitle) {
+    case "TODO":
+      el.textContent = ""
+      const checkbox = todoCheckboxTemplate.cloneNode(true)
+      el.appendChild(checkbox)
+      break
+    case "DONE":
+      el.textContent = ""
+      const checkedCheckbox = todoCheckboxTemplate.cloneNode(true)
+      checkedCheckbox.checked = true
+      el.appendChild(checkedCheckbox)
+      break
+    case "video":
+      if (seq[1].className === "url") {
+        const videoEmbedElement = videoEmbedTemplate.cloneNode(true)
+        videoEmbedElement.src = youtubeLinkToEmbed(seq[1].innerText)
+        el.textContent = ""
+        el.appendChild(videoEmbedElement)
+      }
+      break
+    case "query":
+      break
+    default:
+      return
+  }
+  el.className = "compute"
+}
+
+const getIdOfYoutubeURL = (url) => {
+  const match = url.match(/^https:\/\/www\.youtube.com\/watch\?v=([a-zA-Z0-9]+)(&t=.+)?$/)
+  if (match) return match[1]
+}
+
+const getEmbedLinkOfYoutubeId = (id) => {
+  return `https://www.youtube.com/embed/${id}`
+}
+
+const youtubeLinkToEmbed = (link) => getEmbedLinkOfYoutubeId(getIdOfYoutubeURL(link))
+
+
+const parseComputeText = (text) => {
+  const tree = []
+  const stack = [tree]
+  let idx = 0
+  let textLeft = text
+
+  const skipWhitespace = () => {
+    const match = text.match(/^[ \n\r\t]+/)
+    if (match) {
+      textLeft = textLeft.substring(match[0].length)
+      idx += match[0].length
+    }
+  }
+  skipWhitespace()
+
+  while (textLeft.length > 0) {
+    switch (textLeft[0]) {
+      case "{":
+        break
+      case "}":
+        break
+      default:
+        if (textLeft.substring(0, 2) === "or") {
+
+        } else if (textLeft.substring(0, 3) === "and") {
+
+        }
+    }
+    skipWhitespace()
+  }
+}
+
+
+const exampleQueryString = `{and [[A Page]] {or [[Another Page]] {and [[Third Page]] {or [[Forth Page]] [[Fifth Thing]]} [[Another One]]} [[Finally]] }}`
+
+let newRandomQueryString = (n) => {
+  let result = ""
+  for (let i = 0; i < n; i++) {
+    const uuid = newUUID()
+    result += "{and [[" + uuid + "]] "
+  }
+  for (let i = 0; i < n; i++) {
+    result += "}"
+  }
+  return result
+}
+

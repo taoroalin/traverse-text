@@ -202,10 +202,13 @@ if (dataLoaded) start()
 scriptsLoaded = true
 
 const ptest = () => {
-  const t2 = performance.now()
-  for (let i = 0; i < 1000; i++) {
-    newUUID()
+  let s = ""
+  for (let thing in store.blox) {
+    s += store.blox[thing].s
   }
-  console.log(`new store took ${(performance.now() - t2) / 1000}`)
+  console.log(s.length)
+  const t2 = performance.now()
+  console.log(s.matchAll(parseRegex))
+  console.log(`thing took ${(performance.now() - t2)}`)
 }
 // ptest()

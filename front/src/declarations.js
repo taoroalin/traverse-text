@@ -74,6 +74,9 @@ const notificationTemplate = getTemp("notification")
 // Block parsing Templates
 const pageRefTemplate = getTemp("page-ref")
 const imageEmbedTemplate = getTemp("image-embed")
+const computeFailedTemplate = getTemp("compute-failed")
+const todoCheckboxTemplate = getTemp("todo-checkbox")
+const videoEmbedTemplate = getTemp("video-embed")
 
 // login/signup
 const loginForm = elById("login-form")

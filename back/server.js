@@ -7,7 +7,6 @@ const { LruCache, promisify, doEditBlox, undoEditBlox } = require('../front/src/
 
 const bloxCache = new LruCache((key) => common.loadBlox(key))
 
-
 // todo use session keys instead of holding onto password hash everywhere for more security
 const hashRegex = /^[a-zA-Z0-9_\-]{80,90}$/
 

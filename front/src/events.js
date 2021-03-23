@@ -674,6 +674,26 @@ document.addEventListener("mousedown", (event) => {
     execInlineCommand()
   } else if (event.target.className === "image-embed") {
     focusBlockStart(event.target.closest(".block"))
+    // todo select the text corresponding to the image
+    event.preventDefault()
+  } else if (event.target.className === "todo-checkbox") {
+    const checked = event.target.checked
+    const newLink = checked ? "TODO" : "DONE"
+    const block = event.target.closest(".block")
+    const id = block.dataset.id
+
+    const fe = event.target.closest('.compute')
+
+    let string = store.blox[id].s
+    console.log(`s ${fe.startIdx} e ${fe.endIdx}`)
+    string = string.substring(0, fe.startIdx) +
+      "[[" + newLink + "]]" +
+      string.substring(fe.endIdx)
+    macros.write(id, string)
+
+    const blockBody = event.target.closest(".block__body")
+    blockBody.textContent = ""
+    renderBlockBody(blockBody, string)
     event.preventDefault()
   }
 
