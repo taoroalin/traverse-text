@@ -297,14 +297,14 @@ const globalHotkeys = {
     }
   },
   "delete block": {
-    key: "K", control: true, shift: true, fn: () => {
+    key: "k", control: true, shift: true, fn: () => {
       const bloc = store.blox[sessionState.focusId]
-      console.log("maybz deleting block")
       if (bloc.k === undefined || bloc.k.length === 0) {
-        console.log("deleting block")
+        focusBlock.remove()
         focusBlockVerticalOffset(-1)
         macros.delete(sessionState.focusId)
-        focusBlock.remove()
+      } else {
+        notifyText(`no "delete block" for blocks with children (at least right now)`)
       }
     }
   },
@@ -328,7 +328,7 @@ const globalHotkeys = {
 document.addEventListener("keydown", (event) => {
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
-    if (event.key === hotkey.key &&
+    if (event.key.toLowerCase() === hotkey.key &&
       event.shiftKey === !!hotkey.shift &&
       event.ctrlKey === !!hotkey.control &&
       event.altKey === !!hotkey.alt) {
@@ -685,7 +685,6 @@ document.addEventListener("mousedown", (event) => {
     const fe = event.target.closest('.compute')
 
     let string = store.blox[id].s
-    console.log(`s ${fe.startIdx} e ${fe.endIdx}`)
     string = string.substring(0, fe.startIdx) +
       "[[" + newLink + "]]" +
       string.substring(fe.endIdx)

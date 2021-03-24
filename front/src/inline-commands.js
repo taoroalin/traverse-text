@@ -22,6 +22,12 @@ const inlineCommands = {
   today: () => {
     inlineCommandReplaceString("[[" + formatDate(new Date(Date.now())) + "]]")
   },
+  video: () => {
+    inlineCommandReplaceString("{{#video: }}", -2)
+  },
+  query: () => {
+    inlineCommandReplaceString("{{#query: }}", -2)
+  },
   "current time": () => {
     const now = new Date(Date.now())
     inlineCommandReplaceString(formatTime(now))

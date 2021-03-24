@@ -389,6 +389,10 @@ a:visited {
   cursor: pointer;
 }
 
+.image-embed{
+  max-width:100%;
+}
+
 #terminal {
   font-family: "Inconsolata";
   width: 100%;

@@ -201,14 +201,13 @@ const saveUserJustLocalStorage = () => {
 if (dataLoaded) start()
 scriptsLoaded = true
 
+
 const ptest = () => {
-  let s = ""
-  for (let thing in store.blox) {
-    s += store.blox[thing].s
-  }
-  console.log(s.length)
   const t2 = performance.now()
-  console.log(s.matchAll(parseRegex))
-  console.log(`thing took ${(performance.now() - t2)}`)
+  for (let i = 0; i < 100; i++) {
+    generateInnerOuterRefs()
+  }
+  const took = (performance.now() - t2)
+  console.log(`thing took ${took}`)
 }
 // ptest()

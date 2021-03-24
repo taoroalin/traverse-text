@@ -32,18 +32,35 @@ const gcPage = (pageId) => {
 // page-ref-open page-ref-close tag block-ref attribute literal code-block
 const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(^[\/a-zA-Z0-9_-]+)::|`([^`]+)`|```/g
 
-const setLinks = (blocId) => {
+const setLinks = (blocId, doInnerOuterRefs = false) => {
   for (let ref of store.forwardRefs[blocId] || []) {
     store.refs[ref] = store.refs[ref].filter(x => x !== blocId)
     gcPage(ref)
   }
   const forwardRefs = []
   store.forwardRefs[blocId] = forwardRefs
-  const doRef = (ref) => {
-    if (ref in store.refs) store.refs[ref].push(blocId)
-    else store.refs[ref] = [blocId]
-    forwardRefs.push(ref)
+
+  let doRef
+  if (doInnerOuterRefs) {
+    doRef = (ref) => {
+      if (ref in store.refs) {
+
+        store.refs[ref].push(blocId)
+      }
+      else {
+
+        store.refs[ref] = [blocId]
+      }
+      forwardRefs.push(ref)
+    }
+  } else {
+    doRef = (ref) => {
+      if (ref in store.refs) store.refs[ref].push(blocId)
+      else store.refs[ref] = [blocId]
+      forwardRefs.push(ref)
+    }
   }
+
   const doTitle = (title) => {
     let ref = store.titles[title]
     if (ref === undefined) {
@@ -143,6 +160,50 @@ const mergeLists = (list1, list2) => {
   }
 }
 
+// destructured return here costs me like 3ms over 10_000 calls. unfortunate
+const arrSetDiff = (cur, old) => {
+  let added = []
+  let deleted = []
+  for (let ref of cur) {
+    if (!old.includes(ref)) added.push(ref)
+  }
+  for (let oldRef of old) {
+    if (!cur.includes(oldRef)) deleted.push(oldRef)
+  }
+  return { added, deleted }
+}
+
+// INPROGRESS
+const propagateRefs = (blocId, refs, oldRefs) => {
+  const { added, deleted } = arrSetDiff(refs, oldRefs)
+  const bloc = store.blox[blocId]
+  if (bloc.p) {
+    let p = bloc.p
+    while (p) {
+      const pbloc = store.blox[p]
+      const prefs = store.forwardRefs[p]
+      for (let i = 0; i < added.length; i++) { // warning i modified inside loop during deletions
+        const adr = added[i]
+        if (prefs.includes(adr)) {
+          added[i] = added.pop()
+          i -= 1
+        } else {
+          prefs.push(adr)
+        }
+      }
+      p = pbloc.p
+    }
+  }
+  let parent = bloc;
+  do {
+    parent = store.blox[parent.p]
+    for (let i = 0; i < added.length; i++) {
+
+    }
+  } while (parent.p)
+
+}
+
 // inner refs are refs in a page/block and any pages/blocks within it
 const generateInnerRefs = () => {
   // algorithm: for each ref anywhere, add it to each of its parent's uprefs
@@ -157,7 +218,7 @@ const generateInnerRefs = () => {
       id = store.blox[id].p
     }
   }
-  console.log(`innerrefs took ${performance.now() - stime}`)
+  // console.log(`innerrefs took ${performance.now() - stime}`)
 }
 
 // outer refs are refs in a block / page and each block/page in its ancestry
@@ -175,7 +236,7 @@ const generateOuterRefs = () => {
     }
     fn(blocId)
   }
-  console.log(`outerrefs took ${performance.now() - stime}`)
+  // console.log(`outerrefs took ${performance.now() - stime}`)
 }
 
 const generateInnerOuterRefs = () => {

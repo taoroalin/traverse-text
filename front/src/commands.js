@@ -59,7 +59,7 @@ const undo = () => {
   }
 }
 
-const doEditCacheStuff = (edit) => {
+const doEditCacheStuff = (edit, includeInnerOuter = false) => {
   const [op, id, p1, p2, p3, p4] = edit
   switch (op) {
     case 'dl':
@@ -83,7 +83,7 @@ const doEditCacheStuff = (edit) => {
       }
       break
     case 'df':
-      setLinks(id)
+      setLinks(id, includeInnerOuter)
       const bloc = store.blox[id]
       if (bloc.p === undefined) {
         const oldString = unapplyDif(bloc.s, p1) // this work could be deduplicated, but AAAAGGGGHHHH there's already so much coupling to deduplicate work!

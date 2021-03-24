@@ -144,10 +144,13 @@ const notifyText = (text, duration) => {
 
 // 16            17          18  19
 // compute-start compute-end and or
-const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[\/a-zA-Z0-9_-]+)::|(```)|\\(.*)|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)|({{)|(}})|(and)|(or)/g
+const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[ \/a-zA-Z0-9_-]+)::|(```)|\\(.*)|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)|({{)|(}})|(and)|(or)/g
 // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
-// I'm very impressed with JS regex performance! that regex eats my string at 900M chars/s!
+// This regex runs at 50-100M chars/s
+// a regex this large runs at 1/3 the speed of a regex like /d([a-z])/g for equivelent string lengths + match counts + group counts
+// adding a group slows it down by like 25%
+// adding a named group halves its speed - unfortunately that's why I don't use named groups
 
 const renderBlockBodyToEdit = (parent, text) => {
   parent.dataset.editmode = true
@@ -194,17 +197,10 @@ const renderBlockBodyToEdit = (parent, text) => {
       tagElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(tagElement)
     } else if (match[4]) {
-      const blockId = match[4]
-      const block = store.blox[blockId]
-      if (block) {
-        const blockRefElement = document.createElement('span')
-        blockRefElement.className = 'block-ref'
-        blockRefElement.innerText = block.s
-        blockRefElement.dataset.id = blockId
-        stackTop.appendChild(blockRefElement)
-      } else {
-        stackTop.appendChild(newTextNode(match[0]))
-      }
+      const brElement = document.createElement('span')
+      brElement.className = "block-ref-editing"
+      brElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(brElement)
     } else if (match[5]) {
       if (stackTop.className === "bold") {
         stackTop.appendChild(newTextNode("**"))
@@ -501,6 +497,9 @@ const renderBlockBody = (parent, text) => {
   }
 }
 
+const queryOperationOrder = { "compute-or": 1, "compute-and": 2 }
+// not using 0 because that would be falsy
+
 const transformComputeElement = (el) => {
   const seq = el.children[1].children
   const firstEl = seq[0]
@@ -521,6 +520,7 @@ const transformComputeElement = (el) => {
       el.appendChild(checkedCheckbox)
       break
     case "video":
+      if (seq.length !== 2) return
       if (seq[1].className === "url") {
         const videoEmbedElement = videoEmbedTemplate.cloneNode(true)
         videoEmbedElement.src = youtubeLinkToEmbed(seq[1].innerText)
@@ -528,7 +528,68 @@ const transformComputeElement = (el) => {
         el.appendChild(videoEmbedElement)
       }
       break
-    case "query":
+    case "query": // INPROGRESS very broken rn
+
+      // step 1 parse element list using precedence climbing
+      let tree = {
+        l: undefined,
+        r: undefined,
+        op: undefined,
+        title: undefined,
+        p: undefined
+      }
+      let cur = tree
+      for (let i = 1; i < seq.length; i++) {
+        const newNode = { l: undefined, r: undefined, op: undefined, title: undefined, p: undefined }
+        const el = seq[i]
+        const title = getPageTitleOfNode(el)
+        if (title) {
+          newNode.title = title
+          newNode.op = "page"
+          if (cur.l === undefined) {
+            cur.l = newNode
+          } else cur.r = newNode
+          newNode.p = cur
+          cur = newNode
+          continue
+        }
+        const opOrder = queryOperationOrder[el.className]
+        if (opOrder !== undefined) {
+          newNode.op = el.className
+          while (queryOperationOrder[cur.op] && queryOperationOrder[cur.op] > opOrder) {
+            cur = cur.p
+          }
+          newNode.l = cur
+          if (cur.p.l === cur) cur.p.l = newNode
+          else cur.p.r = newNode
+        }
+      }
+
+      const queryFn = (ast) => {
+        let r = queryFn(ast.r)
+        let l = queryFn(ast.l)
+        switch (ast.op) {
+          case "compute-and":
+            const result = []
+            for (let id of r) {
+              if (l.includes(id)) result.push(id)
+            }
+            return result
+          case "compute-or":
+            for (let el of r) {
+              l.push(el)
+            }
+            return l
+          case "page":
+            return [...store.refs[page]]
+          default:
+            return []
+        }
+      }
+      const queryStime = performance.now()
+      const result = queryFn(tree)
+      console.log(`query took ${performance.now() - queryStime}`)
+      console.log(result)
       break
     default:
       return
@@ -536,62 +597,77 @@ const transformComputeElement = (el) => {
   el.className = "compute"
 }
 
-const getIdOfYoutubeURL = (url) => {
+
+
+/*
+[1 and 2] or
+[[1 and 2] or]
+
+[1 or 2] and
+[1 or [2 and ]]
+
+[1 or [2 and [3 nand 4]]] and
+
+[1 or 2] or
+[[1 or 2] or]
+ */
+
+const idOfYoutubeURL = (url) => {
   const match = url.match(/^https:\/\/www\.youtube.com\/watch\?v=([a-zA-Z0-9]+)(&t=.+)?$/)
   if (match) return match[1]
 }
 
-const getEmbedLinkOfYoutubeId = (id) => {
+const embedLinkOfYoutubeId = (id) => {
   return `https://www.youtube.com/embed/${id}`
 }
 
-const youtubeLinkToEmbed = (link) => getEmbedLinkOfYoutubeId(getIdOfYoutubeURL(link))
+const youtubeLinkToEmbed = (link) => embedLinkOfYoutubeId(idOfYoutubeURL(link))
 
 
-const parseComputeText = (text) => {
-  const tree = []
-  const stack = [tree]
-  let idx = 0
-  let textLeft = text
+// const parseComputeText = (text) => {
+//   const tree = []
+//   const stack = [tree]
+//   let idx = 0
+//   let textLeft = text
 
-  const skipWhitespace = () => {
-    const match = text.match(/^[ \n\r\t]+/)
-    if (match) {
-      textLeft = textLeft.substring(match[0].length)
-      idx += match[0].length
-    }
-  }
-  skipWhitespace()
+//   const skipWhitespace = () => {
+//     const match = text.match(/^[ \n\r\t]+/)
+//     if (match) {
+//       textLeft = textLeft.substring(match[0].length)
+//       idx += match[0].length
+//     }
+//   }
+//   skipWhitespace()
 
-  while (textLeft.length > 0) {
-    switch (textLeft[0]) {
-      case "{":
-        break
-      case "}":
-        break
-      default:
-        if (textLeft.substring(0, 2) === "or") {
+//   while (textLeft.length > 0) {
+//     switch (textLeft[0]) {
+//       case "{":
+//         break
+//       case "}":
+//         break
+//       default:
+//         if (textLeft.substring(0, 2) === "or") {
 
-        } else if (textLeft.substring(0, 3) === "and") {
+//         } else if (textLeft.substring(0, 3) === "and") {
 
-        }
-    }
-    skipWhitespace()
-  }
-}
+//         }
+//     }
+//     skipWhitespace()
+//   }
+// }
 
 
-const exampleQueryString = `{and [[A Page]] {or [[Another Page]] {and [[Third Page]] {or [[Forth Page]] [[Fifth Thing]]} [[Another One]]} [[Finally]] }}`
+// const exampleQueryString = `{and [[A Page]] {or [[Another Page]] {and [[Third Page]] {or [[Forth Page]] [[Fifth Thing]]} [[Another One]]} [[Finally]] }}`
 
-let newRandomQueryString = (n) => {
-  let result = ""
-  for (let i = 0; i < n; i++) {
-    const uuid = newUUID()
-    result += "{and [[" + uuid + "]] "
-  }
-  for (let i = 0; i < n; i++) {
-    result += "}"
-  }
-  return result
-}
+// let newRandomQueryString = (n) => {
+//   let result = ""
+//   for (let i = 0; i < n; i++) {
+//     const uuid = newUUID()
+//     result += "{and [[" + uuid + "]] "
+//   }
+//   for (let i = 0; i < n; i++) {
+//     result += "}"
+//   }
+//   return result
+// }
 

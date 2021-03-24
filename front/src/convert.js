@@ -111,7 +111,8 @@ const storeToRoamJSON = (store) => {
 
   const blockIdToJSON = (blockId) => {
     const block = store.blox[blockId]
-    const result = { uid: blockId, string: block.s, "create-time": base64ToInt(block.ct), "edit-time": base64ToInt(block.et) }
+    const result = { uid: blockId, string: block.s, "create-time": base64ToInt(block.ct) }
+    if (block.et) result["edit-time"] = base64ToInt(block.et)
     const roamProps = store.roamProps[blockId]
     if (roamProps) Object.assign(result, roamProps)
 
