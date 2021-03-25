@@ -532,15 +532,16 @@ const transformComputeElement = (el) => {
 
       // step 1 parse element list using precedence climbing
       let tree = {
-        l: undefined,
-        r: undefined,
-        op: undefined,
-        title: undefined,
-        p: undefined
+        // l: undefined,
+        // r: undefined,
+        // op: undefined,
+        // title: undefined,
+        // p: undefined
       }
       let cur = tree
+      console.log(seq)
       for (let i = 1; i < seq.length; i++) {
-        const newNode = { l: undefined, r: undefined, op: undefined, title: undefined, p: undefined }
+        const newNode = {}
         const el = seq[i]
         const title = getPageTitleOfNode(el)
         if (title) {
@@ -548,7 +549,12 @@ const transformComputeElement = (el) => {
           newNode.op = "page"
           if (cur.l === undefined) {
             cur.l = newNode
-          } else cur.r = newNode
+          } else if (cur.r === undefined) {
+            cur.r = newNode
+          } else {
+            console.error("page ref with no operator")
+            return
+          }
           newNode.p = cur
           cur = newNode
           continue
@@ -560,12 +566,21 @@ const transformComputeElement = (el) => {
             cur = cur.p
           }
           newNode.l = cur
-          if (cur.p.l === cur) cur.p.l = newNode
-          else cur.p.r = newNode
+          if (cur.p.l === cur) {
+            newNode.l = cur.p.l
+            cur.p.l = newNode
+          }
+          else {
+            newNode.r = cur.p.r
+            cur.p.r = newNode
+          }
         }
       }
 
+      console.log(tree)
+
       const queryFn = (ast) => {
+        if (ast === undefined) return []
         let r = queryFn(ast.r)
         let l = queryFn(ast.l)
         switch (ast.op) {
@@ -581,9 +596,7 @@ const transformComputeElement = (el) => {
             }
             return l
           case "page":
-            return [...store.refs[page]]
-          default:
-            return []
+            return [...(store.refs[page] || [])]
         }
       }
       const queryStime = performance.now()

@@ -434,11 +434,10 @@ document.addEventListener("keydown", (event) => {
         if (sessionState.position === 0) {
           const parent = store.blox[store.blox[sessionState.focusId].p]
           if (!(parent.p === undefined && parent.k.length === 1)) {
-            blocks = Array.from(document.querySelectorAll(".block"))
-            newActiveBlock = blocks[blocks.indexOf(focusBlock) - 1]
-            focusBlock.remove()
-            macros.delete(sessionState.focusId)
-            focusBlockEnd(newActiveBlock)
+            const currentFocusBlock = focusBlock
+            focusBlockVerticalOffset(-1)
+            macros.delete(currentFocusBlock.dataset.id)
+            currentFocusBlock.remove()
             event.preventDefault()
           }
         }
@@ -447,7 +446,7 @@ document.addEventListener("keydown", (event) => {
         if (event.altKey && event.shiftKey) {
           const parentId = store.blox[sessionState.focusId].p
           const parentElement = focusBlock.parentNode
-          const currentIdx = store.blox[parentId].children.indexOf(sessionState.focusId)
+          const currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
           if (focusBlock.nextElementSibling) {
             macros.move(sessionState.focusId, parentId, currentIdx + 1)
             if (focusBlock.nextElementSibling.nextElementSibling) {
@@ -465,7 +464,7 @@ document.addEventListener("keydown", (event) => {
         if (event.altKey && event.shiftKey) {
           const parentId = store.blox[sessionState.focusId].p
           const parentElement = focusBlock.parentNode
-          const currentIdx = store.blox[parentId].children.indexOf(sessionState.focusId)
+          const currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
           if (focusBlock.previousElementSibling) {
             macros.move(sessionState.focusId, parentId, currentIdx - 1)
             parentElement.insertBefore(focusBlock, focusBlock.previousElementSibling)

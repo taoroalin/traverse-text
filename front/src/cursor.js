@@ -30,7 +30,7 @@ const focusIdPosition = () => {
         if (sessionState.position >= (el.startIdx || 0) && sessionState.position <= (el.startIdx || 0) + el.textContent.length) {
           scanResult = el
           const placeToGo = sessionState.position - el.startIdx
-          console.log(`startIdx ${el.startIdx} togo ${placeToGo}`)
+          // console.log(`startIdx ${el.startIdx} togo ${placeToGo}`)
           getSelection().collapse(el, placeToGo)
           return el
         }
