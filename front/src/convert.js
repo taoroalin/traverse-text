@@ -111,7 +111,8 @@ const storeToRoamJSON = (store) => {
 
   const blockIdToJSON = (blockId) => {
     const block = store.blox[blockId]
-    const result = { uid: blockId, string: block.s, "create-time": base64ToInt(block.ct) }
+    const result = { uid: blockId, string: block.s }
+    if (block.ct) result["create-time"] = base64ToInt(block.ct)
     if (block.et) result["edit-time"] = base64ToInt(block.et)
     const roamProps = store.roamProps[blockId]
     if (roamProps) Object.assign(result, roamProps)
@@ -132,7 +133,10 @@ const storeToRoamJSON = (store) => {
     const pageId = store.titles[title]
     const page = store.blox[pageId]
     const roamProps = store.roamProps[pageId]
-    const jsonPage = { uid: pageId, title: page.s, "edit-time": base64ToInt(page.et), "create-time": base64ToInt(page.ct) }
+    const jsonPage = { uid: pageId, title: page.s }
+    if (page.ct) jsonPage["create-time"] = base64ToInt(page.ct)
+    if (page.et) jsonPage["edit-time"] = base64ToInt(page.et)
+
     roamJSON.push(jsonPage)
     Object.assign(jsonPage, roamProps)
     if (page.k) {

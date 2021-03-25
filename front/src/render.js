@@ -497,7 +497,7 @@ const queryAstArrayStrategy = (ast) => {
 }
 
 const queryAstObjectSetStrategy = (ast) => {
-  if (ast === undefined) return []
+  if (ast === undefined) return {}
   let r = queryAstObjectSetStrategy(ast.r)
   let l = queryAstObjectSetStrategy(ast.l)
   let result = {}
