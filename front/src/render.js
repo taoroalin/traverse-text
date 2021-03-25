@@ -378,6 +378,7 @@ const queryOperationOrder = { "root": 0, "compute-or": 1, "compute-and": 2, "pag
 
 const transformComputeElement = (el) => {
   const seq = el.children[1].children
+  if (seq.length === 0) return
   const firstEl = seq[0]
   const pageTitle = getPageTitleOfNode(firstEl)
   if (pageTitle === undefined) {
@@ -453,29 +454,9 @@ const transformComputeElement = (el) => {
       tree = tree.l
       console.log(tree)
 
-      const queryFn = (ast) => {
-        if (ast === undefined) return []
-        let r = queryFn(ast.r)
-        let l = queryFn(ast.l)
-        switch (ast.op) {
-          case "compute-and":
-            const result = []
-            for (let id of r) {
-              if (l.includes(id)) result.push(id)
-            }
-            return result
-          case "compute-or":
-            for (let el of r) {
-              l.push(el)
-            }
-            return l
-          case "page":
-            return [...(store.refs[store.titles[ast.title]] || [])]
-        }
-      }
       const queryStime = performance.now()
       const blocksWithQueries = store.refs[store.titles.query]
-      const result = queryFn(tree).filter(x => !blocksWithQueries.includes(x))
+      const result = Object.keys(queryAstObjectSetStrategy(tree)).filter(x => !blocksWithQueries.includes(x))
       console.log(`query took ${performance.now() - queryStime}`)
       console.log(result)
 
@@ -494,6 +475,51 @@ const transformComputeElement = (el) => {
 }
 
 
+const queryAstArrayStrategy = (ast) => {
+  if (ast === undefined) return []
+  let r = queryAstArrayStrategy(ast.r)
+  let l = queryAstArrayStrategy(ast.l)
+  switch (ast.op) {
+    case "compute-and":
+      const result = []
+      for (let id of r) {
+        if (l.includes(id)) result.push(id)
+      }
+      return result
+    case "compute-or":
+      for (let el of r) {
+        l.push(el)
+      }
+      return l
+    case "page":
+      return [...(store.refs[store.titles[ast.title]] || [])]
+  }
+}
+
+const queryAstObjectSetStrategy = (ast) => {
+  if (ast === undefined) return []
+  let r = queryAstObjectSetStrategy(ast.r)
+  let l = queryAstObjectSetStrategy(ast.l)
+  let result = {}
+  switch (ast.op) {
+    case "compute-and":
+      for (let id in r) {
+        if (l[id] === 1) result[id] = 1
+      }
+      return result
+    case "compute-or":
+      for (let id in r) {
+        l[id] = 1
+      }
+      return l
+    case "page":
+      const idList = store.refs[store.titles[ast.title]]
+      for (let id of idList) {
+        result[id] = 1
+      }
+      return result
+  }
+}
 
 /*
 [1 and 2] or
@@ -518,52 +544,3 @@ const embedLinkOfYoutubeId = (id) => {
 }
 
 const youtubeLinkToEmbed = (link) => embedLinkOfYoutubeId(idOfYoutubeURL(link))
-
-
-// const parseComputeText = (text) => {
-//   const tree = []
-//   const stack = [tree]
-//   let idx = 0
-//   let textLeft = text
-
-//   const skipWhitespace = () => {
-//     const match = text.match(/^[ \n\r\t]+/)
-//     if (match) {
-//       textLeft = textLeft.substring(match[0].length)
-//       idx += match[0].length
-//     }
-//   }
-//   skipWhitespace()
-
-//   while (textLeft.length > 0) {
-//     switch (textLeft[0]) {
-//       case "{":
-//         break
-//       case "}":
-//         break
-//       default:
-//         if (textLeft.substring(0, 2) === "or") {
-
-//         } else if (textLeft.substring(0, 3) === "and") {
-
-//         }
-//     }
-//     skipWhitespace()
-//   }
-// }
-
-
-// const exampleQueryString = `{and [[A Page]] {or [[Another Page]] {and [[Third Page]] {or [[Forth Page]] [[Fifth Thing]]} [[Another One]]} [[Finally]] }}`
-
-// let newRandomQueryString = (n) => {
-//   let result = ""
-//   for (let i = 0; i < n; i++) {
-//     const uuid = newUUID()
-//     result += "{and [[" + uuid + "]] "
-//   }
-//   for (let i = 0; i < n; i++) {
-//     result += "}"
-//   }
-//   return result
-// }
-
