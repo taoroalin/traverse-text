@@ -1,3 +1,5 @@
+/* this file is called css.css so that I don't accidentally find it when searching for some _other_ sort of file */
+
 /* global styles ----------------------------------------------------------------------------- */
 * {
   outline: none;
@@ -21,6 +23,7 @@
   --shadow: rgb(98, 98, 98);
   --notification: #2e4736;
   --query-background: #26352a;
+  --editing-background: #040404;
   --selected: #2d4a66;
 }
 
@@ -40,6 +43,7 @@
   --page-ref: rgb(73, 197, 91);
   --notification: #a4d1b1;
   --query-background: #b0dfbd;
+  --editing-background:#e6e6e6;
   --selected: #abcdeb;
 }
 
@@ -253,8 +257,13 @@ a:visited {
 }
 
 .block__body {
-  padding: 5px 0;
+  padding: 5px 2px;
   white-space: pre-wrap;
+}
+
+.block__body[data-editmode="true"]{
+  background-color: var(--editing-background);
+  border-radius:4px;
 }
 
 .block__bullet {
