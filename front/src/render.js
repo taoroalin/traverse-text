@@ -155,172 +155,8 @@ const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|
 // adding a group slows it down by like 25%
 // adding a named group halves its speed - unfortunately that's why I don't use named groups
 
-const renderBlockBodyToEdit = (parent, text) => {
-  parent.dataset.editmode = true
-  // if (text[text.length - 1] !== "\u200A") text += "\u200A" // add space because browser creates new text node (bad) if we ever reach the end of ours
-  const stack = [parent]
-  const matches = text.matchAll(parseRegex)
-
-  let idx = 0
-  let stackTop = parent
-
-  const newTextNode = (string) => {
-    const result = document.createTextNode(string)
-    result.startIdx = idx
-    result.endIdx = idx + string.length
-    return result
-  }
-
-
-  for (let match of matches) {
-
-    stackTop.appendChild(newTextNode(text.substring(idx, match.index)))
-    idx = match.index
-
-    if (match[1]) {
-      const pageRefElement = pageRefTemplate.cloneNode(true)
-      stackTop.appendChild(pageRefElement)
-      pageRefElement.children[0].appendChild(newTextNode("[["))
-      stack.push(pageRefElement.children[1])
-      stackTop = stack[stack.length - 1]
-    } else if (match[2]) {
-      if (stackTop.className === "page-ref__body") {
-        stackTop.parentNode.children[2].appendChild(newTextNode("]]"))
-        stack.pop()
-        stackTop = stack[stack.length - 1]
-      } else {
-        const el = document.createElement("span")
-        el.className = "page-ref-close-missing-open"
-        el.appendChild(newTextNode("]]"))
-        stackTop.appendChild(el)
-      }
-    } else if (match[3]) {
-      const tagElement = document.createElement('span')
-      tagElement.className = "tag"
-      tagElement.appendChild(newTextNode(match[0]))
-      stackTop.appendChild(tagElement)
-    } else if (match[4]) {
-      const brElement = document.createElement('span')
-      brElement.className = "block-ref-editing"
-      brElement.appendChild(newTextNode(match[0]))
-      stackTop.appendChild(brElement)
-    } else if (match[5]) {
-      if (stackTop.className === "bold") {
-        stackTop.appendChild(newTextNode("**"))
-        stack.pop()
-        stackTop = stack[stack.length - 1]
-      } else {
-        const boldElement = document.createElement('span')
-        boldElement.className = 'bold'
-        stackTop.appendChild(boldElement)
-        boldElement.appendChild(newTextNode("**"))
-        stack.push(boldElement)
-        stackTop = boldElement
-      }
-    } else if (match[6]) {
-      if (stackTop.className === "highlight") {
-        stackTop.appendChild(newTextNode("^^"))
-        stack.pop()
-        stackTop = stack[stack.length - 1]
-      } else {
-        const highlightElement = document.createElement('span')
-        highlightElement.className = 'highlight'
-        stackTop.appendChild(highlightElement)
-        highlightElement.appendChild(newTextNode("^^"))
-        stack.push(highlightElement)
-        stackTop = highlightElement
-      }
-    } else if (match[7]) {
-      if (stackTop.className === "italic") {
-        stackTop.appendChild(newTextNode("__"))
-        stack.pop()
-        stackTop = stack[stack.length - 1]
-      } else {
-        const italicElement = document.createElement('span')
-        italicElement.className = 'italic'
-        stackTop.appendChild(italicElement)
-        italicElement.appendChild(newTextNode("__"))
-        stack.push(italicElement)
-        stackTop = italicElement
-      }
-    } else if (match[8]) {
-      const urlElement = document.createElement('span')
-      urlElement.className = 'url'
-      urlElement.appendChild(newTextNode(match[0]))
-      urlElement.href = match[8]
-      stackTop.appendChild(urlElement)
-    } else if (match[9]) {
-      const literalElement = document.createElement('span')
-      literalElement.className = 'literal'
-      literalElement.appendChild(newTextNode(match[0]))
-      stackTop.appendChild(literalElement)
-    } else if (match[10]) {
-      const templateExpanderElement = document.createElement('span')
-      templateExpanderElement.className = 'template-expander'
-      templateExpanderElement.appendChild(newTextNode(match[0]))
-      stackTop.appendChild(templateExpanderElement)
-    } else if (match[11]) {
-      const attributeElement = document.createElement('span')
-      attributeElement.className = 'attribute'
-      attributeElement.appendChild(newTextNode(match[0]))
-      stackTop.appendChild(attributeElement)
-    } else if (match[12]) {
-      if (stackTop.className === "code-block") {
-        stackTop.appendChild(newTextNode(match[0]))
-        stack.pop()
-        stackTop = stack[stack.length - 1]
-      } else {
-        const codeBlockElement = document.createElement('div')
-        codeBlockElement.className = 'code-block'
-        codeBlockElement.appendChild(newTextNode(match[0]))
-        stackTop.appendChild(codeBlockElement)
-        stack.push(codeBlockElement)
-        stackTop = codeBlockElement
-      }
-    } else if (match[13]) {
-      const commandElement = document.createElement("span")
-      commandElement.className = "command"
-      commandElement.appendChild(newTextNode(match[0]))
-      stackTop.appendChild(commandElement)
-    } else if (match[14] !== undefined && match[15] !== undefined) {
-      const imageJustTextElement = document.createElement("span")
-      imageJustTextElement.className = "image-full-text"
-      imageJustTextElement.appendChild(newTextNode(match[0]))
-      stackTop.appendChild(imageJustTextElement)
-    } else if (match[16]) {
-      const computeStartElement = document.createElement("span")
-      computeStartElement.appendChild(newTextNode("{{"))
-      stackTop.appendChild(computeStartElement)
-    } else if (match[17]) {
-      const computeEndElement = document.createElement("span")
-      computeEndElement.appendChild(newTextNode("}}"))
-      stackTop.appendChild(computeEndElement)
-    } else {
-      const uselessElement = document.createElement("span")
-      uselessElement.className = "irrelevent-token"
-      uselessElement.appendChild(newTextNode(match[0]))
-      stackTop.appendChild(uselessElement)
-    }
-    idx = match.index + match[0].length
-  }
-
-  stack[stack.length - 1].appendChild(newTextNode(text.substring(idx)))
-
-  /**
-   * PARSING REVELATION!!!!
-   * Instead of backtracking and deleting when a block doesn't close, I can just erase the className of the block. Then it's still part of the tree but looks like it's gone! much less performance cost than backtracking!!
-   */
-  while (stackTop !== parent) {
-    if (stackTop.className === "page-ref")
-      stackTop.children[0].className = stackTop.children[0].className + "-incomplete"
-    stackTop.className = stackTop.className + "-incomplete"
-    stackTop = stackTop.parentNode
-  }
-}
-
-
-const renderBlockBody = (parent, text) => {
-  parent.dataset.editmode = false
+const renderBlockBody = (parent, text, editMode = false) => {
+  parent.dataset.editmode = editMode
   const stack = [parent]
   const matches = text.matchAll(parseRegex)
 
@@ -345,16 +181,22 @@ const renderBlockBody = (parent, text) => {
       const pageRefElement = pageRefTemplate.cloneNode(true)
       pageRefElement.startIdx = idx + 2
       stackTop.appendChild(pageRefElement)
+      if (editMode)
+        pageRefElement.children[0].appendChild(newTextNode("[["))
       stack.push(pageRefElement.children[1])
       stackTop = stack[stack.length - 1]
     } else if (match[2]) {
       if (stackTop.className === "page-ref__body") {
         stackTop.parentNode.endIdx = idx
+        if (editMode)
+          stackTop.parentNode.children[2].appendChild(newTextNode("]]"))
         stack.pop()
         stackTop = stack[stack.length - 1]
         lastTextNode.endIdx += 2
       } else {
         const el = document.createElement("span")
+        if (editMode)
+          el.className = "page-ref-close-missing-open"
         el.appendChild(newTextNode("]]"))
         stackTop.appendChild(el)
       }
@@ -364,19 +206,28 @@ const renderBlockBody = (parent, text) => {
       tagElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(tagElement)
     } else if (match[4]) {
-      const blockId = match[4]
-      const block = store.blox[blockId]
-      if (block) {
-        const blockRefElement = document.createElement('span')
-        blockRefElement.className = 'block-ref'
-        blockRefElement.innerText = block.s
-        blockRefElement.dataset.id = blockId
-        stackTop.appendChild(blockRefElement)
+      if (editMode) {
+        const brElement = document.createElement('span')
+        brElement.className = "block-ref-editing"
+        brElement.appendChild(newTextNode(match[0]))
+        stackTop.appendChild(brElement)
       } else {
-        stackTop.appendChild(newTextNode(match[0]))
+        const blockId = match[4]
+        const block = store.blox[blockId]
+        if (block) {
+          const blockRefElement = document.createElement('span')
+          blockRefElement.className = 'block-ref'
+          blockRefElement.innerText = block.s
+          blockRefElement.dataset.id = blockId
+          stackTop.appendChild(blockRefElement)
+        } else {
+          stackTop.appendChild(newTextNode(match[0]))
+        }
       }
     } else if (match[5]) {
       if (stackTop.className === "bold") {
+        if (editMode)
+          stackTop.appendChild(newTextNode("**"))
         stack.pop()
         stackTop = stack[stack.length - 1]
         lastTextNode.endIdx += 2
@@ -384,11 +235,15 @@ const renderBlockBody = (parent, text) => {
         const boldElement = document.createElement('span')
         boldElement.className = 'bold'
         stackTop.appendChild(boldElement)
+        if (editMode)
+          boldElement.appendChild(newTextNode("**"))
         stack.push(boldElement)
         stackTop = boldElement
       }
     } else if (match[6]) {
       if (stackTop.className === "highlight") {
+        if (editMode)
+          stackTop.appendChild(newTextNode("^^"))
         stack.pop()
         stackTop = stack[stack.length - 1]
         lastTextNode.endIdx += 2
@@ -396,11 +251,15 @@ const renderBlockBody = (parent, text) => {
         const highlightElement = document.createElement('span')
         highlightElement.className = 'highlight'
         stackTop.appendChild(highlightElement)
+        if (editMode)
+          highlightElement.appendChild(newTextNode("^^"))
         stack.push(highlightElement)
         stackTop = highlightElement
       }
     } else if (match[7]) {
       if (stackTop.className === "italic") {
+        if (editMode)
+          stackTop.appendChild(newTextNode("__"))
         stack.pop()
         stackTop = stack[stack.length - 1]
         lastTextNode.endIdx += 2
@@ -408,6 +267,8 @@ const renderBlockBody = (parent, text) => {
       } else {
         const italicElement = document.createElement('span')
         italicElement.className = 'italic'
+        if (editMode)
+          italicElement.appendChild(newTextNode("__"))
         stackTop.appendChild(italicElement)
         stack.push(italicElement)
         stackTop = italicElement
@@ -449,11 +310,18 @@ const renderBlockBody = (parent, text) => {
       commandElement.className = "command"
       commandElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(commandElement)
-    } else if (match[14] !== undefined && match[15] !== undefined) { // image is 14-15
-      const imageElement = imageEmbedTemplate.cloneNode(true)
-      imageElement.alt = match[14]
-      imageElement.src = match[15]
-      stackTop.appendChild(imageElement)
+    } else if (match[14] !== undefined && match[15] !== undefined) {
+      if (editMode) {
+        const imageJustTextElement = document.createElement("span")
+        imageJustTextElement.className = "image-full-text"
+        imageJustTextElement.appendChild(newTextNode(match[0]))
+        stackTop.appendChild(imageJustTextElement)
+      } else {
+        const imageElement = imageEmbedTemplate.cloneNode(true)
+        imageElement.alt = match[14]
+        imageElement.src = match[15]
+        stackTop.appendChild(imageElement)
+      }
     } else if (match[16]) {
       const computeFailedElement = computeFailedTemplate.cloneNode(true)
       computeFailedElement.startIdx = idx + 2
@@ -492,10 +360,15 @@ const renderBlockBody = (parent, text) => {
 
   stack[stack.length - 1].appendChild(newTextNode(text.substring(idx)))
 
-  // todo handle unmatched elements
+  // todo make it add back astarisks and stuff
+  /**
+   * PARSING REVELATION!!!!
+   * Instead of backtracking and deleting when a block doesn't close, I can just erase the className of the block. Then it's still part of the tree but looks like it's gone! much less performance cost than backtracking!!
+   */
   while (stackTop !== parent) {
-
-    stackTop.className = ""
+    if (stackTop.className === "page-ref")
+      stackTop.children[0].className = stackTop.children[0].className + "-incomplete"
+    stackTop.className = stackTop.className + "-incomplete"
     stackTop = stackTop.parentNode
   }
 }

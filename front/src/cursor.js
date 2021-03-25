@@ -18,7 +18,7 @@ const prepFocusIdForCursor = () => {
 
   const text = store.blox[sessionState.focusId].s
   focusBlockBody.innerText = ""
-  renderBlockBodyToEdit(focusBlockBody, text)
+  renderBlockBody(focusBlockBody, text, true)
 }
 
 const focusIdPosition = () => {
