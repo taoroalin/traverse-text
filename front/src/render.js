@@ -335,7 +335,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
         el.endIdx = idx
         el.text = text.substring(el.startIdx, el.endIdx)
         el.children[2].appendChild(newTextNode("}}"))
-        transformComputeElement(el)
+        transformComputeElement(el, editMode)
         stack.pop()
         stackTop = stack[stack.length - 1]
         lastTextNode.endIdx += 2
@@ -376,7 +376,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
 const queryOperationOrder = { "root": 0, "compute-or": 1, "compute-and": 2, "page": 3 }
 // not using 0 because that would be falsy
 
-const transformComputeElement = (el) => {
+const transformComputeElement = (el, editMode = false) => {
   const seq = el.children[1].children
   if (seq.length === 0) return
   const firstEl = seq[0]
@@ -386,23 +386,29 @@ const transformComputeElement = (el) => {
   }
   switch (pageTitle) {
     case "TODO":
-      el.textContent = ""
-      const checkbox = todoCheckboxTemplate.cloneNode(true)
-      el.appendChild(checkbox)
+      if (!editMode) {
+        el.textContent = ""
+        const checkbox = todoCheckboxTemplate.cloneNode(true)
+        el.appendChild(checkbox)
+      }
       break
     case "DONE":
-      el.textContent = ""
-      const checkedCheckbox = todoCheckboxTemplate.cloneNode(true)
-      checkedCheckbox.checked = true
-      el.appendChild(checkedCheckbox)
+      if (!editMode) {
+        el.textContent = ""
+        const checkedCheckbox = todoCheckboxTemplate.cloneNode(true)
+        checkedCheckbox.checked = true
+        el.appendChild(checkedCheckbox)
+      }
       break
     case "video":
-      if (seq.length !== 2) return
-      if (seq[1].className === "url") {
-        const videoEmbedElement = videoEmbedTemplate.cloneNode(true)
-        videoEmbedElement.src = youtubeLinkToEmbed(seq[1].innerText)
-        el.textContent = ""
-        el.appendChild(videoEmbedElement)
+      if (!editMode) {
+        if (seq.length !== 2) return
+        if (seq[1].className === "url") {
+          const videoEmbedElement = videoEmbedTemplate.cloneNode(true)
+          videoEmbedElement.src = youtubeLinkToEmbed(seq[1].innerText)
+          el.textContent = ""
+          el.appendChild(videoEmbedElement)
+        }
       }
       break
     case "query": // INPROGRESS very broken rn
@@ -415,6 +421,7 @@ const transformComputeElement = (el) => {
         // title: undefined,
         // p: undefined
       }
+      console.log(seq)
       let cur = tree
       for (let i = 1; i < seq.length; i++) {
         const newNode = {}

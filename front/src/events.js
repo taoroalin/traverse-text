@@ -594,13 +594,7 @@ const getPageTitleOfNode = (node) => {
 
   const pageRef = node.closest(".page-ref")
   if (pageRef) {
-    const block = node.closest('.block')
-    const id = block.dataset.id
-    if (focusBlock === block) {
-      return pageRef.children[1].innerText
-    } else {
-      return store.blox[id].s.substring(pageRef.startIdx, pageRef.endIdx)
-    }
+    return pageRef.children[1].innerText
   }
 
   return undefined
