@@ -296,6 +296,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
       stackTop.appendChild(attributeElement)
     } else if (match[12]) {
       if (stackTop.className === "code-block") {
+        if (editMode) stackTop.appendChild(newTextNode("```"))
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {
@@ -304,6 +305,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
         stackTop.appendChild(codeBlockElement)
         stack.push(codeBlockElement)
         stackTop = codeBlockElement
+        if (editMode) stackTop.appendChild(newTextNode("```"))
       }
     } else if (match[13]) {
       const commandElement = document.createElement("span")
@@ -462,7 +464,7 @@ const transformComputeElement = (el, editMode = false) => {
       console.log(tree)
 
       const queryStime = performance.now()
-      const blocksWithQueries = store.refs[store.titles.query]
+      const blocksWithQueries = store.refs[store.titles["query"]]
       const result = Object.keys(queryAstObjectSetStrategy(tree)).filter(x => !blocksWithQueries.includes(x))
       console.log(`query took ${performance.now() - queryStime}`)
       console.log(result)

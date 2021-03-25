@@ -209,6 +209,22 @@ let newUUID
   }
 }
 
+// inprogress
+const mergeEdits = (edits) => {
+  const diffsById = {}
+  for (let i = 0; i < edits.length; i++) {
+    const edit = edits[i]
+    switch (edit[0]) {
+      case "df":
+        pushToArrInObj(diffsById, edit[1], i)
+        break;
+    }
+  }
+  for (let id in diffsById) {
+    const dif = diffsById[id]
+
+  }
+}
 
 const macros = {}
 macros.nocommit = {

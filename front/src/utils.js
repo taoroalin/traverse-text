@@ -124,3 +124,9 @@ const ustime = () => {
   console.log(p)
   return p
 }
+
+const pushToArrInObj = (obj, key, val) => {
+  if (obj[key] === undefined) {
+    obj[key] = [val]
+  } else obj[key].push(val)
+}
