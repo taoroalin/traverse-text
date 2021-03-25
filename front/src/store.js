@@ -173,7 +173,7 @@ const arrSetDiff = (cur, old) => {
   return { added, deleted }
 }
 
-// INPROGRESS
+// @INPROGRESS
 const propagateRefs = (blocId, refs, oldRefs) => {
   const { added, deleted } = arrSetDiff(refs, oldRefs)
   const bloc = store.blox[blocId]

@@ -413,7 +413,7 @@ const transformComputeElement = (el, editMode = false) => {
         }
       }
       break
-    case "query": // INPROGRESS very broken rn
+    case "query":
 
       // step 1 parse element list using precedence climbing
       let tree = {

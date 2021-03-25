@@ -209,19 +209,17 @@ let newUUID
   }
 }
 
-// inprogress
+// @inprogress
+// originally I wanted to just collect changes done on each id individually and consolidate them, but the fact that {i:"a"} operates on the end and {i:"a", p:1} operates from the beginning means you can't consolidate between end and middle changes without knowing starting or ending configuration. could be fixed by indexing everthing from the end
+// todo index diffs from the end instead of the beginning to make it consistent with end-default
+// also moving blocks changes the idx of other children, which means moves on different blocks aren't independent
+// so what really needs to happen is a maximal partial state must be created and then compressed
+// requires indexing around holes / insertions into child lists
 const mergeEdits = (edits) => {
-  const diffsById = {}
+  const result = []
+  const state = {}
   for (let i = 0; i < edits.length; i++) {
     const edit = edits[i]
-    switch (edit[0]) {
-      case "df":
-        pushToArrInObj(diffsById, edit[1], i)
-        break;
-    }
-  }
-  for (let id in diffsById) {
-    const dif = diffsById[id]
 
   }
 }
