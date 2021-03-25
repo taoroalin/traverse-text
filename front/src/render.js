@@ -26,18 +26,21 @@ const renderPage = (parentNode, uid, hasBackrefs = true) => {
   if (hasBackrefs && refs && refs.length > 0) {
     const backrefsListElement = backrefListTemplate.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
-    sortByLastEdited(refs)
-    console.log(refs.map(x => store.blox[x]))
-    for (let backref of refs) {
-      const backrefFrame = backrefFrameTemplate.cloneNode(true)
-      renderBreadcrumb(backrefFrame.children[0], backref)
-      renderBlock(backrefFrame.children[1], backref)
-      backrefsListElement.children[1].appendChild(backrefFrame)
-    }
+    renderBackrefs(backrefsListElement.children[1], refs)
   }
 
   parentNode.appendChild(element)
   return element
+}
+
+const renderBackrefs = (parent, refs) => {
+  sortByLastEdited(refs)
+  for (let backref of refs) {
+    const backrefFrame = backrefFrameTemplate.cloneNode(true)
+    renderBreadcrumb(backrefFrame.children[0], backref)
+    renderBlock(backrefFrame.children[1], backref)
+    parent.appendChild(backrefFrame)
+  }
 }
 
 const renderBlock = (parentNode, uid, idx) => {
@@ -497,7 +500,7 @@ const renderBlockBody = (parent, text) => {
   }
 }
 
-const queryOperationOrder = { "compute-or": 1, "compute-and": 2 }
+const queryOperationOrder = { "root": 0, "compute-or": 1, "compute-and": 2, "page": 3 }
 // not using 0 because that would be falsy
 
 const transformComputeElement = (el) => {
@@ -534,12 +537,11 @@ const transformComputeElement = (el) => {
       let tree = {
         // l: undefined,
         // r: undefined,
-        // op: undefined,
+        op: "root",
         // title: undefined,
         // p: undefined
       }
       let cur = tree
-      console.log(seq)
       for (let i = 1; i < seq.length; i++) {
         const newNode = {}
         const el = seq[i]
@@ -562,21 +564,20 @@ const transformComputeElement = (el) => {
         const opOrder = queryOperationOrder[el.className]
         if (opOrder !== undefined) {
           newNode.op = el.className
-          while (queryOperationOrder[cur.op] && queryOperationOrder[cur.op] > opOrder) {
+          let prev = undefined
+          while (queryOperationOrder[cur.op] > opOrder) {
+            prev = cur
             cur = cur.p
           }
-          newNode.l = cur
-          if (cur.p.l === cur) {
-            newNode.l = cur.p.l
-            cur.p.l = newNode
-          }
-          else {
-            newNode.r = cur.p.r
-            cur.p.r = newNode
-          }
+          newNode.l = prev
+          prev.p = newNode
+          if (cur.l === prev) cur.l = newNode
+          else cur.r = newNode
+          newNode.p = cur
+          cur = newNode
         }
       }
-
+      tree = tree.l
       console.log(tree)
 
       const queryFn = (ast) => {
@@ -596,13 +597,22 @@ const transformComputeElement = (el) => {
             }
             return l
           case "page":
-            return [...(store.refs[page] || [])]
+            return [...(store.refs[store.titles[ast.title]] || [])]
         }
       }
       const queryStime = performance.now()
-      const result = queryFn(tree)
+      const blocksWithQueries = store.refs[store.titles.query]
+      const result = queryFn(tree).filter(x => !blocksWithQueries.includes(x))
       console.log(`query took ${performance.now() - queryStime}`)
       console.log(result)
+
+      // todo UGGGH 
+      const queryFrame = queryFrameTemplate.cloneNode(true)
+      renderBackrefs(queryFrame, result)
+      const block = el.closest(".block")
+      const otherQuery = block.querySelector(".query-frame")
+      if (otherQuery) otherQuery.remove()
+      block.appendChild(queryFrame)
       break
     default:
       return
@@ -620,7 +630,7 @@ const transformComputeElement = (el) => {
 [1 or [2 and ]]
 
 [1 or [2 and [3 nand 4]]] and
-
+                     ^
 [1 or 2] or
 [[1 or 2] or]
  */

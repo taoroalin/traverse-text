@@ -77,6 +77,7 @@ const imageEmbedTemplate = getTemp("image-embed")
 const computeFailedTemplate = getTemp("compute-failed")
 const todoCheckboxTemplate = getTemp("todo-checkbox")
 const videoEmbedTemplate = getTemp("video-embed")
+const queryFrameTemplate = getTemp("query-frame")
 
 // login/signup
 const loginForm = elById("login-form")

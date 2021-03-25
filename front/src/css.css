@@ -20,6 +20,7 @@
   --page-ref: #2bcc5b;
   --shadow: rgb(98, 98, 98);
   --notification: #2e4736;
+  --query-background: #26352a;
   --selected: #2d4a66;
 }
 
@@ -38,6 +39,7 @@
   --highlight: rgb(255, 239, 146);
   --page-ref: rgb(73, 197, 91);
   --notification: #a4d1b1;
+  --query-background: #b0dfbd;
   --selected: #abcdeb;
 }
 
@@ -399,6 +401,13 @@ a:visited {
   padding: 8px;
   background-color: black;
   color: white;
+}
+
+.query-frame{
+  background-color: var(--query-background);
+  border-radius:8px;
+  padding:1px 12px 18px;
+  margin:3px 0;
 }
 
 /* Popup / other view styles  -----------------------------------------------------------*/
