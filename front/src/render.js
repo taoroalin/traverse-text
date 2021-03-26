@@ -282,7 +282,8 @@ const renderBlockBody = (parent, text, editMode = false) => {
     } else if (match[9]) {
       const literalElement = document.createElement('span')
       literalElement.className = 'literal'
-      literalElement.appendChild(newTextNode(match[9]))
+      if (editMode) literalElement.appendChild(newTextNode(match[0]))
+      else literalElement.appendChild(newTextNode(match[9]))
       stackTop.appendChild(literalElement)
     } else if (match[10]) {
       const templateExpanderElement = document.createElement('span')

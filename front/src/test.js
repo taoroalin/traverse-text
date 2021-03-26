@@ -70,8 +70,7 @@ const benchmarkRenderAll = async () => {
     await new Promise(resolve => setTimeout(resolve, 0))
   }
   const duration = performance.now() - stime
-  const message = `rendered ${count} pages in ${Math.round(duration)}ms, avg ${Math.round(duration / count)}ms
-  function time avg ${Math.round(functionTime / count)}`
+  const message = `rendered ${count} pages in ${Math.round(duration)}ms, avg ${Math.round(duration / count)}ms \nfunction time avg ${Math.round(functionTime / count)}`
   console.log(message)
   notifyText(message, 10)
 }

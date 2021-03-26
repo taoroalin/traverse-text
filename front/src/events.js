@@ -1,35 +1,5 @@
 // Event Listener Helpers -----------------------------------------------------------------------------------------------
 
-const focusBlockEnd = (blockNode) => {
-  sessionState.focusId = blockNode.dataset.id
-  sessionState.position = store.blox[sessionState.focusId].s.length
-  focusIdPosition()
-  console.log("focusblockend")
-}
-
-const focusBlockStart = (blockNode) => {
-  sessionState.focusId = blockNode.dataset.id
-  sessionState.position = 0
-  focusIdPosition()
-  console.log("focusblockstartt")
-}
-
-const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => { // this closure feels weird, maybe shoudn't use this language feature?
-  const blocks = Array.from(document.querySelectorAll(".block"))
-  const newActiveBlock = blocks[blocks.indexOf(block) + offset]
-  if (newActiveBlock) {
-    if (!start) {
-      focusBlockEnd(newActiveBlock)
-    } else {
-      focusBlockStart(newActiveBlock)
-    }
-  }
-}
-
-const getChildren = (node) => {
-  return node.className === "block" ? node.children[2].children : node.children[1].children
-}
-
 const downloadHandler = () => {
   console.log("download")
   const json = storeToRoamJSON(store)
@@ -585,20 +555,6 @@ const updownythingey = (parent, list, cache, focused) => {
   }
 }
 
-const getPageTitleOfNode = (node) => {
-  const tag = node.closest(".tag")
-  if (tag) return tag.innerText.substring(1)
-
-  const attribute = node.closest(".attribute")
-  if (attribute) return attribute.innerText.substring(0, attribute.innerText.length - 2)
-
-  const pageRef = node.closest(".page-ref")
-  if (pageRef) {
-    return pageRef.children[1].innerText
-  }
-
-  return undefined
-}
 // The single event handler model has some problems. The cases need to appear in the same order they are nested in the DOM
 // maybe this should be click instead of mousedown
 document.addEventListener("mousedown", (event) => {
@@ -778,15 +734,15 @@ document.addEventListener("selectionchange", (event) => {
   sessionState.isFocused = false
 })
 
-document.addEventListener("visibilitychange", (event) => {
-  console.log("focusin");
-}, false)
+// document.addEventListener("visibilitychange", (event) => {
+//   console.log("focusin");
+// }, false)
 
-document.addEventListener("visibilitychange", (event) => {
-  console.log("focusout")
-}, true)
+// document.addEventListener("visibilitychange", (event) => {
+//   console.log("focusout")
+// }, true)
 
-// ID-ED ELEMENT EVENT LISTENERS ----------------------------------------------------------
+// ID'ed ELEMENT EVENT LISTENERS ----------------------------------------------------------
 
 const showTopBarFn = () => {
   user.s.topBar = "visible"
@@ -815,7 +771,7 @@ uploadInput.addEventListener('change', (event) => {
       console.log(files)
       if (files.length === 1 && files[0].ext === "json") {
         store = roamJsonToStore(files[0].name, files[0].text)
-        preprocessNewStore()
+        preprocessImportedStore()
       } else {
         notifyText("Markdown import doesn't work yet. Upload a .json file, or a .zip file containing a .json file instead.", 12)
         throw new Error("md import doesn't work")
@@ -835,14 +791,14 @@ uploadInput.addEventListener('change', (event) => {
     file.text().then((text) => {
       user.s.graphName = name
       store = roamJsonToStore(name, text)
-      preprocessNewStore()
+      preprocessImportedStore()
     })
   } else {
     notifyText("Micro Roam only accepts a .json file or .zip file containing 1 .json file") // add "md" once that works
   }
 })
 
-const preprocessNewStore = async () => {
+const preprocessImportedStore = async () => {
   startFn = () => gotoNoHistory("dailyNotes")
   const response = await fetch("./default-store.json")
   const json = await response.json()

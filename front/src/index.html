@@ -144,10 +144,10 @@
   r.onerror = (e) => {
     console.log("error")
     console.log(e)
-    alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. 
-      You can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
+    alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. \nYou can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
   }
 </script>
+<link rel="stylesheet" href="fonts.css">
 
 <body class="dark">
   <div id="app">
@@ -245,9 +245,6 @@
   <title>Micro Roam</title>
 
   <link rel="stylesheet" href="css.css">
-
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inconsolata">
 
   <template id="page">
     <div class="page">
@@ -357,7 +354,6 @@
   <script src="declarations.js"></script>
   <script src="front-back-shared.js"></script>
   <script src="utils.js"></script>
-  <script src="inline-commands.js"></script>
   <script src="commands.js"></script>
   <script src="store.js"></script>
   <script src="cursor.js"></script>
@@ -366,11 +362,12 @@
 
   <script src="client.js"></script>
 
-  <script src="events.js"></script>
   <script src="nav.js"></script>
 
   <!-- THIS COMMENT IS FUNCTIONAL because it stops the script inliner from combining the scripts above and below it so the bottom ones can load after the page renders-->
 
+  <script src="events.js" async></script>
+  <script src="inline-commands.js" async></script>
   <script src="convert.js" async></script>
   <script src="test.js" async></script>
 </body>

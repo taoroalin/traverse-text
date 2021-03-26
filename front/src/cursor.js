@@ -113,3 +113,52 @@ const updateCursorSpanInfo = () => {
   if (editingLink === undefined)
     autocompleteList.style.display = "none"
 }
+
+
+
+const focusBlockEnd = (blockNode) => {
+  sessionState.focusId = blockNode.dataset.id
+  sessionState.position = store.blox[sessionState.focusId].s.length
+  focusIdPosition()
+  console.log("focusblockend")
+}
+
+const focusBlockStart = (blockNode) => {
+  sessionState.focusId = blockNode.dataset.id
+  sessionState.position = 0
+  focusIdPosition()
+  console.log("focusblockstartt")
+}
+
+const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => { // this closure feels weird, maybe shoudn't use this language feature?
+  const blocks = Array.from(document.querySelectorAll(".block"))
+  const newActiveBlock = blocks[blocks.indexOf(block) + offset]
+  if (newActiveBlock) {
+    if (!start) {
+      focusBlockEnd(newActiveBlock)
+    } else {
+      focusBlockStart(newActiveBlock)
+    }
+  }
+}
+
+const getChildren = (node) => {
+  return node.className === "block" ? node.children[2].children : node.children[1].children
+}
+
+
+const getPageTitleOfNode = (node) => {
+  // accessing innerText is triggering a recalculateStyle, this is costing me 10ms on page renders with queries
+  const tag = node.closest(".tag")
+  if (tag) return tag.innerText.substring(1)
+
+  const attribute = node.closest(".attribute")
+  if (attribute) return attribute.innerText.substring(0, attribute.innerText.length - 2)
+
+  const pageRef = node.closest(".page-ref")
+  if (pageRef) {
+    return pageRef.children[1].innerText
+  }
+
+  return undefined
+}
