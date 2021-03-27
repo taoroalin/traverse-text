@@ -2,6 +2,7 @@ const fs = require('fs')
 const http = require('http')
 const build = require("./build").build
 
+
 const serveDir = "../front/public/"
 const serveDirCompressed = "../front/public-br/"
 
@@ -47,8 +48,6 @@ http.createServer((req, res) => {
   res.end()
 }).listen(8080)
 
-
-const liveServeSnippet = `<script>const liveServeWS = new WebSocket</script>`
 
 http.createServer((req, res) => {
   const url = req.url

@@ -63,10 +63,11 @@ const build = async () => {
   }
 
   const html = fs.readFileSync("../front/src/index.html", "utf8")
-  const result = html.replace(regexScriptImport, scriptReplacer).replace(regexStyleImport, styleReplacer).replace(/<\/script>\s*<script( async)?>/g, "").replace(/\r?\n\s*/g, "\n")
+  const result = html.replace(regexScriptImport, scriptReplacer).replace(regexStyleImport, styleReplacer).replace(/<\/script>\s*<script( async)?>/g, "").replace(/<\/style>[\t\r\n ]*<style>/g, "")
   // todo use minify(text, {toplevel:true}) for more mangling
   // todo minify inline
 
+  fs.writeFileSync("../front/public/index-no-min.html", result)
   const htmlmin = minify(result, { collapseWhitespace: true, minifyJS: true, minifyCSS: true, removeComments: true, removeOptionalTags: true, removeRedundantAttributes: true, useShortDoctype: true })
 
   fs.writeFileSync("../front/public/index.html", htmlmin)

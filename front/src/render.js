@@ -147,7 +147,7 @@ const notifyText = (text, duration) => {
 
 // 16            17          18  19
 // compute-start compute-end and or
-const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[ \/a-zA-Z0-9_-]+)::|(```)|\\(.*)|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)|({{)|(}})|(and)|(or)/g
+const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[ \/a-zA-Z0-9_-]+)::|(```)|\/([^\/]*)|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)|({{)|(}})|(and)|(or)/g
 // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
 // This regex runs at 50-100M chars/s
@@ -311,6 +311,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
     } else if (match[13]) {
       const commandElement = document.createElement("span")
       commandElement.className = "command"
+      console.log(match[0])
       commandElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(commandElement)
     } else if (match[14] !== undefined && match[15] !== undefined) {
@@ -424,7 +425,6 @@ const transformComputeElement = (el, editMode = false) => {
         // title: undefined,
         // p: undefined
       }
-      console.log(seq)
       let cur = tree
       for (let i = 1; i < seq.length; i++) {
         const newNode = {}
@@ -462,13 +462,12 @@ const transformComputeElement = (el, editMode = false) => {
         }
       }
       tree = tree.l
-      console.log(tree)
 
       const queryStime = performance.now()
       const blocksWithQueries = store.refs[store.titles["query"]]
       const result = Object.keys(queryAstObjectSetStrategy(tree)).filter(x => !blocksWithQueries.includes(x))
-      console.log(`query took ${performance.now() - queryStime}`)
-      console.log(result)
+      // console.log(`query took ${performance.now() - queryStime}`)
+      // console.log(result)
 
       // todo UGGGH 
       const queryFrame = queryFrameTemplate.cloneNode(true)

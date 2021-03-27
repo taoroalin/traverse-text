@@ -177,6 +177,7 @@ document.addEventListener("input", (event) => {
         diff = { i: event.data }
       else diff = { i: event.data, s: sessionState.position - 1 }
     }
+    console.log(string)
     setFocusedBlockString(string, diff)
 
     if (editingCommandElement) {
@@ -190,7 +191,6 @@ document.addEventListener("input", (event) => {
     }
 
     if (editingTemplateExpander) {
-      console.log("editingTemplateExpander")
       const editingTemplateText = editingTemplateExpander.innerText.substring(2)
       const matchingTemplates = searchTemplates(editingTemplateText)
       renderResultSet(editingTemplateExpander, matchingTemplates, templateList, 0)
