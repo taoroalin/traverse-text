@@ -68,17 +68,17 @@ const renderBlock = (parentNode, uid, idx) => {
 }
 
 const renderBreadcrumb = (parent, blockId) => {
+  blockId = store.blox[blockId].p
   const list = []
-  if (store.blox[blockId].p) {
-    while (true) {
-      blockId = store.blox[blockId].p
-      if (store.blox[blockId].p) {
-        list.push({ string: store.blox[blockId].s, id: blockId })
-      } else {
-        list.push({ title: store.blox[blockId].s, id: blockId })
-        break
-      }
-    }
+  while (blockId !== undefined) {
+    const block = store.blox[blockId]
+    if (block.p !== undefined) {
+      list.push({ string: block.s, id: blockId })
+    } else
+      list.push({ title: block.s, id: blockId })
+    blockId = block.p
+  }
+  if (list.length > 0) {
     const node = breadcrumbPageTemplate.cloneNode(true)
     const title = list[list.length - 1].title
     renderBlockBody(node, title)
@@ -311,7 +311,6 @@ const renderBlockBody = (parent, text, editMode = false) => {
     } else if (match[13]) {
       const commandElement = document.createElement("span")
       commandElement.className = "command"
-      console.log(match[0])
       commandElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(commandElement)
     } else if (match[14] !== undefined && match[15] !== undefined) {
@@ -364,7 +363,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
 
   stack[stack.length - 1].appendChild(newTextNode(text.substring(idx)))
 
-  // todo make it add back astarisks and stuff
+  // todo make it add back astarisks and stuff in non-edit mode
   /**
    * PARSING REVELATION!!!!
    * Instead of backtracking and deleting when a block doesn't close, I can just erase the className of the block. Then it's still part of the tree but looks like it's gone! much less performance cost than backtracking!!
@@ -454,7 +453,7 @@ const transformComputeElement = (el, editMode = false) => {
             cur = cur.p
           }
           newNode.l = prev
-          prev.p = newNode
+          if (prev !== undefined) prev.p = newNode
           if (cur.l === prev) cur.l = newNode
           else cur.r = newNode
           newNode.p = cur
@@ -464,8 +463,14 @@ const transformComputeElement = (el, editMode = false) => {
       tree = tree.l
 
       const queryStime = performance.now()
-      const blocksWithQueries = store.refs[store.titles["query"]]
-      const result = Object.keys(queryAstObjectSetStrategy(tree)).filter(x => !blocksWithQueries.includes(x))
+      const blocksWithQueries = {}
+      for (let id of store.refs[store.titles["query"]]) {
+        blocksWithQueries[id] = 1
+      }
+      const result = []
+      for (let key in queryAstObjectSetStrategy(tree)) {
+        if (blocksWithQueries[key] === undefined && store.blox[key] !== undefined) result.push(key)
+      }
       // console.log(`query took ${performance.now() - queryStime}`)
       // console.log(result)
 

@@ -177,7 +177,6 @@ document.addEventListener("input", (event) => {
         diff = { i: event.data }
       else diff = { i: event.data, s: sessionState.position - 1 }
     }
-    console.log(string)
     setFocusedBlockString(string, diff)
 
     if (editingCommandElement) {

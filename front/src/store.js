@@ -28,14 +28,26 @@ const gcPage = (pageId) => {
   }
 }
 
+const fixParents = () => {
+  for (let id in store.blox) {
+    delete store.blox[id].p
+  }
+  for (let id in store.blox) {
+    const bloc = store.blox[id]
+    for (let childId of bloc.k || []) {
+      store.blox[childId].p = id
+    }
+  }
+}
+
 // 1             2              3   4         5         6       7
 // page-ref-open page-ref-close tag block-ref attribute literal code-block
 const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(^[\/a-zA-Z0-9_-]+)::|`([^`]+)`|```/g
 
-const setLinks = (blocId, doInnerOuterRefs = false) => {
+const setLinks = (blocId, doInnerOuterRefs = false, nogc = false) => {
   for (let ref of store.forwardRefs[blocId] || []) {
     store.refs[ref] = store.refs[ref].filter(x => x !== blocId)
-    gcPage(ref)
+    if (!nogc) gcPage(ref)
   }
   const forwardRefs = []
   store.forwardRefs[blocId] = forwardRefs
@@ -44,11 +56,8 @@ const setLinks = (blocId, doInnerOuterRefs = false) => {
   if (doInnerOuterRefs) {
     doRef = (ref) => {
       if (ref in store.refs) {
-
         store.refs[ref].push(blocId)
-      }
-      else {
-
+      } else {
         store.refs[ref] = [blocId]
       }
       forwardRefs.push(ref)
@@ -89,7 +98,8 @@ const setLinks = (blocId, doInnerOuterRefs = false) => {
       } else if (match[5]) {
         doTitle(match[5])
       } else if (match[4]) {
-        doRef(match[4])
+        if (store.blox[match[4]] !== undefined)
+          doRef(match[4])
       } else if (match[7]) {
         if (stackTop && stackTop.t === "cb") {
           stack.pop()
@@ -121,10 +131,10 @@ const setLinks = (blocId, doInnerOuterRefs = false) => {
         stackTop.s = stackTop.s + match[0]
       } else if (match[5]) {
         stackTop.s = stackTop.s + match[0]
-        const ref = store.titles[match[5]]
         doTitle(match[5])
       } else if (match[4]) {
-        doRef(match[4])
+        if (store.blox[match[4]] !== undefined)
+          doRef(match[4])
         stackTop.s = stackTop.s + match[0]
       } else if (match[7]) {
         if (stackTop && stackTop.t === "cb") {
@@ -145,8 +155,8 @@ const setLinks = (blocId, doInnerOuterRefs = false) => {
 
 const generateRefs = () => {
   const stime = performance.now()
-  if (store.refs === undefined) store.refs = {}
-  if (store.forwardRefs === undefined) store.forwardRefs = {}
+  store.refs = {}
+  store.forwardRefs = {}
   for (let blocId in store.blox) {
     setLinks(blocId)
   }
