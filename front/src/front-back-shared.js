@@ -78,13 +78,13 @@ const doEditBlox = (edit, blox, time) => {
         s: ""
       }
       const parentId = p1, idx = p2
-      if (parentId) {
+      if (parentId !== undefined) {
         blox[id].p = parentId
-        if (!blox[parentId].k) blox[parentId].k = []
-        if (idx) {
-          blox[parentId].k.splice(idx, 0, id)
-        } else {
+        if (blox[parentId].k === undefined) blox[parentId].k = []
+        if (idx === undefined) {
           blox[parentId].k.push(id)
+        } else {
+          blox[parentId].k.splice(idx, 0, id)
         }
       }
       break

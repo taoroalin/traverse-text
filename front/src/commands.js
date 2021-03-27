@@ -271,6 +271,11 @@ macros.nocommit = {
     doEdit("df", id, diff(title, ""))
     return id
   },
+  create: (parentId, idx) => {
+    const id = newUid()
+    doEdit('cr', id, parentId, idx)
+    return id
+  },
   move: (id, parentId, idx) => {
     const bloc = store.blox[id]
     doEdit("mv", id, parentId, idx, bloc.p, store.blox[bloc.p].k.indexOf(id))
