@@ -139,14 +139,14 @@ const terminalCommands = {
 }
 
 //~frontskip
-const socket = new WebSocket("ws://localhost:4000//ws")
-socket.onmessage = (message) => {
-  const data = message.data
-  console.log(`got message`)
-  console.log(message)
-}
-socket.onopen = () => {
-  console.log('ws open')
-  socket.send("Hi!")
-}
+// const socket = new WebSocket("ws://localhost:4000//ws")
+// socket.onmessage = (message) => {
+//   const data = message.data
+//   console.log(`got message`)
+//   console.log(message)
+// }
+// socket.onopen = () => {
+//   console.log('ws open')
+//   socket.send("Hi!")
+// }
 //~
