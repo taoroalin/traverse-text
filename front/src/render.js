@@ -132,22 +132,22 @@ const notifyText = (text, duration) => {
   el.innerText = text
   appElement.appendChild(el)
   setTimeout(() => el.style.top = "60px", 50)
-  const dur = (duration && duration * 1000) || 5000
-  setTimeout(() => el.style.opacity = "0", dur)
+  const durationMillis = (duration && duration * 1000) || 5000
+  setTimeout(() => el.style.opacity = "0", durationMillis)
   setTimeout(() => {
     el.remove()
-  }, dur + 300)
+  }, durationMillis + 300)
 }
 
-// 1             2              3   4         5    6         7
-// page-ref-open page-ref-close tag block-ref bold highlight italic
+// 1             2              3  4         5    6         7
+// page-ref-open page-ref-close or block-ref bold highlight italic
 
-// 8    9       10                11        12         13      14-15
-// link literal template-expander attribute code-block command image-embed
+// 8    9       10                11  12         13      14-15
+// link literal template-expander and code-block command image-embed
 
-// 16            17          18  19
-// compute-start compute-end and or
-const parseRegex = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(^[ \/a-zA-Z0-9_-]+)::|(```)|(\/[^\/]*)|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)|({{)|(}})|(and)|(or)/g
+// 16            17           18-19 20-21
+// compute-start compute-end  tag   attribute
+const parseRegex = /(\[\[(?:[a-z]+:)?)|(\]\])|(or)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(and)|(```)|(\/[^\/]*)|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)|({{)|(}})|#([a-z]+:)?([\/a-zA-Z0-9_-]+)|^([a-z]+:)?([ \/a-zA-Z0-9_-]+)::/g
 // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
 // This regex runs at 50-100M chars/s
@@ -177,15 +177,16 @@ const renderBlockBody = (parent, text, editMode = false) => {
     stackTop.appendChild(newTextNode(text.substring(idx, match.index)))
     idx = match.index
 
-    if (match[1]) {
+    if (match[1] !== undefined) {
       const pageRefElement = pageRefTemplate.cloneNode(true)
       pageRefElement.startIdx = idx + 2
       stackTop.appendChild(pageRefElement)
+      stackTop.graphName = match[1]
       if (editMode)
-        pageRefElement.children[0].appendChild(newTextNode("[["))
+        pageRefElement.children[0].appendChild(newTextNode(match[0]))
       stack.push(pageRefElement.children[1])
       stackTop = stack[stack.length - 1]
-    } else if (match[2]) {
+    } else if (match[2] !== undefined) {
       if (stackTop.className === "page-ref__body") {
         stackTop.parentNode.endIdx = idx
         if (editMode)
@@ -200,12 +201,12 @@ const renderBlockBody = (parent, text, editMode = false) => {
         el.appendChild(newTextNode("]]"))
         stackTop.appendChild(el)
       }
-    } else if (match[3]) {
-      const tagElement = document.createElement('span')
-      tagElement.className = "tag"
-      tagElement.appendChild(newTextNode(match[0]))
-      stackTop.appendChild(tagElement)
-    } else if (match[4]) {
+    } else if (match[3] !== undefined) {
+      const andElement = document.createElement('span')
+      andElement.className = 'compute-or'
+      andElement.appendChild(newTextNode("or"))
+      stackTop.appendChild(andElement)
+    } else if (match[4] !== undefined) {
       if (editMode) {
         const brElement = document.createElement('span')
         brElement.className = "block-ref-editing"
@@ -224,7 +225,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
           stackTop.appendChild(newTextNode(match[0]))
         }
       }
-    } else if (match[5]) {
+    } else if (match[5] !== undefined) {
       if (stackTop.className === "bold") {
         if (editMode)
           stackTop.appendChild(newTextNode("**"))
@@ -240,7 +241,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
         stack.push(boldElement)
         stackTop = boldElement
       }
-    } else if (match[6]) {
+    } else if (match[6] !== undefined) {
       if (stackTop.className === "highlight") {
         if (editMode)
           stackTop.appendChild(newTextNode("^^"))
@@ -256,7 +257,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
         stack.push(highlightElement)
         stackTop = highlightElement
       }
-    } else if (match[7]) {
+    } else if (match[7] !== undefined) {
       if (stackTop.className === "italic") {
         if (editMode)
           stackTop.appendChild(newTextNode("__"))
@@ -273,29 +274,29 @@ const renderBlockBody = (parent, text, editMode = false) => {
         stack.push(italicElement)
         stackTop = italicElement
       }
-    } else if (match[8]) {
+    } else if (match[8] !== undefined) {
       const urlElement = document.createElement('span')
       urlElement.className = 'url'
       urlElement.appendChild(newTextNode(match[0]))
       urlElement.href = match[8]
       stackTop.appendChild(urlElement)
-    } else if (match[9]) {
+    } else if (match[9] !== undefined) {
       const literalElement = document.createElement('span')
       literalElement.className = 'literal'
       if (editMode) literalElement.appendChild(newTextNode(match[0]))
       else literalElement.appendChild(newTextNode(match[9]))
       stackTop.appendChild(literalElement)
-    } else if (match[10]) {
+    } else if (match[10] !== undefined) {
       const templateExpanderElement = document.createElement('span')
       templateExpanderElement.className = 'template-expander'
       templateExpanderElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(templateExpanderElement)
-    } else if (match[11]) {
-      const attributeElement = document.createElement('span')
-      attributeElement.className = 'attribute'
-      attributeElement.appendChild(newTextNode(match[0]))
-      stackTop.appendChild(attributeElement)
-    } else if (match[12]) {
+    } else if (match[11] !== undefined) {
+      const andElement = document.createElement('span')
+      andElement.className = 'compute-and'
+      andElement.appendChild(newTextNode("and"))
+      stackTop.appendChild(andElement)
+    } else if (match[12] !== undefined) {
       if (stackTop.className === "code-block") {
         if (editMode) stackTop.appendChild(newTextNode("```"))
         stack.pop()
@@ -308,7 +309,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
         stackTop = codeBlockElement
         if (editMode) stackTop.appendChild(newTextNode("```"))
       }
-    } else if (match[13]) {
+    } else if (match[13] !== undefined) {
       const commandElement = document.createElement("span")
       commandElement.className = "command"
       commandElement.appendChild(newTextNode(match[0]))
@@ -325,14 +326,14 @@ const renderBlockBody = (parent, text, editMode = false) => {
         imageElement.src = match[15]
         stackTop.appendChild(imageElement)
       }
-    } else if (match[16]) {
+    } else if (match[16] !== undefined) {
       const computeFailedElement = computeFailedTemplate.cloneNode(true)
       computeFailedElement.startIdx = idx + 2
       stackTop.appendChild(computeFailedElement)
       computeFailedElement.children[0].appendChild(newTextNode("{{"))
       stack.push(computeFailedElement.children[1])
       stackTop = stack[stack.length - 1]
-    } else if (match[17]) {
+    } else if (match[17] !== undefined) {
       if (stackTop.className === "compute-failed__body") {
         const el = stackTop.parentNode
         el.endIdx = idx
@@ -347,16 +348,20 @@ const renderBlockBody = (parent, text, editMode = false) => {
         el.appendChild(newTextNode("}}"))
         stackTop.appendChild(el)
       }
-    } else if (match[18]) {
-      const andElement = document.createElement('span')
-      andElement.className = 'compute-and'
-      andElement.appendChild(newTextNode("and"))
-      stackTop.appendChild(andElement)
-    } else if (match[19]) {
-      const andElement = document.createElement('span')
-      andElement.className = 'compute-or'
-      andElement.appendChild(newTextNode("or"))
-      stackTop.appendChild(andElement)
+    } else if (match[19] !== undefined) { // 18 is optional graphname
+      const tagElement = document.createElement('span')
+      tagElement.className = "tag"
+      tagElement.graphName = match[18]
+      tagElement.title = match[19]
+      tagElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(tagElement)
+    } else if (match[21] !== undefined) { // 20 is optional graphname
+      const attributeElement = document.createElement('span')
+      attributeElement.className = 'attribute'
+      attributeElement.graphName = match[20]
+      attributeElement.title = match[21]
+      attributeElement.appendChild(newTextNode(match[0]))
+      stackTop.appendChild(attributeElement)
     }
     idx = match.index + match[0].length
   }
@@ -379,7 +384,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
 const queryOperationOrder = { "root": 0, "compute-or": 1, "compute-and": 2, "page": 3 }
 // not using 0 because that would be falsy
 
-const transformComputeElement = (el, editMode = false) => {
+const transformComputeElement = (el, editMode) => {
   const seq = el.children[1].children
   if (seq.length === 0) return
   const firstEl = seq[0]

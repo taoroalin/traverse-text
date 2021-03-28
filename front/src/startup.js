@@ -51,6 +51,7 @@ if (userText) {
         console.log(`STORE NOT ON SERVER`)
         return
       }
+      console.lot(`server on commit ${res.getHeader('commitid')} local on commit ${user.s.syncCommitId}`)
       usingLocalStore = false
       user.s.syncCommitId = res.headers.get('commitid')
       res.json().then(blox => {

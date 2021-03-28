@@ -150,10 +150,10 @@ const getChildren = (node) => {
 const getPageTitleOfNode = (node) => {
   // accessing innerText is triggering a recalculateStyle, this is costing me 10ms on page renders with queries
   const tag = node.closest(".tag")
-  if (tag) return tag.innerText.substring(1)
+  if (tag) return tag.title
 
   const attribute = node.closest(".attribute")
-  if (attribute) return attribute.innerText.substring(0, attribute.innerText.length - 2)
+  if (attribute) return attribute.title
 
   const pageRef = node.closest(".page-ref")
   if (pageRef) {
