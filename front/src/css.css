@@ -405,7 +405,10 @@ a:visited {
 }
 
 .todo-checkbox{
-  margin-bottom:0px;
+  transform: translateY(1px);
+  height:14px;
+  width:14px;
+  margin:0 2px;
 }
 
 .compute-failed{

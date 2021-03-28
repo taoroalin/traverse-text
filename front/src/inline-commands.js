@@ -8,7 +8,7 @@ const inlineCommandReplaceString = (string, offset = 0) => {
 
 // inline commands are completely different than commands. They're things the user can do to the current block they're editing
 const inlineCommands = {
-  todo: () => {
+  TODO: () => {
     const position = editingCommandElement.firstChild.startIdx + 9
     editingCommandElement.remove()
     let string = focusBlockBody.innerText

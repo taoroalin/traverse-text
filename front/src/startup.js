@@ -1,5 +1,6 @@
 let idb = null
 let store = null
+let otherStores = {}
 let r
 
 const basicBitchServerUrl = "http://localhost:3000"
@@ -51,7 +52,7 @@ if (userText) {
         console.log(`STORE NOT ON SERVER`)
         return
       }
-      console.lot(`server on commit ${res.getHeader('commitid')} local on commit ${user.s.syncCommitId}`)
+      console.log(`server on commit ${res.headers.get('commitid')} local on commit ${user.s.syncCommitId}`)
       usingLocalStore = false
       user.s.syncCommitId = res.headers.get('commitid')
       res.json().then(blox => {
