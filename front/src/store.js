@@ -20,7 +20,7 @@ const bloxProps = [
   "eu"  // edit user
 ]
 
-const gcPage = (pageId) => {
+const gcPage = (store, pageId) => {
   const page = store.blox[pageId]
   const refs = store.refs[pageId]
   if ((page.k === undefined || page.k.length === 0) && (refs === undefined || refs.length === 0)) {
@@ -44,10 +44,10 @@ const fixParents = () => {
 // page-ref-open page-ref-close tag block-ref attribute literal code-block
 const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(^[\/a-zA-Z0-9_-]+)::|`([^`]+)`|```/g
 
-const setLinks = (blocId, doInnerOuterRefs = false, nogc = false) => {
+const setLinks = (store, blocId, doInnerOuterRefs = false, nogc = false) => {
   for (let ref of store.forwardRefs[blocId] || []) {
     store.refs[ref] = store.refs[ref].filter(x => x !== blocId)
-    if (!nogc) gcPage(ref)
+    if (!nogc) gcPage(store, ref)
   }
   const forwardRefs = []
   store.forwardRefs[blocId] = forwardRefs
@@ -153,12 +153,12 @@ const setLinks = (blocId, doInnerOuterRefs = false, nogc = false) => {
   if (forwardRefs.length === 0) delete store.forwardRefs[blocId]
 }
 
-const generateRefs = () => {
+const generateRefs = (store) => {
   const stime = performance.now()
   store.refs = {}
   store.forwardRefs = {}
   for (let blocId in store.blox) {
-    setLinks(blocId)
+    setLinks(store, blocId)
   }
   console.log(`gen refs took ${performance.now() - stime}`)
   return store
@@ -418,14 +418,15 @@ const searchTemplates = (string) => {
 }
 
 const hydrateFromBlox = (graphName, blox) => {
-  store = blankStore()
+  const store = blankStore()
   store.blox = blox
   store.graphName = graphName
   for (let id in blox) {
     const bloc = blox[id]
     if (bloc.p === undefined) store.titles[bloc.s] = id
   }
-  generateRefs()
+  generateRefs(store)
+  return store
 }
 
 const sortByLastEdited = (arr) => {

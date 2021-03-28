@@ -854,3 +854,6 @@ reallyWantToLeaveElement.children[0].addEventListener('click', reset)
 //   }
 // })
 
+// addNewStoreElement.addEventListener('keydown', (event)=>{
+
+// })

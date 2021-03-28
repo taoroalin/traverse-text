@@ -68,7 +68,11 @@ const build = async () => {
   // todo minify inline
 
   fs.writeFileSync("../front/public/index-no-min.html", result)
-  const htmlmin = minify(result, { collapseWhitespace: true, minifyJS: true, minifyCSS: true, removeComments: true, removeOptionalTags: true, removeRedundantAttributes: true, useShortDoctype: true })
+  const htmlmin = minify(result, {
+    collapseWhitespace: true, minifyJS: {
+      compress: { unsafe_undefined: false, varify: false }
+    }, minifyCSS: true, removeComments: true, removeOptionalTags: true, removeRedundantAttributes: true, useShortDoctype: true
+  })
 
   fs.writeFileSync("../front/public/index.html", htmlmin)
 

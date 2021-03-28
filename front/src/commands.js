@@ -38,7 +38,7 @@ const undoEditCacheStuff = (edit) => {
       }
       break
     case 'df':
-      setLinks(id)
+      setLinks(store, id)
       const bloc = store.blox[id]
       if (bloc.p === undefined) {
         const oldString = applyDif(bloc.s, p1) // this work could be deduplicated, but AAAAGGGGHHHH there's already so much coupling to deduplicate work!
@@ -83,7 +83,7 @@ const doEditCacheStuff = (edit, includeInnerOuter = false) => {
       }
       break
     case 'df':
-      setLinks(id, includeInnerOuter)
+      setLinks(store, id, includeInnerOuter)
       const bloc = store.blox[id]
       if (bloc.p === undefined) {
         const oldString = unapplyDif(bloc.s, p1) // this work could be deduplicated, but AAAAGGGGHHHH there's already so much coupling to deduplicate work!

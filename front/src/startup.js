@@ -59,7 +59,7 @@ if (userText) {
         console.log('got blox')
         const oldStartFn = startFn
         startFn = () => {
-          hydrateFromBlox(user.s.graphName, blox)
+          store = hydrateFromBlox(user.s.graphName, blox)
           oldStartFn()
         }
         setDataLoaded()

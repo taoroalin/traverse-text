@@ -49,19 +49,24 @@ const saveStoreToBasicBitchServer = async (blox) => {
   }
 }
 
-const getStoreFromBasicBitchServer = async (graphName) => {
+const getBloxFromBasicBitchServer = async (graphName) => {
   const getSentTime = performance.now()
   const response = await fetch(`${basicBitchServerUrl}/get/${graphName}`,
     { headers: { passwordHash: user.h } })
   switch (reponse.status) {
     case 200:
       const blox = await response.json()
-      hydrateFromBlox(graphName, blox)
       console.log(`got in ${performance.now() - getSentTime}`)
-      break
+      return blox
     default:
       console.warn(`failed to get store`)
   }
+}
+
+const addOtherStore = async (graphName) => {
+  const blox = await getBloxFromBasicBitchServer(graphName)
+  const otherStore = hydrateFromBlox(blox)
+  otherStores[graphName] = otherStore
 }
 
 const saveSettingsToBasicBitchServer = async () => {
