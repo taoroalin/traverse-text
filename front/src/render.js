@@ -393,6 +393,8 @@ const transformComputeElement = (el, editMode = false) => {
         el.textContent = ""
         const checkbox = todoCheckboxTemplate.cloneNode(true)
         el.appendChild(checkbox)
+      } else {
+        return
       }
       break
     case "DONE":
@@ -401,10 +403,12 @@ const transformComputeElement = (el, editMode = false) => {
         const checkedCheckbox = todoCheckboxTemplate.cloneNode(true)
         checkedCheckbox.checked = true
         el.appendChild(checkedCheckbox)
+      } else {
+        return
       }
       break
     case "video":
-      if (!editMode) {
+      if (!editMode && !user.s.noVideo) {
         if (seq.length !== 2) return
         if (seq[1].className === "url") {
           const videoEmbedElement = videoEmbedTemplate.cloneNode(true)
@@ -412,6 +416,8 @@ const transformComputeElement = (el, editMode = false) => {
           el.textContent = ""
           el.appendChild(videoEmbedElement)
         }
+      } else {
+        return
       }
       break
     case "query":
@@ -481,6 +487,7 @@ const transformComputeElement = (el, editMode = false) => {
       const otherQuery = block.querySelector(".query-frame")
       if (otherQuery) otherQuery.remove()
       block.appendChild(queryFrame)
+      return
       break
     default:
       return

@@ -413,6 +413,7 @@ document.addEventListener("keydown", (event) => {
         break
       case "ArrowDown":
         if (event.altKey && event.shiftKey) {
+          // this needs to only work when the parent is actually visible, not accidentally move around in its parent when its just a block in a frame. 
           const parentId = store.blox[sessionState.focusId].p
           const parentElement = focusBlock.parentNode
           const currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
@@ -846,3 +847,10 @@ signOutButton.addEventListener('click', () => {
 })
 
 reallyWantToLeaveElement.children[0].addEventListener('click', reset)
+
+// createNewStoreElement.addEventListener("keydown", (event) => {
+//   if (event.key === "Enter") {
+//     createAndSwitchToNewStore(event.target.value)
+//   }
+// })
+

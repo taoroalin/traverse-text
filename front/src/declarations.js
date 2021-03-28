@@ -1,189 +1,189 @@
 const allHtml = `<div id="app">
-    <div id="top-bar" style="margin-top:-43px">
-      <a id="report-issue-button"
-        tabindex="-1">
-        Report Issue
-      </a>
-      <button id="help-button" tabindex="-1">
-        Help
-      </button>
-      <button id="daily-notes-button" tabindex="-1">
-        Daily Notes
-      </button>
-      <input id="search-input" placeholder="search" tabindex="-1">
-      <button id="upload-button" tabindex="-1">
-        <input style="display:none" type="file" id="upload-input">
-        Upload
-      </button>
-      <a id="download-button" tabindex="-1">
-        Download
-      </a>
-      <button id="signup-button" tabindex="-1">
-        Sign up
-      </button>
-      <button id="signout-button" tabindex="-1" style="display:none">
-        Sign Out
-      </button>
-      <!-- <svg id="top-hamburger" width="25" height="25">
-        <circle cx="12.5" cy="6" r="2.1" fill="var(--bullet)" />
-        <circle cx="12.5" cy="12.5" r="2.1" fill="var(--bullet)" />
-        <circle cx="12.5" cy="19" r="2.1" fill="var(--bullet)" />
-      </svg> -->
-    </div>
+  <div id="top-bar" style="margin-top:-43px">
+    <a id="report-issue-button"
+      tabindex="-1">
+      Report Issue
+    </a>
+    <button id="help-button" tabindex="-1">
+      Help
+    </button>
+    <button id="daily-notes-button" tabindex="-1">
+      Daily Notes
+    </button>
+    <input id="search-input" placeholder="search" tabindex="-1">
+    <button id="upload-button" tabindex="-1">
+      <input style="display:none" type="file" id="upload-input">
+      Upload
+    </button>
+    <a id="download-button" tabindex="-1">
+      Download
+    </a>
+    <button id="signup-button" tabindex="-1">
+      Sign up
+    </button>
+    <button id="signout-button" tabindex="-1" style="display:none">
+      Sign Out
+    </button>
+    <!-- <svg id="top-hamburger" width="25" height="25">
+      <circle cx="12.5" cy="6" r="2.1" fill="var(--bullet)" />
+      <circle cx="12.5" cy="12.5" r="2.1" fill="var(--bullet)" />
+      <circle cx="12.5" cy="19" r="2.1" fill="var(--bullet)" />
+    </svg> -->
+  </div>
 
-    <div id="top-bar-hidden-hitbox" style="position:fixed;height:20px;width:100%;display:none;"></div>
+  <div id="top-bar-hidden-hitbox" style="position:fixed;height:20px;width:100%;display:none;"></div>
 
 
 
-    <div id="terminal" contenteditable="true" style="display:none"></div>
+  <div id="terminal" contenteditable="true" style="display:none"></div>
 
-    <div id="page-frame-outer">
-      <div id="page-frame">
+  <div id="page-frame-outer">
+    <div id="page-frame">
 
-      </div>
-    </div>
-
-    <!-- inline styles on this site are all edited directly by js -->
-    <div id="autocomplete-list" style="display:none"></div>
-    <div id="command-list" style="display:none"></div>
-    <div id="search-result-list" style="display:none"></div>
-    <div id="template-list" style="display:none"></div>
-
-    <div id="login" style="display:none">
-      <p>Login</p>
-      <form id="login-form">
-        <input type="email" id="login-email" placeholder="email">
-        <input type="password" id="login-password" placeholder="password">
-        <input type="submit" style="height:0px" tabindex="-1">
-      </form>
-      <button id="switch-to-signup">Sign up</button>
-      <button class="exit-to-main">Back</button>
-    </div>
-
-    <div id="signup" style="display:none">
-      <p>Sign up</p>
-      <form id="signup-form">
-        <input type="email" id="signup-email" placeholder="email">
-        <input type="text" id="signup-username" placeholder="username">
-        <input type="password" id="signup-password" placeholder="password">
-        <input type="submit" style="height:0px" tabindex="-1">
-      </form>
-      <button id="switch-to-login">Login</button>
-      <button class="exit-to-main">Back</button>
-    </div>
-
-    <div id="really-want-to-leave" class="really-want-to" style="display:none">
-      Your data will be lost if you sign out now
-      <button>Continue</button>
     </div>
   </div>
 
-  <title>Micro Roam</title>
+  <!-- inline styles on this site are all edited directly by js -->
+  <div id="autocomplete-list" style="display:none"></div>
+  <div id="command-list" style="display:none"></div>
+  <div id="search-result-list" style="display:none"></div>
+  <div id="template-list" style="display:none"></div>
+
+  <div id="login" style="display:none">
+    <p>Login</p>
+    <form id="login-form">
+      <input type="email" id="login-email" placeholder="email">
+      <input type="password" id="login-password" placeholder="password">
+      <input type="submit" style="height:0px" tabindex="-1">
+    </form>
+    <button id="switch-to-signup">Sign up</button>
+    <button class="exit-to-main">Back</button>
+  </div>
+
+  <div id="signup" style="display:none">
+    <p>Sign up</p>
+    <form id="signup-form">
+      <input type="email" id="signup-email" placeholder="email">
+      <input type="text" id="signup-username" placeholder="username">
+      <input type="password" id="signup-password" placeholder="password">
+      <input type="submit" style="height:0px" tabindex="-1">
+    </form>
+    <button id="switch-to-login">Login</button>
+    <button class="exit-to-main">Back</button>
+  </div>
+
+  <div id="really-want-to-leave" class="really-want-to" style="display:none">
+    Your data will be lost if you sign out now
+    <button>Continue</button>
+  </div>
+</div>
+
+<title>Micro Roam</title>
 
 
-  <template id="page">
-    <div class="page">
-      <h1 class="page__title" contenteditable="true" tabindex="-1" spellcheck="false"></h1>
+<template id="page">
+  <div class="page">
+    <h1 class="page__title" contenteditable="true" tabindex="-1"></h1>
 
-      <div class="page__body">
+    <div class="page__body">
 
-      </div>
-      <div class="page__backlinks">
-
-      </div>
     </div>
-  </template>
+    <div class="page__backlinks">
 
-  <template id="block">
-    <div class="block">
-      <svg class="block__bullet" width="20" height="20">
-        <circle cx="10" cy="10.5" r="3" fill="var(--bullet)" />
-      </svg>
-      <div class="block__body" contenteditable="true" tabindex="-1" spellcheck="false"></div>
-      <div class="block__children">
-
-      </div>
     </div>
-  </template>
+  </div>
+</template>
 
-  <template id="backref-list">
-    <div class="backref-list">
-      <div class="backref-list__title">Linked References</div>
-      <div class="backref-list__body"></div>
+<template id="block">
+  <div class="block">
+    <svg class="block__bullet" width="20" height="20">
+      <circle cx="10" cy="10.5" r="3" fill="var(--bullet)" />
+    </svg>
+    <div class="block__body" contenteditable="true" tabindex="-1"></div>
+    <div class="block__children">
+
     </div>
-  </template>
+  </div>
+</template>
 
-  <template id="query-frame">
-    <div class="query-frame"></div>
-  </template>
+<template id="backref-list">
+  <div class="backref-list">
+    <div class="backref-list__title">Linked References</div>
+    <div class="backref-list__body"></div>
+  </div>
+</template>
 
-  <template id="block-focus-frame">
-    <div class="block-focus-frame">
-      <div class="block-focus-frame__breadcrumb"></div>
-      <div class="block-focus-frame__body"></div>
-      <div class="block-focus-frame__backlinks"></div>
-    </div>
-  </template>
+<template id="query-frame">
+  <div class="query-frame"></div>
+</template>
 
-  <template id="backref-frame">
-    <div class="backref-frame">
-      <div class="backref-frame__breadcrumb"></div>
-      <div class="backref-frame__body"></div>
-    </div>
-  </template>
+<template id="block-focus-frame">
+  <div class="block-focus-frame">
+    <div class="block-focus-frame__breadcrumb"></div>
+    <div class="block-focus-frame__body"></div>
+    <div class="block-focus-frame__backlinks"></div>
+  </div>
+</template>
 
-  <template id="page-ref">
-    <span class="page-ref"><span class="page-ref__brackets"></span><span class="page-ref__body"></span><span
-        class="page-ref__brackets"></span></span>
-  </template>
+<template id="backref-frame">
+  <div class="backref-frame">
+    <div class="backref-frame__breadcrumb"></div>
+    <div class="backref-frame__body"></div>
+  </div>
+</template>
 
-  <template id="image-embed">
-    <img class="image-embed">
-  </template>
+<template id="page-ref">
+  <span class="page-ref"><span class="page-ref__brackets"></span><span class="page-ref__body"></span><span
+      class="page-ref__brackets"></span></span>
+</template>
 
-  <template id="compute-failed">
-    <span class="compute-failed"><span class="compute-failed__brackets"></span><span
-        class="compute-failed__body"></span><span class="compute-failed__brackets"></span></span>
-  </template>
+<template id="image-embed">
+  <img class="image-embed">
+</template>
 
-  <template id="todo-checkbox">
-    <input type="checkbox" class="todo-checkbox">
-  </template>
+<template id="compute-failed">
+  <span class="compute-failed"><span class="compute-failed__brackets"></span><span
+      class="compute-failed__body"></span><span class="compute-failed__brackets"></span></span>
+</template>
 
-  <template id="video-embed">
-    <iframe class="video-embed" width="560" height="315" title="YouTube video player" frameborder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen></iframe>
-  </template>
+<template id="todo-checkbox">
+  <input type="checkbox" class="todo-checkbox">
+</template>
 
-  <template id="breadcrumb-page">
-    <span class="breadcrumb-page"></span>
-  </template>
+<template id="video-embed">
+  <iframe class="video-embed" width="560" height="315" title="YouTube video player" frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen></iframe>
+</template>
 
-  <template id="notification">
-    <div class="notification"></div>
-  </template>
+<template id="breadcrumb-page">
+  <span class="breadcrumb-page"></span>
+</template>
 
-  <template id="breadcrumb-block">
-    <span class="breadcrumb-block"><span class="breadcrumb-block__arrow">-></span><span
-        class="breadcrumb-block__body"></span></span>
-  </template>
+<template id="notification">
+  <div class="notification"></div>
+</template>
 
-  <template id="autocomplete__suggestion">
-    <div class="autocomplete__suggestion"></div>
-  </template>
+<template id="breadcrumb-block">
+  <span class="breadcrumb-block"><span class="breadcrumb-block__arrow">-></span><span
+      class="breadcrumb-block__body"></span></span>
+</template>
 
-  <template id="command__suggestion">
-    <div class="command__suggestion"></div>
-  </template>
+<template id="autocomplete__suggestion">
+  <div class="autocomplete__suggestion"></div>
+</template>
 
-  <template id="template__suggestion">
-    <div class="template__suggestion"></div>
-  </template>
+<template id="command__suggestion">
+  <div class="command__suggestion"></div>
+</template>
 
-  <template id="search-result">
-    <div class="search-result"></div>
-  </template>`
+<template id="template__suggestion">
+  <div class="template__suggestion"></div>
+</template>
+
+<template id="search-result">
+  <div class="search-result"></div>
+</template>`
 // Cursor info. Raw info stored in JSON, DOM elements cached in lots of random vars
 let sessionState = { pageFrame: "dailyNotes", focusId: null, scroll: 0, position: null }
 
@@ -261,6 +261,8 @@ const reallyWantToLeaveElement = elById("really-want-to-leave")
 const uploadInput = elById('upload-input')
 
 const appElement = elById('app')
+
+const createNewStoreElement = elById('create-new-store')
 
 
 // Templates

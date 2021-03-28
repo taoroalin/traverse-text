@@ -97,8 +97,7 @@ const roamJsonToStore = (graphName, text) => {
   }
 
   generateRefs()
-  store.commitId = "MYVERYFIRSTCOMMITEVER"
-  user.s.commitId = store.commitId
+  user.s.commitId = "MYVERYFIRSTCOMMITEVER"
 
   console.log(`roamJsonToStore took ${performance.now() - stime}`)
   console.log(store)

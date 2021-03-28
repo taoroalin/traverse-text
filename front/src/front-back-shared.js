@@ -37,7 +37,7 @@ const undoEditBlox = (edit, blox) => {
       const parentId = p1.p, idx = p2
       if (parentId) {
         if (!blox[parentId].k) blox[parentId].k = []
-        if (idx) {
+        if (idx !== undefined) {
           blox[parentId].k.splice(idx, 0, id)
         } else {
           blox[parentId].k.push(id)
@@ -115,7 +115,7 @@ try {
 }
 
 class LruCache {
-  constructor(fetcher, maxProcessMemory = 1_500_000_000) {
+  constructor(fetcher, maxProcessMemory = 1500000000) { // 1.5G
     this.maxProcessMemory = maxProcessMemory
     this.fetcher = fetcher
     this.map = new Map()

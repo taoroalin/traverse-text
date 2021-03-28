@@ -404,6 +404,17 @@ a:visited {
   max-width:100%;
 }
 
+.todo-checkbox{
+  margin-bottom:0px;
+}
+
+.compute-failed{
+  background-color:var(--query-background);
+  border-radius:4px;
+  padding:5px 2px;
+  margin-left: -2px;
+}
+
 #terminal {
   font-family: "Inconsolata";
   width: 100%;

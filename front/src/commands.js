@@ -108,7 +108,6 @@ const commit = () => {
   const newId = newUUID()
   undoCommitList.push({ id: newId, t: intToBase64(Date.now()), edits: undoCommitInProgress })
   undoCommitSessionStateList.push(cpy(sessionState))
-  store.commitId = newId
   user.s.commitId = newId
   undoCommitInProgress = []
   setTimeout(() => {

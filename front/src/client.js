@@ -20,6 +20,7 @@ const syncEditsWithBasicBitchServer = async () => {
   const response = await fetch(`${basicBitchServerUrl}/edit/${store.graphName}`, { headers })
   if (response.status === 200) {
     user.s.syncCommitId = newCommitId
+    masterCommitList.push(commit)
   } else if (response.status === 409) {
     console.log("conflicting edit")
     invalidateLocal()
@@ -42,7 +43,6 @@ const saveStoreToBasicBitchServer = async (blox) => {
     })
   if (response.status === 200 || response.status === 304) {
     user.s.syncCommitId = syncCommitId
-    store.syncCommitId = syncCommitId
     console.log(`save confirmed in ${performance.now() - putSentTime}`)
   } else {
     console.warn(`failed to save to server`)
@@ -149,5 +149,4 @@ const addGraph = async () => {
     return
   }
   user.s.syncCommitId = syncCommitId
-  store.syncCommitId = syncCommitId
 }

@@ -50,8 +50,15 @@ http.createServer((req, res) => {
 
 
 http.createServer((req, res) => {
-  const url = req.url
-  const extension = url.match(/\.[a-z0-9]+$/)[0]
+  let url = req.url
+  let match = url.match(/\.[a-z0-9]+$/)
+  let extension
+  if (match) {
+    extension = match[0]
+  } else {
+    extension = ".html"
+    url = "/index.html"
+  }
   res.setHeader("Content-Type", fileExtToContentType[extension])
   const dir = `../front/src${url}`
   const readStream = fs.createReadStream(dir)

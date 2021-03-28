@@ -180,6 +180,8 @@ const saveUser = () => {
   if (user.s.topBar === "visible") showTopBar()
   else hideTopBar()
 
+  document.body.spellcheck = user.s.spellcheck
+
   if (user.h) {
     signOutButton.style.display = "block"
     signupButton.style.display = "none"

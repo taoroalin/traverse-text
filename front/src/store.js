@@ -13,8 +13,8 @@ const blankStore = () => ({
 const bloxProps = [
   "s",  // string
   "p",  // parent
-  "i",  // child idx
   "ct", // create time
+  "k", // kids
   "et", // edit time
   "cu", // create user
   "eu"  // edit user
@@ -435,4 +435,13 @@ const sortByLastEdited = (arr) => {
     }
     return 1
   })
+}
+
+const createAndSwitchToNewStore = storeName => {
+  store = blankStore()
+  store.graphName = storeName
+  user.s.graphName = storeName
+  user.commitId = "MYVERYFIRSTCOMMITEVER"
+  saveUser()
+  saveStore()
 }
