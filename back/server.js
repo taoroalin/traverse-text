@@ -222,6 +222,13 @@ http.createServer(async (req, res) => {
         res.end()
         return
       }
+
+      if (req.headers.force === undefined && req.headers.synccommitid !== graphs[match[2]].l) {
+        res.writeHead(409)
+        res.end()
+        return
+      }
+
       graphs[match[2]].l = req.headers.commitid
       debouncedSaveGraphs()
       // todo add coordination between threads using err.code==='EBUSY'?

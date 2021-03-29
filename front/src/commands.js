@@ -125,7 +125,7 @@ const commitEdit = (...edit) => {
   commit()
 }
 
-const saveStore = () => {
+const saveStore = (force = false) => {
   // stringify blox, then stringify rest of store and insert blox string to avoid re-stringifying blox
   const blox = store.blox
   const bloxText = JSON.stringify(blox)
@@ -135,7 +135,7 @@ const saveStore = () => {
       fullString += '"' + key + '":' + JSON.stringify(store[key]) + ","
   }
   fullString += '"blox":' + bloxText + '}'
-  saveStoreToBasicBitchServer(bloxText)
+  saveStoreToBasicBitchServer(bloxText, force)
   saveStoreStringLocal(fullString)
 }
 

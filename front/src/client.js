@@ -29,13 +29,14 @@ const syncEditsWithBasicBitchServer = async () => {
   }
 }
 
-const saveStoreToBasicBitchServer = async (blox) => {
+const saveStoreToBasicBitchServer = async (blox, force = false) => {
   const putSentTime = performance.now()
   const headers = new Headers()
   headers.set('h', user.h)
   const syncCommitId = user.s.commitId
   headers.set('commitid', syncCommitId)
   headers.set('synccommitid', user.s.syncCommitId)
+  if (force) headers.set('force', 'true')
   const response = await fetch(`${basicBitchServerUrl}/put/${store.graphName}`,
     {
       method: "POST", body: blox,
