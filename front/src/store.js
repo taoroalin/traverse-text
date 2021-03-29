@@ -40,6 +40,25 @@ const fixParents = () => {
   }
 }
 
+const fixDuplicatePages = () => {
+  const titles = {}
+  for (let id in store.blox) {
+    const bloc = store.blox[id]
+    if (!bloc.p) {
+      pushToArrInObj(titles, store.blox[id].s, id)
+    }
+  }
+  for (let id in titles) {
+    const arr = titles[id]
+    for (let i = 1; i < arr.length; i++) {
+      for (let k of store.blox[arr[i]].k || []) {
+        macros.move(k, arr[0])
+      }
+      macros.delete(arr[i])
+    }
+  }
+}
+
 // 1             2              3   4         5         6       7
 // page-ref-open page-ref-close tag block-ref attribute literal code-block
 const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(^[\/a-zA-Z0-9_-]+)::|`([^`]+)`|```/g
@@ -161,7 +180,6 @@ const generateRefs = (store) => {
     setLinks(store, blocId)
   }
   console.log(`gen refs took ${performance.now() - stime}`)
-  return store
 }
 
 const mergeLists = (list1, list2) => {
@@ -417,14 +435,20 @@ const searchTemplates = (string) => {
   return templateSearchCache
 }
 
-const hydrateFromBlox = (graphName, blox) => {
-  const store = blankStore()
-  store.blox = blox
-  store.graphName = graphName
-  for (let id in blox) {
-    const bloc = blox[id]
+const generateTitles = (store) => {
+  store.titles = {}
+  for (let id in store.blox) {
+    const bloc = store.blox[id]
     if (bloc.p === undefined) store.titles[bloc.s] = id
   }
+}
+
+const hydrateFromBlox = (graphName, blox) => {
+  console.log("hydratefromblox")
+  let store = blankStore()
+  store.blox = blox
+  store.graphName = graphName
+  generateTitles(store)
   generateRefs(store)
   return store
 }

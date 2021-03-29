@@ -261,7 +261,7 @@ a:visited {
   white-space: pre-wrap;
 }
 
-.block__body[data-editmode="true"]{
+[data-editingspotlight="true"] .block__body[data-editmode="true"]{
   background-color: var(--editing-background);
   border-radius:4px;
 }

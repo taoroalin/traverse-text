@@ -107,7 +107,7 @@ const flash = benchmarkRenderAll
 const blank = (name = "default") => {
   store = blankStore()
   store.graphName = name
-  user = { s: { graphName: "default", theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light", topBar: "visible", logging: false, spellcheck: false } }
+  user = { s: { graphName: "default", theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light", topBar: "visible", logging: false, spellcheck: false, editingSpotlight: true } }
   user.s.graphName = name
   saveUser()
   debouncedSaveStore()

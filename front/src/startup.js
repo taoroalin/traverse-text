@@ -54,12 +54,12 @@ if (userText) {
       }
       console.log(`server on commit ${res.headers.get('commitid')} local on commit ${user.s.syncCommitId}`)
       usingLocalStore = false
-      user.s.syncCommitId = res.headers.get('commitid')
       res.json().then(blox => {
         console.log('got blox')
         const oldStartFn = startFn
         startFn = () => {
           store = hydrateFromBlox(user.s.graphName, blox)
+          user.s.syncCommitId = res.headers.get('commitid')
           oldStartFn()
         }
         setDataLoaded()
@@ -106,7 +106,7 @@ if (userText) {
     }
   }
 } else {
-  user = { s: { graphName: "default", theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light", topBar: "visible", logging: false, spellcheck: false } }
+  user = { s: { graphName: "default", theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light", topBar: "visible", logging: false, spellcheck: false, editingSpotlight: true } }
   fetch("./default-store.json").then(text => {
     text.json().then(json => {
       store = json

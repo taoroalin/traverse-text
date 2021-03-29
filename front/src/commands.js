@@ -88,6 +88,10 @@ const doEditCacheStuff = (edit, includeInnerOuter = false) => {
       if (bloc.p === undefined) {
         const oldString = unapplyDif(bloc.s, p1) // this work could be deduplicated, but AAAAGGGGHHHH there's already so much coupling to deduplicate work!
         delete store.titles[oldString]
+        if (store.titles[bloc.s] !== undefined) {
+          console.error(`duplicate block title ${bloc.s}`)
+          return
+        }
         store.titles[bloc.s] = id
       }
       break
@@ -265,6 +269,11 @@ macros.nocommit = {
     }
   },
   createPage: (title) => {
+    if (store.titles[title]) {
+      console.error(`tried to create page that already exists ${title}`)
+      return
+    }
+    console.log(`making page ${title}`)
     const id = newUid()
     doEdit("cr", id)
     doEdit("df", id, diff(title, ""))
@@ -277,6 +286,7 @@ macros.nocommit = {
   },
   move: (id, parentId, idx) => {
     const bloc = store.blox[id]
+    if (idx === undefined) idx = store.blox[parentId].k.length
     doEdit("mv", id, parentId, idx, bloc.p, store.blox[bloc.p].k.indexOf(id))
   }
 }

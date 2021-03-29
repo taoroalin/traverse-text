@@ -120,14 +120,12 @@ const focusBlockEnd = (blockNode) => {
   sessionState.focusId = blockNode.dataset.id
   sessionState.position = store.blox[sessionState.focusId].s.length
   focusIdPosition()
-  console.log("focusblockend")
 }
 
 const focusBlockStart = (blockNode) => {
   sessionState.focusId = blockNode.dataset.id
   sessionState.position = 0
   focusIdPosition()
-  console.log("focusblockstartt")
 }
 
 const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => { // this closure feels weird, maybe shoudn't use this language feature?

@@ -40,11 +40,15 @@ const renderSessionState = () => {
       pageFrameOuter.addEventListener("scroll", dailyNotesInfiniteScrollListener)
       sessionState.oldestDate = new Date(Date.now())
       let numNotesLoaded = 0
-      if (store.titles[formatDate(sessionState.oldestDate)] === undefined) {
-        macros.createPage(formatDate(sessionState.oldestDate))
+      console.log(store.titles)
+      let dateString = formatDate(sessionState.oldestDate)
+      generateTitles(store) // todo get rid of title corruption and remove this. it's here because the titles are always corrupted at this point, I have no idea why.
+      if (!store.titles[dateString]) {
+        console.log(`creating page ${dateString}`)
+        macros.createPage(dateString)
       }
       for (let i = 0; i < 1000; i++) {
-        const daysNotes = store.titles[formatDate(sessionState.oldestDate)]
+        const daysNotes = store.titles[dateString]
         if (daysNotes) {
           renderPage(pageFrame, daysNotes)
           const pageBreak = document.createElement("div")
@@ -58,12 +62,14 @@ const renderSessionState = () => {
         sessionState.oldestDate.setDate(
           sessionState.oldestDate.getDate() - 1
         )
+        dateString = formatDate(sessionState.oldestDate)
+
       }
-      if (numNotesLoaded < initialDailyNotes) pageFrame.lastChild.remove()
+      if (numNotesLoaded < initialDailyNotes) pageFrame.lastChild.remove() // remove last page divider
       break
   }
 
-  if (!sessionState.isFocused) {
+  if (!sessionState.isFocused || !pageFrame.querySelector(`.block[data-id="${sessionState.focusId}"]`)) {
     const firstBlockElement = pageFrame.querySelector('.block')
     sessionState.position = 0
     sessionState.focusId = firstBlockElement.dataset.id
@@ -181,6 +187,7 @@ const saveUser = () => {
   else hideTopBar()
 
   document.body.spellcheck = user.s.spellcheck
+  document.body.dataset['editingspotlight'] = user.s.editingSpotlight
 
   if (user.h) {
     signOutButton.style.display = "block"

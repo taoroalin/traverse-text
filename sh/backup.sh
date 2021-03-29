@@ -1,1 +1,1 @@
-cp -R ../user-data/ ../user-data-backup/
+cp -a ../user-data/. ../user-data-backup/
