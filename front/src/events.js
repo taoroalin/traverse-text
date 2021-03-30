@@ -734,14 +734,6 @@ document.addEventListener("selectionchange", (event) => {
   sessionState.isFocused = false
 })
 
-// document.addEventListener("visibilitychange", (event) => {
-//   console.log("focusin");
-// }, false)
-
-// document.addEventListener("visibilitychange", (event) => {
-//   console.log("focusout")
-// }, true)
-
 // ID'ed ELEMENT EVENT LISTENERS ----------------------------------------------------------
 
 const showTopBarFn = () => {
@@ -800,9 +792,6 @@ uploadInput.addEventListener('change', (event) => {
 
 const preprocessImportedStore = async () => {
   startFn = () => gotoNoHistory("dailyNotes")
-  const response = await fetch("./default-store.json")
-  const json = await response.json()
-  mergeStore(json)
   await addGraph()
   start()
 }
@@ -848,12 +837,16 @@ signOutButton.addEventListener('click', () => {
 
 reallyWantToLeaveElement.children[0].addEventListener('click', reset)
 
-// createNewStoreElement.addEventListener("keydown", (event) => {
-//   if (event.key === "Enter") {
-//     createAndSwitchToNewStore(event.target.value)
-//   }
-// })
+topHamburgerElement.addEventListener('click', () => {
+  if (optionsFrame.style.display == 'block') {
+    optionsFrame.style.display = 'none'
+  } else {
+    optionsFrame.style.display = 'block'
+  }
+})
 
-// addNewStoreElement.addEventListener('keydown', (event)=>{
-
-// })
+createNewStoreElement.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    createAndSwitchToNewStore(event.target.value)
+  }
+})

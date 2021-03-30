@@ -129,7 +129,6 @@ signupForm.addEventListener("submit", async (event) => {
   const jsonBody = JSON.stringify({ h: passwordHash, u: username, e: email, s: user.s })
   console.log(jsonBody)
   const headers = new Headers()
-  alert(jsonBody)
   headers.set('body', jsonBody)
   const response = await fetch(`${basicBitchServerUrl}/signup`, { method: "POST", headers })
   if (response.status === 200) {

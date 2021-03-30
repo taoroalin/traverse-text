@@ -24,11 +24,14 @@ const allHtml = `<div id="app">
     <button id="signout-button" tabindex="-1" style="display:none">
       Sign Out
     </button>
-    <!-- <svg id="top-hamburger" width="25" height="25">
+    <svg id="top-hamburger" width="25" height="25">
       <circle cx="12.5" cy="6" r="2.1" fill="var(--bullet)" />
       <circle cx="12.5" cy="12.5" r="2.1" fill="var(--bullet)" />
       <circle cx="12.5" cy="19" r="2.1" fill="var(--bullet)" />
-    </svg> -->
+    </svg>
+    <div id="options-frame" style="display:none">
+      <input id="create-new-store" placeholder="Create new graph">
+    </div>
   </div>
 
   <div id="top-bar-hidden-hitbox" style="position:fixed;height:20px;width:100%;display:none;"></div>
@@ -263,7 +266,8 @@ const uploadInput = elById('upload-input')
 const appElement = elById('app')
 
 const createNewStoreElement = elById('create-new-store')
-
+const topHamburgerElement = elById('top-hamburger')
+const optionsFrame = elById('options-frame')
 
 // Templates
 const pageTemplate = getTemp("page")

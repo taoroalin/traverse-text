@@ -50,11 +50,13 @@
 input,
 button,
 a {
-  font-family: "Inter", Verdana;
+  font-family: "Inter", Ahorani, Verdana;
 }
 
 input {
   border: none;
+  background-color:var(--background);
+  color:var(--text);
 }
 
 button {
@@ -84,7 +86,7 @@ span {
 
 body {
   scrollbar-width: 0px;
-  font-family: "Inter", Verdana, Arial;
+  font-family: Inter, Aharoni, Verdana;
   font-weight: normal;
   margin: 0;
   color: var(--text);
@@ -138,6 +140,17 @@ a:visited {
   cursor:pointer;
 }
 
+#options-frame{
+  position:fixed;
+  top:42px;
+  right:5px;
+}
+
+#create-new-store{
+  border-radius:4px;
+  padding:4px;
+  font-size: 1.1em;
+}
 
 #top-bar a {
   padding: 14px 10px 10px;
@@ -167,7 +180,8 @@ a:visited {
 
 #autocomplete-list,
 #template-list,
-#command-list {
+#command-list,
+#options-frame {
   position: absolute;
   display: flex;
   flex-direction: column;

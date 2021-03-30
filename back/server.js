@@ -8,7 +8,7 @@ const { LruCache, promisify, doEditBlox, undoEditBlox } = require('../front/src/
 const bloxCache = new LruCache((key) => common.loadBlox(key))
 
 // todo use session keys instead of holding onto password hash everywhere for more security
-const hashRegex = /^[a-zA-Z0-9_\-]{80,90}$/
+const hashRegex = /^[a-zA-Z0-9_\-]{70,100}$/
 
 let accounts = JSON.parse(fs.readFileSync(`../user-data/accounts.json`))
 let accountsByHash = {}
@@ -276,7 +276,7 @@ http.createServer(async (req, res) => {
         res.write("That graph name already taken.")
         return
       }
-      graphs[match[2]] = { l: match[3] }
+      graphs[match[2]] = { l: req.headers.commitid }
       writeStream = fs.createWriteStream(`../user-data/blox-br/${match[2]}.json.br`)
       common.brCompressStream(req, writeStream)
       userAccount.u.w[match[2]] = 1

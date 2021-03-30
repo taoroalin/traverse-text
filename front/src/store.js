@@ -2,9 +2,12 @@
 const blankStore = () => ({
   blox: {},
   titles: {},
+
   refs: {},
+  forwardRefs: {},
   innerRefs: {},
   outerRefs: {},
+
   roamProps: {},
   ownerRoamId: undefined,
   graphName: undefined,
@@ -21,11 +24,25 @@ const bloxProps = [
 ]
 
 const gcPage = (store, pageId) => {
-  const page = store.blox[pageId]
-  const refs = store.refs[pageId]
-  if ((page.k === undefined || page.k.length === 0) && (refs === undefined || refs.length === 0)) {
+  if (isPageEmpty(store, pageId))
     macros.nocommit.delete(pageId)
+}
+
+const isPageEmpty = (store, pageId) => {
+  const page = store.blox[pageId]
+  if (store.refs[pageId] !== undefined && store.refs[pageId].length > 0) return false
+  if (page.k) {
+    if (page.k.length > 1) return false
+    if (page.k.length === 0) return true
+    const childId = page.k[0]
+    return isBlockEmpty(store, childId)
   }
+  return true
+}
+
+const isBlockEmpty = (store, blockId) => {
+  const block = store.blox[blockId]
+  return block.s === "" && (block.k === undefined || block.k.length === 0)
 }
 
 const fixParents = () => {
@@ -462,11 +479,13 @@ const sortByLastEdited = (arr) => {
   })
 }
 
-const createAndSwitchToNewStore = storeName => {
+const createAndSwitchToNewStore = async (storeName) => {
   store = blankStore()
   store.graphName = storeName
   user.s.graphName = storeName
-  user.commitId = "MYVERYFIRSTCOMMITEVER"
+  user.s.commitId = "MYVERYFIRSTCOMMITEVER"
   saveUser()
+  await addGraph()
   saveStore()
+  window.location.href = window.location.href
 }
