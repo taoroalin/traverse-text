@@ -14,7 +14,7 @@
   --link: #3f84c0;
   --brackets: #a7b6c2;
   --block-ref: rgb(63, 63, 63);
-  --bullet: #758897;
+  --bullet: #879189;
   --border: #afbeca;
   --bar: #565d63;
   --break: #838e97;
@@ -131,6 +131,12 @@ a:visited {
   background-color: var(--background);
 }
 
+#top-bar button {
+  font-size: 0.9em;
+  color:var(--bullet);
+  padding: 10px 10px 8px;
+}
+
 .top-bar-transition{
   transition: margin-top 0.1s;
 }
@@ -141,46 +147,44 @@ a:visited {
 }
 
 #top-hamburger{
-  padding:10px 10px 5px;
+  padding:7px 6px 2px 4px;
   cursor:pointer;
 }
 
 #options-frame{
   position:fixed;
-  top:42px;
+  top:36px;
   right:5px;
+  display: flex;
+  flex-direction:column;
+}
+
+#options-frame button{
+  border-radius:4px;
+  padding:6px;
+  display:block;
 }
 
 #create-new-store{
   border-radius:4px;
-  padding:4px;
-  font-size: 1.1em;
-}
-
-#top-bar a {
-  padding: 14px 10px 10px;
-  font-size: 0.9em;
-  color: var(--text);
-  display: block;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-#top-bar button {
-  padding: 14px 10px 10px;
-  font-size: 0.9em;
+  padding:6px;
+  font-size:1.1em;
 }
 
 #search-input {
   background-color: var(--background);
   color: var(--text);
   padding: 3px 13px;
-  margin: 7px 5px 5px;
+  margin: 5px 3px 4px;
   display: block;
-  font-size: 1.2em;
-  box-shadow: 0 0 2px var(--shadow);
+  font-size: 1.1em;
+  box-shadow: 0 0 2px var(--bullet);
   border-radius: 100px;
   flex-grow: 1;
+}
+
+#search-input::placeholder{
+  color:var(--bullet);
 }
 
 #autocomplete-list,

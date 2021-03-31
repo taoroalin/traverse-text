@@ -1,3 +1,6 @@
+const elById = (str) => document.getElementById(str)
+const getTemp = (str) => elById(str).content.firstElementChild
+
 const allHtml = `<div id="app">
   <div id="top-bar" style="margin-top:-43px">
     <div id="top-bar-left">
@@ -13,13 +16,9 @@ const allHtml = `<div id="app">
       <circle cx="12.5" cy="12.5" r="2.1" fill="var(--bullet)" />
       <circle cx="12.5" cy="19" r="2.1" fill="var(--bullet)" />
     </svg>
-    <div id="options-frame" style="display:none">
-      <input id="create-new-store" placeholder="Create new graph">
-    </div>
   </div>
 
   <div id="top-bar-hidden-hitbox" style="position:fixed;height:20px;width:100%;display:none;"></div>
-
 
 
   <div id="terminal" contenteditable="true" style="display:none"></div>
@@ -28,6 +27,9 @@ const allHtml = `<div id="app">
     <div id="page-frame">
 
     </div>
+  </div>
+  
+  <div id="options-frame" style="display:none">
   </div>
 
   <!-- inline styles on this site are all edited directly by js -->
@@ -172,16 +174,52 @@ const allHtml = `<div id="app">
   <div class="search-result"></div>
 </template>`
 
+const allFrame = elById("html")
+
+allFrame.innerHTML = allHtml
+
+const topBarRight = elById('top-bar-right')
+const topBarLeft = elById('top-bar-left')
+const optionsFrame = elById('options-frame')
+
 const topButtons = {}
 
-{
-  const topButtonNames = ["Report Issue", "Help", "Daily Notes", "Upload", "Download", "Signup", "Signout", "Login"]
+let topButtonNames = ["Help", "Daily Notes", "Report Issue", "Sign Up", "Sign Out", "Login", "Upload", "Download",]
+for (let name of topButtonNames) {
+  topButtons[name] = document.createElement('button')
+  topButtons[name].innerText = name
+  topButtons[name].tabindex = -1
+}
+
+topButtons["Create New Graph"] = document.createElement('input')
+topButtons["Create New Graph"].placeholder = "Create New Graph"
+topButtons["Create New Graph"].id = "create-new-store"
+topButtons["Create New Graph"].type = "text"
+topButtons["Create New Graph"].size = 15
+
+const disconnectedFileInput = document.createElement('input')
+disconnectedFileInput.type = "file"
+
+topButtonNames = Object.keys(topButtons)
+
+let toShowOnTopBar = ["help", "Daily Notes", "Report Issue", "Sign Up"]
+
+const layoutTopBar = () => {
+  const split = Math.round(toShowOnTopBar.length / 2)
+  for (let i = 0; i < split; i++) {
+    topBarLeft.appendChild(topButtons[topButtonNames[i]])
+  }
+  for (let i = split; i < toShowOnTopBar.length; i++) {
+    topBarRight.appendChild(topButtons[topButtonNames[i]])
+  }
   for (let name of topButtonNames) {
-    topButtons[name] = document.createElement('button')
-    topButtons[name].innerText = name
-    topButtons[name].tabindex = -1
+    if (!toShowOnTopBar.includes(name)) {
+      optionsFrame.appendChild(topButtons[name])
+    }
   }
 }
+layoutTopBar()
+
 
 // Cursor info. Raw info stored in JSON, DOM elements cached in lots of random vars
 let sessionState = { pageFrame: "dailyNotes", focusId: null, scroll: 0, position: null }
@@ -209,13 +247,7 @@ let clipboardData = null
 
 const SEARCH_RESULT_LENGTH = 12
 
-const elById = (str) => document.getElementById(str)
-const getTemp = (str) => elById(str).content.firstElementChild
-
 // Singleton elements
-const allFrame = elById("html")
-
-allFrame.innerHTML = allHtml
 
 
 document.body.className = user.s.theme
@@ -233,7 +265,6 @@ setTimeout(() => topBar.className = "top-bar-transition", 200)
 const pageFrame = elById("page-frame")
 const pageFrameOuter = elById("page-frame-outer")
 const searchInput = elById("search-input")
-const downloadButton = elById("download-button")
 const terminalElement = elById("terminal")
 
 const searchResultList = elById("search-result-list")
@@ -251,19 +282,13 @@ templateList.dataset.templateName = "template__suggestion"
 const switchToLogin = elById("switch-to-login")
 const switchToSignup = elById("switch-to-signup")
 const signupElement = elById("signup")
-const signupButton = elById("signup-button")
 const loginElement = elById("login")
 
-const signOutButton = elById("signout-button")
 const reallyWantToLeaveElement = elById("really-want-to-leave")
-
-const uploadInput = elById('upload-input')
 
 const appElement = elById('app')
 
-const createNewStoreElement = elById('create-new-store')
 const topHamburgerElement = elById('top-hamburger')
-const optionsFrame = elById('options-frame')
 
 // Templates
 const pageTemplate = getTemp("page")

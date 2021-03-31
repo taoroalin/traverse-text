@@ -2,9 +2,6 @@ const http = require('http')
 const { promisify } = require('util')
 const { publicAccountHash } = require('../secrets')
 
-const basicBitchServerUrl = "http://localhost:3000"
-
-
 const myFetch = promisify((url, callback) => {
   http.get(url, res => {
     if (res.statusCode !== 200) {

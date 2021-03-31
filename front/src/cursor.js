@@ -42,6 +42,8 @@ const focusIdPosition = () => {
   }
   scanElement(focusBlockBody)
   updateCursorSpanInfo()
+
+  focusBlockBody.scrollIntoView(false)// false means don't align to top
 }
 
 const selectIdWholeNode = (node) => {

@@ -178,7 +178,7 @@ const showTopBar = () => {
   topBarHiddenHitbox.style.display = "none"
 }
 const hideTopBar = () => {
-  topBar.style.marginTop = "-43px"
+  topBar.style.marginTop = "-36px"
   topBarHiddenHitbox.style.display = "block"
 }
 const saveUser = () => {
@@ -190,11 +190,13 @@ const saveUser = () => {
   document.body.dataset['editingspotlight'] = user.s.editingSpotlight
 
   if (user.h) {
-    signOutButton.style.display = "block"
-    signupButton.style.display = "none"
+    topButtons["Sign Out"].style.display = "block"
+    topButtons["Sign Up"].style.display = "none"
+    topButtons["Login"].style.display = "none"
   } else {
-    signOutButton.style.display = "none"
-    signupButton.style.display = "block"
+    topButtons["Sign Out"].style.display = "none"
+    topButtons["Sign Up"].style.display = "block"
+    topButtons["Login"].style.display = "block"
   }
   saveUserJustLocalStorage()
   saveSettingsToBasicBitchServer()

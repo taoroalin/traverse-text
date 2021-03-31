@@ -5,8 +5,10 @@ const downloadHandler = () => {
   const json = storeToRoamJSON(store)
   const data = new Blob([json], { type: 'text/json' })
   const url = URL.createObjectURL(data)
-  downloadButton.setAttribute('href', url)
-  downloadButton.setAttribute('download', `${store.graphName}-${formatDateYMD(new Date(Date.now()))}.json`)
+  const aElement = document.createElement('a')
+  aElement.setAttribute('href', url)
+  aElement.setAttribute('download', `${store.graphName}-${formatDateYMD(new Date(Date.now()))}.json`)
+  aElement.click()
 }
 
 const downloadMd = () => {
@@ -224,7 +226,7 @@ const globalHotkeys = {
   },
   "upload": {
     key: "d", control: true, fn: () => {
-      uploadInput.click()
+      topButtons["Upload"].click()
     }
   },
   "download": { key: "s", control: true, shift: true, fn: downloadHandler },
@@ -593,24 +595,22 @@ document.addEventListener("mousedown", (event) => {
     link.click()
 
     // everything else, so none of it triggers when user clicks markup
-  } else if (event.target.id === "download-button") {
+  } else if (event.target === topButtons["Download"]) {
     downloadHandler()
   } else if (event.target.className === "template__suggestion") {
     if (focusSuggestion) focusSuggestion.dataset.selected = false
     event.target.dataset.selected = true
     focusSuggestion = event.target
     expandTemplate()
-  } else if (event.target.id === "upload-button") {
-    uploadInput.click()
-  } else if (event.target.id === "daily-notes-button") {
+  } else if (event.target === topButtons["Upload"]) {
+    disconnectedFileInput.click()
+  } else if (event.target === topButtons["Daily Notes"]) {
     goto("dailyNotes")
-  } else if (event.target.id === "options-button") {
-    notifyText("Options coming soon")
   } else if (event.target.className === "autocomplete__suggestion") {
     if (focusSuggestion) focusSuggestion.dataset.selected = false
     event.target.dataset.selected = true
     autocomplete()
-  } else if (event.target.id === "help-button") {
+  } else if (event.target === topButtons["Help"]) {
     goto("pageTitle", "Welcome to Micro Roam")
   } else if (closestBreadcrumbPage) {
     goto("pageTitle", closestBreadcrumbPage.dataset.title)
@@ -752,7 +752,7 @@ topBarHiddenHitbox.addEventListener("mouseout", () => {
   showTopBarTimeout = null
 })
 
-uploadInput.addEventListener('change', (event) => {
+disconnectedFileInput.addEventListener('change', (event) => {
   const file = event.target.files[0]
   console.log(file)
   const { name, ext: extension } = splitFileName(file.name)
@@ -796,7 +796,7 @@ const preprocessImportedStore = async () => {
   start()
 }
 
-signupButton.addEventListener('click', (event) => {
+topButtons["Sign Up"].addEventListener('click', (event) => {
   focusSignup()
   event.stopPropagation()
   event.preventDefault()
@@ -826,7 +826,7 @@ const rwlClickOutListener = (event) => {
   }
 }
 
-signOutButton.addEventListener('click', () => {
+topButtons["Sign Out"].addEventListener('click', () => {
   if (isSynced()) reset()
   else {
     reallyWantToLeaveElement.style.display = "flex"
@@ -845,7 +845,7 @@ topHamburgerElement.addEventListener('click', () => {
   }
 })
 
-createNewStoreElement.addEventListener("keydown", (event) => {
+topButtons["Create New Graph"].addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     createAndSwitchToNewStore(event.target.value)
   }
