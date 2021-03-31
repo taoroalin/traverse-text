@@ -1,3 +1,38 @@
+const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
+const CHARS_16 = "0123456789abcdef"
+
+let newUid
+{
+  let UidRandomContainer = new Uint8Array(9)
+  newUid = () => {
+    let result
+    do {
+      crypto.getRandomValues(UidRandomContainer)
+      result = ""
+      for (let i = 0; i < 9; i++) {
+        result += CHARS_64[UidRandomContainer[i] % 64]
+      }
+    } while (store.blox[result] !== undefined)
+    return result
+  }
+}
+
+// I'm using base64 126 bit UUIDs instead because they're less length in JSON and they are more ergonomic to write in markup like ((uuid)) if I ever want to do that
+let newUUID
+{
+  let UuidRandomContainer = new Uint8Array(21)
+  newUUID = () => { // this is 126 bits, 21xbase64
+    crypto.getRandomValues(UuidRandomContainer)
+    let result = ""
+    for (let i = 0; i < 21; i++) {
+      result += CHARS_64[UuidRandomContainer[i] % 64]
+    }
+    return result
+  }
+}
+
+
+
 const applyDif = (string, dif) => {
   // not using dif.s||result.length because dif.s could be 0
   let end = string.length
@@ -144,6 +179,26 @@ class LruCache {
 
 const promisify = (fn) => (...args) => new Promise((resolve, err) => fn(...args, resolve))
 
+// this is v slow, 7M dates / s
+// not using bit shifts here because this needs to work with 64 bit ints and JS doesn't expose 64 bit bit-shifts
+const intToBase64 = (int) => {
+  if (int === undefined) return
+  let str = ""
+  while (int > 0) {
+    str = "" + CHARS_64[int % 64] + str
+    int = Math.floor(int / 64)
+  }
+  return str
+}
+
+const base64ToInt = (str) => {
+  let result = 0
+  for (let i = 0; i < str.length; i++) {
+    result += CHARS_64.indexOf(str[i]) * Math.pow(64, (str.length - i - 1))
+  }
+  return result
+}
+
 //~frontskip this tag means the front end build script will cut out everything between here and the next ~
 try {
   exports.applyDif = applyDif
@@ -152,6 +207,10 @@ try {
   exports.undoEditBlox = undoEditBlox
   exports.promisify = promisify
   exports.LruCache = LruCache
+  exports.newUid = newUid
+  exports.newUUID = newUUID
+  exports.base64ToInt = base64ToInt
+  exports.intToBase64 = intToBase64
 } catch (e) {
 
 }

@@ -1,5 +1,8 @@
 const http = require('http')
 const { promisify } = require('util')
+const { publicAccountHash } = require('../secrets')
+
+const basicBitchServerUrl = "http://localhost:3000"
 
 
 const myFetch = promisify((url, callback) => {
@@ -24,6 +27,21 @@ const getLinks = (htmlText) => {
   return results
 }
 
-exports.myFetch = myFetch
+const addPublicGraph = async (name, blox) => {
+  const options = {
+    hostname: "localhost",
+    port: 3000,
+    method: 'POST',
+    headers: { h: publicAccountHash, commitid: 'MYVERYFIRSTCOMMITEVER', force: "true", public: "true" }, path: "/creategraph/" + name
+  }
+  console.log("requesting")
+  const req = http.request(options, res => {
+    console.log(`done`)
+  })
+  req.write(JSON.stringify(blox))
+  req.end()
+}
 
+exports.myFetch = myFetch
 exports.getLinks = getLinks
+exports.addPublicGraph = addPublicGraph

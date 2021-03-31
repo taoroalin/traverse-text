@@ -182,36 +182,6 @@ const print = (text) => {
   }
 }
 
-let newUid
-{
-  let UidRandomContainer = new Uint8Array(9)
-  newUid = () => {
-    let result
-    do {
-      crypto.getRandomValues(UidRandomContainer)
-      result = ""
-      for (let i = 0; i < 9; i++) {
-        result += CHARS_64[UidRandomContainer[i] % 64]
-      }
-    } while (store.blox[result] !== undefined)
-    return result
-  }
-}
-
-// I'm using base64 126 bit UUIDs instead because they're less length in JSON and they are more ergonomic to write in markup like ((uuid)) if I ever want to do that
-let newUUID
-{
-  let UuidRandomContainer = new Uint8Array(21)
-  newUUID = () => { // this is 126 bits, 21xbase64
-    crypto.getRandomValues(UuidRandomContainer)
-    let result = ""
-    for (let i = 0; i < 21; i++) {
-      result += CHARS_64[UuidRandomContainer[i] % 64]
-    }
-    return result
-  }
-}
-
 // @inprogress
 // originally I wanted to just collect changes done on each id individually and consolidate them, but the fact that {i:"a"} operates on the end and {i:"a", p:1} operates from the beginning means you can't consolidate between end and middle changes without knowing starting or ending configuration. could be fixed by indexing everthing from the end
 // todo index diffs from the end instead of the beginning to make it consistent with end-default

@@ -271,7 +271,7 @@ http.createServer(async (req, res) => {
     case "creategraph":
       const existingGraph = graphs[match[2]]
       // todo make sure a write stream can't create file here
-      if (existingGraph !== undefined) {
+      if (existingGraph !== undefined && !(req.headers.force && canAccountWriteBlox(userAccount, match[2]))) {
         res.writeHead(409)
         res.write("That graph name already taken.")
         return
@@ -281,6 +281,7 @@ http.createServer(async (req, res) => {
       common.brCompressStream(req, writeStream)
       userAccount.u.w[match[2]] = 1
       userAccount.u.r[match[2]] = 1
+      if (req.headers.public) graphs[match[2]].p = 1
       debouncedSaveAccounts()
       debouncedSaveGraphs()
       req.on("end", () => {

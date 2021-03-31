@@ -12,5 +12,7 @@ front/src/fonts/**
 
 rando.html
 
+secrets.js
+
 test-data/**
 test-data/graphminer-current-old.json
