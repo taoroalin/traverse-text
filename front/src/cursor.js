@@ -42,8 +42,6 @@ const focusIdPosition = () => {
   }
   scanElement(focusBlockBody)
   updateCursorSpanInfo()
-
-  focusBlockBody.scrollIntoView(false)// false means don't align to top
 }
 
 const selectIdWholeNode = (node) => {
@@ -117,7 +115,6 @@ const updateCursorSpanInfo = () => {
 }
 
 
-
 const focusBlockEnd = (blockNode) => {
   sessionState.focusId = blockNode.dataset.id
   sessionState.position = store.blox[sessionState.focusId].s.length
@@ -134,6 +131,8 @@ const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => 
   const blocks = Array.from(document.querySelectorAll(".block"))
   const newActiveBlock = blocks[blocks.indexOf(block) + offset]
   if (newActiveBlock) {
+    newActiveBlock.scrollIntoView(false)// false means don't align to top
+
     if (!start) {
       focusBlockEnd(newActiveBlock)
     } else {
