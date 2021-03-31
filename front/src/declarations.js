@@ -1,29 +1,13 @@
 const allHtml = `<div id="app">
   <div id="top-bar" style="margin-top:-43px">
-    <a id="report-issue-button"
-      tabindex="-1">
-      Report Issue
-    </a>
-    <button id="help-button" tabindex="-1">
-      Help
-    </button>
-    <button id="daily-notes-button" tabindex="-1">
-      Daily Notes
-    </button>
+    <div id="top-bar-left">
+      
+    </div>
     <input id="search-input" placeholder="search" tabindex="-1">
-    <button id="upload-button" tabindex="-1">
-      <input style="display:none" type="file" id="upload-input">
-      Upload
-    </button>
-    <a id="download-button" tabindex="-1">
-      Download
-    </a>
-    <button id="signup-button" tabindex="-1">
-      Sign up
-    </button>
-    <button id="signout-button" tabindex="-1" style="display:none">
-      Sign Out
-    </button>
+    <div id="top-bar-right">
+      
+    </div>
+
     <svg id="top-hamburger" width="25" height="25">
       <circle cx="12.5" cy="6" r="2.1" fill="var(--bullet)" />
       <circle cx="12.5" cy="12.5" r="2.1" fill="var(--bullet)" />
@@ -187,6 +171,18 @@ const allHtml = `<div id="app">
 <template id="search-result">
   <div class="search-result"></div>
 </template>`
+
+const topButtons = {}
+
+{
+  const topButtonNames = ["Report Issue", "Help", "Daily Notes", "Upload", "Download", "Signup", "Signout", "Login"]
+  for (let name of topButtonNames) {
+    topButtons[name] = document.createElement('button')
+    topButtons[name].innerText = name
+    topButtons[name].tabindex = -1
+  }
+}
+
 // Cursor info. Raw info stored in JSON, DOM elements cached in lots of random vars
 let sessionState = { pageFrame: "dailyNotes", focusId: null, scroll: 0, position: null }
 

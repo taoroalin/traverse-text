@@ -10,5 +10,7 @@ front/src/fonts/**
 **/node_modules/**
 **/package-lock.json
 
+rando.html
+
 test-data/**
 test-data/graphminer-current-old.json
