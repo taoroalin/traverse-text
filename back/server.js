@@ -269,6 +269,11 @@ http.createServer(async (req, res) => {
       // console.log(`get ${match[2]}`)
       return
     case "creategraph":
+      if (!match[2].match(/^[a-zA-Z0-9\-]+$/)) {
+        res.writeHead(400)
+        res.write("Graph names can only contain letters, numbers, and dash")
+        return
+      }
       const existingGraph = graphs[match[2]]
       // todo make sure a write stream can't create file here
       if (existingGraph !== undefined && !(req.headers.force && canAccountWriteBlox(userAccount, match[2]))) {
@@ -328,7 +333,7 @@ http.createServer(async (req, res) => {
       res.end()
       return
     default:
-      console.log(`REGEX / SWITCH CASE MISMATCH`)
+      console.log(`ERROR REGEX / SWITCH CASE MISMATCH`)
       return
   }
 }).listen(3000)

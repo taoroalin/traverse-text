@@ -131,7 +131,7 @@ const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => 
   const blocks = Array.from(document.querySelectorAll(".block"))
   const newActiveBlock = blocks[blocks.indexOf(block) + offset]
   if (newActiveBlock) {
-    newActiveBlock.scrollIntoView(false)// false means don't align to top
+    newActiveBlock.scrollIntoView({ block: 'nearest', inline: 'nearest' })
 
     if (!start) {
       focusBlockEnd(newActiveBlock)

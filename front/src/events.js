@@ -646,7 +646,7 @@ document.addEventListener("mousedown", (event) => {
   } else if (event.target.id = "top-connect") {
     if (connectFrame.style.display === "none") { // todo make the "connect" button show loaded graphs
       connectFrame.style.display = "block"
-      for (let otherStore of otherStores) {
+      for (let otherStore in otherStores) {
 
       }
     } else connectFrame.style.display = "none"

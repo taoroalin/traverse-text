@@ -91,10 +91,6 @@ const formatInt = (int, digits) => {
 const clamp = (x, min, max) => Math.max(min, Math.min(x, max))
 
 
-// console.log(intToBase64(Date.now()))
-// console.log(Date.now())
-// console.log(base64ToInt(intToBase64(Date.now())))
-
 // firefox rounds to 1ms. rounding is supposedly to protect against Specter and related vulnerabilities
 const ustime = () => {
   const p = Math.floor((performance.timing.navigationStart + performance.now()) * 1000)

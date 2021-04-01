@@ -47,8 +47,8 @@ const allHtml = `<div id="app">
   </div>
 
   <div id="connect-frame" style="display:none">
-  <input id="find-graph-input">
-  <div id="connected-list"></div>
+    <input id="find-graph-input">
+    <div id="connected-list"></div>
   </div>
 
   <!-- inline styles on this site are all edited directly by js -->
