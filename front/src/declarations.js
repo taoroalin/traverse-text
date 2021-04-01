@@ -10,12 +10,26 @@ const allHtml = `<div id="app">
     <div id="top-bar-right">
       
     </div>
-
-    <svg id="top-hamburger" width="25" height="25">
-      <circle cx="12.5" cy="6" r="2.1" fill="var(--bullet)" />
-      <circle cx="12.5" cy="12.5" r="2.1" fill="var(--bullet)" />
-      <circle cx="12.5" cy="19" r="2.1" fill="var(--bullet)" />
+    
+    <svg id="top-connect" width="25" height="25">
+      <line x1="12.5" y1="20" x2="21" y2="9" stroke="var(--bullet)" />
+      <line x1="12.5" y1="20" x2="4" y2="9" stroke="var(--bullet)" />
+      <line x1="12.5" y1="20" x2="12.5" y2="5" stroke="var(--bullet)" />
+      
+      <circle cx="4" cy="9" r="3.5" stroke="var(--bullet)" />
+      <circle cx="12.5" cy="5" r="3.5" stroke="var(--bullet)" />
+      <circle cx="21" cy="9" r="3.5" stroke="var(--bullet)" />
+      
+      <circle cx="12.5" cy="20" r="4.5" stroke="var(--bullet)" />
+      <circle cx="12.5" cy="20" r="2.5" fill="var(--bullet)" />
     </svg>
+    
+    <svg id="top-hamburger" width="25" height="25">
+      <circle cx="12.5" cy="5" r="2.5" fill="var(--bullet)" />
+      <circle cx="12.5" cy="13" r="2.5" fill="var(--bullet)" />
+      <circle cx="12.5" cy="21" r="2.5" fill="var(--bullet)" />
+    </svg>
+    
   </div>
 
   <div id="top-bar-hidden-hitbox" style="position:fixed;height:20px;width:100%;display:none;"></div>
@@ -30,6 +44,11 @@ const allHtml = `<div id="app">
   </div>
   
   <div id="options-frame" style="display:none">
+  </div>
+
+  <div id="connect-frame" style="display:none">
+  <input id="find-graph-input">
+  <div id="connected-list"></div>
   </div>
 
   <!-- inline styles on this site are all edited directly by js -->
@@ -290,6 +309,19 @@ const appElement = elById('app')
 
 const topHamburgerElement = elById('top-hamburger')
 
+const connectFrame = elById('connect-frame')
+
+
+// login/signup
+const loginForm = elById("login-form")
+const loginEmailElement = elById("login-email")
+const loginPasswordElement = elById("login-password")
+const signupForm = elById("signup-form")
+
+const signupUsernameElement = elById("signup-username")
+const signupEmailElement = elById("signup-email")
+const signupPasswordElement = elById("signup-password")
+
 // Templates
 const pageTemplate = getTemp("page")
 const blockTemplate = getTemp("block")
@@ -308,15 +340,5 @@ const computeFailedTemplate = getTemp("compute-failed")
 const todoCheckboxTemplate = getTemp("todo-checkbox")
 const videoEmbedTemplate = getTemp("video-embed")
 const queryFrameTemplate = getTemp("query-frame")
-
-// login/signup
-const loginForm = elById("login-form")
-const loginEmailElement = elById("login-email")
-const loginPasswordElement = elById("login-password")
-const signupForm = elById("signup-form")
-
-const signupUsernameElement = elById("signup-username")
-const signupEmailElement = elById("signup-email")
-const signupPasswordElement = elById("signup-password")
 
 const textEncoder = new TextEncoder()

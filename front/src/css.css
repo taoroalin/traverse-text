@@ -147,7 +147,7 @@ a:visited {
   flex-direction: row;
 }
 
-#top-hamburger{
+#top-hamburger, #top-connect{
   padding:7px 6px 2px 4px;
   cursor:pointer;
 }

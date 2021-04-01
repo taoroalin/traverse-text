@@ -643,6 +643,13 @@ document.addEventListener("mousedown", (event) => {
     blockBody.textContent = ""
     renderBlockBody(blockBody, string)
     event.preventDefault()
+  } else if (event.target.id = "top-connect") {
+    if (connectFrame.style.display === "none") { // todo make the "connect" button show loaded graphs
+      connectFrame.style.display = "block"
+      for (let otherStore of otherStores) {
+
+      }
+    } else connectFrame.style.display = "none"
   }
 
   // this is at the bottom so that autocomplete suggestion click handler still knows where the link is. 
