@@ -1,1 +1,1 @@
-cp -R ../user-data/ ../user-data-just-replaced/ && rm -r ../user-data/ && cp -R ../user-data-backup/ ../user-data/
+cp -a ../user-data/. ../user-data-just-replaced/ && rm -r ../user-data/ && cp -a ../user-data-backup/. ../user-data/

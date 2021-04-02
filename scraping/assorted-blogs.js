@@ -5,7 +5,6 @@ const shared = require('../front/src/front-back-shared')
 const crypto = require('crypto')
 
 const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
-const CHARS_16 = "0123456789abcdef"
 
 let newUid
 {
