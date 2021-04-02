@@ -199,7 +199,7 @@ const base64ToInt = (str) => {
   return result
 }
 
-//~frontskip this tag means the front end build script will cut out everything between here and the next ~
+//~frontskip this tag means the front end build script will cut out everything between here and the next tilde (can't use tilde sign there because that would fool preprocessor)
 try {
   exports.applyDif = applyDif
   exports.unapplyDif = unapplyDif

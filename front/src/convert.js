@@ -506,7 +506,7 @@ const filesToZip = (files) => {
     writeU16ToU8Array(u8, headerStart + 26, nameLen)
   }
 
-  //   writeU16ToU8Array(blankCentralHeader,12,createTimeMsDosFormat)
+  // writeU16ToU8Array(blankCentralHeader,12,createTimeMsDosFormat)
   // writeU16ToU8Array(blankCentralHeader,14,createTimeMsDosFormat)
   // writeIntToU8Array(blankCentralHeader,16,CRC_32_MAGIC)
   const blob = new Blob([buffer])
