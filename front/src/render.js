@@ -183,14 +183,23 @@ const renderBlockBody = (parent, text, editMode = false) => {
       stackTop.appendChild(pageRefElement)
       stackTop.graphName = match[1]
       if (editMode)
-        pageRefElement.children[0].appendChild(newTextNode(match[0]))
-      stack.push(pageRefElement.children[1])
+        pageRefElement.children[0].appendChild(newTextNode("[["))
+      pageRefElement.startIdx = idx
+
+      const theTextNode = document.createTextNode(match[0].substring(2))
+      theTextNode.startIdx = idx + 2
+      theTextNode.endIdx = idx + match[0].length
+
+      pageRefElement.children[1].appendChild(theTextNode)
+      stack.push(pageRefElement.children[2])
       stackTop = stack[stack.length - 1]
     } else if (match[2] !== undefined) {
       if (stackTop.className === "page-ref__body") {
         stackTop.parentNode.endIdx = idx
+        stackTop.parentNode.title = stackTop.innerText
+        stackTop.parentNode.endIdx = idx + 2
         if (editMode)
-          stackTop.parentNode.children[2].appendChild(newTextNode("]]"))
+          stackTop.parentNode.children[3].appendChild(newTextNode("]]"))
         stack.pop()
         stackTop = stack[stack.length - 1]
         lastTextNode.endIdx += 2
@@ -349,11 +358,22 @@ const renderBlockBody = (parent, text, editMode = false) => {
         stackTop.appendChild(el)
       }
     } else if (match[19] !== undefined) { // 18 is optional graphname
-      const tagElement = document.createElement('span')
-      tagElement.className = "tag"
+      const tagElement = tagTemplate.cloneNode(true)
+
+      match[18] ||= ""
+      tagElement.children[0].appendChild(newTextNode("#" + match[18]))
       tagElement.graphName = match[18]
       tagElement.title = match[19]
-      tagElement.appendChild(newTextNode(match[0]))
+
+      const theTextNode = document.createTextNode(match[19])
+      theTextNode.startIdx = idx + match[18].length + 1
+      theTextNode.endIdx = idx + match[0].length
+
+      tagElement.startIdx = idx
+      tagElement.endIdx = idx + match[0].length
+
+      tagElement.children[1].appendChild(theTextNode)
+
       stackTop.appendChild(tagElement)
     } else if (match[21] !== undefined) { // 20 is optional graphname
       const attributeElement = document.createElement('span')
@@ -389,7 +409,7 @@ const transformComputeElement = (el, editMode) => {
   if (seq.length === 0) return
   const firstEl = seq[0]
   const pageTitle = getPageTitleOfNode(firstEl)
-  if (pageTitle === undefined) {
+  if (!pageTitle) {
     return
   }
   switch (pageTitle) {
@@ -550,10 +570,10 @@ const queryAstObjectSetStrategy = (ast) => {
 /*
 [1 and 2] or
 [[1 and 2] or]
-
+ 
 [1 or 2] and
 [1 or [2 and ]]
-
+ 
 [1 or [2 and [3 nand 4]]] and
                      ^
 [1 or 2] or

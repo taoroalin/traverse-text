@@ -80,20 +80,20 @@ const autocomplete = () => {
   if (editingLink.className === "tag") {
     const textNode = editingLink.childNodes[0]
     // check for the exact inverse of tag regex to see if this would be a valid tag, otherwise make it a ref  
-    if (/[^\/a-zA-Z0-9_-]/.test(focusSuggestion.dataset.title)) {
-      const string = origString.slice(0, textNode.startIdx) + "[[" + focusSuggestion.dataset.title + "]]" + origString.slice(textNode.endIdx)
-      sessionState.position = textNode.startIdx + focusSuggestion.dataset.title.length + 4
+    if (focusSuggestion.dataset.title.match(/^[a-zA-Z0-9\-_]+$/)) {
+      const string = origString.slice(0, editingLink.startIdx) + "#" + focusSuggestion.dataset.title + origString.slice(editingLink.endIdx)
+      sessionState.position = editingLink.startIdx + focusSuggestion.dataset.title.length + 1
       setFocusedBlockString(string)
     } else {
-      const string = origString.slice(0, textNode.startIdx) + "#" + focusSuggestion.dataset.title + origString.slice(textNode.endIdx)
-      sessionState.position = textNode.startIdx + focusSuggestion.dataset.title.length + 1
+      const string = origString.slice(0, editingLink.startIdx) + "[[" + focusSuggestion.dataset.title + "]]" + origString.slice(editingLink.endIdx)
+      console.log(string)
+      sessionState.position = editingLink.startIdx + focusSuggestion.dataset.title.length + 4
       setFocusedBlockString(string)
     }
   } else {
-    const textNode = editingLink.children[1].childNodes[0]
-    const string = origString.slice(0, textNode.startIdx) + focusSuggestion.dataset.title + origString.slice(textNode.endIdx)
+    const string = origString.slice(0, editingLink.startIdx) + "[[" + focusSuggestion.dataset.title + "]]" + origString.slice(editingLink.endIdx)
     console.log(string)
-    sessionState.position = textNode.startIdx + focusSuggestion.dataset.title.length + 2
+    sessionState.position = editingLink.startIdx + focusSuggestion.dataset.title.length + 4
     setFocusedBlockString(string)
   }
   autocompleteList.style.display = "none"
@@ -561,9 +561,9 @@ const updownythingey = (parent, list, cache, focused) => {
 // maybe this should be click instead of mousedown
 document.addEventListener("mousedown", (event) => {
 
-  const clickedPageTitle = getPageTitleOfNode(event.target)
-  if (clickedPageTitle) {
-    goto("pageTitle", clickedPageTitle)
+  const clickedPageLink = getClosestPageLink(event.target)
+  if (clickedPageLink) {
+    goto("pageTitle", clickedPageLink.title, clickedPageLink.graphName)
     return
   }
 
@@ -643,7 +643,7 @@ document.addEventListener("mousedown", (event) => {
     blockBody.textContent = ""
     renderBlockBody(blockBody, string)
     event.preventDefault()
-  } else if (event.target.id = "top-connect") {
+  } else if (event.target.id === "top-connect") {
     if (connectFrame.style.display === "none") { // todo make the "connect" button show loaded graphs
       connectFrame.style.display = "block"
       for (let otherStore in otherStores) {

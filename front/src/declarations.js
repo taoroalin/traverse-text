@@ -46,11 +46,6 @@ const allHtml = `<div id="app">
   <div id="options-frame" style="display:none">
   </div>
 
-  <div id="connect-frame" style="display:none">
-    <input id="find-graph-input">
-    <div id="connected-list"></div>
-  </div>
-
   <!-- inline styles on this site are all edited directly by js -->
   <div id="autocomplete-list" style="display:none"></div>
   <div id="command-list" style="display:none"></div>
@@ -141,8 +136,12 @@ const allHtml = `<div id="app">
 </template>
 
 <template id="page-ref">
-  <span class="page-ref"><span class="page-ref__brackets"></span><span class="page-ref__body"></span><span
+  <span class="page-ref"><span class="page-ref__brackets"></span><span class="page-ref__graphname"></span><span class="page-ref__body"></span><span
       class="page-ref__brackets"></span></span>
+</template>
+
+<template id="tag">
+  <span class="tag"><span class="tag__graph-name"></span><span class="tag__body"></span></span>
 </template>
 
 <template id="image-embed">
@@ -334,6 +333,7 @@ const backrefFrameTemplate = getTemp("backref-frame")
 const notificationTemplate = getTemp("notification")
 
 // Block parsing Templates
+const tagTemplate = getTemp("tag")
 const pageRefTemplate = getTemp("page-ref")
 const imageEmbedTemplate = getTemp("image-embed")
 const computeFailedTemplate = getTemp("compute-failed")

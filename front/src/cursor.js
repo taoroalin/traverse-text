@@ -87,19 +87,19 @@ const updateCursorPosition = () => {
 
 const updateCursorSpanInfo = () => {
   editingLink = undefined
-  const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
   const tags = focusBlockBody.querySelectorAll(".tag")
   for (let tag of tags) {
-    if (tag.childNodes[0].endIdx >= sessionState.position && tag.childNodes[0].startIdx < sessionState.position) {
+    if (tag.children[1].firstChild.endIdx >= sessionState.position && tag.children[0].firstChild.startIdx < sessionState.position) {
       editingLink = tag
     }
   }
+  const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
   for (let ref of pageRefs) {
-    if (ref.children[1].childNodes[0].endIdx >= sessionState.position && ref.children[1].childNodes[0].startIdx < sessionState.position) {
+    if (ref.children[2].firstChild.endIdx >= sessionState.position && ref.children[1].firstChild.startIdx < sessionState.position) {
       editingLink = ref
     }
   }
-  editingTitle = editingLink && ((editingLink.className === "tag" && editingLink.innerText.substring(1)) || (editingLink.className === "page-ref" && editingLink.children[1].innerText))
+  editingTitle = editingLink && editingLink.title
 
   editingTemplateExpander = getEditingSimpleSpan("template-expander")
 
@@ -146,18 +146,11 @@ const getChildren = (node) => {
 }
 
 
+const getClosestPageLink = (node) => {
+  return node.closest(".tag") || node.closest(".attribute") || node.closest(".page-ref")
+}
+
 const getPageTitleOfNode = (node) => {
-  // accessing innerText is triggering a recalculateStyle, this is costing me 10ms on page renders with queries
-  const tag = node.closest(".tag")
-  if (tag) return tag.title
-
-  const attribute = node.closest(".attribute")
-  if (attribute) return attribute.title
-
-  const pageRef = node.closest(".page-ref")
-  if (pageRef) {
-    return pageRef.children[1].innerText
-  }
-
-  return undefined
+  const linkNode = getClosestPageLink(node)
+  return linkNode && linkNode.title
 }

@@ -45,7 +45,7 @@ const benchmarkRandomWalk = () => renderMulti(() => {
   const tags = document.querySelectorAll(".tag")
   const pageBreadcrumbs = document.querySelectorAll(".breadcrumb-page")
   for (let link of pageLinks) {
-    linkTitles.push(link.children[1].innerText)
+    linkTitles.push(link.children[2].innerText)
   }
   for (let tag of tags) {
     linkTitles.push(tag.innerText.substring(1))

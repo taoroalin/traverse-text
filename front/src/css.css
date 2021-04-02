@@ -350,6 +350,11 @@ a:visited {
   color: var(--brackets);
 }
 
+.page-ref__graphname {
+  font-weight: lighter;
+  color: var(--page-ref);
+}
+
 .page-ref__body {
   color: var(--page-ref);
   font-weight:600;
@@ -363,10 +368,16 @@ a:visited {
   text-decoration: underline;
 }
 
-.tag {
+.tag__body {
   color: var(--page-ref);
   position: relative;
   font-weight:600;
+}
+
+.tag__graph-name{
+  color: var(--page-ref);
+  position: relative;
+  font-weight:300;
 }
 
 .tag:hover {
