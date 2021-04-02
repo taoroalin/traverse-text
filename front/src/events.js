@@ -271,9 +271,11 @@ const globalHotkeys = {
     key: "k", control: true, shift: true, fn: () => {
       const bloc = store.blox[sessionState.focusId]
       if (bloc.k === undefined || bloc.k.length === 0) {
-        focusBlock.remove()
+        const oldFocusBlock = focusBlock
+        const oldFocusId = sessionState.focusId
         focusBlockVerticalOffset(-1)
-        macros.delete(sessionState.focusId)
+        oldFocusBlock.remove()
+        macros.delete(oldFocusId)
       } else {
         notifyText(`no "delete block" for blocks with children (at least right now)`)
       }
