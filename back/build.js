@@ -2,7 +2,6 @@ const fs = require('fs')
 const zlib = require('zlib')
 const stream = require('stream')
 const minify = require('html-minifier').minify;
-const UglifyJS = require('uglify-js')
 
 const { performance } = require('perf_hooks')
 
@@ -54,11 +53,6 @@ const build = async () => {
     let js = fs.readFileSync("../front/src/" + fname, "utf8")
     js = js.replace(/\/\/~frontskip([^~]|\n|\r)*~/, "")
     js = js.replace(/^[ \t]*(print|console.log)[^\n]+\r?\n/, "") // remove all console.log or print
-    const minifiedObject = UglifyJS.minify(js)
-    if (minifiedObject.error) {
-      throw minifiedObject.error
-    }
-    js = minifiedObject.code
     return `\n<script${async || ""}>\n${js}\n</script>\n`
   }
 
@@ -75,7 +69,7 @@ const build = async () => {
 
   fs.writeFileSync("../front/public/index-no-min.html", result)
   const htmlmin = minify(result, {
-    collapseWhitespace: true, minifyCSS: true, removeComments: true, removeOptionalTags: true, removeRedundantAttributes: true, useShortDoctype: true
+    collapseWhitespace: true, minifyCSS: true, minifyJS: true, removeComments: true, removeOptionalTags: true, removeRedundantAttributes: true, useShortDoctype: true
   })
 
   fs.writeFileSync("../front/public/index.html", htmlmin)
