@@ -358,9 +358,9 @@ const renderBlockBody = (parent, text, editMode = false) => {
         stackTop.appendChild(el)
       }
     } else if (match[19] !== undefined) { // 18 is optional graphname
-      const tagElement = tagTemplate.cloneNode(true)
+      const tagElement = tagTemplate.cloneNode(true);
 
-      match[18] ||= ""
+      match[18] = match[18] || ""; // uglify-js doesn't support ||= operator
       tagElement.children[0].appendChild(newTextNode("#" + match[18]))
       tagElement.graphName = match[18]
       tagElement.title = match[19]

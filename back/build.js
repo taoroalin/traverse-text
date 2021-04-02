@@ -54,7 +54,11 @@ const build = async () => {
     let js = fs.readFileSync("../front/src/" + fname, "utf8")
     js = js.replace(/\/\/~frontskip([^~]|\n|\r)*~/, "")
     js = js.replace(/^[ \t]*(print|console.log)[^\n]+\r?\n/, "") // remove all console.log or print
-    js = UglifyJS.minify(js).code
+    const minifiedObject = UglifyJS.minify(js)
+    if (minifiedObject.error) {
+      throw minifiedObject.error
+    }
+    js = minifiedObject.code
     return `\n<script${async || ""}>\n${js}\n</script>\n`
   }
 

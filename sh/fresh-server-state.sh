@@ -1,1 +1,1 @@
-rm -rf ../user-data && rm -rf ../server-log && cp -a ../user-data-empty/. ../user-data/ && cp -a ../server-log-empty/. ../server-log/
+rm -rf ../user-data && rm -rf ../server-log && cp -a ../user-data-empty/. ../user-data/ && cp -a ../server-log-empty/. ../server-log/ && mkdir ../front/blox-br/
