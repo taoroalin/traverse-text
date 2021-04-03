@@ -573,7 +573,7 @@ document.addEventListener("mousedown", (event) => {
 
   if (event.target.className === "search-result") {
     if (event.target.dataset.title) {
-      goto("pageTitle", event.target.dataset.title)
+      goto("pageTitle", event.target.dataset.title) // todo fix this failing on nested page links in non-edit mode
     } else {
       goto("block", event.target.dataset.id)
     }

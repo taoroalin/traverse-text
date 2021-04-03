@@ -187,7 +187,7 @@ const serverHandler = async (req, res) => {
     fs.appendFile('../user-data/issues.txt', req.headers.body, () => { })
     return
   } else if (match[1] === "error") {
-    fs.appendFile('../user-data/errors.txt', req.headers.body, () => { })
+    fs.appendFile('../user-data/errors-front.txt', req.headers.body, () => { })
     return
   }
   const passwordHash = req.headers.h

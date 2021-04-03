@@ -4,6 +4,23 @@ const https = require('https')
 const build = require("./build").build
 const { httpsOptions } = require('./common')
 
+let watchFnTimeout = null
+const watchFn = async () => {
+  await build()
+  readServeDir()
+}
+
+const watchFnDebounced = () => {
+  clearTimeout(watchFnTimeout)
+  watchFnTimeout = setTimeout(watchFn, 50)
+}
+
+fs.watch("../front/src", (eventType, fileName) => {
+  if (eventType === "change") {
+    watchFnDebounced()
+  }
+})
+
 const serveDir = "../front/public/"
 const serveDirCompressed = "../front/public-br/"
 
@@ -20,7 +37,7 @@ const readServeDir = () => {
     pageBytesCompressed[plainName] = fs.readFileSync(serveDirCompressed + fileName)
   }
 }
-readServeDir()
+watchFn()
 
 
 const fileExtToContentType = {
@@ -31,6 +48,24 @@ const fileExtToContentType = {
   ".js": "text/javascript",
   ".css": "text/css;"
 }
+
+
+http.createServer((req, res) => {
+  let url = req.url
+  let match = url.match(/\.[a-z0-9]+$/)
+  let extension
+  if (match) {
+    extension = match[0]
+  } else {
+    extension = ".html"
+    url = "/index.html"
+  }
+  res.setHeader("Content-Type", fileExtToContentType[extension])
+  const dir = `../front/src${url}`
+  const readStream = fs.createReadStream(dir)
+  readStream.pipe(res)
+}).listen(8081)
+
 
 const serverHandler = (req, res) => {
   let url = req.url
@@ -65,38 +100,3 @@ if (httpsOptions) {
 } else {
   http.createServer(serverHandler).listen(80)
 }
-
-
-
-http.createServer((req, res) => {
-  let url = req.url
-  let match = url.match(/\.[a-z0-9]+$/)
-  let extension
-  if (match) {
-    extension = match[0]
-  } else {
-    extension = ".html"
-    url = "/index.html"
-  }
-  res.setHeader("Content-Type", fileExtToContentType[extension])
-  const dir = `../front/src${url}`
-  const readStream = fs.createReadStream(dir)
-  readStream.pipe(res)
-}).listen(8081)
-
-let watchFnTimeout = null
-const watchFn = async () => {
-  await build()
-  readServeDir()
-}
-
-const watchFnDebounced = () => {
-  clearTimeout(watchFnTimeout)
-  watchFnTimeout = setTimeout(watchFn, 50)
-}
-
-fs.watch("../front/src", (eventType, fileName) => {
-  if (eventType === "change") {
-    watchFnDebounced()
-  }
-})

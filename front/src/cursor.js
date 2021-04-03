@@ -129,9 +129,13 @@ const focusBlockStart = (blockNode) => {
 
 const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => { // this closure feels weird, maybe shoudn't use this language feature?
   const blocks = Array.from(document.querySelectorAll(".block"))
-  const newActiveBlock = blocks[blocks.indexOf(block) + offset]
+  const newIndex = blocks.indexOf(block) + offset
+  const newActiveBlock = blocks[newIndex]
   if (newActiveBlock) {
-    newActiveBlock.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    if (newIndex === 0)
+      pageFrameOuter.scrollTop = 0
+    else
+      newActiveBlock.scrollIntoView({ block: 'nearest', inline: 'nearest' })
 
     if (!start) {
       focusBlockEnd(newActiveBlock)

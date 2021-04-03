@@ -156,7 +156,7 @@ const parseStackTrace = (string) => {
   }
   return result
 }
-const logError = (message, url, lineNumber, columnNumber, error) => {
+const logErrorOld = (message, url, lineNumber, columnNumber, error) => {
   const errorInfo = { line: lineNumber, file: url, stack: parseStackTrace(error.stack), message, column: columnNumber }
   const existingErrors = localStorage.getItem("error_log")
   if (existingErrors) {
@@ -168,6 +168,13 @@ const logError = (message, url, lineNumber, columnNumber, error) => {
   }
   // todo send error to server at this point
   return false // we don't actually "catch" the error, we just report that it happened. The error is still an error
+}
+
+const logError = async (message, url, lineNumber, columnNumber, error) => {
+  const headers = new Headers()
+  headers.set('body', `${user.email}\n${error.stack}`)
+  headers.set('h', user.h)
+  const res = await fetch(`${basicBitchServerUrl}/error`, { headers })
 }
 
 window.onerror = logError

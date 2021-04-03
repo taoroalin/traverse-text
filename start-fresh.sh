@@ -1,3 +1,4 @@
+sudo apt-get update
 rm -rf ./user-data 
 rm -rf ./server-log 
 cp -a ./user-data-empty/. ./user-data/ 
