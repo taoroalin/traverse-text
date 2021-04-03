@@ -63,6 +63,9 @@ if (useHTTPS) {
     cert: fs.readFileSync('/etc/letsencrypt/live/traversetext.com/fullchain.pem')
   }
   https.createServer(options, serverHandler).listen(443)
+  http.createServer((req, res) => {
+    res.redirect('https://' + req.headers.host + req.url);
+  }).listen(80) // todo make sure I'm switching to HTTPS in the most performant way
 } else {
   http.createServer(serverHandler).listen(80)
 }
