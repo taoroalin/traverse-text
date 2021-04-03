@@ -171,10 +171,15 @@ const logErrorOld = (message, url, lineNumber, columnNumber, error) => {
 }
 
 const logError = async (message, url, lineNumber, columnNumber, error) => {
+  console.log("LOGGING ERROR")
   const headers = new Headers()
-  headers.set('body', `${user.email}\n${error.stack}`)
   headers.set('h', user.h)
-  const res = await fetch(`${basicBitchServerUrl}/error`, { headers })
+  const res = await fetch(`${basicBitchServerUrl}/error`, { headers, method: 'POST', body: `${user.e}\n${error.stack}\n` })
+  if (res.statusCode !== 200) {
+    console.log(res)
+  } else {
+    console.log("ERROR LOGGED")
+  }
 }
 
 window.onerror = logError

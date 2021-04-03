@@ -129,7 +129,8 @@ const focusBlockStart = (blockNode) => {
 
 const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => { // this closure feels weird, maybe shoudn't use this language feature?
   const blocks = Array.from(document.querySelectorAll(".block"))
-  const newIndex = blocks.indexOf(block) + offset
+  let newIndex = blocks.indexOf(block) + offset
+  newIndex = Math.max(0, Math.min(blocks.length - 1, newIndex))
   const newActiveBlock = blocks[newIndex]
   if (newActiveBlock) {
     if (newIndex === 0)

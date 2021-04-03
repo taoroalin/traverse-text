@@ -184,10 +184,15 @@ const serverHandler = async (req, res) => {
     // todo verify email
     return
   } else if (match[1] === "issue") {
-    fs.appendFile('../user-data/issues.txt', req.headers.body, () => { })
+    fs.appendFile('../server-log/issues.txt', req.headers.body, () => { })
     return
   } else if (match[1] === "error") {
-    fs.appendFile('../user-data/errors-front.txt', req.headers.body, () => { })
+    const writeStream = fs.createWriteStream('../server-log/errors-front.txt', { flags: 'a' })
+    req.pipe(writeStream)
+    req.on('end', () => {
+      res.writeHead(200)
+      res.end()
+    })
     return
   }
   const passwordHash = req.headers.h

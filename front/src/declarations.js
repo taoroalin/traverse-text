@@ -12,15 +12,15 @@ const allHtml = `<div id="app">
     </div>
     
     <svg id="top-connect" width="25" height="25">
-      <line x1="12.5" y1="20" x2="21" y2="9" stroke="var(--bullet)" />
+      <line x1="12.5" y1="20" x2="21" y2="9" stroke="var(--bullet)"/>
       <line x1="12.5" y1="20" x2="4" y2="9" stroke="var(--bullet)" />
       <line x1="12.5" y1="20" x2="12.5" y2="5" stroke="var(--bullet)" />
       
-      <circle cx="4" cy="9" r="3.5" stroke="var(--bullet)" />
-      <circle cx="12.5" cy="5" r="3.5" stroke="var(--bullet)" />
-      <circle cx="21" cy="9" r="3.5" stroke="var(--bullet)" />
+      <circle cx="4" cy="9" r="3.5" stroke="var(--bullet)"  fill="var(--background)" />
+      <circle cx="12.5" cy="5" r="3.5" stroke="var(--bullet)"  fill="var(--background)" />
+      <circle cx="21" cy="9" r="3.5" stroke="var(--bullet)"  fill="var(--background)" />
       
-      <circle cx="12.5" cy="20" r="4.5" stroke="var(--bullet)" />
+      <circle cx="12.5" cy="20" r="4.5" stroke="var(--bullet)"  fill="var(--background)" />
       <circle cx="12.5" cy="20" r="2.5" fill="var(--bullet)" />
     </svg>
     
