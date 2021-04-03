@@ -1,6 +1,9 @@
 const fs = require('fs')
 const http = require('http')
+const https = require('https')
 const build = require("./build").build
+
+const useHTTPS = true
 
 
 const serveDir = "../front/public/"
@@ -31,7 +34,7 @@ const fileExtToContentType = {
   ".css": "text/css;"
 }
 
-http.createServer((req, res) => {
+const serverHandler = (req, res) => {
   let url = req.url
   let bytes = pageBytes[url]
   let bytesCompressed = pageBytesCompressed[url]
@@ -52,7 +55,18 @@ http.createServer((req, res) => {
   res.setHeader("Content-Type", fileExtToContentType[extension])
   res.write(bytesCompressed || bytes)
   res.end()
-}).listen(80)
+}
+
+if (useHTTPS) {
+  const httpsOptions = {
+    key: fs.readFileSync('/etc/letsencrypt/live/traversetext.com/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/traversetext.com/fullchain.pem')
+  }
+  https.createServer(options, serverHandler).listen(443)
+} else {
+  http.createServer(serverHandler).listen(80)
+}
+
 
 
 http.createServer((req, res) => {
