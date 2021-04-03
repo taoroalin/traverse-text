@@ -59,7 +59,8 @@ if (httpsOptions) {
 
   https.createServer(httpsOptions, serverHandler).listen(443)
   http.createServer((req, res) => {
-    res.redirect('https://' + req.headers.host + req.url);
+    res.writeHead(302, { 'Location': 'https://' + req.headers.host + req.url });
+    res.end()
   }).listen(80) // todo make sure I'm switching to HTTPS in the most performant way
 } else {
   http.createServer(serverHandler).listen(80)
