@@ -42,11 +42,17 @@ http.createServer((req, res) => {
   if (bytesCompressed !== undefined) {
     res.setHeader('Content-Encoding', 'br')
   }
+  if (bytes === undefined && bytesCompressed === undefined) {
+    console.log(`ERROR don't have file ${req.url}`)
+    res.writeHead(404)
+    res.end()
+    return
+  }
   const extension = url.match(/\.[a-z0-9]+$/)[0]
   res.setHeader("Content-Type", fileExtToContentType[extension])
   res.write(bytesCompressed || bytes)
   res.end()
-}).listen(8080)
+}).listen(80)
 
 
 http.createServer((req, res) => {

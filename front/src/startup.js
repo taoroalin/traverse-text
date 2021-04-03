@@ -3,7 +3,7 @@ let store = null
 let otherStores = {}
 let r
 
-const basicBitchServerUrl = "http://localhost:3000"
+const basicBitchServerUrl = "http://localhost:8756"
 
 let user
 let userText = localStorage.getItem("user")
