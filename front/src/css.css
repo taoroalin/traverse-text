@@ -12,6 +12,7 @@
   --background:#000000;
   --click: rgb(100, 100, 100);
   --text: #dbdbdb;
+  --max:#fff;
   --link: #3f84c0;
   --brackets: #a7b6c2;
   --block-ref: rgb(63, 63, 63);
@@ -31,7 +32,8 @@
 .light {
   --background: white;
   --click: rgb(197, 197, 197);
-  --text: black;
+  --text: #000;
+  --max:#000;
   --link: rgb(54, 123, 184);
   --brackets: #a7b6c2;
   --block-ref: lightgrey;
@@ -289,6 +291,7 @@ a:visited {
 [data-editingspotlight="true"] .block__body[data-editmode="true"]{
   background-color: var(--editing-background);
   border-radius:4px;
+  color:var(--max);
 }
 
 .block__bullet {

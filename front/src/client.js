@@ -166,5 +166,7 @@ const addGraphBloxBr = async (graphName, blob) => {
     notifyText("failed to add graph")
     return
   }
+  user.s.graphName = graphName
+  saveUser()
   invalidateLocal()
 }

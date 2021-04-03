@@ -837,6 +837,8 @@ const rwlClickOutListener = (event) => {
   }
 }
 
+topButtons["Login"].addEventListener('click', focusLogin)
+
 topButtons["Sign Out"].addEventListener('click', () => {
   if (isSynced()) reset()
   else {
