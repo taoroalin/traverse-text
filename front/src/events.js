@@ -794,6 +794,8 @@ disconnectedFileInput.addEventListener('change', (event) => {
       store = roamJsonToStore(name, text)
       preprocessImportedStore()
     })
+  } else if (extension === "br") {
+    addGraphBloxBr(name, file)
   } else {
     notifyText("Micro Roam only accepts a .json file or .zip file containing 1 .json file") // add "md" once that works
   }

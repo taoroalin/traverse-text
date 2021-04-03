@@ -155,3 +155,16 @@ const addGraph = async () => {
   }
   user.s.syncCommitId = syncCommitId
 }
+
+const addGraphBloxBr = async (graphName, blob) => {
+  const headers = new Headers()
+  headers.set('h', user.h)
+  headers.set('commitid', "MYVERYFIRSTCOMMITEVER")
+  headers.set('format', 'blox-br')
+  const response = await fetch(`${basicBitchServerUrl}/creategraph/${graphName}`, { headers, method: 'POST', body: blob })
+  if (!response.ok) {
+    notifyText("failed to add graph")
+    return
+  }
+  invalidateLocal()
+}

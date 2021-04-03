@@ -285,7 +285,11 @@ const serverHandler = async (req, res) => {
       }
       graphs[match[2]] = { l: req.headers.commitid }
       writeStream = fs.createWriteStream(`../user-data/blox-br/${match[2]}.json.br`)
-      common.brCompressStream(req, writeStream)
+      if (req.headers.format === 'blox-br') {
+        req.pipe(writeStream)
+      } else {
+        common.brCompressStream(req, writeStream)
+      }
       userAccount.u.w[match[2]] = 1
       userAccount.u.r[match[2]] = 1
       if (req.headers.public) graphs[match[2]].p = 1
