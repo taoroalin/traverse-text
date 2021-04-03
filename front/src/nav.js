@@ -109,15 +109,15 @@ const goto = (...command) => {
   sessionState.scroll = 0
   gotoNoHistory(...command)
   setTimeout(() => {
-    history.replaceState(oldSessionState, "Micro Roam")
+    history.replaceState(oldSessionState, "Traverse Text")
     // todo use page title, in more places than just this because apparently here's not often supported
-    history.pushState(sessionState, "Micro Roam")
+    history.pushState(sessionState, "Traverse Text")
   }, 0)
 }
 
 const gotoReplaceHistory = (...command) => {
   gotoNoHistory(...command)
-  history.replaceState(sessionState, "Micro Roam")
+  history.replaceState(sessionState, "Traverse Text")
 }
 
 window.addEventListener("popstate", (event) => {

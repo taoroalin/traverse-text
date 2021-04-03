@@ -797,7 +797,7 @@ disconnectedFileInput.addEventListener('change', (event) => {
   } else if (extension === "br") {
     addGraphBloxBr(name, file)
   } else {
-    notifyText("Micro Roam only accepts a .json file or .zip file containing 1 .json file") // add "md" once that works
+    notifyText("Traverse Text only accepts a .json file or .zip file containing 1 .json file") // add "md" once that works
   }
 })
 

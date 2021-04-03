@@ -3,7 +3,11 @@ let store = null
 let otherStores = {}
 let r
 
-const basicBitchServerUrl = location.origin + ":8756"
+const basicBitchServerUrl = location.protocol + "//" + location.hostname + ":8756"
+
+//~frontskip
+document.title = "Local Traverse Text"
+//~
 
 let user
 let userText = localStorage.getItem("user")
@@ -145,5 +149,5 @@ r.onupgradeneeded = (event) => {
 r.onerror = (e) => {
   console.log("error")
   console.log(e)
-  alert(`In order to save your notes between sessions, Micro Roam needs access to IndexedDB. \nYou can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
+  alert(`In order to save your notes between sessions, Traverse Text needs access to IndexedDB. \nYou can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
 }

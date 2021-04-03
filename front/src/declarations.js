@@ -81,7 +81,7 @@ const allHtml = `<div id="app">
   </div>
 </div>
 
-<title>Micro Roam</title>
+<title>Traverse Text</title>
 
 
 <template id="page">
