@@ -42,3 +42,8 @@ exports.brCompressStream = (from, to) => {
     }
   })
 }
+
+exports.httpsOptions = {
+  key: fs.readFileSync('/etc/letsencrypt/live/traversetext.com/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/traversetext.com/fullchain.pem')
+}

@@ -1,6 +1,8 @@
 const http = require('http')
+const https = require('https')
 const fs = require('fs')
 const common = require('./common.js')
+const httpsOptions = common.httpsOptions
 const { performance } = require('perf_hooks')
 const { LruCache, promisify, doEditBlox, undoEditBlox } = require('../front/src/front-back-shared.js')
 // front-back-shared is in the front folder because its easier to import from other paths in Node than browser
@@ -100,7 +102,7 @@ const getReqHeaderBody = (req) => {
 
 
 // I had json in body, but that caused timing issues because I want to change end listener, but couldn't to it fast enough because the end event happens so fast. Switched to putting all JSON made for immediate parsing in header
-http.createServer(async (req, res) => {
+const serverHandler = async (req, res) => {
   const gotReqTime = performance.now()
   res.setHeader('Access-Control-Expose-Headers', '*')
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -336,7 +338,13 @@ http.createServer(async (req, res) => {
       console.log(`ERROR REGEX / SWITCH CASE MISMATCH`)
       return
   }
-}).listen(8756)
+}
+
+if (httpsOptions) {
+  https.createServer(httpsOptions, serverHandler).listen(8756)
+} else {
+  http.createServer(serverHandler).listen(8756)
+}
 
 
 /*

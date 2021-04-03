@@ -2,9 +2,7 @@ const fs = require('fs')
 const http = require('http')
 const https = require('https')
 const build = require("./build").build
-
-const useHTTPS = true
-
+const { httpsOptions } = require('./common')
 
 const serveDir = "../front/public/"
 const serveDirCompressed = "../front/public-br/"
@@ -57,12 +55,9 @@ const serverHandler = (req, res) => {
   res.end()
 }
 
-if (useHTTPS) {
-  const options = {
-    key: fs.readFileSync('/etc/letsencrypt/live/traversetext.com/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/traversetext.com/fullchain.pem')
-  }
-  https.createServer(options, serverHandler).listen(443)
+if (httpsOptions) {
+
+  https.createServer(httpsOptions, serverHandler).listen(443)
   http.createServer((req, res) => {
     res.redirect('https://' + req.headers.host + req.url);
   }).listen(80) // todo make sure I'm switching to HTTPS in the most performant way
