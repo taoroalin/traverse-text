@@ -58,7 +58,7 @@ const serverHandler = (req, res) => {
 }
 
 if (useHTTPS) {
-  const httpsOptions = {
+  const options = {
     key: fs.readFileSync('/etc/letsencrypt/live/traversetext.com/privkey.pem'),
     cert: fs.readFileSync('/etc/letsencrypt/live/traversetext.com/fullchain.pem')
   }
