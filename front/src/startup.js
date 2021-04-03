@@ -3,7 +3,7 @@ let store = null
 let otherStores = {}
 let r
 
-const basicBitchServerUrl = "https://traversetext.com:8756"
+const basicBitchServerUrl = location.origin + ":8756"
 
 let user
 let userText = localStorage.getItem("user")
