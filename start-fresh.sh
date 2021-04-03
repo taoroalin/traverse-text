@@ -9,6 +9,8 @@ mkdir ./user-data/edits-br/
 mkdir ./front/public-br/
 
 cd back 
+sudo apt-get install nodejs
+sudo apt-get install npm
 npm install
-bash --rcfile <(echo 'nodemon ./site-server.js')
-nodemon ./server.js
+bash --rcfile <(echo 'node ./site-server.js')
+node ./server.js

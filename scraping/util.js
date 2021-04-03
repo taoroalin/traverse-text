@@ -26,7 +26,7 @@ const getLinks = (htmlText) => {
 
 const addPublicGraph = async (name, blox) => {
   const options = {
-    hostname: "localhost",
+    hostname: "traversetext.com",
     port: 8756,
     method: 'POST',
     headers: { h: publicAccountHash, commitid: 'MYVERYFIRSTCOMMITEVER', force: "true", public: "true" }, path: "/creategraph/" + name
