@@ -1,4 +1,4 @@
 cd back 
 wait
-node ./server.js & 
-node ./site-server.js
+nodemon --ignore ../front/ ./server.js &
+nodemon --ignore ../front/ ./site-server.js &

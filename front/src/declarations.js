@@ -4,32 +4,32 @@ const getTemp = (str) => elById(str).content.firstElementChild
 const allHtml = `<div id="app">
   <div id="top-bar" style="margin-top:-43px">
     <div id="top-bar-left">
-      
+
     </div>
     <input id="search-input" placeholder="search" tabindex="-1">
     <div id="top-bar-right">
-      
+
     </div>
-    
+
     <svg id="top-connect" width="25" height="25">
       <line x1="12.5" y1="20" x2="21" y2="9" stroke="var(--bullet)"/>
       <line x1="12.5" y1="20" x2="4" y2="9" stroke="var(--bullet)" />
       <line x1="12.5" y1="20" x2="12.5" y2="5" stroke="var(--bullet)" />
-      
+
       <circle cx="4" cy="9" r="3.5" stroke="var(--bullet)"  fill="var(--background)" />
       <circle cx="12.5" cy="5" r="3.5" stroke="var(--bullet)"  fill="var(--background)" />
       <circle cx="21" cy="9" r="3.5" stroke="var(--bullet)"  fill="var(--background)" />
-      
+
       <circle cx="12.5" cy="20" r="4.5" stroke="var(--bullet)"  fill="var(--background)" />
       <circle cx="12.5" cy="20" r="2.5" fill="var(--bullet)" />
     </svg>
-    
+
     <svg id="top-hamburger" width="25" height="25">
       <circle cx="12.5" cy="5" r="2.5" fill="var(--bullet)" />
       <circle cx="12.5" cy="13" r="2.5" fill="var(--bullet)" />
       <circle cx="12.5" cy="21" r="2.5" fill="var(--bullet)" />
     </svg>
-    
+
   </div>
 
   <div id="top-bar-hidden-hitbox" style="position:fixed;height:20px;width:100%;display:none;"></div>
@@ -42,7 +42,7 @@ const allHtml = `<div id="app">
 
     </div>
   </div>
-  
+
   <div id="options-frame" style="display:none">
   </div>
 

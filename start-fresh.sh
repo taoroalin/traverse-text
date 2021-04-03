@@ -12,5 +12,7 @@ mkdir ./front/public-br/
 cd back 
 sudo apt-get install nodejs npm net-tools
 npm install
-bash --rcfile <(echo 'node ./site-server.js')
-node ./server.js
+npm install -g nodemon
+wait
+nodemon --ignore ../front/ ./server.js &
+nodemon --ignore ../front/ ./site-server.js &

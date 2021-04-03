@@ -863,3 +863,7 @@ topButtons["Create New Graph"].addEventListener("keydown", (event) => {
     createAndSwitchToNewStore(event.target.value)
   }
 })
+
+topButtons["Report Issue"].addEventListener("click", (event) => {
+  // todo report issue
+})

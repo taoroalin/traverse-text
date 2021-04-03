@@ -145,8 +145,12 @@ try {
   performance.memory.heapUsed
   getProcessMemory = () => (performance.memory && performance.memory.heapUsed)
 } catch (e) {
-  process.memoryUsage().heapUsed
-  getProcessMemory = () => process.memoryUsage().heapUsed
+  try {
+    process.memoryUsage().heapUsed
+    getProcessMemory = () => process.memoryUsage().heapUsed
+  } catch (e) {
+    getProcessMemory = () => 0 // todo make getProcessMemory work on firefox
+  }
 }
 
 class LruCache {
