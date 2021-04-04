@@ -306,6 +306,18 @@ a:visited {
   font-size:22px;
 }
 
+[data-header="1"] .block__bullet{
+  top:15px;
+}
+
+[data-header="2"] .block__bullet{
+  top:11px;
+}
+
+[data-header="3"] .block__bullet{
+  top:7px;
+}
+
 .block__bullet {
   cursor: pointer;
   position: absolute;
