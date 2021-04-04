@@ -145,9 +145,9 @@ const notifyText = (text, duration) => {
 // 8    9       10                11  12         13      14-15
 // link literal template-expander and code-block command image-embed
 
-// 16            17           18-19 20-21
-// compute-start compute-end  tag   attribute
-const parseRegex = /(\[\[(?:[a-zA-Z0-9\-]+:)?)|(\]\])|(or)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(and)|(```)|(\/[ a-zA-Z]*)|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)|({{)|(}})|#([a-zA-Z0-9\-]+:)?([\/a-zA-Z0-9_-]+)|^([a-zA-Z0-9\-]+:)?([ \/a-zA-Z0-9_-]+)::/g
+// 16            17           18-19 20-21     22 23 24
+// compute-start compute-end  tag   attribute h1 h2 h3
+const parseRegex = /(\[\[(?:[a-zA-Z0-9\-]+:)?)|(\]\])|(or)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(and)|(```)|(\/[ a-zA-Z]*)|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)|({{)|(}})|#([a-zA-Z0-9\-]+:)?([\/a-zA-Z0-9_-]+)|^([a-zA-Z0-9\-]+:)?([ \/a-zA-Z0-9_-]+)::|(^# )|(^## )|(^### )/g
 // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
 
 // This regex runs at 50-100M chars/s
@@ -156,6 +156,7 @@ const parseRegex = /(\[\[(?:[a-zA-Z0-9\-]+:)?)|(\]\])|(or)|\(\(([a-zA-Z0-9\-_]+)
 // adding a named group halves its speed - unfortunately that's why I don't use named groups
 
 const renderBlockBody = (parent, text, editMode = false) => {
+  parent.parentNode.dataset.header = ''
   parent.dataset.editmode = editMode
   const stack = [parent]
   const matches = text.matchAll(parseRegex)
@@ -382,6 +383,30 @@ const renderBlockBody = (parent, text, editMode = false) => {
       attributeElement.title = match[21]
       attributeElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(attributeElement)
+    } else if (match[22]) {
+      if (editMode) {
+        const h1Element = document.createElement('span')
+        h1Element.className = 'h1'
+        h1Element.appendChild(newTextNode(match[0]))
+        stackTop.appendChild(h1Element)
+      }
+      parent.parentNode.dataset.header = "1"
+    } else if (match[23]) {
+      if (editMode) {
+        const h1Element = document.createElement('span')
+        h1Element.className = 'h2'
+        h1Element.appendChild(newTextNode(match[0]))
+        stackTop.appendChild(h1Element)
+      }
+      parent.parentNode.dataset.header = "2"
+    } else if (match[24]) {
+      if (editMode) {
+        const h1Element = document.createElement('span')
+        h1Element.className = 'h3'
+        h1Element.appendChild(newTextNode(match[0]))
+        stackTop.appendChild(h1Element)
+      }
+      parent.parentNode.dataset.header = "3"
     }
     idx = match.index + match[0].length
   }

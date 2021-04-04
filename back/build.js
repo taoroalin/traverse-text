@@ -78,6 +78,7 @@ const build = async () => {
   fs.copyFile("../front/src/default-store.json", "../front/public/default-store.json", () => { })
   fs.copyFile("../front/src/Inter-latin.woff2", "../front/public/Inter-latin.woff2", () => { })
   fs.copyFile("../front/src/Inconsolata-latin.woff2", "../front/public/Inconsolata-latin.woff2", () => { })
+  fs.copyFile("../front/src/welcome-from-roam.html", "../front/public/welcome-from-roam.html", () => { })
   await compressPublic()
 }
 build()

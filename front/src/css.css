@@ -294,6 +294,18 @@ a:visited {
   color:var(--max);
 }
 
+[data-header="1"] .block__body{
+  font-size:32px;
+}
+
+[data-header="2"] .block__body{
+  font-size:26px;
+}
+
+[data-header="3"] .block__body{
+  font-size:22px;
+}
+
 .block__bullet {
   cursor: pointer;
   position: absolute;

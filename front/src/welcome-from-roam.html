@@ -1,0 +1,100 @@
+<div id="welcome">
+  <div class="welcome-section">
+    <h2>Welcome to Traverse Text</h2>
+    <h2>It's a replacement for Roam Research that runs 10x faster</h2>
+    <h2>with ambitions to be much more</h2>
+    <button>Get Started</button>
+    <div class="horiz">
+      <button id="light">Light</button>
+      <button id="dark">Dark</button>
+    </div>
+  </div>
+
+  <div class="welcome-section">
+    <button>Upload my Roam JSON</button>
+  </div>
+
+  <div class="welcome-section">
+    <h2>Would you like to edit your graph name?</h2>
+    <input id="graph-name">
+    <button id="use-this-graph-name">Use this graph name</button>
+  </div>
+
+  <div class="welcome-section">
+    <h2>What is your email?</h2>
+    <input id="email" type="email" placeholder="Type your email here">
+    <h2>What will be your password</h2>
+    <input id="password" type="password" placeholder="Type your password here">
+  </div>
+
+  <div class="welcome-section">
+    <h2>What will be your username?</h2>
+    <input id="username">
+  </div>
+
+  <div class="welcome-section">
+    <h2>What colors do you like?</h2>
+  </div>
+</div>
+<style>
+  input {
+    display: block;
+    width: 300px;
+    margin: 0 auto;
+    appearance: none;
+    border: none;
+    box-shadow: none;
+    cursor: pointer;
+    background-color: inherit;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  button {
+    display: block;
+    width: 150px;
+    margin: 0 auto;
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+  }
+
+  #welcome {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: scroll;
+    /* background-color: var(--background); */
+  }
+
+  .welcome-section {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .horiz {
+    display: flex;
+    flex-direction: row;
+    margin: 0 auto;
+  }
+
+  #light {
+    border-radius: 8px 0 0 8px;
+  }
+
+  #dark {
+    border-radius: 0 8px 8px 0;
+  }
+</style>
+<script>
+  document.getElementById('welcome').addEventListener('keydown', (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log("scroll")
+  })
+</script>

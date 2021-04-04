@@ -6,15 +6,26 @@ const inlineCommandReplaceString = (string, offset = 0) => {
   setFocusedBlockString(focusBlockBody.innerText)
 }
 
+const inlineCommandPrefixString = (prefix, removeRegex = undefined) => {
+  let position = editingCommandElement.firstChild.startIdx + prefix.length
+  editingCommandElement.remove()
+  let string = focusBlockBody.innerText
+  if (removeRegex) {
+    const match = string.match(removeRegex)
+    if (match) {
+      string = string.substring(match.length)
+      position -= match.length
+    }
+  }
+  string = prefix + string
+  sessionState.position = position
+  setFocusedBlockString(string)
+}
+
 // inline commands are completely different than commands. They're things the user can do to the current block they're editing
 const inlineCommands = {
   TODO: () => {
-    const position = editingCommandElement.firstChild.startIdx + 9
-    editingCommandElement.remove()
-    let string = focusBlockBody.innerText
-    string = "{{#TODO}}" + string
-    sessionState.position = position
-    setFocusedBlockString(string)
+    inlineCommandPrefixString("{{#TODO}}", /^{{(#TODO|#DONE|\[\[TODO\]\]|\[\[DONE\]\])}}/)
   },
   "page link": () => {
     inlineCommandReplaceString("[[]]", -2)
@@ -44,6 +55,15 @@ const inlineCommands = {
   "last week": () => {
     inlineCommandReplaceString("[[" + getLastWeekDateString() + "]]")
   },
+  "header 1": () => {
+    inlineCommandPrefixString("# ", /^#{1,3} /)
+  },
+  "header 2": () => {
+    inlineCommandPrefixString("## ", /^#{1,3} /)
+  },
+  "header 3": () => {
+    inlineCommandPrefixString("### ", /^#{1,3} /)
+  },
   bold: () => {
     inlineCommandReplaceString("****", -2)
   },
@@ -52,7 +72,7 @@ const inlineCommands = {
   },
   highlight: () => {
     inlineCommandReplaceString("^^^^", -2)
-  }
+  },
 }
 
 let commandSearchCache = []
