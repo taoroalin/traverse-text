@@ -156,7 +156,7 @@ const parseRegex = /(\[\[(?:[a-zA-Z0-9\-]+:)?)|(\]\])|(or)|\(\(([a-zA-Z0-9\-_]+)
 // adding a named group halves its speed - unfortunately that's why I don't use named groups
 
 const renderBlockBody = (parent, text, editMode = false) => {
-  parent.parentNode.dataset.header = ''
+  if (parent.parentElement) parent.parentElement.dataset.header = ''
   parent.dataset.editmode = editMode
   const stack = [parent]
   const matches = text.matchAll(parseRegex)
@@ -390,7 +390,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
         h1Element.appendChild(newTextNode(match[0]))
         stackTop.appendChild(h1Element)
       }
-      parent.parentNode.dataset.header = "1"
+      if (parent.parentElement) parent.parentElement.dataset.header = "1"
     } else if (match[23]) {
       if (editMode) {
         const h1Element = document.createElement('span')
@@ -398,7 +398,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
         h1Element.appendChild(newTextNode(match[0]))
         stackTop.appendChild(h1Element)
       }
-      parent.parentNode.dataset.header = "2"
+      if (parent.parentElement) parent.parentElement.dataset.header = "2"
     } else if (match[24]) {
       if (editMode) {
         const h1Element = document.createElement('span')
@@ -406,7 +406,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
         h1Element.appendChild(newTextNode(match[0]))
         stackTop.appendChild(h1Element)
       }
-      parent.parentNode.dataset.header = "3"
+      if (parent.parentElement) parent.parentElement.dataset.header = "3"
     }
     idx = match.index + match[0].length
   }
