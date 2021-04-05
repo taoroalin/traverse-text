@@ -1,4 +1,10 @@
 // Event Listener Helpers -----------------------------------------------------------------------------------------------
+const isOsMac = navigator.platform.substring(0, 3) === "Mac"
+
+const getCtrlKey = (event) => {
+  if (isOsMac) return event.metaKey
+  return event.ctrlKey
+}
 
 const downloadHandler = () => {
   console.log("download")
@@ -299,7 +305,7 @@ document.addEventListener("keydown", (event) => {
     const hotkey = globalHotkeys[hotkeyName]
     if (event.key.toLowerCase() === hotkey.key &&
       event.shiftKey === !!hotkey.shift &&
-      event.ctrlKey === !!hotkey.control &&
+      getCtrlKey(event) === !!hotkey.control &&
       event.altKey === !!hotkey.alt) {
       hotkey.fn(event)
       event.preventDefault()
@@ -309,7 +315,7 @@ document.addEventListener("keydown", (event) => {
 
   if (dragSelect) {
     let did = false
-    if ((event.key === "c" || event.key === "x") && event.ctrlKey) {
+    if ((event.key === "c" || event.key === "x") && getCtrlKey(event)) {
       let text = ""
       console.log("copy blocks")
       const id = dragSelect.root.dataset.id
@@ -334,7 +340,7 @@ document.addEventListener("keydown", (event) => {
       navigator.clipboard.writeText(text)
       did = true
     }
-    if (event.key === "Backspace" || event.key === "Delete" || (event.key === "x" && event.ctrlKey)) {
+    if (event.key === "Backspace" || event.key === "Delete" || (event.key === "x" && getCtrlKey(event))) {
       console.log(dragSelect)
       if (dragSelect.rooted) {
         focusBlockVerticalOffset(-1, dragSelect.root)
@@ -381,7 +387,7 @@ document.addEventListener("keydown", (event) => {
       case "Enter":
         if (!event.shiftKey) {
           let idx = store.blox[store.blox[sessionState.focusId].p].k.indexOf(sessionState.focusId)
-          if (!event.ctrlKey) {
+          if (!getCtrlKey(event)) {
             idx += 1
           }
           console.log(idx)
@@ -467,7 +473,7 @@ document.addEventListener("keydown", (event) => {
         }
         break
       case "c":
-        if (event.ctrlKey) { // LEGITTODO copy md text and check paste text against, 
+        if (getCtrlKey(event)) { // LEGITTODO copy md text and check paste text against, 
           clipboardData = null
         }
         break
@@ -476,7 +482,7 @@ document.addEventListener("keydown", (event) => {
 
   if (document.activeElement && document.activeElement.id === "search-input") {
     if (event.key === "Enter") {
-      if (!event.ctrlKey && focusSuggestion) {
+      if (!getCtrlKey(event) && focusSuggestion) {
         if (focusSuggestion.dataset.title) {
           goto("pageTitle", focusSuggestion.dataset.title)
         } else {
@@ -494,7 +500,7 @@ document.addEventListener("keydown", (event) => {
   }
 
   if (terminalElement.style.display !== "none") {
-    if (event.key === "Enter" && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+    if (event.key === "Enter" && !getCtrlKey(event) && !event.shiftKey && !event.altKey) {
       const string = event.target.innerText
       const first = string.match(/^[a-z]+/)
       if (first && terminalCommands[first[0]]) {
@@ -507,7 +513,7 @@ document.addEventListener("keydown", (event) => {
       else {
         try {
           eval(string)
-          if (!event.ctrlKey) {
+          if (!getCtrlKey(event)) {
             terminalElement.style.display = "none"
             terminalElement.innerHTML = ""
           }
