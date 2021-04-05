@@ -349,4 +349,4 @@ const queryFrameTemplate = getTemp("query-frame")
 
 const textEncoder = new TextEncoder()
 
-const colorThemeOrder = ["light", "dark", "purple", "green"]
+const colorThemeOrder = ["light", "purple", "green", "dark"]
