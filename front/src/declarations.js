@@ -192,6 +192,9 @@ const allHtml = `<div id="app">
   <div class="search-result"></div>
 </template>`
 
+const onboardHTML = `
+`
+
 const allFrame = elById("html")
 
 allFrame.innerHTML = allHtml
