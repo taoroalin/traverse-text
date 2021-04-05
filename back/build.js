@@ -2,19 +2,16 @@ const fs = require('fs')
 const zlib = require('zlib')
 const stream = require('stream')
 const minify = require('html-minifier').minify;
+const common = require('./common')
 
 const { performance } = require('perf_hooks')
 
 const compress = (fileName) => new Promise(resolve => {
   const cpystime = performance.now()
-  const compressor = zlib.createBrotliCompress({ params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 11, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } })
   const source = fs.createReadStream(`../front/public/${fileName}`)
   const target = fs.createWriteStream(`../front/public-br/${fileName}`)
-  stream.pipeline(source, compressor, target, (err) => {
-    if (err) {
-      console.log("failed to compress:", err)
-    }
-    console.log(fileName + " " + Math.floor(performance.now() - cpystime))
+  common.brCompressExpensiveStream(source, target, (err) => {
+    console.log("brotli " + fileName + " in " + Math.floor(performance.now() - cpystime))
     resolve()
   })
 })
@@ -68,9 +65,11 @@ const build = async () => {
   // todo minify inline
 
   // fs.writeFileSync("../front/public/index-no-min.html", result)
+  const minifySTime = performance.now()
   const htmlmin = minify(result, {
     collapseWhitespace: true, minifyCSS: true, minifyJS: true, removeComments: true, removeOptionalTags: true, removeRedundantAttributes: true, useShortDoctype: true
   })
+  console.log(`minified in ${Math.round(performance.now() - minifySTime)}`)
 
   fs.writeFileSync("../front/public/index.html", htmlmin)
 
@@ -81,6 +80,5 @@ const build = async () => {
   fs.copyFile("../front/src/welcome-from-roam.html", "../front/public/welcome-from-roam.html", () => { })
   await compressPublic()
 }
-build()
 
 exports.build = build

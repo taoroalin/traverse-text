@@ -6,6 +6,8 @@ const { LruCache, promisify, doEditBlox, undoEditBlox } = require('../front/src/
 
 const brotliCompressParams = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } }
 
+const brotliCompressExpensiveParams = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 11, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } }
+
 exports.asyncStoreBloxString = promisify((name, bloxString, callback) => {
   zlib.brotliCompress(bloxString, brotliCompressParams, (err, data) => {
     if (!err) {
@@ -34,12 +36,33 @@ exports.loadBlox = promisify((name, callback) => {
   })
 })
 
-exports.brCompressStream = (from, to) => {
+exports.brCompressStream = (from, to, callback) => {
   const compressor = zlib.createBrotliCompress(brotliCompressParams)
   stream.pipeline(from, compressor, to, (err) => {
     if (err) {
       console.log("failed to compress:", err)
     }
+    if (callback !== undefined) callback(err)
+  })
+}
+
+exports.brCompressExpensiveStream = (from, to, callback) => {
+  const compressor = zlib.createBrotliCompress(brotliCompressExpensiveParams)
+  stream.pipeline(from, compressor, to, (err) => {
+    if (err) {
+      console.log("failed to compress:", err)
+    }
+    if (callback !== undefined) callback(err)
+  })
+}
+
+exports.gzCompressStream = (from, to, callback) => {
+  const compressor = zlib.createGzip()
+  stream.pipeline(from, compressor, to, (err) => {
+    if (err) {
+      console.log("failed to compress:", err)
+    }
+    if (callback !== undefined) callback(err)
   })
 }
 
