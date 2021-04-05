@@ -87,7 +87,7 @@ const renderBreadcrumb = (parent, blockId) => {
     for (let i = list.length - 2; i >= 0; i--) {
       const node = breadcrumbBlockTemplate.cloneNode(true)
       const nodeBody = node.children[1]
-      renderBlockBody(nodeBody, list[i].string)
+      renderBlockBody(nodeBody, truncateElipsis(list[i].string, 22))
       node.dataset.id = list[i].id
       parent.appendChild(node)
     }
@@ -199,11 +199,14 @@ const renderBlockBody = (parent, text, editMode = false) => {
         stackTop.parentNode.endIdx = idx
         stackTop.parentNode.title = stackTop.innerText
         stackTop.parentNode.endIdx = idx + 2
+        lastTextNode.endIdx += 2
         if (editMode)
           stackTop.parentNode.children[3].appendChild(newTextNode("]]"))
+        else
+          stackTop.parentNode.children[3].appendChild(newTextNode(" "))
+
         stack.pop()
         stackTop = stack[stack.length - 1]
-        lastTextNode.endIdx += 2
       } else {
         const el = document.createElement("span")
         if (editMode)
@@ -237,11 +240,11 @@ const renderBlockBody = (parent, text, editMode = false) => {
       }
     } else if (match[5] !== undefined) {
       if (stackTop.className === "bold") {
+        lastTextNode.endIdx += 2
         if (editMode)
           stackTop.appendChild(newTextNode("**"))
         stack.pop()
         stackTop = stack[stack.length - 1]
-        lastTextNode.endIdx += 2
       } else {
         const boldElement = document.createElement('span')
         boldElement.className = 'bold'
@@ -253,11 +256,11 @@ const renderBlockBody = (parent, text, editMode = false) => {
       }
     } else if (match[6] !== undefined) {
       if (stackTop.className === "highlight") {
+        lastTextNode.endIdx += 2
         if (editMode)
           stackTop.appendChild(newTextNode("^^"))
         stack.pop()
         stackTop = stack[stack.length - 1]
-        lastTextNode.endIdx += 2
       } else {
         const highlightElement = document.createElement('span')
         highlightElement.className = 'highlight'
@@ -269,11 +272,11 @@ const renderBlockBody = (parent, text, editMode = false) => {
       }
     } else if (match[7] !== undefined) {
       if (stackTop.className === "italic") {
+        lastTextNode.endIdx += 2
         if (editMode)
           stackTop.appendChild(newTextNode("__"))
         stack.pop()
         stackTop = stack[stack.length - 1]
-        lastTextNode.endIdx += 2
 
       } else {
         const italicElement = document.createElement('span')

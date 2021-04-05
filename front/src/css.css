@@ -4,6 +4,7 @@
 * {
   outline: none;
   scrollbar-width: none;
+  transition: background-color 0.06s;
 }
 
 
@@ -58,7 +59,7 @@
   --highlight: #fef3ac;/*#B59E7A*/
   --brackets: #737373;
   --editing-background: #08404f;
-  --max:#fff;
+  --max:#b7e2e2;
   --query-background: #094b5a;
   --notification: #1a6376;
   --bullet: #A5B5BC;
@@ -125,7 +126,7 @@ span {
 }
 
 ::selection {
-  background-color: #85b7e8;
+  background-color: var(--selected);
   color: var(--text);
 }
 
@@ -299,6 +300,13 @@ a:visited {
   margin-left: 20px;
 }
 
+.backref-frame{
+  background-color: var(--query-background);
+  border-radius: 8px;
+    padding:1px 12px 18px;
+  margin:14px 0;
+}
+
 .backref-list__body {
   margin-left: 10px;
 }
@@ -306,7 +314,10 @@ a:visited {
 .backref-list__title {
   font-size: 1.3em;
   /* font-weight: bold; */
-  padding: 20px 0 0;
+  padding: 18px 0 0;
+  border: 1px solid var(--break);
+  border-width:0 0 1px 0;
+  margin: 0 0 22px 0;
 }
 
 .page-break {
@@ -328,6 +339,9 @@ a:visited {
 .block__body {
   padding: 5px 2px;
   white-space: pre-wrap;
+  transition: background-color 0s; 
+  /* editing spotlight transitions instantly, 
+  while all other background colors transition slowly */
 }
 
 [data-editingspotlight="true"] .block__body[data-editmode="true"]{
@@ -396,6 +410,8 @@ a:visited {
 
 .breadcrumb-block {
   cursor: pointer;
+  font-size:0.9em;
+  color:var(--bullet);
 }
 
 .backref-frame__breadcrumb {
