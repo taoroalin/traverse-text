@@ -344,7 +344,7 @@ document.addEventListener("keydown", (event) => {
       console.log(dragSelect)
       if (dragSelect.rooted) {
         focusBlockVerticalOffset(-1, dragSelect.root)
-        macros.nocommit.delete(dragSelect.root.dataset.id)
+        macros.delete(dragSelect.root.dataset.id)
         document.querySelectorAll(`.block[data-id="${dragSelect.root.dataset.id}"]`).forEach(x => x.remove())
       } else {
         const childNodes = getChildren(dragSelect.root)
