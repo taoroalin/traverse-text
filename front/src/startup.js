@@ -149,5 +149,5 @@ r.onupgradeneeded = (event) => {
 r.onerror = (e) => {
   console.log("error")
   console.log(e)
-  alert(`In order to save your notes between sessions, Traverse Text needs access to IndexedDB. \nYou can allow access by exiting "private browsing" mode, or by using a newer browser, or by changing browser settings`)
+  alert(`Traverse Text doesn't work with Firefox Private mode. It works with Chrome, Brave, Safari, and Firefox normal mode.`)
 }

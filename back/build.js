@@ -67,7 +67,7 @@ const build = async () => {
   // todo use minify(text, {toplevel:true}) for more mangling
   // todo minify inline
 
-  fs.writeFileSync("../front/public/index-no-min.html", result)
+  // fs.writeFileSync("../front/public/index-no-min.html", result)
   const htmlmin = minify(result, {
     collapseWhitespace: true, minifyCSS: true, minifyJS: true, removeComments: true, removeOptionalTags: true, removeRedundantAttributes: true, useShortDoctype: true
   })

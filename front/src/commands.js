@@ -145,6 +145,12 @@ const saveStoreIncremental = () => {
 }
 
 const saveStoreStringLocal = (string) => {
+  saveStoreStringLocalStorage(string)
+  if (idb)
+    saveStoreStringIndexedDB(string)
+}
+
+const saveStoreStringLocalStorage = (string) => {
   try {
     localStorage.setItem('store', string)
   } catch (e) {
@@ -152,6 +158,9 @@ const saveStoreStringLocal = (string) => {
     localStorage.removeItem('store')
     console.error(`Local Storage Failure: ${e}`)
   }
+}
+
+const saveStoreStringIndexedDB = (string) => {
   const transaction = idb.transaction(["stores"], "readwrite")
   const storeStore = transaction.objectStore("stores")
   const req = storeStore.put({
