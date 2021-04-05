@@ -202,7 +202,7 @@ const optionsFrame = elById('options-frame')
 
 const topButtons = {}
 
-let topButtonNames = ["Help", "Daily Notes", "Report Issue", "Sign Up", "Sign Out", "Login", "Upload", "Download",]
+let topButtonNames = ["Help", "Daily Notes", "Report Issue", "Sign Up", "Sign Out", "Login", "Upload", "Download", "Create New Graph"]
 for (let name of topButtonNames) {
   topButtons[name] = document.createElement('button')
   topButtons[name].innerText = name
@@ -220,15 +220,18 @@ disconnectedFileInput.type = "file"
 
 topButtonNames = Object.keys(topButtons)
 
-let toShowOnTopBar = ["help", "Daily Notes", "Report Issue", "Sign Up"]
+let toShowOnTopBar = ["Daily Notes", "Report Issue", "Sign Up", "Upload",]
 
 const layoutTopBar = () => {
-  const split = Math.round(toShowOnTopBar.length / 2)
+  const split = Math.floor(toShowOnTopBar.length / 2)
+  console.log(`SPLIT ${split}`)
   for (let i = 0; i < split; i++) {
-    topBarLeft.appendChild(topButtons[topButtonNames[i]])
+    topBarLeft.appendChild(topButtons[toShowOnTopBar[i]])
+    console.log(`left ${toShowOnTopBar[i]}`)
   }
   for (let i = split; i < toShowOnTopBar.length; i++) {
-    topBarRight.appendChild(topButtons[topButtonNames[i]])
+    topBarRight.appendChild(topButtons[toShowOnTopBar[i]])
+    console.log(`right ${toShowOnTopBar[i]}`)
   }
   for (let name of topButtonNames) {
     if (!toShowOnTopBar.includes(name)) {

@@ -7,14 +7,14 @@ const inlineCommandReplaceString = (string, offset = 0) => {
 }
 
 const inlineCommandPrefixString = (prefix, removeRegex = undefined) => {
-  let position = editingCommandElement.firstChild.startIdx + prefix.length
+  let position = editingCommandElement.startIdx + prefix.length
   editingCommandElement.remove()
-  let string = focusBlockBody.innerText
+  let string = focusBlockBody.innerText // @removeinnertext
   if (removeRegex) {
     const match = string.match(removeRegex)
     if (match) {
-      string = string.substring(match.length)
-      position -= match.length
+      string = string.substring(match[0].length)
+      position -= match[0].length
     }
   }
   string = prefix + string

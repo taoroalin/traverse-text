@@ -322,6 +322,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
     } else if (match[13] !== undefined) {
       const commandElement = document.createElement("span")
       commandElement.className = "command"
+      commandElement.startIdx = idx
       commandElement.appendChild(newTextNode(match[0]))
       stackTop.appendChild(commandElement)
     } else if (match[14] !== undefined && match[15] !== undefined) {
