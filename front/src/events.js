@@ -233,13 +233,9 @@ const globalHotkeys = {
   "save": { key: "s", control: true, fn: debouncedSaveStore },
   "toggle color theme": {
     key: "m", control: true, fn: () => {
-      if (document.body.className === "light") {
-        user.s.theme = "dark"
-        saveUser()
-      } else {
-        user.s.theme = "light"
-        saveUser()
-      }
+      const currentThemeIndex = colorThemeOrder.indexOf(user.s.theme)
+      user.s.theme = colorThemeOrder[(currentThemeIndex + 1) % colorThemeOrder.length]
+      saveUser()
     }
   },
   "search": {
