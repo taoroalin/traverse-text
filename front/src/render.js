@@ -152,8 +152,8 @@ const parseRegex = /(\[\[(?:[a-zA-Z0-9\-]+:)?)|(\]\])|(or)|\(\(([a-zA-Z0-9\-_]+)
 
 // This regex runs at 50-100M chars/s
 // a regex this large runs at 1/3 the speed of a regex like /d([a-z])/g for equivelent string lengths + match counts + group counts
-// adding a group slows it down by like 25%
-// adding a named group halves its speed - unfortunately that's why I don't use named groups
+// a regex with a capturing group is like 25% slower than one without a capturing group
+// using named groups halves its speed - unfortunately that's why I don't use named groups
 
 const renderBlockBody = (parent, text, editMode = false) => {
   if (parent.parentElement) parent.parentElement.dataset.header = ''
@@ -541,34 +541,13 @@ const transformComputeElement = (el, editMode) => {
       const otherQuery = block.querySelector(".query-frame")
       if (otherQuery) otherQuery.remove()
       block.appendChild(queryFrame)
+      el.className = "compute-kept"
       return
       break
     default:
       return
   }
   el.className = "compute"
-}
-
-
-const queryAstArrayStrategy = (ast) => {
-  if (ast === undefined) return []
-  let r = queryAstArrayStrategy(ast.r)
-  let l = queryAstArrayStrategy(ast.l)
-  switch (ast.op) {
-    case "compute-and":
-      const result = []
-      for (let id of r) {
-        if (l.includes(id)) result.push(id)
-      }
-      return result
-    case "compute-or":
-      for (let el of r) {
-        l.push(el)
-      }
-      return l
-    case "page":
-      return [...(store.refs[store.titles[ast.title]] || [])]
-  }
 }
 
 const queryAstObjectSetStrategy = (ast) => {
@@ -610,7 +589,7 @@ const queryAstObjectSetStrategy = (ast) => {
  */
 
 const idOfYoutubeURL = (url) => {
-  const match = url.match(/^https:\/\/www\.youtube.com\/watch\?v=([a-zA-Z0-9]+)(&t=.+)?$/)
+  const match = url.match(/^https:\/\/(?:www\.youtube.com\/watch|youtu.be\/)\?v=([a-zA-Z0-9]+)(&t=.+)?$/)
   if (match) return match[1]
 }
 

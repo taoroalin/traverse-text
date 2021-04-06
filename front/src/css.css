@@ -27,27 +27,29 @@
   --query-background: #051809;
   --editing-background: #141414;
   --selected: #113658;
+  --error:#460f0f;
 }
 
 .purple {
   --background:#282A36;
-  --page-ref: #7afc9b;
-  --text: #F8F8F2;
-  --link: #8BE9FD;
-  --selected: #242b6b;
-  --highlight: #f0e59f;
-  --brackets: #a7a9c2;
-  --editing-background: #424450;
-  --max:#fff;
-  --query-background: #42485f;
-  --notification: #45495f;
-  --bullet: rgb(197, 206, 226);
   --click: rgb(100, 100, 100);
+  --text: #F8F8F2;
+  --max:#fff;
+  --link: #8BE9FD;
+  --brackets: #a7a9c2;
   --block-ref: rgb(102, 102, 102);
+  --bullet: rgb(197, 206, 226);
   --border: #b4c5d3;
   --bar: #68727a;
   --break: #9494b8;
+  --highlight: #f0e59f;
+  --page-ref: #7afc9b;
   --shadow: rgb(51, 51, 51);
+  --notification: #45495f;
+  --query-background: #42485f;
+  --editing-background: #424450;
+  --selected: #242b6b;
+  --error:#460f1d;
 }
 
 .green {
@@ -70,6 +72,7 @@
   --bar: #68727a;
   --break: #6093a0;
   --shadow: rgb(24, 24, 24);
+  --error:#300300;
 }
 
 .light {
@@ -91,6 +94,7 @@
   --query-background: #b0dfbd;
   --editing-background:#e6e6e6;
   --selected: #abcdeb;
+  --error:#ff7a7a;
 }
 
 input,
@@ -537,6 +541,13 @@ a:visited {
 }
 
 .compute-failed{
+  background-color:var(--error);
+  border-radius:4px;
+  padding:5px 2px;
+  margin-left: -2px;
+}
+
+.compute-kept{
   background-color:var(--query-background);
   border-radius:4px;
   padding:5px 2px;
