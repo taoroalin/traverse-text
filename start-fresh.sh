@@ -6,6 +6,7 @@ cp -a ./server-log-empty/. ./server-log/
 rm -rf ./front/public-br
 mkdir ./user-data/blox-br/
 mkdir ./user-data/edits-br/
+mkdir -p ./server-log/server-temp/blox-br
 
 mkdir ./front/public-br/
 

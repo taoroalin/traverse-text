@@ -50,11 +50,12 @@ let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
 
 let saveGraphsTimeout = null
 const saveGraphs = () => {
-  fs.writeFile("../user-data/graphs.json", JSON.stringify(graphs), (err) => {
+  fs.writeFile("../server-log/server-temp/graphs.json", JSON.stringify(graphs), (err) => {
     if (err) {
       log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
       return
     }
+    fs.rename("../server-log/server-temp/graphs.json", "../user-data/graphs.json", () => { })
   })
   saveGraphsTimeout = null
 }
@@ -68,11 +69,12 @@ const debouncedSaveGraphs = () => {
 
 // todo create under different name and rename because rename is atomic, whereas a concurrent process could crash halfway through writeFile, leaving partial file
 const saveAccounts = () => {
-  fs.writeFile("../user-data/accounts.json", JSON.stringify(accounts), (err) => {
+  fs.writeFile("../server-log/server-temp/accounts.json", JSON.stringify(accounts), (err) => {
     if (err) {
       log(`CRITICAL ERROR ACCOUNT SAVE FAILURE`)
       return
     }
+    fs.rename("../server-log/server-temp/accounts.json", '../user-data/accounts.json', () => { })
   })
   saveAccountsTimeout = null
 }
@@ -239,13 +241,13 @@ const serverHandler = async (req, res) => {
       graphs[match[2]].l = req.headers.commitid
       debouncedSaveGraphs()
       // todo add coordination between threads using err.code==='EBUSY'?
-      writeStream = fs.createWriteStream(`../user-data/blox-br/${match[2]}.json.br`)
-      common.brCompressStream(req, writeStream)
-      req.on("end", () => {
-        res.writeHead(200)
-        res.end()
+      writeStream = fs.createWriteStream(`../server-log/server-temp/blox-br/${match[2]}.json.br`)
+      common.brCompressStream(req, writeStream, () => {
+        fs.rename(`../server-log/server-temp/blox-br/${match[2]}.json.br`, `../user-data/blox-br/${match[2]}.json.br`, () => {
+          res.writeHead(200)
+          res.end()
+        })
       })
-      // console.log(`wrote ${match[2]}`)
       return
     case "get":
       graphMetadata = graphs[match[2]]
@@ -289,7 +291,7 @@ const serverHandler = async (req, res) => {
         return
       }
       graphs[match[2]] = { l: req.headers.commitid }
-      writeStream = fs.createWriteStream(`../user-data/blox-br/${match[2]}.json.br`)
+      writeStream = fs.createWriteStream(`../server-log/server-temp/blox-br/${match[2]}.json.br`)
       if (req.headers.format === 'blox-br') {
         req.pipe(writeStream)
       } else {
@@ -301,8 +303,10 @@ const serverHandler = async (req, res) => {
       debouncedSaveAccounts()
       debouncedSaveGraphs()
       req.on("end", () => {
-        res.writeHead(200)
-        res.end()
+        fs.rename(`../server-log/server-temp/blox-br/${match[2]}.json.br`, `../user-data/blox-br/${match[2]}.json.br`, () => {
+          res.writeHead(200)
+          res.end()
+        })
       })
       return
     case "auth":

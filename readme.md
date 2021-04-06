@@ -2,19 +2,21 @@
 
 Fast note taking and sharing app inspired by Roam Research.
 
+A Roam Research clone focused on performance and shareability.
+
+
+
 # Mission
 
-Make your internet 10x+ faster.
+Write, share, and read linked documents 10x faster.
 
-What does this mean exactly? It means making your experience of creating, browsing, sharing, and searching 10x faster. The main technologies behind this right now are _large scale client side text caching_ and _performance tuned JavaScript_. 
+What that will look like: Open Traverse Text and start writing in half a second. Never lose your flow state to slow page loads, renders, queries, edits. Share pages *that run just as fast as a static blog*. Write for years without the software slowing down.
 
-How is the 10x dream achievable? JavaScript, which is engineered to run bloated frameworks, is now able to search through gigabytes of text per second. Fast internet connections, which normally transfer megabytes of dead weight JavaScript, can instead ship megabytes of related information to your computer up front and make it searchable instantaneously. It's possible to render 60 different pages of text per second, and open a link in as long as it takes to type 1 character into a terminal.
-
-Basically what it does: In the same compute + bandwidth a React site uses to render a text field, you download every public writing made by any of your friends, search it, and pretty-print the result.
+How is 10x performance achievable? Because other tools spend *1 billion cpu cycles* to render a simple page. Why is that? Are there a billion letters on the page? No. Are there a billion pixels in your screen? No. Are those projects (and their dependencies) made by tens of thousands of low-quality developers, each of whom spends 100,000 of your cpu cycles? Yes.  
 
 # Why did I make Micro Roam?
 
-I love Roam Research. I think that sort of freeform, linked text should be the default for everything we write. However, Roam Research doesn't have the engineering quality to be that default for most people, and from my conversations with them, the team at Roam is not heading in that direction.
+I love Roam Research. I think that sort of freeform, linked text should be the default for all writing. However, Roam Research doesn't scale to large documents, and isn't quick to share. From my conversations with them, these issues are not a priority for Roam Research, and thus I am solving them myself.
 
 # The Stack
 
@@ -42,7 +44,7 @@ Zen mode: hide top bar and the page has nothing but content
 
 # Features missing compared to Roam
 
-Queries, roam/render, roam/css, image upload, page list, favorites, a some other small ones
+roam/css, image upload, page list, favorites, the prototype roam/render features like kanban, tables, and many others I don't remember
 
 # Benchmarks
 
@@ -114,7 +116,3 @@ exporting / importing markdown files
 making signup and login work and have good ui
 
 Plan for non-editing blocs: have seperate class for editing bloc, still have contenteditable on noedit blocs, on focusin record position then rerender as editbloc
-
-# Issues
-
-Enter to create block not work sometimes?

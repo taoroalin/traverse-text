@@ -94,7 +94,20 @@
   --query-background: #b0dfbd;
   --editing-background:#e6e6e6;
   --selected: #abcdeb;
-  --error:#ff7a7a;
+  --error:#ffc4c4;
+}
+
+[data-editingspotlight="true"] .block__body[data-editmode="true"]{
+  backdrop-filter: brightness(150%);
+}
+
+.light[data-editingspotlight="true"] .block__body[data-editmode="true"]{
+  backdrop-filter: brightness(90%);
+}
+
+.dark[data-editingspotlight="true"] .block__body[data-editmode="true"]{
+  background-color:var(--editing-background);
+  /* @todo make this a different color inside query result */
 }
 
 input,
@@ -349,9 +362,8 @@ a:visited {
 }
 
 [data-editingspotlight="true"] .block__body[data-editmode="true"]{
-  background-color: var(--editing-background);
-  border-radius:4px;
   color:var(--max);
+  border-radius:4px;
 }
 
 [data-header="1"]>.block__body{

@@ -1,5 +1,6 @@
 const fs = require('fs')
 const fsPromises = fs.promises
+const { performance } = require('perf_hooks')
 const zlib = require('zlib')
 const stream = require('stream')
 const { LruCache, promisify, doEditBlox, undoEditBlox } = require('../front/src/front-back-shared.js')
@@ -11,11 +12,14 @@ const brotliCompressExpensiveParams = { params: { [zlib.constants.BROTLI_PARAM_Q
 exports.asyncStoreBloxString = promisify((name, bloxString, callback) => {
   zlib.brotliCompress(bloxString, brotliCompressParams, (err, data) => {
     if (!err) {
-      fs.writeFile(`../user-data/blox-br/${name}.json.br`, data, (err) => {
+      const tempName = `../server-log/server-temp/blox-br/${name}.json.br`
+      fs.writeFile(tempName, data, (err) => {
         if (err) {
           console.log(err)
         }
-        callback()
+        fs.rename(tempName, `../user-data/blox-br/${name}.json.br`, () => {
+          callback()
+        })
       })
     }
   })
