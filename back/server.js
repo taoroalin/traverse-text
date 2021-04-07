@@ -247,6 +247,7 @@ const serverHandler = async (req, res) => {
       common.brCompressStream(req, writeStream, () => {
         fs.rename(`../server-log/server-temp/blox-br/${match[2]}.json.br`, `../user-data/blox-br/${match[2]}.json.br`, () => {
           res.writeHead(200)
+          console.log(`put took ${performance.now() - gotReqTime}`)
           res.end()
         })
       })
