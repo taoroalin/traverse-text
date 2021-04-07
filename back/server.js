@@ -355,7 +355,7 @@ const serverHandler = async (req, res) => {
       }
       graphs[match[2]].l = commit.id
       debouncedSaveGraphs()
-      common.asyncStoreBloxString(match[2], JSON.stringify(blox))
+      const storeError = await common.asyncStoreBloxString(match[2], JSON.stringify(blox))
       res.writeHead(200)
       res.end()
       return
