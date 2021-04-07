@@ -1,6 +1,8 @@
 const http = require('http')
 const https = require('https')
 const fs = require('fs')
+const zlib = require('zlib')
+const stream = require('stream')
 const common = require('./common.js')
 const httpsOptions = common.httpsOptions
 const { performance } = require('perf_hooks')
@@ -272,9 +274,18 @@ const serverHandler = async (req, res) => {
       }
 
       res.setHeader('commitid', graphMetadata.l)
-      res.setHeader('Content-Encoding', 'br')
-      fileReadStream = fs.createReadStream(`../user-data/blox-br/${match[2]}.json.br`)
-      fileReadStream.pipe(res)
+      if (req.headers['accept-encoding'].match(/br/)) {
+        res.setHeader('Content-Encoding', 'br')
+        fileReadStream = fs.createReadStream(`../user-data/blox-br/${match[2]}.json.br`)
+        fileReadStream.pipe(res)
+      } else {
+        res.setHeader('Content-Encoding', 'gzip')
+        fileReadStream = fs.createReadStream(`../user-data/blox-br/${match[2]}.json.br`)
+        const br = zlib.createBrotliDecompress()
+        const gz = zlib.createGzip()
+        stream.pipeline(fileReadStream, br, gz, res, () => { })
+        log('transcoding to gzip')
+      }
       // console.log(`get ${match[2]}`)
       return
     case "creategraph":

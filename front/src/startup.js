@@ -149,5 +149,5 @@ r.onupgradeneeded = (event) => {
 r.onerror = (e) => {
   console.log("error")
   console.log(e)
-  alert(`Traverse Text doesn't work with Firefox Private mode. It works with Chrome, Brave, Safari, and Firefox normal mode.`)
+  // alert(`Traverse Text doesn't work with Firefox Private mode. It works with Chrome, Brave, Safari, and Firefox normal mode.`)
 }
