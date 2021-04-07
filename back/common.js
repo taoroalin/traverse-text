@@ -10,14 +10,14 @@ const brotliCompressParams = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 
 const brotliCompressExpensiveParams = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 11, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } }
 
 exports.asyncStoreBloxString = promisify((name, bloxString, callback) => {
-  zlib.brotliCompress(bloxString, brotliCompressParams, (err, data) => {
+  zlib.gzip(bloxString, (err, data) => {
     if (!err) {
-      const tempName = `../server-log/server-temp/blox-br/${name}.json.br`
+      const tempName = `../server-log/server-temp/blox-gz/${name}.json.gz`
       fs.writeFile(tempName, data, (err) => {
         if (err) {
           console.log(err)
         }
-        fs.rename(tempName, `../user-data/blox-br/${name}.json.br`, () => {
+        fs.rename(tempName, `../user-data/blox-gz/${name}.json.gz`, () => {
           callback()
         })
       })
@@ -26,9 +26,9 @@ exports.asyncStoreBloxString = promisify((name, bloxString, callback) => {
 })
 
 exports.loadBlox = promisify((name, callback) => {
-  fs.readFile(`../user-data/blox-br/${name}.json.br`, (err, string) => {
+  fs.readFile(`../user-data/blox-gz/${name}.json.gz`, (err, data) => {
     if (err) return null
-    zlib.brotliDecompress(string, (err, data) => {
+    zlib.gunzip(data, (err, data) => {
       if (err) {
         console.log(err)
         callback(null)
@@ -62,6 +62,16 @@ exports.brCompressExpensiveStream = (from, to, callback) => {
 
 exports.gzCompressStream = (from, to, callback) => {
   const compressor = zlib.createGzip()
+  stream.pipeline(from, compressor, to, (err) => {
+    if (err) {
+      console.log("failed to compress:", err)
+    }
+    if (callback !== undefined) callback(err)
+  })
+}
+
+exports.gzDecompressStream = (from, to, callback) => {
+  const compressor = zlib.createGunzip()
   stream.pipeline(from, compressor, to, (err) => {
     if (err) {
       console.log("failed to compress:", err)

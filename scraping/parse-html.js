@@ -30,8 +30,8 @@ const makeParser = (regex, functions, onInBetween, postprocess) => {
   }
 }
 
-//                      tag-start  tag-end           attribute
-//                      1          2             3   4             5         6
+//                      tag-start    tag-end               attribute                
+//                      1            2                 3   4                        5            6
 const htmlParseRegex = /<([a-z0-9]+)|<\/([a-z0-9\-]+)>|(>)|([a-z\-]+)=(?:([^><" ]+)|"([^><"]+)")|<!doctypehtml>/g
 
 const emptyTags = { meta: 1, br: 1, input: 1, link: 1, hr: 1, img: 1, keygen: 1, param: 1, source: 1, track: 1, wbr: 1, area: 1, base: 1, col: 1, embed: 1 }

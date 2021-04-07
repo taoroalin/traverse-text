@@ -241,9 +241,9 @@ const serverHandler = async (req, res) => {
       graphs[match[2]].l = req.headers.commitid
       debouncedSaveGraphs()
       // todo add coordination between threads using err.code==='EBUSY'?
-      writeStream = fs.createWriteStream(`../server-log/server-temp/blox-br/${match[2]}.json.br`)
-      common.brCompressStream(req, writeStream, () => {
-        fs.rename(`../server-log/server-temp/blox-br/${match[2]}.json.br`, `../user-data/blox-br/${match[2]}.json.br`, () => {
+      writeStream = fs.createWriteStream(`../server-log/server-temp/blox-gz/${match[2]}.json.gz`)
+      common.gzCompressStream(req, writeStream, () => {
+        fs.rename(`../server-log/server-temp/blox-gz/${match[2]}.json.gz`, `../user-data/blox-gz/${match[2]}.json.gz`, () => {
           res.writeHead(200)
           res.end()
         })
@@ -272,8 +272,8 @@ const serverHandler = async (req, res) => {
       }
 
       res.setHeader('commitid', graphMetadata.l)
-      res.setHeader('Content-Encoding', 'br')
-      fileReadStream = fs.createReadStream(`../user-data/blox-br/${match[2]}.json.br`)
+      res.setHeader('Content-Encoding', 'gzip')
+      fileReadStream = fs.createReadStream(`../user-data/blox-gz/${match[2]}.json.gz`)
       fileReadStream.pipe(res)
       // console.log(`get ${match[2]}`)
       return
@@ -291,11 +291,11 @@ const serverHandler = async (req, res) => {
         return
       }
       graphs[match[2]] = { l: req.headers.commitid }
-      writeStream = fs.createWriteStream(`../server-log/server-temp/blox-br/${match[2]}.json.br`)
-      if (req.headers.format === 'blox-br') {
+      writeStream = fs.createWriteStream(`../server-log/server-temp/blox-gz/${match[2]}.json.gz`)
+      if (req.headers.format === 'blox-gz') {
         req.pipe(writeStream)
       } else {
-        common.brCompressStream(req, writeStream)
+        common.gzCompressStream(req, writeStream)
       }
       userAccount.u.w[match[2]] = 1
       userAccount.u.r[match[2]] = 1
@@ -303,7 +303,7 @@ const serverHandler = async (req, res) => {
       debouncedSaveAccounts()
       debouncedSaveGraphs()
       req.on("end", () => {
-        fs.rename(`../server-log/server-temp/blox-br/${match[2]}.json.br`, `../user-data/blox-br/${match[2]}.json.br`, () => {
+        fs.rename(`../server-log/server-temp/blox-gz/${match[2]}.json.gz`, `../user-data/blox-gz/${match[2]}.json.gz`, () => {
           res.writeHead(200)
           res.end()
         })
