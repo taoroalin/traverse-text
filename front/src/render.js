@@ -433,7 +433,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
 const queryOperationOrder = { "root": 0, "compute-or": 1, "compute-and": 2, "page": 3 }
 // not using 0 because that would be falsy
 
-const transformComputeElement = (el, editMode) => {
+const transformComputeElement = (el, editMode,) => {
   const seq = el.children[1].children
   if (seq.length === 0) return
   const firstEl = seq[0]
@@ -448,6 +448,7 @@ const transformComputeElement = (el, editMode) => {
         const checkbox = todoCheckboxTemplate.cloneNode(true)
         el.appendChild(checkbox)
       } else {
+        el.className = "compute-kept"
         return
       }
       break
@@ -458,20 +459,28 @@ const transformComputeElement = (el, editMode) => {
         checkedCheckbox.checked = true
         el.appendChild(checkedCheckbox)
       } else {
+        el.className = "compute-kept"
         return
       }
       break
     case "video":
-      if (!editMode && !user.s.noVideo) {
-        if (seq.length !== 2) return
-        if (seq[1].className === "url") {
-          const videoEmbedElement = videoEmbedTemplate.cloneNode(true)
-          videoEmbedElement.src = youtubeLinkToEmbed(seq[1].innerText)
-          el.textContent = ""
-          el.appendChild(videoEmbedElement)
-        }
-      } else {
+      if (user.s.noVideo) {
         return
+      }
+      if (seq.length !== 2) return
+      if (seq[1].className === "url") {
+        const embedLink = youtubeLinkToEmbed(seq[1].innerText)
+        if (!embedLink) {
+          return
+        }
+        if (editMode) {
+          el.className = "compute-kept"
+          return
+        }
+        const videoEmbedElement = videoEmbedTemplate.cloneNode(true)
+        videoEmbedElement.src = embedLink
+        el.textContent = ""
+        el.appendChild(videoEmbedElement)
       }
       break
     case "query":
@@ -594,7 +603,7 @@ const idOfYoutubeURL = (url) => {
 }
 
 const embedLinkOfYoutubeId = (id) => {
-  return `https://www.youtube.com/embed/${id}`
+  if (id) return `https://www.youtube.com/embed/${id}`
 }
 
 const youtubeLinkToEmbed = (link) => embedLinkOfYoutubeId(idOfYoutubeURL(link))
