@@ -103,3 +103,13 @@ const pushToArrInObj = (obj, key, val) => {
     obj[key] = [val]
   } else obj[key].push(val)
 }
+
+
+const downloadThing = (name, thing, type) => {
+  const data = new Blob([thing], { type: type })
+  const url = URL.createObjectURL(data)
+  const aElement = document.createElement('a')
+  aElement.setAttribute('href', url)
+  aElement.setAttribute('download', name)
+  aElement.click()
+}

@@ -5,9 +5,11 @@ const zlib = require('zlib')
 const stream = require('stream')
 const { LruCache, promisify, doEditBlox, undoEditBlox } = require('../front/src/front-back-shared.js')
 
-const brotliCompressParams = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } }
+const brotliCompressParams = { chunkSize: 64 * 1024, params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } }
 
 const brotliCompressExpensiveParams = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 11, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } }
+
+const gzParams = { chunkSize: 64 * 1024 }
 
 exports.asyncStoreBloxString = promisify((name, bloxString, callback) => {
   zlib.brotliCompress(bloxString, brotliCompressParams, (err, data) => {
@@ -61,7 +63,7 @@ exports.brCompressExpensiveStream = (from, to, callback) => {
 }
 
 exports.gzCompressStream = (from, to, callback) => {
-  const compressor = zlib.createGzip()
+  const compressor = zlib.createGzip(gzParams)
   stream.pipeline(from, compressor, to, (err) => {
     if (err) {
       console.log("failed to compress:", err)

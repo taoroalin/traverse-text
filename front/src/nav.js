@@ -40,7 +40,7 @@ const renderSessionState = () => {
       pageFrameOuter.addEventListener("scroll", dailyNotesInfiniteScrollListener)
       sessionState.oldestDate = new Date(Date.now())
       let numNotesLoaded = 0
-      console.log(store.titles)
+      // console.log(store.titles)
       let dateString = formatDate(sessionState.oldestDate)
       generateTitles(store) // todo get rid of title corruption and remove this. it's here because the titles are always corrupted at this point, I have no idea why.
       if (!store.titles[dateString]) {
@@ -227,10 +227,16 @@ scriptsLoaded = true
 
 const ptest = () => {
   const t2 = performance.now()
-  for (let i = 0; i < 100; i++) {
-    generateInnerOuterRefs()
+  // for (let id in store.blox) {
+  //   base64ToInt(id)
+  // }
+  for (let i = 0; i < 1000000; i++) {
+    intToBase64(i)
   }
   const took = (performance.now() - t2)
   console.log(`thing took ${took}`)
 }
 // ptest()
+const tempy = oldBloxToBin()
+// downloadThing("bin", tempy, 'application/x-blox')
+console.log(binToNewBlox(tempy))

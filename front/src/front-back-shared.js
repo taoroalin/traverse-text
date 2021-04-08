@@ -1,4 +1,8 @@
-const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
+const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const CHARS_64_MAP = {}
+for (let i = 0; i < 64; i++) {
+  CHARS_64_MAP[CHARS_64[i]] = i
+}
 const CHARS_16 = "0123456789abcdef"
 
 let newUid
@@ -181,6 +185,173 @@ class LruCache {
   }
 }
 
+const oldBloxToNewBlox = (blox) => {
+  const stime = performance.now()
+  let oldIdToNewId = {}
+  const now = Date.now()
+  let newBlox = []
+  for (let id in blox) {
+    const bloc = blox[id]
+    const newBloc = { s: bloc.s, k: [] }
+    switch (typeof bloc.ct) {
+      case 'string': newBloc.ct = base64ToInt(bloc.ct)
+        break
+      case 'number': newBloc.ct = bloc.ct
+        break
+      default:
+        newBloc.ct = now
+    }
+    switch (typeof bloc.et) {
+      case 'string': newBloc.et = base64ToInt(bloc.et)
+        break
+      case 'number': newBloc.et = bloc.et
+        break
+      default:
+        newBloc.et = now
+    }
+    oldIdToNewId[id] = newBlox.length
+    newBlox.push(newBloc)
+  }
+
+  for (let id in blox) {
+    const bloc = blox[id]
+    const newId = oldIdToNewId[id]
+    const newBloc = newBlox[newId]
+    newBloc.k = (bloc.k || []).map(x => oldIdToNewId[x])
+    newBloc.s = newBloc.s.replaceAll(/\(\(([a-zA-Z0-9\-_]+)\)\)/g, (match, blocId) => {
+      return oldIdToNewId[blocId] ? `((` + intToBase64(oldIdToNewId[blocId]) + `))` : match
+    })
+  }
+  console.log(newBlox)
+  console.log(`oldtonew took ${performance.now() - stime}`)
+  return newBlox
+}
+
+
+const bloxHeaderLength = 12
+const blocHeaderLength = 32
+
+const newBloxToBin = (blox) => {
+  const b2bstime = performance.now()
+  const bigBuffer = new ArrayBuffer(5000000)
+  let bigDataView = new DataView(bigBuffer)
+  let bigU8 = new Uint8Array(bigBuffer)
+  // for now just allocate 10M and hope it's enough
+
+
+  let stringBuffer = new Uint8Array(5000000)
+
+  /*
+  unix timestamp technically fits in 6 bytes.
+   
+  blox:
+  num blox         4
+  strings start    4
+  version          4
+  [bloc header]
+  [string]
+   
+  bloc header:
+  ct               8 8
+  et               8 16
+  
+  kids-start       4 20
+  kids-len         4 24
+  str-start        4 28
+  str-len          4 32
+  [kid]
+  */
+
+  bigDataView.setUint32(0, blox.length, true)
+  bigDataView.setUint32(8, 1, true)
+  let idx = bloxHeaderLength
+  let stringView = stringBuffer
+  let stringIdx = 0
+  let kidsIdx = bloxHeaderLength + blocHeaderLength * blox.length
+  for (let i = 0; i < blox.length; i++) {
+    const bloc = blox[i]
+
+    bigDataView.setBigUint64(idx, BigInt(bloc.ct), true)
+    idx += 8
+    bigDataView.setBigUint64(idx, BigInt(bloc.et), true)
+    idx += 8
+
+    bigDataView.setUint32(idx, kidsIdx, true)
+    idx += 4
+    bigDataView.setUint32(idx, bloc.k.length, true)
+    idx += 4
+
+    for (let i = 0; i < bloc.k.length; i++) {
+      bigDataView.setUint32(kidsIdx, bloc.k[i], true)
+      kidsIdx += 4
+    }
+
+    bigDataView.setUint32(idx, stringIdx, true)
+    idx += 4
+    const { read: len } = textEncoder.encodeInto(bloc.s, stringView)
+    stringView = stringView.subarray(len)
+    stringIdx += len
+    bigDataView.setUint32(idx, len, true)
+    idx += 4
+  }
+  bigDataView.setUint32(4, kidsIdx, true)
+
+  console.log(`binify took ${performance.now() - b2bstime}`)
+  const precopytime = performance.now()
+  const fittedU8 = new Uint8Array(kidsIdx + stringIdx)
+  fittedU8.set(bigU8.subarray(0, kidsIdx), 0)
+  fittedU8.set(stringBuffer.subarray(0, stringIdx), kidsIdx)
+  console.log(`copy took ${performance.now() - precopytime}`)
+  console.log(fittedU8)
+  return fittedU8
+}
+
+const binToNewBlox = (bin) => {
+  const decodeSTime = performance.now()
+  let idx = 0
+
+  const dataView = new DataView(bin.buffer)
+
+  const len = dataView.getUint32(0, true)
+  console.log(len)
+  let kidsIdx = bloxHeaderLength + len * blocHeaderLength
+  const blocHeadersEnd = kidsIdx
+  let stringIdx = dataView.getUint32(4, true)
+
+  let blox = []
+  for (let idx = bloxHeaderLength; idx < blocHeadersEnd;) {
+    const bloc = { k: [] }
+    bloc.ct = Number(dataView.getBigUint64(idx, true))
+    idx += 8
+    bloc.et = Number(dataView.getBigUint64(idx, true))
+    idx += 8
+
+    const kidsStart = dataView.getUint32(idx, true)
+    idx += 4
+    const kidsLength = dataView.getUint32(idx, true)
+    idx += 4
+
+    for (let i = 0; i < kidsLength; i++) {
+      bloc.k.push(dataView.getUint32(kidsStart + i * 4, true))
+    }
+
+    const stringStart = dataView.getUint32(idx, true)
+    idx += 4
+    const stringLength = dataView.getUint32(idx, true)
+    idx += 4
+
+    bloc.s = textDecoder.decode(bin.subarray(stringIdx + stringStart, stringIdx + stringStart + stringLength))
+
+    blox.push(bloc)
+  }
+  console.log(`decode took ${performance.now() - decodeSTime}`)
+  return blox
+}
+
+const oldBloxToBin = () => newBloxToBin(oldBloxToNewBlox(store.blox))
+
+
+
 const promisify = (fn) => (...args) => new Promise((resolve, err) => fn(...args, resolve))
 
 // this is v slow, 7M dates / s
@@ -198,7 +369,7 @@ const intToBase64 = (int) => {
 const base64ToInt = (str) => {
   let result = 0
   for (let i = 0; i < str.length; i++) {
-    result += CHARS_64.indexOf(str[i]) * Math.pow(64, (str.length - i - 1))
+    result += CHARS_64_MAP[str[i]] * Math.pow(64, (str.length - i - 1))
   }
   return result
 }

@@ -9,12 +9,7 @@ const getCtrlKey = (event) => {
 const downloadHandler = () => {
   console.log("download")
   const json = storeToRoamJSON(store)
-  const data = new Blob([json], { type: 'text/json' })
-  const url = URL.createObjectURL(data)
-  const aElement = document.createElement('a')
-  aElement.setAttribute('href', url)
-  aElement.setAttribute('download', `${store.graphName}-${formatDateYMD(new Date(Date.now()))}.json`)
-  aElement.click()
+  downloadThing(`${store.graphName}-${formatDateYMD(new Date(Date.now()))}.json`, json, 'text/json')
 }
 
 const downloadMd = () => {

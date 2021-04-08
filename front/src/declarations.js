@@ -348,5 +348,6 @@ const videoEmbedTemplate = getTemp("video-embed")
 const queryFrameTemplate = getTemp("query-frame")
 
 const textEncoder = new TextEncoder()
+const textDecoder = new TextDecoder()
 
 const colorThemeOrder = ["light", "purple", "green", "dark"]
