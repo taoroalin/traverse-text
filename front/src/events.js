@@ -6,15 +6,19 @@ const getCtrlKey = (event) => {
   return event.ctrlKey
 }
 
-const downloadHandler = () => {
-  console.log("download")
-  const json = storeToRoamJSON(store)
-  const data = new Blob([json], { type: 'text/json' })
+const downloadThing = (name, thing, type) => {
+  const data = new Blob([thing], { type: type })
   const url = URL.createObjectURL(data)
   const aElement = document.createElement('a')
   aElement.setAttribute('href', url)
-  aElement.setAttribute('download', `${store.graphName}-${formatDateYMD(new Date(Date.now()))}.json`)
+  aElement.setAttribute('download', name)
   aElement.click()
+}
+
+const downloadHandler = () => {
+  console.log("download")
+  const json = storeToRoamJSON(store)
+  downloadThing(`${store.graphName}-${formatDateYMD(new Date(Date.now()))}.json`, json, 'text/json')
 }
 
 const downloadMd = () => {
@@ -831,26 +835,26 @@ switchToSignup.addEventListener('click', focusSignup)
 
 switchToLogin.addEventListener('click', focusLogin)
 
-const rwlClickOutListener = (event) => {
+const reallyWantToLeaveClickOutsideListener = (event) => {
   console.log("rwlclick")
   if (event.target.closest('.really-want-to') === null) {
     reallyWantToLeaveElement.style.display = "none"
-    document.removeEventListener('click', rwlClickOutListener)
+    document.removeEventListener('click', reallyWantToLeaveClickOutsideListener)
   }
 }
 
 topButtons["Login"].addEventListener('click', focusLogin)
 
 topButtons["Sign Out"].addEventListener('click', () => {
-  if (isSynced()) reset()
+  if (storeManager.isSynced()) invalidateUser()
   else {
     reallyWantToLeaveElement.style.display = "flex"
-    document.addEventListener('click', (event) => rwlClickOutListener(event))
+    document.addEventListener('click', (event) => reallyWantToLeaveClickOutsideListener(event))
     event.stopPropagation()
   }
 })
 
-reallyWantToLeaveElement.children[0].addEventListener('click', reset)
+reallyWantToLeaveElement.children[0].addEventListener('click', invalidateUser)
 
 topHamburgerElement.addEventListener('click', () => {
   if (optionsFrame.style.display == 'block') {
@@ -868,4 +872,20 @@ topButtons["Create New Graph"].addEventListener("keydown", (event) => {
 
 topButtons["Report Issue"].addEventListener("click", (event) => {
   // todo report issue
+})
+
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault()
+  userManager.login(loginEmailElement.value, loginPasswordElement.value)
+  loginEmailElement.value = ""
+  loginPasswordElement.value = ""
+})
+
+signupForm.addEventListener("submit", async (event) => {
+  event.preventDefault()
+  userManager.signup(signupEmailElement.value, signupUsernameElement.value, signupPasswordElement.value)
+  signupEmailElement.value = ""
+  signupUsernameElement.value = ""
+  signupPasswordElement.value = ""
 })

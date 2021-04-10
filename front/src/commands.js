@@ -14,19 +14,9 @@ s: position. defaults to end of string
 
 */
 
-const isSynced = () => user.s.commitId === user.s.syncCommitId
-
 const diff = (string, oldString) => { // todo real diff
   return { d: oldString, i: string }
 }
-
-let undoCommitList = []
-let undoCommitSessionStateList = []
-let undoCommitInProgress = []
-
-let masterCommitList = []
-let masterCommitInProgress = []
-
 
 const undoEditCacheStuff = (edit) => {
   const [op, id, p1, p2, p3, p4] = edit
@@ -148,47 +138,6 @@ const saveStoreStringLocal = (string) => {
   saveStoreStringLocalStorage(string)
   if (idb)
     saveStoreStringIndexedDB(string)
-}
-
-const saveStoreStringLocalStorage = (string) => {
-  try {
-    localStorage.setItem('store', string)
-  } catch (e) {
-    // mainly catch localstorage size limit
-    localStorage.removeItem('store')
-    console.error(`Local Storage Failure: ${e}`)
-  }
-}
-
-const saveStoreStringIndexedDB = (string) => {
-  const transaction = idb.transaction(["stores"], "readwrite")
-  const storeStore = transaction.objectStore("stores")
-  const req = storeStore.put({
-    graphName: store.graphName,
-    store: string
-  })
-  req.onsuccess = () => {
-    console.log("saved")
-  }
-  req.onerror = (event) => {
-    console.log("save error")
-    console.log(event)
-  }
-}
-
-let saveStoreTimeout = null
-
-const debouncedSaveStore = () => {
-  if (user.s.commitId !== user.s.syncCommitId) {
-    clearTimeout(saveStoreTimeout)
-    saveStoreTimeout = setTimeout(saveStoreIncremental, 300)
-  }
-}
-
-const print = (text) => {
-  if (user.s.logging) {
-    console.log(text)
-  }
 }
 
 // @inprogress

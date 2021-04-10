@@ -174,7 +174,7 @@ const logError = async (message, url, lineNumber, columnNumber, error) => {
   console.log("LOGGING ERROR")
   const headers = new Headers()
   headers.set('h', user.h)
-  const res = await fetch(`${basicBitchServerUrl}/error`, { headers, method: 'POST', body: `${user.e}\n${error.stack}\n` })
+  const res = await fetch(`${apiUrl}/error`, { headers, method: 'POST', body: `${user.e}\n${error.stack}\n` })
   if (res.statusCode !== 200) {
     console.log(res)
   } else {
@@ -183,41 +183,6 @@ const logError = async (message, url, lineNumber, columnNumber, error) => {
 }
 
 window.onerror = logError
-
-
-const showTopBar = () => {
-  topBar.style.marginTop = "0px"
-  topBarHiddenHitbox.style.display = "none"
-}
-const hideTopBar = () => {
-  topBar.style.marginTop = "-36px"
-  topBarHiddenHitbox.style.display = "block"
-}
-const saveUser = () => {
-  document.body.className = user.s.theme
-  if (user.s.topBar === "visible") showTopBar()
-  else hideTopBar()
-
-  document.body.spellcheck = user.s.spellcheck
-  document.body.dataset['editingspotlight'] = user.s.editingSpotlight
-
-  if (user.h) {
-    topButtons["Sign Out"].style.display = "block"
-    topButtons["Sign Up"].style.display = "none"
-    topButtons["Login"].style.display = "none"
-  } else {
-    topButtons["Sign Out"].style.display = "none"
-    topButtons["Sign Up"].style.display = "block"
-    topButtons["Login"].style.display = "block"
-  }
-  saveUserJustLocalStorage()
-  saveSettingsToBasicBitchServer()
-}
-
-const saveUserJustLocalStorage = () => {
-  localStorage.setItem("user", JSON.stringify(user))
-
-}
 
 
 // Finally starting the program after everything's compiled

@@ -1,3 +1,152 @@
+
+class StoreManagerClass {
+  constructor() {
+    this.meta = {}
+
+    this.store = null
+
+    this.stores = {}
+
+    this.undoCommitList = []
+    this.undoCommitInProgress = []
+
+    this.serverPendingEdits = []
+    this.pendingEdits = []
+
+    this.saveStoreTimeout = null
+
+    this.graphName = localStorage.getItem('graphName')
+    let metaText = localStorage.getItem("storeMeta")
+    if (metaText) {
+      this.meta = JSON.parse(metaText)
+    }
+
+    if (graphName) {
+
+    }
+
+  }
+
+  isSynced = () => {
+    return this.pendingEdits.length === 0
+  }
+
+  getStore(graphName) {
+    const getSentTime = performance.now()
+    const response = await fetch(`${apiUrl}/get/${graphName}`,
+      {
+        headers: {
+          passwordHash: userManager.user.h,
+          synccommitid: this.meta[graphName] && this.meta[graphName].synccommitid
+        }
+      })
+    switch (reponse.status) {
+      case 200:
+        const blox = await response.json()
+        console.log(`got in ${performance.now() - getSentTime}`)
+        return blox
+      case 304:
+        return
+      default:
+        console.warn(`failed to get store`)
+    }
+  }
+
+  saveMeta() {
+    localStorage.setItem('storeMeta', JSON.stringify(this.meta))
+  }
+
+  saveStoreIncremental() {
+    this.saveStoreLocal()
+    this.editServer()
+  }
+
+  debouncedSaveStore() {
+    clearTimeout(saveStoreTimeout)
+    saveStoreTimeout = setTimeout(() => this.saveStoreIncremental, 200)
+  }
+
+  saveStoreLocal() {
+    const string = JSON.stringify(this.store)
+    try {
+      localStorage.setItem('store', string)
+    } catch (e) {
+      // mainly catch localstorage size limit
+      localStorage.removeItem('store')
+      console.error(`Local Storage Failure: ${e}`)
+    }
+
+    const transaction = idb.transaction(["stores"], "readwrite")
+    const storeStore = transaction.objectStore("stores")
+    const req = storeStore.put({
+      graphName: this.graphName,
+      store: string
+    })
+    req.onsuccess = () => {
+      console.log("saved")
+    }
+    req.onerror = (event) => {
+      console.log("save error")
+      console.log(event)
+    }
+  }
+
+  async editServer() {
+    const newCommitId = newUUID()
+    this.serverPendingEdits = this.pendingEdits
+    const commit = { id: newCommitId, t: intToBase64(Date.now()), edits: this.serverPendingEdits }
+    this.pendingEdits = []
+    const response = await fetch(`${apiUrl}/edit/${this.store.graphName}`,
+      {
+        headers: {
+          h: userManager.user.h,
+          body: JSON.stringify(commit),
+          synccommitid: this.meta[this.graphName].syncCommitId
+        }
+      })
+    if (response.status === 200) {
+      this.meta[this.graphName].syncCommitId = newCommitId
+    } else if (response.status === 409) {
+      invalidateStores()
+    } else {
+      this.pendingEdits = [...this.serverPendingEdits, ...this.pendingEdits]
+    }
+  }
+
+  async forceWriteServer() {
+    const response = await fetch(`${apiUrl}/put/${this.graphName}`,
+      {
+        method: "POST", body: JSON.stringify(this.store.blox),
+        headers: {
+          h: userManager.user.h,
+          synccommitid: this.meta[this.graphName].syncCommitId,
+          force: true
+        }
+      })
+    if (response.status === 200 || response.status === 304) {
+      this.meta[this.graphName].syncCommitId = syncCommitId
+    } else {
+      console.error(`failed to save to server`)
+    }
+  }
+
+  async createStore() {
+    const headers = new Headers()
+    headers.set('h', user.h)
+    headers.set('commitid', 'MYVERYFIRSTCOMMITEVER')
+    const response = await fetch(`${apiUrl}/creategraph/${store.graphName}`, { headers, method: 'POST', body: JSON.stringify(this.store.blox) })
+    if (!response.ok) {
+      notifyText("failed to add graph")
+      return
+    }
+    this.meta[this.graphName] = { syncCommitId: response.headers.commidid }
+    this.saveMeta()
+  }
+}
+const storeManager = new StoreManagerClass()
+
+
+
 // blox or bloc means either block or page. they're almost the same, just one has a parent and the other doesn't, and linking syntax is different
 const blankStore = () => ({
   blox: {},
@@ -8,7 +157,6 @@ const blankStore = () => ({
   innerRefs: {},
   outerRefs: {},
 
-  roamProps: {},
   ownerRoamId: undefined,
   graphName: undefined,
 })
@@ -16,11 +164,9 @@ const blankStore = () => ({
 const bloxProps = [
   "s",  // string
   "p",  // parent
-  "ct", // create time
   "k", // kids
+  "ct", // create time
   "et", // edit time
-  "cu", // create user
-  "eu"  // edit user
 ]
 
 const gcPage = (store, pageId) => {

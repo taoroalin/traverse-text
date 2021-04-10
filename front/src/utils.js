@@ -103,3 +103,25 @@ const pushToArrInObj = (obj, key, val) => {
     obj[key] = [val]
   } else obj[key].push(val)
 }
+
+const intervalize = (func, interval) => {
+  let timeout = null
+  return () => {
+    if (timeout !== null)
+      timeout = setTimeout(() => {
+        func()
+        timeout = null
+      }, interval)
+  }
+}
+
+const debounce = (func, delay) => {
+  let timeout = null
+  return () => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      func()
+      timeout = null
+    }, delay)
+  }
+}

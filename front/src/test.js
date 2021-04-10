@@ -139,6 +139,10 @@ const terminalCommands = {
 }
 
 //~frontskip
+document.title = "Local Traverse Text"
+//~
+
+//~frontskip
 // const socket = new WebSocket("ws://localhost:4000//ws")
 // socket.onmessage = (message) => {
 //   const data = message.data

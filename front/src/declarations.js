@@ -227,14 +227,11 @@ let toShowOnTopBar = ["Daily Notes", "Report Issue", "Sign Up", "Upload",]
 
 const layoutTopBar = () => {
   const split = Math.floor(toShowOnTopBar.length / 2)
-  console.log(`SPLIT ${split}`)
   for (let i = 0; i < split; i++) {
     topBarLeft.appendChild(topButtons[toShowOnTopBar[i]])
-    console.log(`left ${toShowOnTopBar[i]}`)
   }
   for (let i = split; i < toShowOnTopBar.length; i++) {
     topBarRight.appendChild(topButtons[toShowOnTopBar[i]])
-    console.log(`right ${toShowOnTopBar[i]}`)
   }
   for (let name of topButtonNames) {
     if (!toShowOnTopBar.includes(name)) {
@@ -350,3 +347,5 @@ const queryFrameTemplate = getTemp("query-frame")
 const textEncoder = new TextEncoder()
 
 const colorThemeOrder = ["light", "purple", "green", "dark"]
+
+const apiUrl = location.protocol + "//" + location.hostname + ":8756"

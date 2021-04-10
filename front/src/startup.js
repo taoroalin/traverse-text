@@ -1,17 +1,19 @@
-let idb = null
-let store = null
-let otherStores = {}
-let r
-
-const basicBitchServerUrl = location.protocol + "//" + location.hostname + ":8756"
-
-//~frontskip
-document.title = "Local Traverse Text"
-//~
-
-let user
-let userText = localStorage.getItem("user")
 let usingLocalStore = true
+
+let print
+{
+  let serverLogInProgress = ""
+  let debouncedSendServerLog = intervalize(() => {
+    fetch(`${apiUrl}/log`, { method: 'POST', body: serverLogInProgress })
+    serverLogInProgress = ""
+  },
+    10000)
+  print = (string) => {
+    serverLogInProgress += string
+    debouncedSendServerLog()
+  }
+}
+
 
 let startFn = () => gotoNoHistory("dailyNotes")
 
@@ -26,28 +28,33 @@ const setDataLoaded = () => {
 const start = () => {
   saveUser()
   startFn()
-  if (user.h && user.s.commitId !== user.s.syncCommitId)
+  if (user.h && user.s.commitId !== graphMetadata[user.s.graphName].syncCommitId)
     debouncedSaveStore()
 }
 
-const invalidateLocal = () => {
+const invalidateStores = () => {
   const r = indexedDB.deleteDatabase("microroam")
   console.error(`Local replica invalid. Resetting from server`)
   user.s.commitId = undefined
-  user.s.syncCommitId = undefined
+  graphMetadata[user.s.graphName].syncCommitId = undefined
   localStorage.setItem("user", JSON.stringify(user))
   localStorage.removeItem('store')
+  window.location.href = window.location.href
+}
+
+const invalidateUser = () => {
+  localStorage.clear()
+  const r = indexedDB.deleteDatabase("microroam")
   window.location.href = window.location.href
 }
 
 if (userText) {
   user = JSON.parse(userText)
   if (user.h) {
-    const headers = new Headers()
-    headers.set('h', user.h)
-    if (user.s.syncCommitId) headers.set('commitid', user.s.syncCommitId)
-    let reqUrl = `${basicBitchServerUrl}/get/${user.s.graphName}`
-    fetch(reqUrl, { method: 'POST', headers: headers }).then(async (res) => {
+    const headers = { h: user.h }
+    if (graphMetadata[user.s.graphName].syncCommitId) headers.commitid = graphMetadata[user.s.graphName].syncCommitId
+    let reqUrl = `${apiUrl}/get/${user.s.graphName}`
+    fetch(reqUrl, { method: 'POST', headers }).then(async (res) => {
       if (res.status === 304) {
         console.log(`already up to date`)
         return
@@ -56,14 +63,14 @@ if (userText) {
         console.log(`STORE NOT ON SERVER`)
         return
       }
-      console.log(`server on commit ${res.headers.get('commitid')} local on commit ${user.s.syncCommitId}`)
+      console.log(`server on commit ${res.headers.get('commitid')} local on commit ${graphMetadata[user.s.graphName].syncCommitId}`)
       usingLocalStore = false
       res.json().then(blox => {
         console.log('got blox')
         const oldStartFn = startFn
         startFn = () => {
           store = hydrateFromBlox(user.s.graphName, blox)
-          user.s.syncCommitId = res.headers.get('commitid')
+          graphMetadata[user.s.graphName].syncCommitId = res.headers.get('commitid')
           oldStartFn()
         }
         setDataLoaded()
@@ -77,7 +84,7 @@ if (userText) {
       store = JSON.parse(lsStore)
       setDataLoaded()
     } catch (e) {
-      invalidateLocal()
+      invalidateStores()
     }
     r = indexedDB.open("microroam", 5)
     r.onsuccess = (e1) => idb = e1.target.result
@@ -95,7 +102,7 @@ if (userText) {
                   store = JSON.parse(e.target.result.store)
                   setDataLoaded()
                 } catch (e) {
-                  invalidateLocal()
+                  invalidateStores()
                 }
               } else {
                 console.log("adding default graph")
@@ -122,32 +129,3 @@ if (userText) {
   r.onsuccess = (e1) => idb = e1.target.result
 }
 
-r.onupgradeneeded = (event) => {
-  console.log("upgradeneeded")
-  const db = r.result
-  const stores = Array.from(db.objectStoreNames)
-  if (!stores.includes("stores")) {
-    db.createObjectStore("stores", { keyPath: "graphName" })
-  } else {
-    console.log(event)
-    console.log(db)
-
-    r.onsuccess = () => {
-      console.log("new success")
-      idb = event.target.result
-      const storeStore = db.transaction(["stores"], "readonly").objectStore("stores")
-      storeStore.get(user.s.graphName).onsuccess = (e) => {
-        store = e.target.result.store
-        const roamJSON = oldStoreToRoamJSON[db.version](store)
-        roamJsonToStore(user.s.graphName, roamJSON)
-        saveStore()
-        setDataLoaded()
-      }
-    }
-  }
-}
-r.onerror = (e) => {
-  console.log("error")
-  console.log(e)
-  // alert(`Traverse Text doesn't work with Firefox Private mode. It works with Chrome, Brave, Safari, and Firefox normal mode.`)
-}
