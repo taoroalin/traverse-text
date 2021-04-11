@@ -1,9 +1,9 @@
 // Event Listener Helpers -----------------------------------------------------------------------------------------------
 const isOsMac = navigator.platform.substring(0, 3) === "Mac"
 
-const getCtrlKey = (event) => {
-  if (isOsMac) return event.metaKey
-  return event.ctrlKey
+let getCtrlKey = (event) => event.ctrlKey
+if (isOsMac) {
+  getCtrlKey = (event) => event.metaKey
 }
 
 const downloadHandler = () => {
@@ -41,7 +41,7 @@ const expandTemplate = () => {
       const childId = childIds[i]
       const idx = currentIdx + i
       const newId = macros.nocommit.copyBlock(childId, parentId, idx)
-      const e = renderBlock(parentNode, newId, idx)
+      const e = renderBlock(store, parentNode, newId, idx)
       if (i === 0) {
         focusBlockEnd(e)
       }
@@ -66,14 +66,14 @@ const pasteBlocks = () => {
 
   if (clipboardData.dragSelect.rooted) {
     const newId = macros.nocommit.copyBlock(clipboardData.dragSelect.root, parentId, currentIdx)
-    const e = renderBlock(parentNode, newId, currentIdx)
+    const e = renderBlock(store, parentNode, newId, currentIdx)
     focusBlockEnd(e)
   } else {
     let lastNode = null
     for (let i = 0; i < clipboardData.dragSelect.endIdx + 1 - clipboardData.dragSelect.startIdx; i++) {
       const blockId = store.blox[clipboardData.dragSelect.root].k[i + clipboardData.dragSelect.startIdx]
       const newId = macros.nocommit.copyBlock(blockId, parentId, i + currentIdx)
-      const e = renderBlock(parentNode, newId, i + currentIdx)
+      const e = renderBlock(store, parentNode, newId, i + currentIdx)
       lastNode = e
     }
     focusBlockEnd(lastNode)
@@ -192,8 +192,8 @@ document.addEventListener("input", (event) => {
       renderResultSet(editingCommandElement, matchingInlineCommands, inlineCommandList, 0)
     }
 
-    if (editingTitle) {
-      const matchingTitles = titleExactFullTextSearch(editingTitle)
+    if (editingLink) {
+      const matchingTitles = titleExactFullTextSearch(editingLink.title)
       renderResultSet(editingLink, matchingTitles, autocompleteList, 0)
     }
 
@@ -252,7 +252,7 @@ const globalHotkeys = {
   },
   "open": {
     key: "o", control: true, fn: (event) => {
-      if (editingTitle) goto("pageTitle", editingTitle)
+      if (editingLink) goto("pageTitle", editingLink.title, editingLink.graphName)
       else if (editingUrlElement) editingUrlElement.click()
     }
   },
@@ -393,7 +393,7 @@ document.addEventListener("keydown", (event) => {
           console.log(idx)
           const newBlockUid = newUid()
           commitEdit("cr", newBlockUid, store.blox[sessionState.focusId].p, idx)
-          const newBlockElement = renderBlock(focusBlock.parentNode, newBlockUid, idx)
+          const newBlockElement = renderBlock(store, focusBlock.parentNode, newBlockUid, idx)
           newBlockElement.children[1].focus()
           event.preventDefault()
         }
@@ -551,7 +551,7 @@ const updownythingey = (parent, list, cache, focused) => {
     } else {
       const oldIdx = parseInt(list.dataset.resultStartIdx)
       const newIdx = clamp(oldIdx + moveDirection * SEARCH_RESULT_LENGTH, 0, cache.length - SEARCH_RESULT_LENGTH)
-      renderResultSet(parent, cache, list, newIdx)
+      renderResultSet(store, parent, cache, list, newIdx)
       if (moveDirection === -1) {
         delete list.firstElementChild.dataset.selected
         list.lastElementChild.dataset.selected = true
@@ -645,7 +645,7 @@ document.addEventListener("mousedown", (event) => {
 
     const blockBody = event.target.closest(".block__body")
     blockBody.textContent = ""
-    renderBlockBody(blockBody, string)
+    renderBlockBody(store, blockBody, string)
     event.preventDefault()
   } else if (event.target.id === "top-connect") {
     if (connectFrame.style.display === "none") { // todo make the "connect" button show loaded graphs

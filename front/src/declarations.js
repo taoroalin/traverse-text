@@ -260,7 +260,6 @@ let focusBlockBody = null
 let editingTemplateExpander = null
 let editingCommandElement = null
 let editingLink = null
-let editingTitle = null
 
 let focusSuggestion = null
 

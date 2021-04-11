@@ -4,7 +4,7 @@ const prepFocusIdForCursor = () => {
     focusBlock.dataset.id !== sessionState.focusId) {
 
     focusBlockBody.textContent = ""
-    renderBlockBody(focusBlockBody, store.blox[focusBlock.dataset.id].s)
+    renderBlockBody(store, focusBlockBody, store.blox[focusBlock.dataset.id].s)
   }
 
   focusBlock = document.querySelector(`.block[data-id="${sessionState.focusId}"]`)
@@ -18,7 +18,7 @@ const prepFocusIdForCursor = () => {
 
   const text = store.blox[sessionState.focusId].s
   focusBlockBody.innerText = ""
-  renderBlockBody(focusBlockBody, text, true)
+  renderBlockBody(store, focusBlockBody, text, true)
 }
 
 const focusIdPosition = () => {
@@ -99,8 +99,6 @@ const updateCursorSpanInfo = () => {
       editingLink = ref
     }
   }
-  editingTitle = editingLink && editingLink.title
-
   editingTemplateExpander = getEditingSimpleSpan("template-expander")
 
   editingUrlElement = getEditingSimpleSpan("url")

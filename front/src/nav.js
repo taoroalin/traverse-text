@@ -12,14 +12,28 @@ const renderSessionState = () => {
   pageFrame.innerHTML = ""
   searchInput.value = ""
 
+
   // render state
   switch (sessionState.pageFrame) {
     case "pageTitle":
-      let existingPage = store.titles[sessionState.page]
-      if (existingPage === undefined) {
-        existingPage = macros.createPage(sessionState.page)
+      const graphName = sessionState.graphName
+      if (graphName === user.s.graphName) {
+        let existingPage = store.titles[sessionState.page]
+        if (existingPage === undefined) {
+          existingPage = macros.createPage(sessionState.page)
+        }
+        renderPage(store, pageFrame, existingPage)
+      } else if (graphName in stores) {
+        let existingPage = stores[graphName].titles[sessionState.page]
+        if (existingPage === undefined) {
+          existingPage = macros.createPage(sessionState.page)
+        }
+        renderPage(stores[graphName], pageFrame, existingPage)
+      } else {
+        addOtherStore(graphName).then(store => {
+          renderSessionState()
+        })
       }
-      renderPage(pageFrame, existingPage)
       break
     case "block":
       const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
@@ -50,7 +64,7 @@ const renderSessionState = () => {
       for (let i = 0; i < 1000; i++) {
         const daysNotes = store.titles[dateString]
         if (daysNotes) {
-          renderPage(pageFrame, daysNotes)
+          renderPage(store, pageFrame, daysNotes)
           const pageBreak = document.createElement("div")
           pageBreak.className = "page-break"
           pageFrame.appendChild(pageBreak)
@@ -86,14 +100,17 @@ const gotoNoHistory = (commandName, ...command) => {
   switch (commandName) {
     case "dailyNotes":
       sessionState.pageFrame = "dailyNotes"
+      sessionState.graphName = command[0] || user.s.graphName
       break
     case "pageTitle":
       sessionState.pageFrame = "pageTitle"
       sessionState.page = command[0]
+      sessionState.graphName = command[1] || user.s.graphName
       break
     case "block":
       sessionState.pageFrame = "block"
       sessionState.block = command[0]
+      sessionState.graphName = command[1] || user.s.graphName
       break
   }
 
@@ -137,7 +154,7 @@ const dailyNotesInfiniteScrollListener = () => {
       sessionState.oldestDate.setDate(sessionState.oldestDate.getDate() - 1)
       const daysNotes = store.titles[formatDate(sessionState.oldestDate)]
       if (daysNotes) {
-        renderPage(pageFrame, daysNotes)
+        renderPage(otherStores[sessionState.graphName], pageFrame, daysNotes)
         const pageBreak = document.createElement("div")
         pageBreak.className = "page-break"
         pageFrame.appendChild(pageBreak)
@@ -145,29 +162,6 @@ const dailyNotesInfiniteScrollListener = () => {
       }
     }
   }
-}
-
-
-const parseStackTrace = (string) => {
-  const result = []
-  const matches = string.matchAll(/([^ ]+) \(([^\)]+):([0-9]+):([0-9]+)\)(?:\n|$)/g)
-  for (let match of matches) {
-    result.push({ function: match[1], file: match[2], line: match[3], column: match[4] })
-  }
-  return result
-}
-const logErrorOld = (message, url, lineNumber, columnNumber, error) => {
-  const errorInfo = { line: lineNumber, file: url, stack: parseStackTrace(error.stack), message, column: columnNumber }
-  const existingErrors = localStorage.getItem("error_log")
-  if (existingErrors) {
-    const z = JSON.parse(existingErrors)
-    z.push(errorInfo)
-    localStorage.setItem("error_log", JSON.stringify(z))
-  } else {
-    localStorage.setItem("error_log", JSON.stringify([errorInfo]))
-  }
-  // todo send error to server at this point
-  return false // we don't actually "catch" the error, we just report that it happened. The error is still an error
 }
 
 const logError = async (message, url, lineNumber, columnNumber, error) => {

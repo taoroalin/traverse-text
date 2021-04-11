@@ -1,4 +1,4 @@
-const renderPage = (parentNode, uid, hasBackrefs = true) => {
+const renderPage = (store, parentNode, uid, hasBackrefs = true) => {
   const page = store.blox[uid]
   const element = pageTemplate.cloneNode(true)
   const title = element.firstElementChild
@@ -19,31 +19,31 @@ const renderPage = (parentNode, uid, hasBackrefs = true) => {
   }
 
   for (let child of children) {
-    renderBlock(body, child)
+    renderBlock(store, body, child)
   }
 
   const refs = store.refs[uid]
   if (hasBackrefs && refs && refs.length > 0) {
     const backrefsListElement = backrefListTemplate.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
-    renderBackrefs(backrefsListElement.children[1], refs)
+    renderBackrefs(store, backrefsListElement.children[1], refs)
   }
 
   parentNode.appendChild(element)
   return element
 }
 
-const renderBackrefs = (parent, refs) => {
-  sortByLastEdited(refs)
+const renderBackrefs = (store, parent, refs) => {
+  sortByLastEdited(store, refs)
   for (let backref of refs) {
     const backrefFrame = backrefFrameTemplate.cloneNode(true)
-    renderBreadcrumb(backrefFrame.children[0], backref)
-    renderBlock(backrefFrame.children[1], backref)
+    renderBreadcrumb(store, backrefFrame.children[0], backref)
+    renderBlock(store, backrefFrame.children[1], backref)
     parent.appendChild(backrefFrame)
   }
 }
 
-const renderBlock = (parentNode, uid, idx) => {
+const renderBlock = (store, parentNode, uid, idx) => {
   const element = blockTemplate.cloneNode(true)
   const body = element.children[1]
   const childrenContainer = element.children[2]
@@ -52,11 +52,11 @@ const renderBlock = (parentNode, uid, idx) => {
   body.dataset.id = uid
 
   const string = store.blox[uid].s
-  renderBlockBody(body, string)
+  renderBlockBody(store, body, string)
 
   const children = store.blox[uid].k
   for (let child of children || []) {
-    renderBlock(childrenContainer, child)
+    renderBlock(store, childrenContainer, child)
   }
 
   if (idx !== undefined && parentNode.children.length >= idx) {
@@ -67,7 +67,7 @@ const renderBlock = (parentNode, uid, idx) => {
   return element
 }
 
-const renderBreadcrumb = (parent, blockId) => {
+const renderBreadcrumb = (store, parent, blockId) => {
   blockId = store.blox[blockId].p
   const list = []
   while (blockId !== undefined) {
@@ -81,62 +81,17 @@ const renderBreadcrumb = (parent, blockId) => {
   if (list.length > 0) {
     const node = breadcrumbPageTemplate.cloneNode(true)
     const title = list[list.length - 1].title
-    renderBlockBody(node, title)
+    renderBlockBody(store, node, title)
     node.dataset.title = title
     parent.appendChild(node)
     for (let i = list.length - 2; i >= 0; i--) {
       const node = breadcrumbBlockTemplate.cloneNode(true)
       const nodeBody = node.children[1]
-      renderBlockBody(nodeBody, truncateElipsis(list[i].string, 22))
+      renderBlockBody(store, nodeBody, truncateElipsis(list[i].string, 22))
       node.dataset.id = list[i].id
       parent.appendChild(node)
     }
   }
-}
-
-const renderResultSet = (parent, resultSet, resultFrame, startIdx = 0) => {
-  if (resultSet.length === 0) {
-    resultFrame.style.display = "none"
-    focusSuggestion = null
-    return
-  }
-  const resultTemplate = getTemp(resultFrame.dataset.templateName)
-  resultFrame.innerHTML = ""
-  resultFrame.style.display = "block"
-  const rect = parent.getBoundingClientRect()
-  resultFrame.style.top = rect.bottom
-  resultFrame.style.left = rect.left
-  resultFrame.dataset.resultStartIdx = startIdx
-  const resultLength = Math.min(resultSet.length, startIdx + SEARCH_RESULT_LENGTH)
-  for (let i = startIdx; i < resultLength; i++) {
-    matchingTitle = resultSet[i]
-    const suggestion = resultTemplate.cloneNode(true)
-    if (i == startIdx) {
-      focusSuggestion = suggestion
-      suggestion.dataset.selected = "true"
-    }
-    suggestion.dataset.id = matchingTitle.id
-    if (matchingTitle.title) {
-      suggestion.dataset.title = matchingTitle.title
-      suggestion.innerText = truncateElipsis(matchingTitle.title, 50)
-    } else {
-      suggestion.dataset.string = matchingTitle.string
-      suggestion.innerText = truncateElipsis(matchingTitle.string, 50)
-    }
-    resultFrame.appendChild(suggestion)
-  }
-}
-
-const notifyText = (text, duration) => {
-  const el = notificationTemplate.cloneNode(true)
-  el.innerText = text
-  appElement.appendChild(el)
-  setTimeout(() => el.style.top = "60px", 50)
-  const durationMillis = (duration && duration * 1000) || 5000
-  setTimeout(() => el.style.opacity = "0", durationMillis)
-  setTimeout(() => {
-    el.remove()
-  }, durationMillis + 300)
 }
 
 // 1             2              3  4         5    6         7
@@ -155,7 +110,7 @@ const parseRegex = /(\[\[(?:[a-zA-Z0-9\-]+:)?)|(\]\])|(or)|\(\(([a-zA-Z0-9\-_]+)
 // a regex with a capturing group is like 25% slower than one without a capturing group
 // using named groups halves its speed - unfortunately that's why I don't use named groups
 
-const renderBlockBody = (parent, text, editMode = false) => {
+const renderBlockBody = (store, parent, text, editMode = false) => {
   if (parent.parentElement) parent.parentElement.dataset.header = ''
   parent.dataset.editmode = editMode
   const stack = [parent]
@@ -353,7 +308,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
         el.endIdx = idx
         el.text = text.substring(el.startIdx, el.endIdx)
         el.children[2].appendChild(newTextNode("}}"))
-        transformComputeElement(el, editMode)
+        transformComputeElement(store, el, editMode)
         stack.pop()
         stackTop = stack[stack.length - 1]
         lastTextNode.endIdx += 2
@@ -433,7 +388,7 @@ const renderBlockBody = (parent, text, editMode = false) => {
 const queryOperationOrder = { "root": 0, "compute-or": 1, "compute-and": 2, "page": 3 }
 // not using 0 because that would be falsy
 
-const transformComputeElement = (el, editMode,) => {
+const transformComputeElement = (store, el, editMode,) => {
   const seq = el.children[1].children
   if (seq.length === 0) return
   const firstEl = seq[0]
@@ -469,7 +424,7 @@ const transformComputeElement = (el, editMode,) => {
       }
       if (seq.length !== 2) return
       if (seq[1].className === "url") {
-        const embedLink = youtubeLinkToEmbed(seq[1].innerText)
+        const embedLink = youtubeLinkToEmbedLink(seq[1].innerText)
         if (!embedLink) {
           return
         }
@@ -543,9 +498,9 @@ const transformComputeElement = (el, editMode,) => {
       // console.log(`query took ${performance.now() - queryStime}`)
       // console.log(result)
 
-      // todo UGGGH 
+      // todo UGGGH make after-body-before-children node in DOM, changing getChildren(node) and such
       const queryFrame = queryFrameTemplate.cloneNode(true)
-      renderBackrefs(queryFrame, result)
+      renderBackrefs(store, queryFrame, result)
       const block = el.closest(".block")
       const otherQuery = block.querySelector(".query-frame")
       if (otherQuery) otherQuery.remove()
@@ -559,6 +514,7 @@ const transformComputeElement = (el, editMode,) => {
   el.className = "compute"
 }
 
+// todo make queries span multiple graphs
 const queryAstObjectSetStrategy = (ast) => {
   if (ast === undefined) return {}
   let r = queryAstObjectSetStrategy(ast.r)
@@ -606,4 +562,51 @@ const embedLinkOfYoutubeId = (id) => {
   if (id) return `https://www.youtube.com/embed/${id}`
 }
 
-const youtubeLinkToEmbed = (link) => embedLinkOfYoutubeId(idOfYoutubeURL(link))
+const youtubeLinkToEmbedLink = (link) => embedLinkOfYoutubeId(idOfYoutubeURL(link))
+
+
+
+const renderResultSet = (parent, resultSet, resultFrame, startIdx = 0) => {
+  if (resultSet.length === 0) {
+    resultFrame.style.display = "none"
+    focusSuggestion = null
+    return
+  }
+  const resultTemplate = getTemp(resultFrame.dataset.templateName)
+  resultFrame.innerHTML = ""
+  resultFrame.style.display = "block"
+  const rect = parent.getBoundingClientRect()
+  resultFrame.style.top = rect.bottom
+  resultFrame.style.left = rect.left
+  resultFrame.dataset.resultStartIdx = startIdx
+  const resultLength = Math.min(resultSet.length, startIdx + SEARCH_RESULT_LENGTH)
+  for (let i = startIdx; i < resultLength; i++) {
+    matchingTitle = resultSet[i]
+    const suggestion = resultTemplate.cloneNode(true)
+    if (i == startIdx) {
+      focusSuggestion = suggestion
+      suggestion.dataset.selected = "true"
+    }
+    suggestion.dataset.id = matchingTitle.id
+    if (matchingTitle.title) {
+      suggestion.dataset.title = matchingTitle.title
+      suggestion.innerText = truncateElipsis(matchingTitle.title, 50)
+    } else {
+      suggestion.dataset.string = matchingTitle.string
+      suggestion.innerText = truncateElipsis(matchingTitle.string, 50)
+    }
+    resultFrame.appendChild(suggestion)
+  }
+}
+
+const notifyText = (text, duration) => {
+  const el = notificationTemplate.cloneNode(true)
+  el.innerText = text
+  appElement.appendChild(el)
+  setTimeout(() => el.style.top = "60px", 50)
+  const durationMillis = (duration && duration * 1000) || 5000
+  setTimeout(() => el.style.opacity = "0", durationMillis)
+  setTimeout(() => {
+    el.remove()
+  }, durationMillis + 300)
+}

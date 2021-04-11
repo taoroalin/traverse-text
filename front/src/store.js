@@ -23,7 +23,7 @@ const bloxProps = [
   "eu"  // edit user
 ]
 
-const gcPage = (store, pageId) => {
+const gcPage = (pageId) => {
   if (isPageEmpty(store, pageId))
     macros.nocommit.delete(pageId)
 }
@@ -470,7 +470,7 @@ const hydrateFromBlox = (graphName, blox) => {
   return store
 }
 
-const sortByLastEdited = (arr) => {
+const sortByLastEdited = (store, arr) => {
   arr.sort((a, b) => {
     if (store.blox[a].et > store.blox[b].et) {
       return -1

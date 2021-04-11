@@ -68,6 +68,7 @@ const addOtherStore = async (graphName) => {
   const blox = await getBloxFromBasicBitchServer(graphName)
   const otherStore = hydrateFromBlox(blox)
   otherStores[graphName] = otherStore
+  return otherStore
 }
 
 const saveSettingsToBasicBitchServer = async () => {

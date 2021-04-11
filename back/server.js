@@ -31,7 +31,6 @@ let logTimeout = null
 const doLog = () => {
   fs.appendFile("../server-log/log.txt", toLog, (err) => {
     if (err) {
-      console.log(`ERROR LOG SAVE FAILURE`)
       return
     }
   })
@@ -41,7 +40,7 @@ const doLog = () => {
 
 // todo find a good abstraction for saving whenever something changes or every 50ms instead of copy-pasting every time
 const log = (str) => {
-  toLog += str + "\n"
+  toLog += str + " "
   if (logTimeout === null) {
     logTimeout = setTimeout(doLog, 50)
   }
@@ -104,6 +103,15 @@ const getReqHeaderBody = (req) => {
   }
 }
 
+const appendReqToFile = (req, res, fileName) => {
+  const writeStream = fs.createWriteStream(fileName, { flags: 'a' })
+  req.pipe(writeStream)
+  req.on('end', () => {
+    res.writeHead(200)
+    res.end()
+  })
+  return
+}
 
 // I had json in body, but that caused timing issues because I want to change end listener, but couldn't to it fast enough because the end event happens so fast. Switched to putting all JSON made for immediate parsing in header
 const serverHandler = async (req, res) => {
@@ -119,7 +127,7 @@ const serverHandler = async (req, res) => {
     res.end()
     return
   }
-  const match = req.url.match(/^\/(settings|get|put|auth|signup|creategraph|startup|edit|issue|error)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
+  const match = req.url.match(/^\/(get|edit|put|creategraph|auth|signup|settings|issue|error|log)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
   log(req.url)
   if (match === null) {
     res.writeHead(404)
@@ -191,14 +199,13 @@ const serverHandler = async (req, res) => {
     fs.appendFile('../server-log/issues.txt', req.headers.body, () => { })
     return
   } else if (match[1] === "error") {
-    const writeStream = fs.createWriteStream('../server-log/errors-front.txt', { flags: 'a' })
-    req.pipe(writeStream)
-    req.on('end', () => {
-      res.writeHead(200)
-      res.end()
-    })
+    appendReqToFile(req, res, '../server-log/errors-front.txt')
+    return
+  } else if (match[1] === "log") {
+    appendReqToFile(req, res, '../server-log/log-front.txt')
     return
   }
+
   const passwordHash = req.headers.h
   if (passwordHash === undefined || !(typeof passwordHash === "string") || passwordHash.match(hashRegex) === null) {
     res.writeHead(401)
@@ -247,7 +254,6 @@ const serverHandler = async (req, res) => {
       common.brCompressStream(req, writeStream, () => {
         fs.rename(`../server-log/server-temp/blox-br/${match[2]}.json.br`, `../user-data/blox-br/${match[2]}.json.br`, () => {
           res.writeHead(200)
-          console.log(`put took ${performance.now() - gotReqTime}`)
           res.end()
         })
       })
@@ -287,7 +293,6 @@ const serverHandler = async (req, res) => {
         stream.pipeline(fileReadStream, br, gz, res, () => { })
         log('transcoding to gzip')
       }
-      // console.log(`get ${match[2]}`)
       return
     case "creategraph":
       if (!match[2].match(/^[a-zA-Z0-9\-]+$/)) {
@@ -360,7 +365,7 @@ const serverHandler = async (req, res) => {
       res.end()
       return
     default:
-      console.log(`ERROR REGEX / SWITCH CASE MISMATCH`)
+      log(`ERROR REGEX / SWITCH CASE MISMATCH`)
       return
   }
 }

@@ -3,6 +3,12 @@ let store = null
 let otherStores = {}
 let r
 
+let meta = {}
+{
+  let metaText = localStorage.getItem('meta')
+  if (metaText) meta = JSON.parse(metaText)
+}
+
 const basicBitchServerUrl = location.protocol + "//" + location.hostname + ":8756"
 
 //~frontskip
