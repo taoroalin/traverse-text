@@ -70,6 +70,14 @@ exports.gzCompressStream = (from, to, callback) => {
   })
 }
 
+exports.fileExtToContentType = {
+  ".ico": "image/x-icon",
+  ".html": "text/html; charset=UTF-8",
+  ".json": "application/json",
+  ".woff2": "font/woff2",
+  ".js": "text/javascript",
+  ".css": "text/css;"
+}
 
 if (fs.existsSync('/etc/letsencrypt/live/traversetext.com/privkey.pem')) {
   exports.httpsOptions = {

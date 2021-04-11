@@ -2,7 +2,7 @@ const fs = require('fs')
 const http = require('http')
 const https = require('https')
 const build = require("./build").build
-const { httpsOptions } = require('./common')
+const { httpsOptions, fileExtToContentType } = require('./common')
 
 let z = (async () => {
 
@@ -42,33 +42,6 @@ let z = (async () => {
   await watchFn()
 
 
-  const fileExtToContentType = {
-    ".ico": "image/x-icon",
-    ".html": "text/html; charset=UTF-8",
-    ".json": "application/json",
-    ".woff2": "font/woff2",
-    ".js": "text/javascript",
-    ".css": "text/css;"
-  }
-
-
-  http.createServer((req, res) => {
-    let url = req.url
-    let match = url.match(/\.[a-z0-9]+$/)
-    let extension
-    if (match) {
-      extension = match[0]
-    } else {
-      extension = ".html"
-      url = "/index.html"
-    }
-    res.setHeader("Content-Type", fileExtToContentType[extension])
-    const dir = `../front/src${url}`
-    const readStream = fs.createReadStream(dir)
-    readStream.pipe(res)
-  }).listen(8081)
-
-
   const serverHandler = (req, res) => {
     let url = req.url
     let bytes = pageBytes[url]
@@ -93,12 +66,12 @@ let z = (async () => {
   }
 
   if (httpsOptions) {
-
     https.createServer(httpsOptions, serverHandler).listen(443)
     http.createServer((req, res) => {
       res.writeHead(302, { 'Location': 'https://' + req.headers.host + req.url });
       res.end()
     }).listen(80) // todo make sure I'm switching to HTTPS in the most performant way
+
   } else {
     http.createServer(serverHandler).listen(80)
   }
