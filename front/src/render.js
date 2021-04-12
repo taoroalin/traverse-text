@@ -401,184 +401,187 @@ const renderBlockBody = (store, parent, text, editMode = false) => {
   }
 }
 
-const queryOperationOrder = { "root": 0, "compute-or": 1, "compute-and": 2, "page": 3 }
-// not using 0 because that would be falsy
+let transformComputeElement
+{
+  const queryOperationOrder = { "root": 0, "compute-or": 1, "compute-and": 2, "page": 3 }
+  // not using 0 because that would be falsy
 
-const transformComputeElement = (store, el, editMode,) => {
-  const seq = el.children[1].children
-  if (seq.length === 0) return
-  const firstEl = seq[0]
-  const pageTitle = getPageTitleOfNode(firstEl)
-  if (!pageTitle) {
-    return
-  }
-  switch (pageTitle) {
-    case "TODO":
-      if (!editMode) {
-        el.textContent = ""
-        const checkbox = todoCheckboxTemplate.cloneNode(true)
-        el.appendChild(checkbox)
-      } else {
-        el.className = "compute-kept"
-        return
-      }
-      break
-    case "DONE":
-      if (!editMode) {
-        el.textContent = ""
-        const checkedCheckbox = todoCheckboxTemplate.cloneNode(true)
-        checkedCheckbox.checked = true
-        el.appendChild(checkedCheckbox)
-      } else {
-        el.className = "compute-kept"
-        return
-      }
-      break
-    case "video":
-      if (user.s.noVideo) {
-        return
-      }
-      if (seq.length !== 2) return
-      if (seq[1].className === "url") {
-        const embedLink = youtubeLinkToEmbedLink(seq[1].innerText)
-        if (!embedLink) {
-          return
-        }
-        if (editMode) {
+  transformComputeElement = (store, el, editMode,) => {
+    const seq = el.children[1].children
+    if (seq.length === 0) return
+    const firstEl = seq[0]
+    const pageTitle = getPageTitleOfNode(firstEl)
+    if (!pageTitle) {
+      return
+    }
+    switch (pageTitle) {
+      case "TODO":
+        if (!editMode) {
+          el.textContent = ""
+          const checkbox = todoCheckboxTemplate.cloneNode(true)
+          el.appendChild(checkbox)
+        } else {
           el.className = "compute-kept"
           return
         }
-        const videoEmbedElement = videoEmbedTemplate.cloneNode(true)
-        videoEmbedElement.src = embedLink
-        el.textContent = ""
-        el.appendChild(videoEmbedElement)
-      }
-      break
-    case "query":
-
-      // step 1 parse element list using precedence climbing
-      let tree = {
-        // l: undefined,
-        // r: undefined,
-        op: "root",
-        // title: undefined,
-        // p: undefined
-      }
-      let cur = tree
-      for (let i = 1; i < seq.length; i++) {
-        const newNode = {}
-        const el = seq[i]
-        const title = getPageTitleOfNode(el)
-        if (title) {
-          newNode.title = title
-          newNode.op = "page"
-          if (cur.l === undefined) {
-            cur.l = newNode
-          } else if (cur.r === undefined) {
-            cur.r = newNode
-          } else {
-            console.error("page ref with no operator")
+        break
+      case "DONE":
+        if (!editMode) {
+          el.textContent = ""
+          const checkedCheckbox = todoCheckboxTemplate.cloneNode(true)
+          checkedCheckbox.checked = true
+          el.appendChild(checkedCheckbox)
+        } else {
+          el.className = "compute-kept"
+          return
+        }
+        break
+      case "video":
+        if (user.s.noVideo) {
+          return
+        }
+        if (seq.length !== 2) return
+        if (seq[1].className === "url") {
+          const embedLink = youtubeLinkToEmbedLink(seq[1].innerText)
+          if (!embedLink) {
             return
           }
-          newNode.p = cur
-          cur = newNode
-          continue
-        }
-        const opOrder = queryOperationOrder[el.className]
-        if (opOrder !== undefined) {
-          newNode.op = el.className
-          let prev = undefined
-          while (queryOperationOrder[cur.op] > opOrder) {
-            prev = cur
-            cur = cur.p
+          if (editMode) {
+            el.className = "compute-kept"
+            return
           }
-          newNode.l = prev
-          if (prev !== undefined) prev.p = newNode
-          if (cur.l === prev) cur.l = newNode
-          else cur.r = newNode
-          newNode.p = cur
-          cur = newNode
+          const videoEmbedElement = videoEmbedTemplate.cloneNode(true)
+          videoEmbedElement.src = embedLink
+          el.textContent = ""
+          el.appendChild(videoEmbedElement)
         }
-      }
-      tree = tree.l
+        break
+      case "query":
 
-      const queryStime = performance.now()
-      const blocksWithQueries = {}
-      for (let id of store.refs[store.titles["query"]]) {
-        blocksWithQueries[id] = 1
-      }
-      const result = []
-      for (let key in queryAstObjectSetStrategy(tree)) {
-        if (blocksWithQueries[key] === undefined && store.blox[key] !== undefined) result.push(key)
-      }
-      // console.log(`query took ${performance.now() - queryStime}`)
-      // console.log(result)
+        // step 1 parse element list using precedence climbing
+        let tree = {
+          // l: undefined,
+          // r: undefined,
+          op: "root",
+          // title: undefined,
+          // p: undefined
+        }
+        let cur = tree
+        for (let i = 1; i < seq.length; i++) {
+          const newNode = {}
+          const el = seq[i]
+          const title = getPageTitleOfNode(el)
+          if (title) {
+            newNode.title = title
+            newNode.op = "page"
+            if (cur.l === undefined) {
+              cur.l = newNode
+            } else if (cur.r === undefined) {
+              cur.r = newNode
+            } else {
+              console.error("page ref with no operator")
+              return
+            }
+            newNode.p = cur
+            cur = newNode
+            continue
+          }
+          const opOrder = queryOperationOrder[el.className]
+          if (opOrder !== undefined) {
+            newNode.op = el.className
+            let prev = undefined
+            while (queryOperationOrder[cur.op] > opOrder) {
+              prev = cur
+              cur = cur.p
+            }
+            newNode.l = prev
+            if (prev !== undefined) prev.p = newNode
+            if (cur.l === prev) cur.l = newNode
+            else cur.r = newNode
+            newNode.p = cur
+            cur = newNode
+          }
+        }
+        tree = tree.l
 
-      // todo UGGGH make after-body-before-children node in DOM, changing getChildren(node) and such
-      const queryFrame = queryFrameTemplate.cloneNode(true)
-      renderBackrefs(store, queryFrame, result)
-      const block = el.closest(".block")
-      const otherQuery = block.querySelector(".query-frame")
-      if (otherQuery) otherQuery.remove()
-      block.appendChild(queryFrame)
-      el.className = "compute-kept"
-      return
-      break
-    default:
-      return
+        const queryStime = performance.now()
+        const blocksWithQueries = {}
+        for (let id of store.refs[store.titles["query"]]) {
+          blocksWithQueries[id] = 1
+        }
+        const result = []
+        for (let key in queryAstObjectSetStrategy(tree)) {
+          if (blocksWithQueries[key] === undefined && store.blox[key] !== undefined) result.push(key)
+        }
+        // console.log(`query took ${performance.now() - queryStime}`)
+        // console.log(result)
+
+        // todo UGGGH make after-body-before-children node in DOM, changing getChildren(node) and such
+        const queryFrame = queryFrameTemplate.cloneNode(true)
+        renderBackrefs(store, queryFrame, result)
+        const block = el.closest(".block")
+        const otherQuery = block.querySelector(".query-frame")
+        if (otherQuery) otherQuery.remove()
+        block.appendChild(queryFrame)
+        el.className = "compute-kept"
+        return
+        break
+      default:
+        return
+    }
+    el.className = "compute"
   }
-  el.className = "compute"
-}
 
-// todo make queries span multiple graphs
-const queryAstObjectSetStrategy = (ast) => {
-  if (ast === undefined) return {}
-  let r = queryAstObjectSetStrategy(ast.r)
-  let l = queryAstObjectSetStrategy(ast.l)
-  let result = {}
-  switch (ast.op) {
-    case "compute-and":
-      for (let id in r) {
-        if (l[id] === 1) result[id] = 1
-      }
-      return result
-    case "compute-or":
-      for (let id in r) {
-        l[id] = 1
-      }
-      return l
-    case "page":
-      const idList = store.refs[store.titles[ast.title]]
-      for (let id of idList) {
-        result[id] = 1
-      }
-      return result
+  // todo make queries span multiple graphs
+  const queryAstObjectSetStrategy = (ast) => {
+    if (ast === undefined) return {}
+    let r = queryAstObjectSetStrategy(ast.r)
+    let l = queryAstObjectSetStrategy(ast.l)
+    let result = {}
+    switch (ast.op) {
+      case "compute-and":
+        for (let id in r) {
+          if (l[id] === 1) result[id] = 1
+        }
+        return result
+      case "compute-or":
+        for (let id in r) {
+          l[id] = 1
+        }
+        return l
+      case "page":
+        const idList = store.refs[store.titles[ast.title]]
+        for (let id of idList) {
+          result[id] = 1
+        }
+        return result
+    }
   }
+
+  /*
+  [1 and 2] or
+  [[1 and 2] or]
+   
+  [1 or 2] and
+  [1 or [2 and ]]
+   
+  [1 or [2 and [3 nand 4]]] and
+                       ^
+  [1 or 2] or
+  [[1 or 2] or]
+   */
+
+  const idOfYoutubeURL = (url) => {
+    const match = url.match(/^https:\/\/(?:www\.youtube.com\/watch|youtu.be\/)\?v=([a-zA-Z0-9]+)(&t=.+)?$/)
+    if (match) return match[1]
+  }
+
+  const embedLinkOfYoutubeId = (id) => {
+    if (id) return `https://www.youtube.com/embed/${id}`
+  }
+
+  const youtubeLinkToEmbedLink = (link) => embedLinkOfYoutubeId(idOfYoutubeURL(link))
 }
-
-/*
-[1 and 2] or
-[[1 and 2] or]
- 
-[1 or 2] and
-[1 or [2 and ]]
- 
-[1 or [2 and [3 nand 4]]] and
-                     ^
-[1 or 2] or
-[[1 or 2] or]
- */
-
-const idOfYoutubeURL = (url) => {
-  const match = url.match(/^https:\/\/(?:www\.youtube.com\/watch|youtu.be\/)\?v=([a-zA-Z0-9]+)(&t=.+)?$/)
-  if (match) return match[1]
-}
-
-const embedLinkOfYoutubeId = (id) => {
-  if (id) return `https://www.youtube.com/embed/${id}`
-}
-
-const youtubeLinkToEmbedLink = (link) => embedLinkOfYoutubeId(idOfYoutubeURL(link))
 
 
 

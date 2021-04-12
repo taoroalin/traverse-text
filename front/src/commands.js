@@ -57,6 +57,7 @@ const undo = () => {
     undoEditBlox(edit, store.blox)
     undoEditCacheStuff(edit)
   }
+  debouncedSaveStore()//@TODO @PRIORITY send intelligible edits to server when undoing!
 }
 
 const doEditCacheStuff = (edit, includeInnerOuter = false) => {

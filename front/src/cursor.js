@@ -1,55 +1,58 @@
-const prepFocusIdForCursor = () => {
-  if (focusBlock &&
-    focusBlock.isConnected &&
-    focusBlock.dataset.id !== sessionState.focusId) {
+let focusIdPosition, selectIdWholeNode
+{
+  const prepFocusIdForCursor = () => {
+    if (focusBlock &&
+      focusBlock.isConnected &&
+      focusBlock.dataset.id !== sessionState.focusId) {
 
-    focusBlockBody.textContent = ""
-    renderBlockBody(store, focusBlockBody, store.blox[focusBlock.dataset.id].s)
+      focusBlockBody.textContent = ""
+      renderBlockBody(store, focusBlockBody, store.blox[focusBlock.dataset.id].s)
+    }
+
+    focusBlock = document.querySelector(`.block[data-id="${sessionState.focusId}"]`)
+    focusBlockBody = focusBlock.children[1]
+
+    if (focusBlock === undefined) {
+      throw new Error(`tried to focus block that doesn't exist: ${sessionState.focusId}`)
+    }
+
+    sessionState.isFocused = true
+
+    const text = store.blox[sessionState.focusId].s
+    focusBlockBody.innerText = ""
+    renderBlockBody(store, focusBlockBody, text, true)
   }
 
-  focusBlock = document.querySelector(`.block[data-id="${sessionState.focusId}"]`)
-  focusBlockBody = focusBlock.children[1]
+  focusIdPosition = () => {
+    prepFocusIdForCursor()
 
-  if (focusBlock === undefined) {
-    throw new Error(`tried to focus block that doesn't exist: ${sessionState.focusId}`)
-  }
-
-  sessionState.isFocused = true
-
-  const text = store.blox[sessionState.focusId].s
-  focusBlockBody.innerText = ""
-  renderBlockBody(store, focusBlockBody, text, true)
-}
-
-const focusIdPosition = () => {
-  prepFocusIdForCursor()
-
-  const scanElement = (element) => {
-    for (let el of element.childNodes) {
-      if (el.nodeName === "#text") {
-        if (sessionState.position >= (el.startIdx || 0) && sessionState.position <= (el.startIdx || 0) + el.textContent.length) {
-          scanResult = el
-          const placeToGo = sessionState.position - el.startIdx
-          // console.log(`startIdx ${el.startIdx} togo ${placeToGo}`)
-          getSelection().collapse(el, placeToGo)
-          return el
+    const scanElement = (element) => {
+      for (let el of element.childNodes) {
+        if (el.nodeName === "#text") {
+          if (sessionState.position >= (el.startIdx || 0) && sessionState.position <= (el.startIdx || 0) + el.textContent.length) {
+            scanResult = el
+            const placeToGo = sessionState.position - el.startIdx
+            // console.log(`startIdx ${el.startIdx} togo ${placeToGo}`)
+            getSelection().collapse(el, placeToGo)
+            return el
+          }
+        } else {
+          const z = scanElement(el)
+          if (z) return z
         }
-      } else {
-        const z = scanElement(el)
-        if (z) return z
       }
     }
+    scanElement(focusBlockBody)
+    updateCursorSpanInfo()
   }
-  scanElement(focusBlockBody)
-  updateCursorSpanInfo()
-}
 
-const selectIdWholeNode = (node) => {
-  prepFocusIdForCursor()
+  selectIdWholeNode = (node) => {
+    prepFocusIdForCursor()
 
-  //todo ......
+    //todo ......
 
-  updateCursorSpanInfo()
+    updateCursorSpanInfo()
+  }
 }
 
 const setFocusedBlockString = (string, diff) => {
@@ -67,14 +70,6 @@ const setFocusedBlockString = (string, diff) => {
   focusIdPosition()
 }
 
-const getEditingSimpleSpan = (className) => {
-  const elements = focusBlockBody.querySelectorAll("." + className)
-  for (let temp of elements) {
-    if (temp.childNodes[0].endIdx >= sessionState.position && temp.childNodes[0].startIdx < sessionState.position) {
-      return temp
-    }
-  }
-}
 
 
 const updateCursorPosition = () => {
@@ -85,31 +80,42 @@ const updateCursorPosition = () => {
   sessionState.position = (focusNode.startIdx || 0) + focusOffset
 }
 
-const updateCursorSpanInfo = () => {
-  editingLink = undefined
-  const tags = focusBlockBody.querySelectorAll(".tag")
-  for (let tag of tags) {
-    if (tag.children[1].firstChild.endIdx >= sessionState.position && tag.children[0].firstChild.startIdx < sessionState.position) {
-      editingLink = tag
+let updateCursorSpanInfo
+{
+  const getEditingSimpleSpan = (className) => {
+    const elements = focusBlockBody.querySelectorAll("." + className)
+    for (let temp of elements) {
+      if (temp.childNodes[0].endIdx >= sessionState.position && temp.childNodes[0].startIdx < sessionState.position) {
+        return temp
+      }
     }
   }
-  const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
-  for (let ref of pageRefs) {
-    if (ref.children[2].firstChild.endIdx >= sessionState.position && ref.children[1].firstChild.startIdx < sessionState.position) {
-      editingLink = ref
+  updateCursorSpanInfo = () => {
+    editingLink = undefined
+    const tags = focusBlockBody.querySelectorAll(".tag")
+    for (let tag of tags) {
+      if (tag.children[1].firstChild.endIdx >= sessionState.position && tag.children[0].firstChild.startIdx < sessionState.position) {
+        editingLink = tag
+      }
     }
+    const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
+    for (let ref of pageRefs) {
+      if (ref.children[2].firstChild.endIdx >= sessionState.position && ref.children[1].firstChild.startIdx < sessionState.position) {
+        editingLink = ref
+      }
+    }
+    editingTemplateExpander = getEditingSimpleSpan("template-expander")
+
+    editingUrlElement = getEditingSimpleSpan("url")
+
+    editingCommandElement = getEditingSimpleSpan("command")
+    if (editingCommandElement === undefined)
+      inlineCommandList.style.display = "none"
+    if (editingTemplateExpander === undefined)
+      templateList.style.display = "none"
+    if (editingLink === undefined)
+      autocompleteList.style.display = "none"
   }
-  editingTemplateExpander = getEditingSimpleSpan("template-expander")
-
-  editingUrlElement = getEditingSimpleSpan("url")
-
-  editingCommandElement = getEditingSimpleSpan("command")
-  if (editingCommandElement === undefined)
-    inlineCommandList.style.display = "none"
-  if (editingTemplateExpander === undefined)
-    templateList.style.display = "none"
-  if (editingLink === undefined)
-    autocompleteList.style.display = "none"
 }
 
 
