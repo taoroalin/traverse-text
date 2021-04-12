@@ -272,14 +272,16 @@ const globalHotkeys = {
   "delete block": {
     key: "k", control: true, shift: true, fn: () => {
       const bloc = store.blox[sessionState.focusId]
-      if (bloc.k === undefined || bloc.k.length === 0) {
+      if ((bloc.k === undefined || bloc.k.length === 0) &&
+        !(store.blox[bloc.p].p === undefined &&
+          store.blox[bloc.p].k.length === 1)) {
         const oldFocusBlock = focusBlock
         const oldFocusId = sessionState.focusId
         focusBlockVerticalOffset(-1)
         oldFocusBlock.remove()
         macros.delete(oldFocusId)
       } else {
-        notifyText(`no "delete block" for blocks with children (at least right now)`)
+        notifyText(`no "delete block" for blocks with children or the only block in a page (at least right now)`)
       }
     }
   },
