@@ -227,14 +227,11 @@ let toShowOnTopBar = ["Daily Notes", "Report Issue", "Sign Up", "Upload",]
 
 const layoutTopBar = () => {
   const split = Math.floor(toShowOnTopBar.length / 2)
-  console.log(`SPLIT ${split}`)
   for (let i = 0; i < split; i++) {
     topBarLeft.appendChild(topButtons[toShowOnTopBar[i]])
-    console.log(`left ${toShowOnTopBar[i]}`)
   }
   for (let i = split; i < toShowOnTopBar.length; i++) {
     topBarRight.appendChild(topButtons[toShowOnTopBar[i]])
-    console.log(`right ${toShowOnTopBar[i]}`)
   }
   for (let name of topButtonNames) {
     if (!toShowOnTopBar.includes(name)) {
@@ -244,9 +241,6 @@ const layoutTopBar = () => {
 }
 layoutTopBar()
 
-
-// Cursor info. Raw info stored in JSON, DOM elements cached in lots of random vars
-let sessionState = { pageFrame: "dailyNotes", focusId: null, scroll: 0, position: null }
 
 // these two stored for re-focusing dom nodes after they're moved
 let focusNode = null

@@ -6,10 +6,12 @@ const stream = require('stream')
 const common = require('./common.js')
 const httpsOptions = common.httpsOptions
 const { performance } = require('perf_hooks')
-const { LruCache, promisify, doEditBlox, undoEditBlox } = require('../front/src/front-back-shared.js')
+const { LruCache, promisify, doEditBlox, undoEditBlox, newSearchRegex } = require('../front/src/front-back-shared.js')
 // front-back-shared is in the front folder because its easier to import from other paths in Node than browser
 
 const bloxCache = new LruCache((key) => common.loadBlox(key))
+let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
+// {graphname:{commitId}}
 
 // todo use session keys instead of holding onto password hash everywhere for more security
 const hashRegex = /^[a-zA-Z0-9_\-]{70,100}$/
@@ -25,65 +27,69 @@ for (let account of accounts) {
 }
 
 
-let toLog = ""
-
-let logTimeout = null
-const doLog = () => {
-  fs.appendFile("../server-log/log.txt", toLog, (err) => {
-    if (err) {
-      return
+let log
+{
+  let toLog = ""
+  let logTimeout = null
+  const doLog = () => {
+    fs.appendFile("../server-log/log.txt", toLog, (err) => {
+      if (err) {
+        return
+      }
+    })
+    toLog = ""
+    logTimeout = null
+  }
+  // todo find a good abstraction for saving whenever something changes or every 50ms instead of copy-pasting every time
+  log = (str) => {
+    toLog += str + " "
+    if (logTimeout === null) {
+      logTimeout = setTimeout(doLog, 50)
     }
-  })
-  toLog = ""
-  logTimeout = null
-}
-
-// todo find a good abstraction for saving whenever something changes or every 50ms instead of copy-pasting every time
-const log = (str) => {
-  toLog += str + " "
-  if (logTimeout === null) {
-    logTimeout = setTimeout(doLog, 50)
   }
 }
 
-let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
-// {graphname:{commitId}}
+let debouncedSaveGraphs
+{
+  let saveGraphsTimeout = null
+  const saveGraphs = () => {
+    fs.writeFile("../server-log/server-temp/graphs.json", JSON.stringify(graphs), (err) => {
+      if (err) {
+        log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
+        return
+      }
+      fs.rename("../server-log/server-temp/graphs.json", "../user-data/graphs.json", () => { })
+    })
+    saveGraphsTimeout = null
+  }
 
-let saveGraphsTimeout = null
-const saveGraphs = () => {
-  fs.writeFile("../server-log/server-temp/graphs.json", JSON.stringify(graphs), (err) => {
-    if (err) {
-      log(`CRITICAL ERROR GRAPH SAVE FAILURE`)
-      return
+  debouncedSaveGraphs = () => {
+    if (saveGraphsTimeout === null) {
+      saveGraphsTimeout = setTimeout(saveGraphs, 50)
     }
-    fs.rename("../server-log/server-temp/graphs.json", "../user-data/graphs.json", () => { })
-  })
-  saveGraphsTimeout = null
-}
-
-const debouncedSaveGraphs = () => {
-  if (saveGraphsTimeout === null) {
-    saveGraphsTimeout = setTimeout(saveGraphs, 50)
   }
 }
 
 
-// todo create under different name and rename because rename is atomic, whereas a concurrent process could crash halfway through writeFile, leaving partial file
-const saveAccounts = () => {
-  fs.writeFile("../server-log/server-temp/accounts.json", JSON.stringify(accounts), (err) => {
-    if (err) {
-      log(`CRITICAL ERROR ACCOUNT SAVE FAILURE`)
-      return
-    }
-    fs.rename("../server-log/server-temp/accounts.json", '../user-data/accounts.json', () => { })
-  })
-  saveAccountsTimeout = null
-}
+let debouncedSaveAccounts
+{
+  // todo create under different name and rename because rename is atomic, whereas a concurrent process could crash halfway through writeFile, leaving partial file
+  const saveAccounts = () => {
+    fs.writeFile("../server-log/server-temp/accounts.json", JSON.stringify(accounts), (err) => {
+      if (err) {
+        log(`CRITICAL ERROR ACCOUNT SAVE FAILURE`)
+        return
+      }
+      fs.rename("../server-log/server-temp/accounts.json", '../user-data/accounts.json', () => { })
+    })
+    saveAccountsTimeout = null
+  }
 
-let saveAccountsTimeout = null
-const debouncedSaveAccounts = () => {
-  if (saveAccountsTimeout === null) {
-    saveAccountsTimeout = setTimeout(saveAccounts, 50)
+  let saveAccountsTimeout = null
+  debouncedSaveAccounts = () => {
+    if (saveAccountsTimeout === null) {
+      saveAccountsTimeout = setTimeout(saveAccounts, 50)
+    }
   }
 }
 
@@ -121,13 +127,13 @@ const serverHandler = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', '*')
   res.setHeader('Access-Control-Expose-Headers', 'commitid')
   // nodejs automatically lowercases all header keys because they're officially supposed to be case insensitive
-  // I had to send out header keys captialized because some clients need that, though
+  // I have to send out header keys captialized because some clients need that, though
   if (req.headers["access-control-request-headers"] !== undefined) {
     res.writeHead(200)
     res.end()
     return
   }
-  const match = req.url.match(/^\/(get|edit|put|creategraph|auth|signup|settings|issue|error|log)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
+  const match = req.url.match(/^\/(get|edit|put|creategraph|searchgraphs|auth|signup|settings|issue|error|log)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
   log(req.url)
   if (match === null) {
     res.writeHead(404)
@@ -364,10 +370,30 @@ const serverHandler = async (req, res) => {
       res.writeHead(200)
       res.end()
       return
+    case 'searchgraphs':
+      const results = searchGraphs(userAccount, match[2])
+      res.write(JSON.stringify(results))
+      return
     default:
       log(`ERROR REGEX / SWITCH CASE MISMATCH`)
       return
   }
+}
+
+const searchGraphs = (account, string) => {
+  const regex = newSearchRegex(string)
+  const result = []
+  for (let graphName in graphs) {
+    if (canAccountReadBlox(account, graphName)) {
+      if (graphName.match(regex)) {
+        result.push(graphName)
+        if (result.length >= 10) {
+          return result
+        }
+      }
+    }
+  }
+  return result
 }
 
 if (httpsOptions) {

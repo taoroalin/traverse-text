@@ -153,5 +153,36 @@ r.onupgradeneeded = (event) => {
 r.onerror = (e) => {
   console.log("error")
   console.log(e)
-  // alert(`Traverse Text doesn't work with Firefox Private mode. It works with Chrome, Brave, Safari, and Firefox normal mode.`)
 }
+
+const urlToSessionState = (url) => {
+  url = decodeURI(url)
+  const theSessionState = { scroll: 0, isFocused: false, position: 0, }
+
+  const queries = url.matchAll(/([a-zA-Z0-9\-_]+)=([a-zA-Z0-9\-_]+)/g)
+  for (let query of queries) {
+    theSessionState[query[1]] = query[2]
+  }
+
+  const paths = Array.from(url.matchAll(/(?:\/([a-zA-Z0-9_ \-]+))/g))
+  theSessionState.pageFrame = "dailyNotes"
+  theSessionState.graphName = user.s.graphName
+  if (paths.length <= 2) {
+    return theSessionState
+  }
+
+  theSessionState.pageFrame = paths[1][1]
+  if (theSessionState.pageFrame === 'pageTitle') {
+    theSessionState.title = paths[2][1]
+  }
+  if (theSessionState.pageFrame === 'block') {
+    theSessionState.block = paths[2][1]
+  }
+
+  return theSessionState
+}
+
+// Cursor info. Raw info stored in JSON, DOM elements cached in lots of random vars
+console.log(location.pathname)
+let sessionState = urlToSessionState(location.hash)
+console.log(sessionState)

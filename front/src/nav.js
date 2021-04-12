@@ -4,34 +4,6 @@ example query string
  */
 const initialDailyNotes = 5
 
-const urlToSessionState = (url) => {
-  url = decodeURI(url)
-  const sessionState = {}
-  const paths = url.matchAll(/(?:\/([a-zA-Z0-9\-_]))/g)
-  if (paths.length === 0) {
-    sessionState.graphName = paths[0][1]
-  } else {
-    sessionState.graphName = user.s.graphName
-  }
-
-  if (paths.length === 1) {
-    sessionState.pageFrame = "dailyNotes"
-  } else {
-    sessionState.pageFrame = paths[1][1]
-    if (sessionState.pageFrame === 'page') {
-      sessionState.title = paths[2][1]
-    }
-    if (sessionState.pageFrame === 'block') {
-      sessionState.block = paths[2][1]
-    }
-  }
-
-  const queries = url.matchAll(/([a-zA-Z0-9\-_])=([a-zA-Z0-9\-_])/g)
-  for (let query of queries) {
-    sessionState[query[1]] = query[2]
-  }
-  return sessionState
-}
 /**
 url template
 graphName/type/id-or-title/?scroll=scroll&focus=id&position=position
@@ -46,7 +18,7 @@ const sessionStateToUrl = (sessionState) => {
       url += "scroll=" + sessionState.scroll + "&"
     }
     if (sessionState.focusId) {
-      url += "focus=" + sessionState.focusId
+      url += "focusId=" + sessionState.focusId
     }
   }
   url = encodeURI(url)

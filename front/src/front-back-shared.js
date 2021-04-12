@@ -203,6 +203,10 @@ const base64ToInt = (str) => {
   return result
 }
 
+const escapeRegex = (string) => string.replaceAll(/([\[\]\(\)])/g, "\\$1").replaceAll("\\\\", "")
+
+const newSearchRegex = (string) => new RegExp(escapeRegex(string), "i")
+
 //~frontskip this tag means the front end build script will cut out everything between here and the next tilde (can't use tilde sign there because that would fool preprocessor)
 try {
   exports.applyDif = applyDif
@@ -215,6 +219,7 @@ try {
   exports.newUUID = newUUID
   exports.base64ToInt = base64ToInt
   exports.intToBase64 = intToBase64
+  exports.newSearchRegex = newSearchRegex
 } catch (e) {
 
 }

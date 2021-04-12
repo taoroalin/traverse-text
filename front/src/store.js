@@ -359,10 +359,6 @@ const mergeStore = (otherStore) => {
 
 // search
 
-const escapeRegex = (string) => string.replaceAll(/([\[\]\(\)])/g, "\\$1").replaceAll("\\\\", "")
-
-const newSearchRegex = (string) => new RegExp(escapeRegex(string), "i")
-
 const searchRefCountWeight = 0.05
 const pageOverBlockWeight = 1
 
