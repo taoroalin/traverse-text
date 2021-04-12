@@ -3,6 +3,11 @@ let store = null
 let otherStores = {}
 let r
 
+const setActiveStore = (inputStore) => {
+  store = inputStore
+  otherStores[inputStore.graphName] = store
+}
+
 let meta = {}
 {
   let metaText = localStorage.getItem('meta')
@@ -19,8 +24,6 @@ let user
 let userText = localStorage.getItem("user")
 let usingLocalStore = true
 
-let startFn = () => gotoNoHistory("dailyNotes")
-
 let dataLoaded = false
 let scriptsLoaded = false
 const setDataLoaded = () => {
@@ -31,7 +34,7 @@ const setDataLoaded = () => {
 
 const start = () => {
   saveUser()
-  startFn()
+  renderSessionState()
   if (user.h && user.s.commitId !== user.s.syncCommitId)
     debouncedSaveStore()
 }
@@ -66,12 +69,8 @@ if (userText) {
       usingLocalStore = false
       res.json().then(blox => {
         console.log('got blox')
-        const oldStartFn = startFn
-        startFn = () => {
-          store = hydrateFromBlox(user.s.graphName, blox)
-          user.s.syncCommitId = res.headers.get('commitid')
-          oldStartFn()
-        }
+        setActiveStore(hydrateFromBlox(user.s.graphName, blox))
+        user.s.syncCommitId = res.headers.get('commitid')
         setDataLoaded()
       })
     })
@@ -80,7 +79,7 @@ if (userText) {
   const lsStore = localStorage.getItem('store')
   if (lsStore) {
     try {
-      store = JSON.parse(lsStore)
+      setActiveStore(JSON.parse(lsStore))
       setDataLoaded()
     } catch (e) {
       invalidateLocal()
@@ -98,7 +97,7 @@ if (userText) {
             if (usingLocalStore === true) {
               if (e.target.result) {
                 try {
-                  store = JSON.parse(e.target.result.store)
+                  setActiveStore(JSON.parse(e.target.result.store))
                   setDataLoaded()
                 } catch (e) {
                   invalidateLocal()
@@ -119,8 +118,7 @@ if (userText) {
   user = { s: { graphName: "default", theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light", topBar: "visible", logging: false, spellcheck: false, editingSpotlight: true } }
   fetch("./default-store.json").then(text => {
     text.json().then(json => {
-      store = json
-      startFn = () => gotoNoHistory("pageTitle", "Welcome to Micro Roam")
+      setActiveStore(json)
       setDataLoaded()
     })
   })
@@ -143,7 +141,7 @@ r.onupgradeneeded = (event) => {
       idb = event.target.result
       const storeStore = db.transaction(["stores"], "readonly").objectStore("stores")
       storeStore.get(user.s.graphName).onsuccess = (e) => {
-        store = e.target.result.store
+        setActiveStore(e.target.result.store)
         const roamJSON = oldStoreToRoamJSON[db.version](store)
         roamJsonToStore(user.s.graphName, roamJSON)
         saveStore()

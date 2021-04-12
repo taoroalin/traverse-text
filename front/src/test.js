@@ -1,6 +1,6 @@
 const testRoundTrip = () => {
   const jsonOutput = storeToRoamJSON(store)
-  store = roamJsonToStore(store.graphName, jsonOutput)
+  const store = roamJsonToStore(store.graphName, jsonOutput)
   const jsonOutput2 = storeToRoamJSON(store)
   const eq = jsonOutput === jsonOutput2
   if (!eq) {
@@ -12,13 +12,6 @@ const testRoundTrip = () => {
   }
 }
 
-
-const createPageTest = () => {
-  const oldStore = store
-  store = blankStore()
-  macros.createPage("Test Page")
-  store = oldStore
-}
 
 // todo switch this to async with empty promise?
 let testSTime
@@ -104,16 +97,6 @@ const nolog = () => {
 
 const flash = benchmarkRenderAll
 
-const blank = (name = "default") => {
-  store = blankStore()
-  store.graphName = name
-  user = { s: { graphName: "default", theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light", topBar: "visible", logging: false, spellcheck: false, editingSpotlight: true } }
-  user.s.graphName = name
-  saveUser()
-  debouncedSaveStore()
-  goto("dailyNotes")
-}
-
 const pr = () => {
   console.log(JSON.stringify(store))
 }
@@ -135,7 +118,7 @@ const monitor = (string) => {
 
 
 const terminalCommands = {
-  blank, reset, flash, log, page, nolog, pr, downloadBinary, monitor
+  reset, flash, log, nolog, pr, downloadBinary, monitor
 }
 
 //~frontskip

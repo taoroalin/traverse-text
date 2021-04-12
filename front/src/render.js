@@ -67,6 +67,22 @@ const renderBlock = (store, parentNode, uid, idx) => {
   return element
 }
 
+const renderBlockAsMainWithBacklinks = (theStore, parentNode, uid) => {
+  const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
+  renderBreadcrumb(theStore, blockFocusFrame.children[0], uid)
+  renderBlock(theStore, blockFocusFrame.children[1], uid)
+  const backRefs = store.refs[uid]
+  if (backRefs) {
+    backRefs.sort((a, b) => store.blox[b].et - store.blox[a].et)
+    const backrefsListElement = backrefListTemplate.cloneNode(true)
+    blockFocusFrame.children[2].appendChild(backrefsListElement)
+    for (let backref of backRefs) {
+      renderBlock(theStore, backrefsListElement.children[1], backref)
+    }
+  }
+  parentNode.appendChild(blockFocusFrame)
+}
+
 const renderBreadcrumb = (store, parent, blockId) => {
   blockId = store.blox[blockId].p
   const list = []

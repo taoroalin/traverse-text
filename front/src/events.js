@@ -773,7 +773,7 @@ disconnectedFileInput.addEventListener('change', (event) => {
       const files = zipToFiles(buffer)
       console.log(files)
       if (files.length === 1 && files[0].ext === "json") {
-        store = roamJsonToStore(files[0].name, files[0].text)
+        setActiveStore(roamJsonToStore(files[0].name, files[0].text))
         preprocessImportedStore()
       } else {
         notifyText("Markdown import doesn't work yet. Upload a .json file, or a .zip file containing a .json file instead.", 12)
@@ -793,7 +793,7 @@ disconnectedFileInput.addEventListener('change', (event) => {
   } else if (extension === "json") {
     file.text().then((text) => {
       user.s.graphName = name
-      store = roamJsonToStore(name, text)
+      setActiveStore(roamJsonToStore(name, text))
       preprocessImportedStore()
     })
   } else if (extension === "br") {
@@ -804,7 +804,6 @@ disconnectedFileInput.addEventListener('change', (event) => {
 })
 
 const preprocessImportedStore = async () => {
-  startFn = () => gotoNoHistory("dailyNotes")
   await addGraph()
   start()
 }

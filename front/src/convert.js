@@ -20,7 +20,7 @@ const roamJsonToStore = (graphName, text) => {
 
   const obj = JSON.parse(text)
 
-  store = blankStore()
+  setActiveStore(blankStore(graphName))
   store.graphName = graphName
 
   // todo interface with roam user ids well
@@ -222,7 +222,7 @@ const mdToStore = (files) => { // files: [{name, ext, fullName, text}]
 
   const blockStringIndex = {}
 
-  store = blankStore()
+  setActiveStore(blankStore(graphName))
 
   const getPageId = (title) => store.pagesByTitle[title] || newUid()
 

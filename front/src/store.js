@@ -1,5 +1,6 @@
 // blox or bloc means either block or page. they're almost the same, just one has a parent and the other doesn't, and linking syntax is different
-const blankStore = () => ({
+const blankStore = (name) => ({
+  graphName: name,
   blox: {},
   titles: {},
 
@@ -10,7 +11,6 @@ const blankStore = () => ({
 
   roamProps: {},
   ownerRoamId: undefined,
-  graphName: undefined,
 })
 
 const bloxProps = [
@@ -83,7 +83,7 @@ const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-
 const setLinks = (store, blocId, doInnerOuterRefs = false, nogc = false) => {
   for (let ref of store.forwardRefs[blocId] || []) {
     store.refs[ref] = store.refs[ref].filter(x => x !== blocId)
-    if (!nogc) gcPage(store, ref)
+    if (!nogc) gcPage(ref)
   }
   const forwardRefs = []
   store.forwardRefs[blocId] = forwardRefs
@@ -462,12 +462,12 @@ const generateTitles = (store) => {
 
 const hydrateFromBlox = (graphName, blox) => {
   console.log("hydratefromblox")
-  let store = blankStore()
-  store.blox = blox
-  store.graphName = graphName
-  generateTitles(store)
-  generateRefs(store)
-  return store
+  let theStore = blankStore(graphName)
+  theStore.blox = blox
+  theStore.graphName = graphName
+  generateTitles(theStore)
+  generateRefs(theStore)
+  return theStore
 }
 
 const sortByLastEdited = (store, arr) => {
@@ -480,8 +480,7 @@ const sortByLastEdited = (store, arr) => {
 }
 
 const createAndSwitchToNewStore = async (storeName) => {
-  store = blankStore()
-  store.graphName = storeName
+  setActiveStore(blankStore(storeName))
   user.s.graphName = storeName
   user.s.commitId = "MYVERYFIRSTCOMMITEVER"
   saveUser()

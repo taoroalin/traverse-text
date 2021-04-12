@@ -4,6 +4,55 @@ example query string
  */
 const initialDailyNotes = 5
 
+const urlToSessionState = (url) => {
+  url = decodeURI(url)
+  const sessionState = {}
+  const paths = url.matchAll(/(?:\/([a-zA-Z0-9\-_]))/g)
+  if (paths.length === 0) {
+    sessionState.graphName = paths[0][1]
+  } else {
+    sessionState.graphName = user.s.graphName
+  }
+
+  if (paths.length === 1) {
+    sessionState.pageFrame = "dailyNotes"
+  } else {
+    sessionState.pageFrame = paths[1][1]
+    if (sessionState.pageFrame === 'page') {
+      sessionState.title = paths[2][1]
+    }
+    if (sessionState.pageFrame === 'block') {
+      sessionState.block = paths[2][1]
+    }
+  }
+
+  const queries = url.matchAll(/([a-zA-Z0-9\-_])=([a-zA-Z0-9\-_])/g)
+  for (let query of queries) {
+    sessionState[query[1]] = query[2]
+  }
+  return sessionState
+}
+/**
+url template
+graphName/type/id-or-title/?scroll=scroll&focus=id&position=position
+ */
+const sessionStateToUrl = (sessionState) => {
+  let url = "/#/" + sessionState.graphName + "/" + sessionState.pageFrame
+  if (sessionState.page) url += "/" + sessionState.page
+  if (sessionState.block) url += "/" + sessionState.block
+  if (sessionState.scroll !== 0 || sessionState.focusId) {
+    url += "?"
+    if (sessionState.scroll !== 0) {
+      url += "scroll=" + sessionState.scroll + "&"
+    }
+    if (sessionState.focusId) {
+      url += "focus=" + sessionState.focusId
+    }
+  }
+  url = encodeURI(url)
+  return url
+}
+
 const renderSessionState = () => {
 
   // clear screen
@@ -36,19 +85,8 @@ const renderSessionState = () => {
       }
       break
     case "block":
-      const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
-      pageFrame.appendChild(blockFocusFrame)
-      renderBreadcrumb(blockFocusFrame.children[0], sessionState.block)
-      renderBlock(blockFocusFrame.children[1], sessionState.block)
-      const backRefs = store.refs[sessionState.block]
-      if (backRefs) {
-        backRefs.sort((a, b) => store.blox[b].et - store.blox[a].et)
-        const backrefsListElement = backrefListTemplate.cloneNode(true)
-        blockFocusFrame.children[2].appendChild(backrefsListElement)
-        for (let backref of backRefs) {
-          renderBlock(backrefsListElement.children[1], backref)
-        }
-      }
+      const theStore = sessionState.graphName ? otherStores[sessionState.graphName] : store
+      renderBlockAsMainWithBacklinks(theStore, pageFrame, sessionState.block)
       break
     case "dailyNotes":
       pageFrameOuter.addEventListener("scroll", dailyNotesInfiniteScrollListener)
@@ -97,6 +135,8 @@ const renderSessionState = () => {
 }
 
 const gotoNoHistory = (commandName, ...command) => {
+  sessionState.page = undefined
+  sessionState.block = undefined
   switch (commandName) {
     case "dailyNotes":
       sessionState.pageFrame = "dailyNotes"
@@ -120,15 +160,15 @@ const gotoNoHistory = (commandName, ...command) => {
 const goto = (...command) => {
   sessionState.scroll = pageFrameOuter.scrollTop
 
-  const oldSessionState = JSON.parse(JSON.stringify(sessionState))
+  const oldSessionState = cpy(sessionState)
 
   sessionState.isFocused = false
   sessionState.scroll = 0
   gotoNoHistory(...command)
   setTimeout(() => {
-    history.replaceState(oldSessionState, "Traverse Text")
+    history.replaceState(oldSessionState, "Traverse Text", sessionStateToUrl(oldSessionState))
     // todo use page title, in more places than just this because apparently here's not often supported
-    history.pushState(sessionState, "Traverse Text")
+    history.pushState(sessionState, "Traverse Text", sessionStateToUrl(sessionState))
   }, 0)
 }
 
