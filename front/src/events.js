@@ -564,6 +564,9 @@ const updownythingey = (parent, list, cache, focused) => {
 // The single event handler model has some problems. The cases need to appear in the same order they are nested in the DOM
 // maybe this should be click instead of mousedown
 document.addEventListener("mousedown", (event) => {
+  if (event.button !== 0) {
+    return
+  }
 
   const clickedPageLink = getClosestPageLink(event.target)
   if (clickedPageLink) {
@@ -808,6 +811,22 @@ const preprocessImportedStore = async () => {
   start()
 }
 
+
+const topHamburgerClickOutsideListener = () => {
+  optionsFrame.style.display = 'none'
+  document.removeEventListener('click', topHamburgerClickOutsideListener)
+}
+topHamburgerElement.addEventListener('click', (event) => {
+  if (optionsFrame.style.display == 'block') {
+    optionsFrame.style.display = 'none'
+  } else {
+    document.addEventListener('click', topHamburgerClickOutsideListener)
+    optionsFrame.style.display = 'block'
+    event.stopPropagation()
+    event.preventDefault()
+  }
+})
+
 topButtons["Sign Up"].addEventListener('click', (event) => {
   focusSignup()
   event.stopPropagation()
@@ -850,14 +869,6 @@ topButtons["Sign Out"].addEventListener('click', () => {
 })
 
 reallyWantToLeaveElement.children[0].addEventListener('click', reset)
-
-topHamburgerElement.addEventListener('click', () => {
-  if (optionsFrame.style.display == 'block') {
-    optionsFrame.style.display = 'none'
-  } else {
-    optionsFrame.style.display = 'block'
-  }
-})
 
 topButtons["Create New Graph"].addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
