@@ -14,5 +14,7 @@ rando.html
 
 secrets.js
 
+scraping/output/**
+
 test-data/**
 test-data/graphminer-current-old.json
