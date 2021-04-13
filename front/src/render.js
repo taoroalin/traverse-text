@@ -50,6 +50,12 @@ const renderBlock = (store, parentNode, uid, idx) => {
   element.dataset.id = uid
   childrenContainer.dataset.id = uid
   body.dataset.id = uid
+  element.dataset.graphName = store.graphName
+  body.dataset.graphName = store.graphName
+  if (user.s.graphName === store.graphName) {
+    console.log(user.s.graphName, store.graphName)
+    body.setAttribute('contenteditable', true)
+  }
 
   const string = store.blox[uid].s
   renderBlockBody(store, body, string)
@@ -338,7 +344,7 @@ const renderBlockBody = (store, parent, text, editMode = false) => {
 
       match[18] = match[18] || ""; // uglify-js doesn't support ||= operator
       tagElement.children[0].appendChild(newTextNode("#" + match[18]))
-      tagElement.graphName = match[18]
+      tagElement.graphName = match[18].substring(0, match[18].length - 1)
       tagElement.title = match[19]
 
       const theTextNode = document.createTextNode(match[19])

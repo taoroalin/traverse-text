@@ -157,7 +157,9 @@ r.onerror = (e) => {
 
 const urlToSessionState = (url) => {
   url = decodeURI(url)
-  const theSessionState = { scroll: 0, isFocused: false, position: 0, block: undefined, title: undefined }
+  const theSessionState = { scroll: 0, isFocused: false, position: 0, block: undefined, page: undefined }
+  theSessionState.pageFrame = "dailyNotes"
+  theSessionState.graphName = user.s.graphName
 
   const queries = url.matchAll(/([a-zA-Z0-9\-_]+)=([a-zA-Z0-9\-_]+)/g)
   for (let query of queries) {
@@ -166,12 +168,10 @@ const urlToSessionState = (url) => {
   }
 
   const paths = Array.from(url.matchAll(/(?:\/([a-zA-Z0-9_ \-]+))/g))
-  theSessionState.pageFrame = "dailyNotes"
-  theSessionState.graphName = user.s.graphName
   if (paths.length <= 2) {
     return theSessionState
   }
-
+  theSessionState.graphName = paths[0][1]
   theSessionState.pageFrame = paths[1][1]
   if (theSessionState.pageFrame === 'pageTitle') {
     theSessionState.page = paths[2][1]

@@ -96,14 +96,16 @@ const renderSessionState = () => {
       break
   }
 
-  if (!sessionState.isFocused || !pageFrame.querySelector(`.block[data-id="${sessionState.focusId}"]`)) {
-    const firstBlockElement = pageFrame.querySelector('.block')
-    sessionState.position = 0
-    sessionState.focusId = firstBlockElement.dataset.id
-  } else {
-    console.log(`SESSION STATE ALREADY FOCUSED ON ${sessionState.focusId}`)
+  if (sessionState.graphName === user.s.graphName) {
+    if (!sessionState.isFocused || !pageFrame.querySelector(`.block[data-id="${sessionState.focusId}"]`)) {
+      const firstBlockElement = pageFrame.querySelector('.block')
+      sessionState.position = 0
+      sessionState.focusId = firstBlockElement.dataset.id
+    } else {
+      console.log(`SESSION STATE ALREADY FOCUSED ON ${sessionState.focusId}`)
+    }
+    focusIdPosition()
   }
-  focusIdPosition()
 
   pageFrameOuter.scrollTop = sessionState.scroll || 0
 

@@ -1,5 +1,5 @@
-const canWriteBloc = (blocId) => { // todo implement readonly blocs
-  return true
+const canWriteToBlockNode = (node) => { // todo implement readonly blocs
+  return node.dataset.graphName == user.s.graphName
 }
 
 /*

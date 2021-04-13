@@ -64,8 +64,16 @@ const getBloxFromBasicBitchServer = async (graphName) => {
   }
 }
 
+let bloxDanLuu
 const addOtherStore = async (graphName) => {
   const blox = await getBloxFromBasicBitchServer(graphName)
+  for (let x in blox) { // @todo @TEMP @uncorrupt I hate uncorrupting
+    // i'm also bad at code tags
+    if (blox[x].s === undefined) {
+      blox[x].s = ""
+    }
+  }
+  bloxDanLuu = blox
   const otherStore = hydrateFromBlox(graphName, blox)
   otherStores[graphName] = otherStore
   return otherStore
