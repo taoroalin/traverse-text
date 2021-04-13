@@ -11,6 +11,40 @@ const { LruCache, promisify, doEditBlox, undoEditBlox, newSearchRegex } = requir
 
 const bloxCache = new LruCache((key) => common.loadBlox(key))
 let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
+let publicReadableGraphs = {}
+for (let graph in graphs) {
+  if (graph.p) publicReadableGraphs[graph] = 1
+}
+const addGraph = (graphName, commitid, isPublic) => {
+  graphs[graphName] = { l: commitid }
+  if (isPublic) {
+    graphs[graphName].p = 1
+    publicReadableGraphs[graphName] = 1
+  }
+  debouncedSaveGraphs()
+}
+const searchGraphs = (account, string, maxResults = 10) => {
+  const regex = newSearchRegex(string)
+  const result = []
+  for (let graphName in account.r) {
+    if (graphName.match(regex)) {
+      result.push(graphName)
+      if (result.length >= maxResults) {
+        return result
+      }
+    }
+  }
+  for (let graphName in publicReadableGraphs) {
+    if (graphName.match(regex)) {
+      result.push(graphName)
+      if (result.length >= maxResults) {
+        return result
+      }
+    }
+  }
+  return result
+}
+
 // {graphname:{commitId}}
 
 // todo use session keys instead of holding onto password hash everywhere for more security
@@ -313,7 +347,6 @@ const serverHandler = async (req, res) => {
         res.write("That graph name already taken.")
         return
       }
-      graphs[match[2]] = { l: req.headers.commitid }
       writeStream = fs.createWriteStream(`../server-log/server-temp/blox-br/${match[2]}.json.br`)
       if (req.headers.format === 'blox-br') {
         req.pipe(writeStream)
@@ -322,9 +355,8 @@ const serverHandler = async (req, res) => {
       }
       userAccount.u.w[match[2]] = 1
       userAccount.u.r[match[2]] = 1
-      if (req.headers.public) graphs[match[2]].p = 1
       debouncedSaveAccounts()
-      debouncedSaveGraphs()
+      addGraph(match[2], req.headers.commitid, req.headers.public)
       req.on("end", () => {
         fs.rename(`../server-log/server-temp/blox-br/${match[2]}.json.br`, `../user-data/blox-br/${match[2]}.json.br`, () => {
           res.writeHead(200)
@@ -380,31 +412,13 @@ const serverHandler = async (req, res) => {
   }
 }
 
-const searchGraphs = (account, string) => {
-  const regex = newSearchRegex(string)
-  const result = []
-  for (let graphName in graphs) {
-    if (canAccountReadBlox(account, graphName)) {
-      if (graphName.match(regex)) {
-        result.push(graphName)
-        if (result.length >= 10) {
-          return result
-        }
-      }
-    }
-  }
-  return result
-}
-
 if (httpsOptions) {
   https.createServer(httpsOptions, serverHandler).listen(8756)
 } else {
   http.createServer(serverHandler).listen(8756)
 }
 
-
 /*
-
 response codes
 
 200 ok
@@ -418,5 +432,4 @@ response codes
 409 conflicts with current state
 451 unavailable for legal reasons
 429 too many requests
-
 */
