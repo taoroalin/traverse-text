@@ -121,11 +121,6 @@ const commit = () => {
   }, 0)
 }
 
-const commitEdit = (...edit) => {
-  doEdit(...edit)
-  commit()
-}
-
 const saveStore = (force = false) => {
   // stringify blox, then stringify rest of store and insert blox string to avoid re-stringifying blox
   const blox = store.blox

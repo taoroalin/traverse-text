@@ -62,7 +62,8 @@ const setFocusedBlockString = (string, diff) => {
   }
 
   if (diff !== undefined) {
-    commitEdit('df', sessionState.focusId, diff)
+    doEdit('df', sessionState.focusId, diff)
+    commit()
   } else {
     macros.write(sessionState.focusId, theString)
   }

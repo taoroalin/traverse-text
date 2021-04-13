@@ -400,8 +400,7 @@ document.addEventListener("keydown", (event) => {
             idx += 1
           }
           console.log(idx)
-          const newBlockUid = newUid()
-          commitEdit("cr", newBlockUid, store.blox[sessionState.focusId].p, idx)
+          const newBlockUid = macros.create(store.blox[sessionState.focusId].p, idx)
           const newBlockElement = renderBlock(store, focusBlock.parentNode, newBlockUid, idx)
           newBlockElement.children[1].focus()
           event.preventDefault()

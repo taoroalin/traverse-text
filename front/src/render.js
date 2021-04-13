@@ -12,11 +12,6 @@ const renderPage = (store, parentNode, uid, hasBackrefs = true) => {
   title.innerText = page.s
 
   let children = page.k
-  if (!children || children.length === 0) { // todo set standards for when lists can be empty to reduce ambiguity
-    const newId = newUid()
-    commitEdit("cr", newId, uid, 0)
-    children = page.k
-  }
 
   for (let child of children) {
     renderBlock(store, body, child)
