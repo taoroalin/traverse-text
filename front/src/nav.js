@@ -47,12 +47,12 @@ const renderSessionState = () => {
           existingPage = macros.createPage(sessionState.page)
         }
         renderPage(store, pageFrame, existingPage)
-      } else if (graphName in stores) {
-        let existingPage = stores[graphName].titles[sessionState.page]
+      } else if (graphName in otherStores) {
+        let existingPage = otherStores[graphName].titles[sessionState.page]
         if (existingPage === undefined) {
           existingPage = macros.createPage(sessionState.page)
         }
-        renderPage(stores[graphName], pageFrame, existingPage)
+        renderPage(otherStores[graphName], pageFrame, existingPage)
       } else {
         addOtherStore(graphName).then(store => {
           renderSessionState()
