@@ -361,13 +361,6 @@ a:visited {
   while all other background colors transition slowly */
 }
 
-.block__body:empty:before {
-  content: "\200b";
-   /* unicode zero width space character*/
-  /* This is to make empty blocks show up as normal height, 
-  only needed when contenteditable is false. @todo find a cleaner, more performant solution */
-}
-
 [data-editingspotlight="true"] .block__body[data-editmode="true"]{
   color:var(--max);
   border-radius:4px;

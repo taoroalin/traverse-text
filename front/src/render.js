@@ -47,13 +47,18 @@ const renderBlock = (store, parentNode, uid, idx) => {
   body.dataset.id = uid
   element.dataset.graphName = store.graphName
   body.dataset.graphName = store.graphName
-  if (user.s.graphName === store.graphName) {
+  const isEditable = user.s.graphName === store.graphName
+  if (isEditable) {
     console.log(user.s.graphName, store.graphName)
     body.setAttribute('contenteditable', true)
   }
 
   const string = store.blox[uid].s
-  renderBlockBody(store, body, string)
+  if (string.length === 0 && !isEditable) {
+    body.innerText = " "
+  } else {
+    renderBlockBody(store, body, string)
+  }
 
   const children = store.blox[uid].k
   for (let child of children || []) {
