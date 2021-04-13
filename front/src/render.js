@@ -3,7 +3,6 @@ const renderPage = (store, parentNode, uid, hasBackrefs = true) => {
   const element = pageTemplate.cloneNode(true)
   const title = element.firstElementChild
   const body = element.children[1]
-  body.dataset.id = uid
   element.dataset.id = uid
 
   if (page.s === undefined) {
@@ -43,13 +42,9 @@ const renderBlock = (store, parentNode, uid, idx) => {
   const body = element.children[1]
   const childrenContainer = element.children[2]
   element.dataset.id = uid
-  childrenContainer.dataset.id = uid
-  body.dataset.id = uid
   element.dataset.graphName = store.graphName
-  body.dataset.graphName = store.graphName
   const isEditable = user.s.graphName === store.graphName
   if (isEditable) {
-    console.log(user.s.graphName, store.graphName)
     body.setAttribute('contenteditable', true)
   }
 
