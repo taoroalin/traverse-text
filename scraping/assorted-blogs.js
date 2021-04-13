@@ -4,38 +4,6 @@ const { parseHTML, htmlGetFirstTag } = require('./parse-html')
 const shared = require('../front/src/front-back-shared')
 const crypto = require('crypto')
 
-const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
-
-let newUid
-{
-  let UidRandomContainer = Buffer.alloc(9)
-  newUid = (blox) => {
-    let result
-    do {
-      crypto.randomFillSync(UidRandomContainer)
-      result = ""
-      for (let i = 0; i < 9; i++) {
-        result += CHARS_64[UidRandomContainer[i] % 64]
-      }
-    } while (blox[result] !== undefined)
-    return result
-  }
-}
-
-// I'm using base64 126 bit UUIDs instead because they're less length in JSON and they are more ergonomic to write in markup like ((uuid)) if I ever want to do that
-let newUUID
-{
-  let UuidRandomContainer = Buffer.alloc(21)
-  newUUID = () => { // this is 126 bits, 21xbase64
-    crypto.randomFillSync(UuidRandomContainer)
-    let result = ""
-    for (let i = 0; i < 21; i++) {
-      result += CHARS_64[UuidRandomContainer[i] % 64]
-    }
-    return result
-  }
-}
-
 const htmlToBloxString = (html) => {
   if (typeof html === "string") return html
   let result = ""
@@ -86,7 +54,7 @@ const htmlArrToBlox = (blox, parentId, arr, time) => {
   const stackLvls = [0]
 
   for (let node of arr) {
-    const id = newUid(blox)
+    const id = shared.newUid(blox)
     const bloc = { ct: time, et: time, k: [] }
     bloc.p = stack[stack.length - 1]
     blox[stack[stack.length - 1]].k.push(id)
@@ -173,7 +141,7 @@ const htmlArrToBlox = (blox, parentId, arr, time) => {
     const posts = await Promise.all(pagePromises)
     const blox = {}
     const htmls = []
-    const dirId = newUid(blox)
+    const dirId = shared.newUid(blox)
     blox[dirId] = { ct: now, et: now, k: [], s: "Unofficial port of Dan Luu's Blog" }
     for (let post of posts) {
       const html = parseHTML(post)
@@ -181,10 +149,10 @@ const htmlArrToBlox = (blox, parentId, arr, time) => {
       const titleNode = htmlGetFirstTag(html, 'title')
       if (titleNode) {
         const title = titleNode.k[0]
-        const id = newUid(blox)
+        const id = shared.newUid(blox)
         blox[id] = { ct: now, et: now, k: [], s: title }
         htmlArrToBlox(blox, id, html.k, now)
-        const dirEntryId = newUid(blox)
+        const dirEntryId = shared.newUid(blox)
         blox[dirEntryId] = { ct: now, et: now, k: [], s: `[[${title}]]` }
         blox[dirId].k.push(dirEntryId)
       }

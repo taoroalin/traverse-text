@@ -2,36 +2,9 @@ const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWX
 const CHARS_16 = "0123456789abcdef"
 
 let newUid
-{
-  let UidRandomContainer = new Uint8Array(9)
-  newUid = () => {
-    let result
-    do {
-      crypto.getRandomValues(UidRandomContainer)
-      result = ""
-      for (let i = 0; i < 9; i++) {
-        result += CHARS_64[UidRandomContainer[i] % 64]
-      }
-    } while (store.blox[result] !== undefined)
-    return result
-  }
-}
+let newUUID
 
 // I'm using base64 126 bit UUIDs instead because they're less length in JSON and they are more ergonomic to write in markup like ((uuid)) if I ever want to do that
-let newUUID
-{
-  let UuidRandomContainer = new Uint8Array(21)
-  newUUID = () => { // this is 126 bits, 21xbase64
-    crypto.getRandomValues(UuidRandomContainer)
-    let result = ""
-    for (let i = 0; i < 21; i++) {
-      result += CHARS_64[UuidRandomContainer[i] % 64]
-    }
-    return result
-  }
-}
-
-
 
 const applyDif = (string, dif) => {
   // not using dif.s||result.length because dif.s could be 0
@@ -215,12 +188,58 @@ try {
   exports.undoEditBlox = undoEditBlox
   exports.promisify = promisify
   exports.LruCache = LruCache
+
+  {
+    let UidRandomContainer = Buffer.alloc(9)
+    newUid = (blox) => {
+      let result
+      do {
+        crypto.randomFillSync(UidRandomContainer)
+        result = ""
+        for (let i = 0; i < 9; i++) {
+          result += CHARS_64[UidRandomContainer[i] % 64]
+        }
+      } while (blox[result] !== undefined)
+      return result
+    }
+
+    let UuidRandomContainer = Buffer.alloc(21)
+    newUUID = () => { // this is 126 bits, 21xbase64
+      crypto.randomFillSync(UuidRandomContainer)
+      let result = ""
+      for (let i = 0; i < 21; i++) {
+        result += CHARS_64[UuidRandomContainer[i] % 64]
+      }
+      return result
+    }
+  }
+
   exports.newUid = newUid
   exports.newUUID = newUUID
   exports.base64ToInt = base64ToInt
   exports.intToBase64 = intToBase64
   exports.newSearchRegex = newSearchRegex
 } catch (e) {
-
+  let UidRandomContainer = new Uint8Array(9)
+  newUid = () => {
+    let result
+    do {
+      crypto.getRandomValues(UidRandomContainer)
+      result = ""
+      for (let i = 0; i < 9; i++) {
+        result += CHARS_64[UidRandomContainer[i] % 64]
+      }
+    } while (store.blox[result] !== undefined)
+    return result
+  }
+  let UuidRandomContainer = new Uint8Array(21)
+  newUUID = () => { // this is 126 bits, 21xbase64
+    crypto.getRandomValues(UuidRandomContainer)
+    let result = ""
+    for (let i = 0; i < 21; i++) {
+      result += CHARS_64[UuidRandomContainer[i] % 64]
+    }
+    return result
+  }
 }
 //~
