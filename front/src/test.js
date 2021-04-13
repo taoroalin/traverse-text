@@ -1,3 +1,46 @@
+const fixParents = () => {
+  for (let id in store.blox) {
+    delete store.blox[id].p
+  }
+  for (let id in store.blox) {
+    const bloc = store.blox[id]
+    for (let childId of bloc.k || []) {
+      store.blox[childId].p = id
+    }
+  }
+}
+
+const fixDuplicatePages = () => {
+  const titles = {}
+  for (let id in store.blox) {
+    const bloc = store.blox[id]
+    if (!bloc.p) {
+      pushToArrInObj(titles, store.blox[id].s, id)
+    }
+  }
+  for (let id in titles) {
+    const arr = titles[id]
+    for (let i = 1; i < arr.length; i++) {
+      for (let k of store.blox[arr[i]].k || []) {
+        macros.move(k, arr[0])
+      }
+      macros.delete(arr[i])
+    }
+  }
+}
+
+const fixFirstBlocksOfPages = () => {
+  for (let title in store.titles) {
+    const id = store.titles[title]
+    const page = store.blox[id]
+    if (page.k === undefined || page.k.length === 0) {
+      macros.nocommit.create(id, 0)
+    }
+  }
+  commit()
+}
+
+
 const testRoundTrip = () => {
   const jsonOutput = storeToRoamJSON(store)
   const store = roamJsonToStore(store.graphName, jsonOutput)
