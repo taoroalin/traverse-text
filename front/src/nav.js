@@ -33,14 +33,17 @@ const renderSessionState = () => {
   pageFrame.innerHTML = ""
   searchInput.value = ""
 
-
+  console.log('TITLE CONAW ' + store.titles["Conaw"])
+  console.log(sessionState.page)
   // render state
   switch (sessionState.pageFrame) {
     case "pageTitle":
       const graphName = sessionState.graphName
       if (graphName === user.s.graphName) {
+        console.log('this graph name')
         let existingPage = store.titles[sessionState.page]
         if (existingPage === undefined) {
+          console.log('creating block')
           existingPage = macros.createPage(sessionState.page)
         }
         renderPage(store, pageFrame, existingPage)
