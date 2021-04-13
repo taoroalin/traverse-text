@@ -53,8 +53,8 @@ const saveStoreToBasicBitchServer = async (blox, force = false) => {
 const getBloxFromBasicBitchServer = async (graphName) => {
   const getSentTime = performance.now()
   const response = await fetch(`${basicBitchServerUrl}/get/${graphName}`,
-    { headers: { passwordHash: user.h } })
-  switch (reponse.status) {
+    { headers: { h: user.h } })
+  switch (response.status) {
     case 200:
       const blox = await response.json()
       console.log(`got in ${performance.now() - getSentTime}`)
@@ -66,7 +66,7 @@ const getBloxFromBasicBitchServer = async (graphName) => {
 
 const addOtherStore = async (graphName) => {
   const blox = await getBloxFromBasicBitchServer(graphName)
-  const otherStore = hydrateFromBlox(blox)
+  const otherStore = hydrateFromBlox(graphName, blox)
   otherStores[graphName] = otherStore
   return otherStore
 }
