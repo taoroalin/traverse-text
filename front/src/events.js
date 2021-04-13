@@ -569,12 +569,6 @@ const updownythingey = (parent, list, cache, focused) => {
   }
 }
 
-const followUrlElement = (element) => {
-  const link = document.createElement("a")
-  link.target = "_blank"
-  link.href = element.innerText
-  link.click()
-}
 
 // The single event handler model has some problems. The cases need to appear in the same order they are nested in the DOM
 // maybe this should be click instead of mousedown
@@ -668,6 +662,9 @@ document.addEventListener("mousedown", (event) => {
 
       }
     } else connectFrame.style.display = "none"
+  } else if (event.target.closest('.alias')) {
+    const aliasHidden = event.target.closest('.alias').children[1]
+    followLinkLike(aliasHidden.firstElementChild)
   }
 
   // this is at the bottom so that autocomplete suggestion click handler still knows where the link is. 

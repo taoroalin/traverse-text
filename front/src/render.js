@@ -457,6 +457,28 @@ let transformComputeElement
           el.appendChild(videoEmbedElement)
         }
         break
+      case "alias":
+        if (editMode) {
+          el.className = "compute-kept"
+          return
+        }
+        const lastOfSeq = seq[seq.length - 1]
+        if (!isLinkLike(lastOfSeq)) {
+          return
+        }
+        const aliasElement = aliasTemplate.cloneNode(true)
+        const aliasVisible = aliasElement.children[0]
+        const aliasHidden = aliasElement.children[1]
+        const seqNodes = Array.from(el.children[1].childNodes)
+        for (let node of seqNodes) {
+          if (node !== seq[0] && node !== lastOfSeq) {
+            aliasVisible.appendChild(node)
+          }
+        }
+        aliasHidden.appendChild(lastOfSeq)
+        el.textContent = ""
+        el.appendChild(aliasElement)
+        break
       case "query":
 
         // step 1 parse element list using precedence climbing

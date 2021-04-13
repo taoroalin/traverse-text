@@ -567,6 +567,17 @@ a:visited {
   margin-left: -2px;
 }
 
+.alias__visible{
+  background-color:var(--selected);
+  border-radius:3px;
+  padding:3px 1px;
+  cursor:pointer;
+}
+
+.alias__hidden{
+  display:none;
+}
+
 #terminal {
   font-family: "Inconsolata";
   width: 100%;

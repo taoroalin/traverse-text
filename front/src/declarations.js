@@ -153,6 +153,10 @@ const allHtml = `<div id="app">
       class="compute-failed__body"></span><span class="compute-failed__brackets"></span></span>
 </template>
 
+<template id="alias">
+  <span class="alias"><span class="alias__visible"></span><span class="alias__hidden"></span></span>
+</template>
+
 <template id="todo-checkbox">
   <input type="checkbox" class="todo-checkbox">
 </template>
@@ -339,6 +343,7 @@ const computeFailedTemplate = getTemp("compute-failed")
 const todoCheckboxTemplate = getTemp("todo-checkbox")
 const videoEmbedTemplate = getTemp("video-embed")
 const queryFrameTemplate = getTemp("query-frame")
+const aliasTemplate = getTemp("alias")
 
 const textEncoder = new TextEncoder()
 

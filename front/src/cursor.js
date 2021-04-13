@@ -164,3 +164,33 @@ const getPageTitleOfNode = (node) => {
   const linkNode = getClosestPageLink(node)
   return linkNode && linkNode.title
 }
+
+const followUrlElement = (element) => {
+  const link = document.createElement("a")
+  link.target = "_blank"
+  link.href = element.innerText
+  link.click()
+}
+
+const isLinkLike = (node) => {
+  return {
+    attribute: 1,
+    tag: 1,
+    "page-ref": 1,
+    url: 1
+  }[node.className]
+}
+
+const followLinkLike = (node) => {
+  switch (node.className) {
+    case "url":
+      followUrlElement(node)
+      break
+    case "block-ref":
+      goto("block", node.dataset.id)
+      break
+    default:
+      goto('pageTitle', node.title, node.graphName)
+      break
+  }
+}
