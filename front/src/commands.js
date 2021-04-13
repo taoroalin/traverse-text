@@ -252,6 +252,8 @@ macros.nocommit = {
     const id = newUid()
     doEdit("cr", id)
     doEdit("df", id, diff(title, ""))
+    const firstChildId = newUid()
+    doEdit('cr', firstChildId, id, 0)
     return id
   },
   create: (parentId, idx) => {
