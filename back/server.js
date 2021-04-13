@@ -26,7 +26,7 @@ const addGraph = (graphName, commitid, isPublic) => {
 const searchGraphs = (account, string, maxResults = 10) => {
   const regex = newSearchRegex(string)
   const result = []
-  for (let graphName in account.r) {
+  for (let graphName in account.u.r) {
     if (graphName.match(regex)) {
       result.push(graphName)
       if (result.length >= maxResults) {
@@ -153,6 +153,18 @@ const appendReqToFile = (req, res, fileName) => {
   return
 }
 
+const statusCodes = {
+  ok: 200,
+  notModified: 304,
+  badSyntax: 400,
+  unauthenticated: 401,
+  unauthorized: 403,
+  notFound: 404,
+  conflictsWithCurrentState: 409,
+  unavailableForLegalReasons: 451,
+  tooManyRequests: 429
+}
+
 // I had json in body, but that caused timing issues because I want to change end listener, but couldn't to it fast enough because the end event happens so fast. Switched to putting all JSON made for immediate parsing in header
 const serverHandler = async (req, res) => {
   const gotReqTime = performance.now()
@@ -163,14 +175,14 @@ const serverHandler = async (req, res) => {
   // nodejs automatically lowercases all header keys because they're officially supposed to be case insensitive
   // I have to send out header keys captialized because some clients need that, though
   if (req.headers["access-control-request-headers"] !== undefined) {
-    res.writeHead(200)
+    res.writeHead(statusCodes.ok)
     res.end()
     return
   }
   const match = req.url.match(/^\/(get|edit|put|creategraph|searchgraphs|auth|signup|settings|issue|error|log)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
   log(req.url)
   if (match === null) {
-    res.writeHead(404)
+    res.writeHead(statusCodes.notFound)
     res.write(`invalid request path`)
     res.end()
     return
@@ -179,19 +191,19 @@ const serverHandler = async (req, res) => {
     let accountDetails = getReqHeaderBody(req)
     if (accountDetails === null) {
       log('bdy ' + req.headers.body)
-      res.writeHead(401)
+      res.writeHead(statusCodes.badSyntax)
       res.write(`invalid json ${bdy}`)
       res.end()
       return
     }
     if (typeof accountDetails !== "object") {
-      res.writeHead(400)
+      res.writeHead(statusCodes.badSyntax)
       res.end()
       return
     }
     const hash = accountDetails.h
     if (hash === undefined || accountsByHash[hash] !== undefined || hash.match(hashRegex) === null) {
-      res.writeHead(401)
+      res.writeHead(statusCodes.badSyntax)
       res.write("Invalid password hash")
       res.end()
       log("Invalid password hash")
@@ -199,7 +211,7 @@ const serverHandler = async (req, res) => {
     }
     const email = accountDetails.e
     if (email === undefined || accountsByEmail[email] !== undefined) {
-      res.writeHead(401)
+      res.writeHead(statusCodes.conflictsWithCurrentState)
       res.write("Email already in use")
       res.end()
       log("Email already in use")
@@ -210,7 +222,7 @@ const serverHandler = async (req, res) => {
       accountsByUsername[username] !== undefined ||
       (typeof username !== "string") ||
       username.match(/^[a-zA-Z0-9_-]{3,50}$/) === null) {
-      res.writeHead(401)
+      res.writeHead(statusCodes.badSyntax)
       res.write(`Invalid username ${username}`)
       res.end()
       log("Invalid username")
@@ -248,13 +260,13 @@ const serverHandler = async (req, res) => {
 
   const passwordHash = req.headers.h
   if (passwordHash === undefined || !(typeof passwordHash === "string") || passwordHash.match(hashRegex) === null) {
-    res.writeHead(401)
+    res.writeHead(statusCodes.unauthenticated)
     res.end()
     return
   }
   const userAccount = accountsByHash[passwordHash]
   if (userAccount === undefined) {
-    res.writeHead(401)
+    res.writeHead(statusCodes.unauthenticated)
     res.end()
     return
   }
@@ -265,24 +277,24 @@ const serverHandler = async (req, res) => {
   switch (match[1]) {
     case "put":
       if (match[2] === undefined) {
-        res.writeHead(400)
+        res.writeHead(statusCodes.badSyntax)
         res.end()
         return
       }
       if (!canAccountWriteBlox(userAccount, match[2])) {
-        res.writeHead(403)
+        res.writeHead(statusCodes.unauthorized)
         res.end()
         return
       }
 
       if (req.headers.commitid !== undefined && graphs[match[2]].l === req.headers.commitid) {
-        res.writeHead(304)
+        res.writeHead(statusCodes.notModified)
         res.end()
         return
       }
 
       if (req.headers.force === undefined && req.headers.synccommitid !== graphs[match[2]].l) {
-        res.writeHead(409)
+        res.writeHead(statusCodes.conflictsWithCurrentState)
         res.end()
         return
       }
@@ -301,12 +313,12 @@ const serverHandler = async (req, res) => {
     case "get":
       graphMetadata = graphs[match[2]]
       if (graphMetadata === undefined) {
-        res.writeHead(404)
+        res.writeHead(statusCodes.notFound)
         res.end()
         return
       }
       if (!canAccountReadBlox(userAccount, match[2])) {
-        res.writeHead(403)
+        res.writeHead(statusCodes.unauthorized)
         res.end()
         return
       }
@@ -315,7 +327,7 @@ const serverHandler = async (req, res) => {
       res.setHeader('user', JSON.stringify(readableUserData))
 
       if (req.headers.commitid && req.headers.commitid === graphMetadata.l) {
-        res.writeHead(304)
+        res.writeHead(statusCodes.notModified)
         res.end()
         return
       }
@@ -336,14 +348,14 @@ const serverHandler = async (req, res) => {
       return
     case "creategraph":
       if (!match[2].match(/^[a-zA-Z0-9\-]+$/)) {
-        res.writeHead(400)
+        res.writeHead(statusCodes.badSyntax)
         res.write("Graph names can only contain letters, numbers, and dash")
         return
       }
       const existingGraph = graphs[match[2]]
       // todo make sure a write stream can't create file here
       if (existingGraph !== undefined && !(req.headers.force && canAccountWriteBlox(userAccount, match[2]))) {
-        res.writeHead(409)
+        res.writeHead(statusCodes.conflictsWithCurrentState)
         res.write("That graph name already taken.")
         return
       }
@@ -359,7 +371,7 @@ const serverHandler = async (req, res) => {
       addGraph(match[2], req.headers.commitid, req.headers.public)
       req.on("end", () => {
         fs.rename(`../server-log/server-temp/blox-br/${match[2]}.json.br`, `../user-data/blox-br/${match[2]}.json.br`, () => {
-          res.writeHead(200)
+          res.writeHead(statusCodes.ok)
           res.end()
         })
       })
@@ -371,23 +383,23 @@ const serverHandler = async (req, res) => {
     case "settings":
       let settings = getReqHeaderBody(req)
       if (settings === null) {
-        res.writeHead(400)
+        res.writeHead(statusCodes.badSyntax)
         res.end()
         return
       }
       userAccount.u.s = settings
       debouncedSaveAccounts()
-      res.writeHead(200)
+      res.writeHead(statusCodes.ok)
       res.end()
       return
     case "edit":
       if (!canAccountWriteBlox(userAccount, match[2])) {
-        res.writeHead(403)
+        res.writeHead(statusCodes.unauthorized)
         res.end()
         return
       }
       if (req.headers.synccommitid !== graphs[match[2]].l) {
-        res.writeHead(409)
+        res.writeHead(statusCodes.conflictsWithCurrentState)
         res.end()
         return
       }
@@ -399,7 +411,7 @@ const serverHandler = async (req, res) => {
       graphs[match[2]].l = commit.id
       debouncedSaveGraphs()
       const storeError = await common.asyncStoreBloxString(match[2], JSON.stringify(blox))
-      res.writeHead(200)
+      res.writeHead(statusCodes.ok)
       res.end()
       return
     case 'searchgraphs':
@@ -417,19 +429,3 @@ if (httpsOptions) {
 } else {
   http.createServer(serverHandler).listen(8756)
 }
-
-/*
-response codes
-
-200 ok
-
-304 not modified
-
-400 bad syntax
-401 don't know you
-403 forbidden
-404 not found
-409 conflicts with current state
-451 unavailable for legal reasons
-429 too many requests
-*/
