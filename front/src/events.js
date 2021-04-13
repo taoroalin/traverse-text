@@ -252,8 +252,15 @@ const globalHotkeys = {
   },
   "open": {
     key: "o", control: true, fn: (event) => {
-      if (editingLink) goto("pageTitle", editingLink.title, editingLink.graphName)
-      else if (editingUrlElement) editingUrlElement.click()
+      console.log('CONTROL O')
+      console.log(editingLink)
+      console.log(editingUrlElement)
+      if (editingLink) {
+        goto("pageTitle", editingLink.title, editingLink.graphName)
+      }
+      else if (editingUrlElement) {
+        followUrlElement(editingUrlElement)
+      }
     }
   },
   "daily notes": {
@@ -563,6 +570,13 @@ const updownythingey = (parent, list, cache, focused) => {
   }
 }
 
+const followUrlElement = (element) => {
+  const link = document.createElement("a")
+  link.target = "_blank"
+  link.href = element.innerText
+  link.click()
+}
+
 // The single event handler model has some problems. The cases need to appear in the same order they are nested in the DOM
 // maybe this should be click instead of mousedown
 document.addEventListener("mousedown", (event) => {
@@ -598,11 +612,7 @@ document.addEventListener("mousedown", (event) => {
   } else if (event.target.className === "block-ref") {
     goto("block", event.target.dataset.id)
   } else if (event.target.className === "url") { // using spans with event handlers as links because they play nice with contenteditable
-    const link = document.createElement("a")
-    link.target = "_blank"
-    link.href = event.target.innerText
-    link.click()
-
+    followUrlElement(event.target)
     // everything else, so none of it triggers when user clicks markup
   } else if (event.target === topButtons["Download"]) {
     downloadHandler()
