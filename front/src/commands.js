@@ -84,7 +84,7 @@ const doEditCacheStuff = (edit, includeInnerOuter = false) => {
       }
       break
     case 'df':
-      setLinks(store, id, includeInnerOuter)
+      setLinks(store, id, true, includeInnerOuter)
       const bloc = store.blox[id]
       if (bloc.p === undefined) {
         const oldString = unapplyDif(bloc.s, p1) // this work could be deduplicated, but AAAAGGGGHHHH there's already so much coupling to deduplicate work!

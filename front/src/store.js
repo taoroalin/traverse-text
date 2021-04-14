@@ -49,7 +49,7 @@ const isBlockEmpty = (store, blockId) => {
 // page-ref-open page-ref-close tag block-ref attribute literal code-block
 const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(^[\/a-zA-Z0-9_-]+)::|`([^`]+)`|```/g
 
-const setLinks = (store, blocId, doInnerOuterRefs = false, nogc = false) => {
+const setLinks = (store, blocId, doCreatePages = true, doInnerOuterRefs = false, nogc = false) => {
   for (let ref of store.forwardRefs[blocId] || []) {
     store.refs[ref] = store.refs[ref].filter(x => x !== blocId)
     if (!nogc) gcPage(ref)
@@ -78,9 +78,14 @@ const setLinks = (store, blocId, doInnerOuterRefs = false, nogc = false) => {
   const doTitle = (title) => {
     let ref = store.titles[title]
     if (ref === undefined) {
-      ref = macros.nocommit.createPage(title) // todo manage the commit on this one. Need some standard for when to commit / when to do
+      if (doCreatePages) {
+        ref = macros.nocommit.createPage(title)
+        // todo manage the commit on this one. Need some standard for when to commit / when to do
+        doRef(ref)
+      }
+    } else {
+      doRef(ref)
     }
-    doRef(ref)
   }
 
   const bloc = store.blox[blocId]
@@ -163,7 +168,7 @@ const generateRefs = (store) => {
   store.refs = {}
   store.forwardRefs = {}
   for (let blocId in store.blox) {
-    setLinks(store, blocId)
+    setLinks(store, blocId, false)
   }
   console.log(`gen refs took ${performance.now() - stime}`)
 }
