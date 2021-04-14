@@ -746,6 +746,7 @@ document.addEventListener("selectionchange", (event) => {
     if (currentFocusBlock && canWriteToBlockNode(currentFocusBlock)) {
       sessionState.isFocused = true
       sessionState.position = (focusNode.startIdx || 0) + focusOffset
+      if (focusNode.textContent.length === focusOffset) sessionState.position = focusNode.endIdx
       if (currentFocusBlock.dataset.id !== sessionState.focusId) {
         sessionState.focusId = currentFocusBlock.dataset.id
         focusIdPosition()

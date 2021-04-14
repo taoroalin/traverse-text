@@ -171,12 +171,12 @@ const renderBlockBody = (store, parent, text, editMode = false) => {
         stackTop.parentNode.endIdx = idx
         stackTop.parentNode.title = stackTop.innerText
         stackTop.parentNode.endIdx = idx + 2
-        lastTextNode.endIdx += 2
         if (editMode)
           stackTop.parentNode.children[3].appendChild(newTextNode("]]"))
-        else
+        else {
           stackTop.parentNode.children[3].appendChild(newTextNode(" "))
-
+          lastTextNode.endIdx += 1
+        }
         stack.pop()
         stackTop = stack[stack.length - 1]
       } else {

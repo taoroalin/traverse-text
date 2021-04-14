@@ -194,3 +194,7 @@ const followLinkLike = (node) => {
       break
   }
 }
+
+const getBlocFromElement = (element) => {
+  return otherStores[element.dataset.graphName].blox[element.dataset.id]
+}
