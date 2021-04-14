@@ -473,7 +473,7 @@ document.addEventListener("keydown", (event) => {
       case "ArrowRight":
         if (event.shiftKey && event.altKey) {
           indentFocusedBlock()
-        } else if (sessionState.position === focusBlockBody.innerText.length) {
+        } else if (sessionState.position >= focusBlockBody.innerText.length) {
           focusBlockVerticalOffset(1, focusBlock, true)
           event.preventDefault()
         } else {
