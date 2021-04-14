@@ -25,10 +25,11 @@ let focusIdPosition, selectIdWholeNode
 
   focusIdPosition = () => {
     prepFocusIdForCursor()
-
+    let lastTextNode
     const scanElement = (element) => {
       for (let el of element.childNodes) {
         if (el.nodeName === "#text") {
+          lastTextNode = el
           if (sessionState.position >= (el.startIdx || 0) && sessionState.position <= (el.startIdx || 0) + el.textContent.length) {
             scanResult = el
             const placeToGo = sessionState.position - el.startIdx
@@ -42,7 +43,7 @@ let focusIdPosition, selectIdWholeNode
         }
       }
     }
-    scanElement(focusBlockBody)
+    if (!scanElement(focusBlockBody)) getSelection().collapse(lastTextNode, lastTextNode.textContent.length)
     updateCursorSpanInfo()
   }
 

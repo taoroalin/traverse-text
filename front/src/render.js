@@ -478,6 +478,12 @@ let transformComputeElement
             aliasVisible.appendChild(node)
           }
         }
+
+        // @hack remove this hack! invisible chars are never good!
+        const textNode = document.createTextNode("\u200a") // hair space
+        textNode.startIdx = el.endIdx
+        aliasVisible.appendChild(textNode)
+
         aliasHidden.appendChild(lastOfSeq)
         el.textContent = ""
         el.appendChild(aliasElement)
