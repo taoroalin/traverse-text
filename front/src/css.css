@@ -320,12 +320,12 @@ a:visited {
 .backref-frame{
   background-color: var(--query-background);
   border-radius: 8px;
-    padding:1px 12px 18px;
-  margin:14px 0;
+  padding:1px 12px 16px;
+  margin:13px 0;
 }
 
 .backref-list__body {
-  margin-left: 10px;
+  margin: 0 10px;
 }
 
 .backref-list__title {
@@ -334,7 +334,7 @@ a:visited {
   padding: 18px 0 0;
   border: 1px solid var(--break);
   border-width:0 0 1px 0;
-  margin: 0 0 22px 0;
+  margin: 0 0 18px 0;
 }
 
 .page-break {

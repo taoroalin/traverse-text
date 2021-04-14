@@ -376,19 +376,19 @@ document.addEventListener("keydown", (event) => {
       autocomplete()
       event.preventDefault()
     }
-    if (updownythingey(editingLink, autocompleteList, titleExactFullTextSearchCache, focusSuggestion)) event.preventDefault()
+    navigateDropdownWithKeyboard(editingLink, autocompleteList, titleExactFullTextSearchCache, focusSuggestion, event)
   } else if (templateList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       expandTemplate()
       event.preventDefault()
     }
-    if (updownythingey(editingTemplateExpander, templateList, templateSearchCache, focusSuggestion)) event.preventDefault()
+    navigateDropdownWithKeyboard(editingTemplateExpander, templateList, templateSearchCache, focusSuggestion, event)
   } else if (inlineCommandList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       execInlineCommand()
       event.preventDefault()
     }
-    if (updownythingey(editingCommandElement, inlineCommandList, commandSearchCache, focusSuggestion)) event.preventDefault()
+    navigateDropdownWithKeyboard(editingCommandElement, inlineCommandList, commandSearchCache, focusSuggestion, event)
   } else if (sessionState.isFocused) {
     let blocks
     let newActiveBlock
@@ -503,8 +503,7 @@ document.addEventListener("keydown", (event) => {
       return
     }
 
-    const didUpDowny = updownythingey(searchInput, searchResultList, exactFullTextSearchCache, focusSuggestion)
-    if (didUpDowny) event.preventDefault()
+    navigateDropdownWithKeyboard(searchInput, searchResultList, exactFullTextSearchCache, focusSuggestion, event)
   }
 
   if (terminalElement.style.display !== "none") {
@@ -546,8 +545,9 @@ document.addEventListener('paste', (event) => {
   }
 })
 
-const updownythingey = (parent, list, cache, focused) => {
+const navigateDropdownWithKeyboard = (parent, list, cache, focused, event) => {
   // todo factor this so the same logic works on search all, block, title, and template
+  console.log(event)
   const moveDirection = ((event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey)) && -1) ||
     ((event.key === "ArrowDown" || event.key === "Tab") && 1)
   if (moveDirection) {
@@ -565,7 +565,7 @@ const updownythingey = (parent, list, cache, focused) => {
         list.lastElementChild.dataset.selected = true
       }
     }
-    return true
+    event.preventDefault()
   }
 }
 
