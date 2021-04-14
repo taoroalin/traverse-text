@@ -10,6 +10,7 @@ const { LruCache, promisify, doEditBlox, undoEditBlox, newSearchRegex } = requir
 // front-back-shared is in the front folder because its easier to import from other paths in Node than browser
 
 const bloxCache = new LruCache((key) => common.loadBlox(key))
+// {graphname:{commitId}}
 let graphs = JSON.parse(fs.readFileSync(`../user-data/graphs.json`))
 let publicReadableGraphs = {}
 for (let graph in graphs) {
@@ -45,7 +46,6 @@ const searchGraphs = (account, string, maxResults = 10) => {
   return result
 }
 
-// {graphname:{commitId}}
 
 // todo use session keys instead of holding onto password hash everywhere for more security
 const hashRegex = /^[a-zA-Z0-9_\-]{70,100}$/
@@ -107,7 +107,6 @@ let debouncedSaveGraphs
 
 let debouncedSaveAccounts
 {
-  // todo create under different name and rename because rename is atomic, whereas a concurrent process could crash halfway through writeFile, leaving partial file
   const saveAccounts = () => {
     fs.writeFile("../server-log/server-temp/accounts.json", JSON.stringify(accounts), (err) => {
       if (err) {
@@ -301,7 +300,6 @@ const serverHandler = async (req, res) => {
 
       graphs[match[2]].l = req.headers.commitid
       debouncedSaveGraphs()
-      // todo add coordination between threads using err.code==='EBUSY'?
       writeStream = fs.createWriteStream(`../server-log/server-temp/blox-br/${match[2]}.json.br`)
       common.brCompressStream(req, writeStream, () => {
         fs.rename(`../server-log/server-temp/blox-br/${match[2]}.json.br`, `../user-data/blox-br/${match[2]}.json.br`, () => {
