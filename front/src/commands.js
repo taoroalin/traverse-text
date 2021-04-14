@@ -177,7 +177,7 @@ let saveStoreTimeout = null
 const debouncedSaveStore = () => {
   if (user.s.commitId !== user.s.syncCommitId) {
     clearTimeout(saveStoreTimeout)
-    saveStoreTimeout = setTimeout(saveStoreIncremental, 300)
+    saveStoreTimeout = setTimeout(saveStoreIncremental, 150)
   }
 }
 

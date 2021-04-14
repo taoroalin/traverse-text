@@ -570,7 +570,7 @@ a:visited {
 .alias__visible{
   background-color:var(--selected);
   border-radius:3px;
-  padding:3px 1px;
+  padding:1px 1px;
   cursor:pointer;
 }
 
