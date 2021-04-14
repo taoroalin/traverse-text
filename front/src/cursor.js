@@ -152,7 +152,7 @@ const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => 
 }
 
 const getChildren = (node) => {
-  return node.className === "block" ? node.children[2].children : node.children[1].children
+  return node.className === "block" ? node.children[3].children : node.children[1].children
 }
 
 

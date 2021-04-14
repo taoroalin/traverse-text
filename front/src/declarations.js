@@ -103,6 +103,7 @@ const allHtml = `<div id="app">
       <circle cx="10" cy="10.5" r="3" fill="var(--bullet)" />
     </svg>
     <div class="block__body" tabindex="-1"></div>
+    <div class="block__after-body"></div>
     <div class="block__children">
 
     </div>

@@ -40,7 +40,7 @@ const renderBackrefs = (store, parent, refs) => {
 const renderBlock = (store, parentNode, uid, idx) => {
   const element = blockTemplate.cloneNode(true)
   const body = element.children[1]
-  const childrenContainer = element.children[2]
+  const childrenContainer = element.children[3]
   element.dataset.id = uid
   element.dataset.graphName = store.graphName
   const isEditable = user.s.graphName === store.graphName
@@ -128,7 +128,10 @@ const parseRegex = /(\[\[(?:[a-zA-Z0-9\-]+:)?)|(\]\])|(or)|\(\(([a-zA-Z0-9\-_]+)
 // using named groups halves its speed - unfortunately that's why I don't use named groups
 
 const renderBlockBody = (store, parent, text, editMode = false) => {
-  if (parent.parentElement) parent.parentElement.dataset.header = ''
+  if (parent.parentElement && parent.parentElement.className === "block") {
+    parent.parentElement.dataset.header = ''
+    parent.parentElement.children[2].textContent = ""
+  }
   parent.dataset.editmode = editMode
   const stack = [parent]
   const matches = text.matchAll(parseRegex)
@@ -543,9 +546,7 @@ let transformComputeElement
         const queryFrame = queryFrameTemplate.cloneNode(true)
         renderBackrefs(store, queryFrame, result)
         const block = el.closest(".block")
-        const otherQuery = block.querySelector(".query-frame")
-        if (otherQuery) otherQuery.remove()
-        block.appendChild(queryFrame)
+        block.children[2].appendChild(queryFrame)
         el.className = "compute-kept"
         return
         break

@@ -113,7 +113,7 @@ const indentFocusedBlock = () => {
     console.log(newParentId)
     const idx = (store.blox[newParentId].k && store.blox[newParentId].k.length) || 0
     macros.move(bid, newParentId, idx)
-    olderSibling.children[2].appendChild(focusBlock)
+    olderSibling.children[3].appendChild(focusBlock)
     getSelection().collapse(focusNode, focusOffset)
   }
 }
