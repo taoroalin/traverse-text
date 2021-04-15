@@ -96,13 +96,13 @@ let updateCursorSpanInfo
     editingLink = undefined
     const pageRefs = focusBlockBody.querySelectorAll(".page-ref")
     for (let ref of pageRefs) {
-      if (ref.children[2].firstChild.endIdx >= sessionState.position && ref.children[1].firstChild.startIdx < sessionState.position) {
+      if (ref.endIdx >= sessionState.position && ref.startIdx < sessionState.position) {
         editingLink = ref
       }
     }
     const tags = focusBlockBody.querySelectorAll(".tag")
     for (let tag of tags) {
-      if (tag.children[1].firstChild.endIdx >= sessionState.position && tag.children[0].firstChild.startIdx < sessionState.position) {
+      if (tag.endIdx >= sessionState.position && tag.startIdx <= sessionState.position) {
         editingLink = tag
       }
     }
