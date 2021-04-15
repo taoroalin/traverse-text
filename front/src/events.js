@@ -654,7 +654,9 @@ const commonAncestorNode = (a, b) => {
   const aList = []
   while (a.dataset.id !== undefined) {
     aList.push(a.dataset.id)
-    a = a.parentNode.parentNode
+    a = a.parentNode
+    if (!a) break
+    a = a.parentNode
   }
   const bList = []
   while (b.dataset.id !== undefined) {

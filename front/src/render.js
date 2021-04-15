@@ -157,7 +157,8 @@ const renderBlockBody = (store, parent, text, editMode = false) => {
       const pageRefElement = pageRefTemplate.cloneNode(true)
       pageRefElement.startIdx = idx + 2
       stackTop.appendChild(pageRefElement)
-      stackTop.graphName = match[1]
+      if (match[1].length > 3) pageRefElement.graphName = match[1].substring(2, match[1].length - 1)
+      else pageRefElement.graphName = store.graphName
       if (editMode)
         pageRefElement.children[0].appendChild(newTextNode("[["))
       pageRefElement.startIdx = idx

@@ -15,7 +15,7 @@ const sessionStateToUrl = (sessionState) => {
   if (sessionState.scroll !== 0 || sessionState.focusId) {
     url += "?"
     if (sessionState.scroll !== 0) {
-      url += "scroll=" + sessionState.scroll + "&"
+      url += "scroll=" + Math.round(sessionState.scroll) + "&"
     }
     if (sessionState.focusId) {
       url += "focusId=" + sessionState.focusId
