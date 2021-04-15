@@ -182,6 +182,8 @@ const newSearchRegex = (string) => new RegExp(escapeRegex(string), "i")
 
 //~frontskip this tag means the front end build script will cut out everything between here and the next tilde (can't use tilde sign there because that would fool preprocessor)
 try {
+  const crypto = require('crypto')
+
   exports.applyDif = applyDif
   exports.unapplyDif = unapplyDif
   exports.doEditBlox = doEditBlox
@@ -220,26 +222,30 @@ try {
   exports.intToBase64 = intToBase64
   exports.newSearchRegex = newSearchRegex
 } catch (e) {
-  let UidRandomContainer = new Uint8Array(9)
-  newUid = () => {
-    let result
-    do {
-      crypto.getRandomValues(UidRandomContainer)
-      result = ""
-      for (let i = 0; i < 9; i++) {
-        result += CHARS_64[UidRandomContainer[i] % 64]
-      }
-    } while (store.blox[result] !== undefined)
-    return result
-  }
-  let UuidRandomContainer = new Uint8Array(21)
-  newUUID = () => { // this is 126 bits, 21xbase64
-    crypto.getRandomValues(UuidRandomContainer)
-    let result = ""
-    for (let i = 0; i < 21; i++) {
-      result += CHARS_64[UuidRandomContainer[i] % 64]
+  //~
+  {
+    let UidRandomContainer = new Uint8Array(9)
+    newUid = () => {
+      let result
+      do {
+        crypto.getRandomValues(UidRandomContainer)
+        result = ""
+        for (let i = 0; i < 9; i++) {
+          result += CHARS_64[UidRandomContainer[i] % 64]
+        }
+      } while (store.blox[result] !== undefined)
+      return result
     }
-    return result
+    let UuidRandomContainer = new Uint8Array(21)
+    newUUID = () => { // this is 126 bits, 21xbase64
+      crypto.getRandomValues(UuidRandomContainer)
+      let result = ""
+      for (let i = 0; i < 21; i++) {
+        result += CHARS_64[UuidRandomContainer[i] % 64]
+      }
+      return result
+    }
   }
+  //~frontskip
 }
 //~
