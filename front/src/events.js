@@ -237,6 +237,7 @@ const globalHotkeys = {
   },
   "open": {
     key: "o", control: true, fn: (event) => {
+      updateCursorSpanInfo()
       console.log('CONTROL O')
       console.log(editingLink)
       console.log(editingUrlElement)
@@ -655,7 +656,7 @@ const commonAncestorNode = (a, b) => {
   while (a.dataset.id !== undefined) {
     aList.push(a.dataset.id)
     a = a.parentNode
-    if (!a) break
+    if (!a) break;
     a = a.parentNode
   }
   const bList = []
@@ -848,7 +849,7 @@ const rwlClickOutListener = (event) => {
 
 topButtons["Login"].addEventListener('click', focusLogin)
 
-topButtons["Sign Out"].addEventListener('click', () => {
+topButtons["Sign Out"].addEventListener('click', (event) => {
   if (isSynced()) reset()
   else {
     reallyWantToLeaveElement.style.display = "flex"
