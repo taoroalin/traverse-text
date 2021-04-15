@@ -116,7 +116,7 @@ const dedentFocusedBlock = () => {
   const bid = sessionState.focusId
   const parentId = store.blox[bid].p
   const parentBlock = store.blox[parentId]
-  if (parentBlock) {
+  if (parentBlock && parentBlock.p) {
     const grandparentId = parentBlock.p
     const idx = store.blox[grandparentId].k.indexOf(parentId)
     macros.move(bid, grandparentId, idx + 1)
