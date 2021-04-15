@@ -35,15 +35,14 @@ const expandTemplate = () => {
     const childIds = store.blox[id].k
     const currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
     macros.nocommit.delete(sessionState.focusId, false)
-    const parentNode = focusBlock.parentNode
-    focusBlock.remove()
     for (let i = 0; i < childIds.length; i++) {
       const childId = childIds[i]
       const idx = currentIdx + i
       const newId = macros.nocommit.copyBlock(childId, parentId, idx)
-      const e = renderBlock(store, parentNode, newId, idx)
       if (i === 0) {
-        focusBlockEnd(e)
+        sessionState.position = 0
+        sessionState.focusId = newId
+        focusIdPosition()
       }
     }
     commit()
@@ -59,25 +58,22 @@ const pasteBlocks = () => {
   const parentNode = focusBlock.parentNode
   if (focusBlockBody.innerText === "") {
     macros.nocommit.delete(sessionState.focusId)
-    focusBlock.remove()
   } else {
     currentIdx += 1
   }
-
+  let firstId
   if (clipboardData.dragSelect.rooted) {
-    const newId = macros.nocommit.copyBlock(clipboardData.dragSelect.root, parentId, currentIdx)
-    const e = renderBlock(store, parentNode, newId, currentIdx)
-    focusBlockEnd(e)
+    firstId = macros.nocommit.copyBlock(clipboardData.dragSelect.root, parentId, currentIdx)
   } else {
-    let lastNode = null
     for (let i = 0; i < clipboardData.dragSelect.endIdx + 1 - clipboardData.dragSelect.startIdx; i++) {
       const blockId = store.blox[clipboardData.dragSelect.root].k[i + clipboardData.dragSelect.startIdx]
-      const newId = macros.nocommit.copyBlock(blockId, parentId, i + currentIdx)
-      const e = renderBlock(store, parentNode, newId, i + currentIdx)
-      lastNode = e
+      const theId = macros.nocommit.copyBlock(blockId, parentId, i + currentIdx)
+      if (!firstId) firstId = theId
     }
-    focusBlockEnd(lastNode)
   }
+  sessionState.position = 0
+  sessionState.focusId = firstId
+  focusIdPosition()
   commit()
 }
 
@@ -113,8 +109,7 @@ const indentFocusedBlock = () => {
     console.log(newParentId)
     const idx = (store.blox[newParentId].k && store.blox[newParentId].k.length) || 0
     macros.move(bid, newParentId, idx)
-    olderSibling.children[3].appendChild(focusBlock)
-    getSelection().collapse(focusNode, focusOffset)
+    focusIdPosition()
   }
 }
 
@@ -126,16 +121,7 @@ const dedentFocusedBlock = () => {
     const grandparentId = parentBlock.p
     const idx = store.blox[grandparentId].k.indexOf(parentId)
     macros.move(bid, grandparentId, idx + 1)
-    const parentNode = focusBlock.parentNode.parentNode
-    const grandparentChildren = parentNode.parentNode
-    const cousin = parentNode.nextElementSibling
-    if (cousin) {
-      grandparentChildren.insertBefore(focusBlock, cousin)
-    } else {
-      grandparentChildren.appendChild(focusBlock)
-    }
-
-    getSelection().collapse(focusNode, focusOffset)
+    focusIdPosition()
   } else {
     // notifyText("can't dedent from page root", 2) // don't need error message here?
   }
@@ -282,10 +268,8 @@ const globalHotkeys = {
       if ((bloc.k === undefined || bloc.k.length === 0) &&
         !(store.blox[bloc.p].p === undefined &&
           store.blox[bloc.p].k.length === 1)) {
-        const oldFocusBlock = focusBlock
         const oldFocusId = sessionState.focusId
         focusBlockVerticalOffset(-1)
-        oldFocusBlock.remove()
         macros.delete(oldFocusId)
       } else {
         notifyText(`no "delete block" for blocks with children or the only block in a page (at least right now)`)
@@ -354,7 +338,6 @@ document.addEventListener("keydown", (event) => {
       if (dragSelect.rooted) {
         focusBlockVerticalOffset(-1, dragSelect.root)
         macros.delete(dragSelect.root.dataset.id)
-        document.querySelectorAll(`.block[data-id="${dragSelect.root.dataset.id}"]`).forEach(x => x.remove())
       } else {
         const childNodes = getChildren(dragSelect.root)
         focusBlockVerticalOffset(-1, childNodes[dragSelect.startIdx])
@@ -363,7 +346,6 @@ document.addEventListener("keydown", (event) => {
         for (let i = dragSelect.endIdx; i >= dragSelect.startIdx; i--) {
           const node = childNodes[i]
           macros.nocommit.delete(node.dataset.id)
-          document.querySelectorAll(`.block[data-id="${node.dataset.id}"]`).forEach(x => x.remove())
         }
         commit()
       }
@@ -400,9 +382,8 @@ document.addEventListener("keydown", (event) => {
             idx += 1
           }
           console.log(idx)
-          const newBlockUid = macros.create(store.blox[sessionState.focusId].p, idx)
-          const newBlockElement = renderBlock(store, focusBlock.parentNode, newBlockUid, idx)
-          newBlockElement.children[1].focus()
+          macros.create(store.blox[sessionState.focusId].p, idx)
+          focusBlockVerticalOffset(1)
           event.preventDefault()
         }
         break
@@ -420,7 +401,6 @@ document.addEventListener("keydown", (event) => {
             const currentFocusBlock = focusBlock
             focusBlockVerticalOffset(-1)
             macros.delete(currentFocusBlock.dataset.id)
-            currentFocusBlock.remove()
             event.preventDefault()
           }
         }
@@ -433,10 +413,7 @@ document.addEventListener("keydown", (event) => {
           const currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
           if (focusBlock.nextElementSibling) {
             macros.move(sessionState.focusId, parentId, currentIdx + 1)
-            if (focusBlock.nextElementSibling.nextElementSibling) {
-              parentElement.insertBefore(focusBlock, focusBlock.nextElementSibling.nextElementSibling)
-            } else parentElement.appendChild(focusBlock)
-            getSelection().collapse(focusNode, focusOffset)
+            focusIdPosition()
             event.preventDefault()
           }
         } else if (!event.shiftKey && !event.altKey) {
@@ -447,12 +424,10 @@ document.addEventListener("keydown", (event) => {
       case "ArrowUp":
         if (event.altKey && event.shiftKey) {
           const parentId = store.blox[sessionState.focusId].p
-          const parentElement = focusBlock.parentNode
           const currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
           if (focusBlock.previousElementSibling) {
             macros.move(sessionState.focusId, parentId, currentIdx - 1)
-            parentElement.insertBefore(focusBlock, focusBlock.previousElementSibling)
-            getSelection().collapse(focusNode, focusOffset)
+            focusIdPosition()
             event.preventDefault()
           }
         } else if (!event.shiftKey && !event.altKey) {
@@ -650,10 +625,6 @@ document.addEventListener("mousedown", (event) => {
       "[[" + newLink + "]]" +
       string.substring(fe.endIdx)
     macros.write(id, string)
-
-    const blockBody = event.target.closest(".block__body")
-    blockBody.textContent = ""
-    renderBlockBody(store, blockBody, string)
     event.preventDefault()
   } else if (event.target.id === "top-connect") {
     if (connectFrame.style.display === "none") { // todo make the "connect" button show loaded graphs

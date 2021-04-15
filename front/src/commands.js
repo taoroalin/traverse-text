@@ -99,6 +99,46 @@ const doEditCacheStuff = (edit, includeInnerOuter = false) => {
   }
 }
 
+const doEditDom = (edit) => {
+  console.log(`doEditDom ${JSON.stringify(edit)}`)
+
+  const removeAll = (id) => {
+    const targetElements = document.querySelectorAll(`.block[data-id="${id}"]`)
+    for (let targetElement of targetElements) {
+      targetElement.remove()
+    }
+  }
+
+  const addChild = (id, parentId, idx) => {
+    const newParents = document.querySelectorAll(`[data-id="${parentId}"]`)
+    for (let newParent of newParents) {
+      const cl = newParent.className === "block" ? newParent.children[3] : newParent.children[1]
+      renderBlock(store, cl, id, idx)
+    }
+  }
+
+  const [op, id, p1, p2, p3, p4] = edit
+  switch (op) {
+    case 'dl':
+      removeAll(id)
+      break
+    case 'mv': {
+      const newParentId = p1, nidx = p2, oldParent = p3
+      removeAll(id)
+      addChild(id, newParentId, nidx)
+    }
+      break
+    case 'cr':
+      addChild(id, p1, p2)
+      break
+    case 'df':
+      const blocks = document.querySelectorAll(`.block[data-id="${id}"]`)
+      for (let block of blocks) {
+        renderBlockBody(store, block.children[1], store.blox[id].s, false)
+      }
+  }
+}
+
 const doEdit = (...edit) => {
   const time = intToBase64(Date.now())
   undoCommitInProgress.push(edit)
@@ -107,6 +147,7 @@ const doEdit = (...edit) => {
   // console.log(edit)
   doEditBlox(edit, store.blox, time)
   doEditCacheStuff(edit)
+  doEditDom(edit)
 }
 
 const commit = () => {
