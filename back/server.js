@@ -155,18 +155,19 @@ const appendReqToFile = (req, res, fileName) => {
 const statusCodes = {
   ok: 200,
   notModified: 304,
+
   badSyntax: 400,
   unauthenticated: 401,
   unauthorized: 403,
   notFound: 404,
   conflictsWithCurrentState: 409,
+  tooManyRequests: 429,
   unavailableForLegalReasons: 451,
-  tooManyRequests: 429
 }
 
 // I had json in body, but that caused timing issues because I want to change end listener, but couldn't to it fast enough because the end event happens so fast. Switched to putting all JSON made for immediate parsing in header
-const serverHandler = async (req, res) => {
-  const gotReqTime = performance.now()
+const serverHandler = async (req, res) => { // todo benchmark removing await
+  // const gotReqTime = performance.now()
   res.setHeader('Access-Control-Expose-Headers', '*')
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Headers', '*')
@@ -178,6 +179,7 @@ const serverHandler = async (req, res) => {
     res.end()
     return
   }
+  // NOTE! None of the matches in here can contain symbols that could be exploited as file names, such as '.'. 
   const match = req.url.match(/^\/(get|edit|put|creategraph|searchgraphs|auth|signup|settings|issue|error|log)(?:\/([a-zA-Z_\-0-9]+))?(?:\/([a-zA-Z_\-0-9]+))?$/)
   log(req.url)
   if (match === null) {
