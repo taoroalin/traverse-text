@@ -308,6 +308,33 @@ const blocToMd = (blocId) => {
   return result
 }
 
+const insertMdIntoBloc = (mdString, parentId, childIdx) => {
+  const blocStartMatches = mdString.matchAll(/(?:^|\r?\n)(?:    )*- /g)//todo support tabs in markdown
+  const stack = [{ id: parentId, idx: childIdx }]
+  let stackTop = stack[0]
+  let idx = 0
+  for (let match of blocStartMatches) {
+    let string = mdString.substring(idx, match.index)
+    if (string.length > 0)
+      macros.nocommit.write(stackTop.id, string)
+
+    const depth = Math.floor((match[0].length - 2) / 4)
+    stack.length = depth + 1
+    stackTop = stack[stack.length - 1]
+
+    const createdId = macros.nocommit.create(stackTop.id, stackTop.idx)
+    stackTop.idx += 1
+    stack.push({ id: createdId, idx: 0 })
+    stackTop = stack[stack.length - 1]
+
+    idx = match.index + match[0].length
+  }
+
+  let string = mdString.substring(idx)
+  if (string.length > 0)
+    macros.nocommit.write(stackTop.id, string)
+}
+
 const storeToMdObjects = () => {
   const result = []
   for (let title in store.titles) {

@@ -55,7 +55,6 @@ const pasteBlocks = () => {
   const block = store.blox[sessionState.focusId]
   const parentId = block.p
   let currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
-  const parentNode = focusBlock.parentNode
   if (focusBlockBody.innerText === "") {
     macros.nocommit.delete(sessionState.focusId)
   } else {
@@ -511,12 +510,20 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener('paste', (event) => {
   console.log(event)
+  const clipboardText = event.clipboardData.getData('text')
+  console.log(clipboardText.substring(0, 2))
   if (clipboardData) {
-    const clipboardText = event.clipboardData.getData('text')
     if (clipboardText.replaceAll(/\r/g, "") == clipboardData.text) {
       pasteBlocks()
       event.preventDefault()
-    } else clipboardData = undefined
+      return
+    }
+  } else clipboardData = undefined
+  if (clipboardText.substring(0, 2) === "- ") {
+    console.log('Pasting Markdown')
+    insertMdIntoBloc(clipboardText, sessionState.focusId, 0)
+    commit()
+    event.preventDefault()
   }
 })
 
