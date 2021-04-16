@@ -377,13 +377,14 @@ document.addEventListener("keydown", (event) => {
     switch (event.key) {
       case "Enter":
         if (!event.shiftKey) {
-          let idx = store.blox[store.blox[sessionState.focusId].p].k.indexOf(sessionState.focusId)
+          let oldIdx = store.blox[store.blox[sessionState.focusId].p].k.indexOf(sessionState.focusId)
+          let idx = oldIdx
           if (!getCtrlKey(event)) {
             idx += 1
           }
           console.log(idx)
           macros.create(store.blox[sessionState.focusId].p, idx)
-          focusBlockVerticalOffset(1)
+          focusBlockVerticalOffset(idx === oldIdx ? -1 : 1)
           event.preventDefault()
         }
         break

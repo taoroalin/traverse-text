@@ -17,7 +17,7 @@ const htmlToBloxString = (html) => {
         case "a":
           // todo make this handle relative links with page/block references
           if (kid.k.length > 0) {
-            result += `[${htmlToBloxString(kid)}](${kid.href})`
+            result += `{{#alias ${htmlToBloxString(kid)} ${kid.href}}}`
           } else {
             result += kid.href
           }
