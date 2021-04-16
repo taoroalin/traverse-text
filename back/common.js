@@ -79,10 +79,11 @@ exports.fileExtToContentType = {
   ".css": "text/css;"
 }
 
-if (fs.existsSync('/etc/letsencrypt/live/traversetext.com/privkey.pem')) {
+const httpsKeyPath = '/etc/letsencrypt/live/traversetext.com/'
+if (fs.existsSync(httpsKeyPath + 'privkey.pem')) {
   exports.httpsOptions = {
-    key: fs.readFileSync('/etc/letsencrypt/live/traversetext.com/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/traversetext.com/fullchain.pem')
+    key: fs.readFileSync(httpsKeyPath + 'privkey.pem'),
+    cert: fs.readFileSync(httpsKeyPath + 'fullchain.pem')
   }
 } else
   exports.httpsOptions = undefined

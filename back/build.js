@@ -29,7 +29,6 @@ const copyPublicForNginx = async () => {
   const fileNames = fs.readdirSync("../front/public")
   for (let fileName of fileNames) {
     fs.copyFileSync('../front/public/' + fileName, '/www/data/' + fileName)
-    console.log(fs.existsSync('/www/data/' + fileName))
   }
 }
 

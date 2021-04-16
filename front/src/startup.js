@@ -115,7 +115,7 @@ if (userText) {
     }
   }
 } else {
-  user = { s: { graphName: "default", theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light", topBar: "visible", logging: false, spellcheck: false, editingSpotlight: true } }
+  user = { s: { graphName: "default", theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "purple" : "light", topBar: "visible", logging: false, spellcheck: false, editingSpotlight: true } }
   fetch("./default-store.json").then(text => {
     text.json().then(json => {
       setActiveStore(json)

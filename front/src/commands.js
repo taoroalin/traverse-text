@@ -40,7 +40,7 @@ const undoEditCacheStuff = (edit) => {
     case 'df':
       setLinks(store, id)
       const bloc = store.blox[id]
-      if (bloc.p === undefined) {
+      if (!bloc.p) {
         const oldString = applyDif(bloc.s, p1) // this work could be deduplicated, but AAAAGGGGHHHH there's already so much coupling to deduplicate work!
         delete store.titles[oldString]
         store.titles[bloc.s] = id
