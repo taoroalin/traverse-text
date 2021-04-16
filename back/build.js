@@ -28,7 +28,7 @@ const compressPublic = async () => {
 const copyPublicForNginx = async () => {
   const fileNames = fs.readdirSync("../front/public")
   for (let fileName of fileNames) {
-    fs.copyFile('../front/public/' + fileName, '/www/data/' + fileName, () => { })
+    fs.copyFileSync('../front/public/' + fileName, '/www/data/' + fileName)
     console.log(fs.existsSync('/www/data/' + fileName))
   }
 }
