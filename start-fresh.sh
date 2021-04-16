@@ -11,6 +11,7 @@ mkdir ./user-data/edits-br/
 mkdir -p ./server-log/server-temp/blox-br
 
 cp ./back/nginx.conf /etc/nginx/nginx.conf
+sudo ufw allow 'Nginx HTTP' # MAKE SURE TO TURN ON HTTPS BEFORE GO LIVE!
 
 mkdir ./front/public-br/
 
