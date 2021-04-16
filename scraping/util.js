@@ -2,8 +2,10 @@ const http = require('http')
 const { promisify } = require('util')
 const { publicAccountHash } = require('../secrets')
 
+const timeoutPromise = timeout => promisify((thing) => setTimeout(() => thing(), timeout))
+
 const myFetch = promisify((url, callback) => {
-  http.get(url, res => {
+  http.get(url, { timeout: 1000 }, res => {
     if (res.statusCode !== 200) {
       callback(res.statusCode, null)
     }
@@ -26,7 +28,7 @@ const getLinks = (htmlText) => {
 
 const addPublicGraph = async (name, blox) => {
   const options = {
-    hostname: "traversetext.com",
+    hostname: "localhost",
     port: 8756,
     method: 'POST',
     headers: { h: publicAccountHash, commitid: 'MYVERYFIRSTCOMMITEVER', force: "true", public: "true" }, path: "/creategraph/" + name

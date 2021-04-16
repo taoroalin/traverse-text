@@ -1,4 +1,4 @@
-<!doctypehtml>
+export const exampleHtmlDanLuu = `<!doctypehtml>
   <html lang=en>
   <meta charset=utf-8>
   <title>Against essential and accidental complexity</title>
@@ -462,4 +462,4 @@
       optimized for? →</a> </div>
   <div class=np> <a href=https://danluu.com/>Archive</a> <a href=https://www.patreon.com/danluu>Support this site
       (patreon)</a> <a href=https://danluu.com/about/>About</a> <a href=https://twitter.com/danluu>Twitter</a> <a
-      href=https://danluu.com/atom.xml rel=alternate type=application/rss+xml>RSS</a></div>
+      href=https://danluu.com/atom.xml rel=alternate type=application/rss+xml>RSS</a></div>`

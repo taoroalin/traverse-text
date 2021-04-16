@@ -1,8 +1,10 @@
-const fs = require('fs')
+// this is a hack to use require in a nodejs module. Why don't they allow mixing module and commonjs????
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
+import { parseHTML, htmlGetFirstTag } from './parse-html.mjs'
 const { myFetch, getLinks, addPublicGraph } = require('./util')
-const { parseHTML, htmlGetFirstTag } = require('./parse-html')
 const shared = require('../front/src/front-back-shared')
-const crypto = require('crypto')
 
 const htmlToBloxString = (html) => {
   if (typeof html === "string") return html
@@ -43,9 +45,10 @@ const htmlToBloxString = (html) => {
 
 const htmlArrToBloxString = (arr) => {
   let result = ""
-  for (let x of arr) {
-    result += htmlToBloxString(x)
+  for (let node of arr) {
+    result += htmlToBloxString(node)
   }
+  if (result.length === 0) console.log(JSON.stringify(arr))
   return result
 }
 
@@ -57,32 +60,33 @@ const htmlArrToBlox = (blox, parentId, arr, time) => {
     const id = shared.newUid(blox)
     const bloc = { ct: time, et: time, k: [] }
     bloc.p = stack[stack.length - 1]
-    blox[stack[stack.length - 1]].k.push(id)
-    blox[id] = bloc
     // const
     let failed = false
 
     switch (node.tag) {
-      case "header": // todo handle this?
       case "div":
-        bloc.s = ""
-        htmlArrToBlox(blox, id, node.k, time)
+      case "font":
+      case "header": // todo handle this?
+        htmlArrToBlox(blox, stack[stack.length - 1], node.k, time)
         break
       case "span":
+        blox[stack[stack.length - 1]].k.push(id)
+        blox[id] = bloc
         bloc.s = htmlToBloxString(node)
-        break
-      case "font":
-        htmlArrToBlox(blox, parentId, node.k, time)
-        failed = true
         break
       case "ol": // todo handle numbered list
       case "ul":
-        bloc.s = ""
+        blox[stack[stack.length - 1]].k.push(id)
+        blox[id] = bloc
+        bloc.s = "List:"
         htmlArrToBlox(blox, id, node.k, time)
         break
       case "item": // todo what is item?
       case "li":
         {
+          blox[stack[stack.length - 1]].k.push(id)
+          blox[id] = bloc
+          bloc.s = htmlToBloxString(node)
           const lst = node.k[node.k.length - 1]
           if (lst.tag === "ul") {
             htmlArrToBlox(blox, id, lst.k, time)
@@ -93,9 +97,13 @@ const htmlArrToBlox = (blox, parentId, arr, time) => {
         }
         break
       case "p":
+        blox[stack[stack.length - 1]].k.push(id)
+        blox[id] = bloc
         bloc.s = htmlToBloxString(node)
         break
       case "blockquote": // todo add {{#quote}} 
+        blox[stack[stack.length - 1]].k.push(id)
+        blox[id] = bloc
         bloc.s = `{{#quote}}`
         htmlArrToBlox(blox, id, node.k, time)
         break
@@ -105,9 +113,12 @@ const htmlArrToBlox = (blox, parentId, arr, time) => {
       case "h4":
       case "h5":
       case "h6":
+        blox[stack[stack.length - 1]].k.push(id)
+        blox[id] = bloc
+        bloc.s = htmlToBloxString(node)
         blox[stack[stack.length - 1]].k.pop()
         const lvl = parseInt(node.tag[1])
-        while (stackLvls[stackLvls.length - 1] > lvl) {
+        while (stackLvls[stackLvls.length - 1] >= lvl) {
           stack.pop()
           stackLvls.pop()
         }
@@ -119,11 +130,7 @@ const htmlArrToBlox = (blox, parentId, arr, time) => {
       case "meta":
       case "link":
       default:
-        failed = true
       // console.log(node.tag)
-    }
-    if (!failed) {
-
     }
   }
 }
@@ -135,10 +142,13 @@ const htmlArrToBlox = (blox, parentId, arr, time) => {
     const links = getLinks(string)
     // console.log(JSON.stringify(links))
     const pagePromises = []
+    console.log('have links')
+    console.log(links)
     for (let link of links) {
       pagePromises.push(myFetch(link.replace('https', 'http')))
     }
     const posts = await Promise.all(pagePromises)
+    console.log('have posts')
     const blox = {}
     const htmls = []
     const dirId = shared.newUid(blox)
@@ -148,7 +158,7 @@ const htmlArrToBlox = (blox, parentId, arr, time) => {
       htmls.push(html)
       const titleNode = htmlGetFirstTag(html, 'title')
       if (titleNode) {
-        const title = titleNode.k[0]
+        const title = unescape(titleNode.k[0]) // todo unescape uri escaped chars, and things like &#39;
         const id = shared.newUid(blox)
         blox[id] = { ct: now, et: now, k: [], s: title }
         htmlArrToBlox(blox, id, html.k, now)

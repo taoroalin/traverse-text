@@ -1,4 +1,5 @@
-const fs = require('fs')
+import { exampleHtmlDanLuu } from "./examples/danluu-html.mjs";
+
 const getFirstGroup = (arr) => {
   for (let i = 1; i < arr.length; i++) {
     if (arr[i]) return i
@@ -37,7 +38,11 @@ const htmlParseRegex = /<([a-z0-9]+)|<\/([a-z0-9\-]+)>|(>)|([a-z\-]+)=(?:([^><" 
 
 const emptyTags = { meta: 1, br: 1, input: 1, link: 1, hr: 1, img: 1, keygen: 1, param: 1, source: 1, track: 1, wbr: 1, area: 1, base: 1, col: 1, embed: 1 }
 
-const parseHTML = makeParser(htmlParseRegex, {
+const htmlUnescape = (string) => {
+  return string.replaceAll('&amp;', '&').replaceAll('&lt', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&apos;', "'").replaceAll(/&#([0-9]+);/).replaceAll(/&#x([a-f0-9]+)/g,)
+}
+
+export const parseHTML = makeParser(htmlParseRegex, {
   1: (match, state) => {
     const newNode = { k: [], tag: match[1] }
     state.stack[state.stack.length - 1].k.push(newNode)
@@ -67,7 +72,7 @@ const parseHTML = makeParser(htmlParseRegex, {
   return tree
 })
 
-const htmlGetFirstTag = (html, tag) => {
+export const htmlGetFirstTag = (html, tag) => {
   if (typeof html === 'string') return
   if (html.tag === tag) return html
   for (let kid of html.k) {
@@ -80,7 +85,7 @@ const htmlFilter = (html, test) => {
 
 }
 
-const htmlFind = (html, test) => {
+export const htmlFind = (html, test) => {
   if (typeof html === 'string') return
   if (test(html)) return html
   for (let kid of html.k) {
@@ -93,11 +98,4 @@ const htmlFind = (html, test) => {
 const exampleHTML = `<div id="hi"><a id=unquoted href="http://thing.thing">thingeys!</a></div>`
 
 
-
-try {
-  exports.parseHTML = parseHTML
-  exports.htmlGetFirstTag = htmlGetFirstTag
-} catch (e) {
-  const exampleHtmlDanLuu = fs.readFileSync('./examples/danluu.html')
-  console.log(parseHTML(exampleHtmlDanLuu))
-}
+console.log(parseHTML(exampleHtmlDanLuu))
