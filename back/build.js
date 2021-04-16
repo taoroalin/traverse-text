@@ -22,7 +22,6 @@ const compressPublic = async () => {
     const ext = fileName.match(/\.[a-z0-9]+$/)
     if (ext && ext != ".woff2" && ext != '.br')
       await compress(fileName)
-    console.log(fs.existsSync('/www/data/' + fileName))
   }
 }
 
@@ -30,6 +29,7 @@ const copyPublicForNginx = async () => {
   const fileNames = fs.readdirSync("../front/public")
   for (let fileName of fileNames) {
     fs.copyFile('../front/public/' + fileName, '/www/data/' + fileName, () => { })
+    console.log(fs.existsSync('/www/data/' + fileName))
   }
 }
 
