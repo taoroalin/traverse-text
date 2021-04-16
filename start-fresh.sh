@@ -1,4 +1,6 @@
 sudo apt-get update
+sudo apt-get install -y nodejs npm nginx 
+
 rm -rf ./user-data 
 rm -rf ./server-log 
 cp -a ./user-data-empty/. ./user-data/ 
@@ -8,10 +10,11 @@ mkdir ./user-data/blox-br/
 mkdir ./user-data/edits-br/
 mkdir -p ./server-log/server-temp/blox-br
 
+cp ./back/nginx.conf /etc/nginx/nginx.conf
+
 mkdir ./front/public-br/
 
 cd back 
-sudo apt-get install nodejs npm net-tools
 npm install
 npm install -g nodemon
 wait
