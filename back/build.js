@@ -22,6 +22,7 @@ const compressPublic = async () => {
     const ext = fileName.match(/\.[a-z0-9]+$/)
     if (ext && ext != ".woff2" && ext != '.br')
       await compress(fileName)
+    console.log(fs.existsSync('/www/data/' + fileName))
   }
 }
 
