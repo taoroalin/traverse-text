@@ -9,7 +9,7 @@ const { performance } = require('perf_hooks')
 const compress = (fileName) => new Promise(resolve => {
   const cpystime = performance.now()
   const source = fs.createReadStream(`../front/public/${fileName}`)
-  const target = fs.createWriteStream(`../front/public-br/${fileName}`)
+  const target = fs.createWriteStream(`../front/public/${fileName}.br`)
   common.brCompressExpensiveStream(source, target, (err) => {
     console.log("brotli " + fileName + " in " + Math.floor(performance.now() - cpystime))
     resolve()
@@ -20,12 +20,17 @@ const compressPublic = async () => {
   const fileNames = fs.readdirSync("../front/public")
   for (let fileName of fileNames) {
     const ext = fileName.match(/\.[a-z0-9]+$/)
-    if (ext && ext != ".woff2")
+    if (ext && ext != ".woff2" && ext != '.br')
       await compress(fileName)
   }
 }
 
-console.log("building")
+const copyPublicForNginx = async () => {
+  const fileNames = fs.readdirSync("../front/public")
+  for (let fileName of fileNames) {
+    fs.copyFile('../front/public/' + fileName, '/www/data/' + fileName, () => { })
+  }
+}
 
 const buildWorker = (workerName = 'worker') => {
   // copy worker & splice in importScripts. 
@@ -78,6 +83,24 @@ const build = async () => {
   fs.copyFile("../front/src/Inconsolata-latin.woff2", "../front/public/Inconsolata-latin.woff2", () => { })
   fs.copyFile("../front/src/welcome-from-roam.html", "../front/public/welcome-from-roam.html", () => { })
   await compressPublic()
+  await copyPublicForNginx()
 }
+
+let mainEvaluation = (async () => {
+
+  await build()
+
+  let watchFnTimeout = null
+  const watchFnDebounced = () => {
+    clearTimeout(watchFnTimeout)
+    watchFnTimeout = setTimeout(build, 50)
+  }
+
+  fs.watch("../front/src", (eventType, fileName) => {
+    if (eventType === "change") {
+      watchFnDebounced()
+    }
+  })
+})()
 
 exports.build = build
