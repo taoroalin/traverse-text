@@ -1,3 +1,5 @@
+git config --global credential.helper store
+
 sudo apt-get update
 sudo apt-get install -y nodejs npm nginx 
 

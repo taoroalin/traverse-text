@@ -112,8 +112,12 @@ const doEditDom = (edit) => {
   const addChild = (id, parentId, idx) => {
     const newParents = document.querySelectorAll(`[data-id="${parentId}"]`)
     for (let newParent of newParents) {
-      const cl = newParent.className === "block" ? newParent.children[3] : newParent.children[1]
-      renderBlock(store, cl, id, idx)
+      let cl
+      if (newParent.className === 'block') {
+        renderBlock(store, newParent.children[3], id, idx)
+      } else if (newParent.className === 'page') {
+        renderBlock(store, newParent.children[1], id, idx)
+      }
     }
   }
 

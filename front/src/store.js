@@ -426,7 +426,12 @@ const generateTitles = (store) => {
   store.titles = {}
   for (let id in store.blox) {
     const bloc = store.blox[id]
-    if (bloc.p === undefined) store.titles[bloc.s] = id
+    if (bloc.p === undefined) {
+      if (store.titles[bloc.s]) {
+        console.error(`duplicate title ${bloc.s}`)
+      } else
+        store.titles[bloc.s] = id
+    }
   }
 }
 
