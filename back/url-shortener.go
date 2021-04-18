@@ -6,13 +6,14 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 )
 
 const filePath = "../user-data/url-shortener.txt"
 
 var file *os.File
-
 var urls []string
+var mutex sync.Mutex
 
 func base64StringToIdx(str string) (idx int) {
 	bytes := []byte(str)
@@ -69,16 +70,23 @@ func breakOn(e error) {
 
 func addUrl(w http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
-	url := path[9:]
+	url := path[9:] // length of /add-url/
+	mutex.Lock()
+	idx := len(urls)
+	// appending to the file and to the array must happen at the same time.
 	urls = append(urls, url)
-
-	fmt.Fprintf(w, "your url is "+idxToBase64String(int32(len(urls))))
 	_, err2 := file.WriteString(url + "\n")
+	mutex.Unlock()
+	fmt.Fprintf(w, "your url is "+idxToBase64String(int32(idx)))
 	breakOn(err2)
 }
 
 func dumpUrls(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "%v", urls)
+}
+
+func blank(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprint(w, "hello world")
 }
 
 func getUrl(w http.ResponseWriter, req *http.Request) {
@@ -93,19 +101,23 @@ func getUrl(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	fmt.Println("starting url shortener")
 	dat, err := ioutil.ReadFile(filePath)
 	breakOn(err)
 	filestring := string(dat)
 	urls = strings.Split(filestring, "\n")
+	urls = urls[:len(urls)-1]
 
 	file, err = os.OpenFile(filePath,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		0644)
 	breakOn(err)
 
+	println(urls[0])
 	http.HandleFunc("/urls", dumpUrls)
 	http.HandleFunc("/add-url/", addUrl)
 	http.HandleFunc("/", getUrl)
+	http.HandleFunc("/blank", blank)
 
 	http.ListenAndServe("127.0.0.1:8090", nil)
 }
