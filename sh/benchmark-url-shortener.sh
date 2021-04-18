@@ -1,1 +1,1 @@
-httperf --server=140.82.4.157 --uri=/welcome-from-roam.html --rate=10000 --num-conns=1000 --http-version=1.1 --timeout 2
+httperf --server=127.0.0.1 --port=8090 --uri=/add-url/abbs --rate=6000 --num-conns=500 --http-version=1.1 --timeout 2
