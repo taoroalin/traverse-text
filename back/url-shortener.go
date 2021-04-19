@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-	"sync"
+	"time"
 
 	"github.com/valyala/fasthttp"
 )
@@ -14,7 +14,7 @@ const filePath = "../user-data/url-shortener.txt"
 
 var file *os.File
 var urls []string
-var mutex sync.Mutex
+var savedUrlCount int
 
 // custom base64 order: - _ 0-9 a-z A-Z
 // absolute shit speed conversion functions
@@ -80,19 +80,20 @@ func breakOn(e error) {
 func rootHandler(ctx *fasthttp.RequestCtx) {
 	pathBytes := ctx.Request.Header.RequestURI()
 	// using this instead of ctx.Path() because path is 'normalized' path, which removes .. and collapses multiple consecutive slashes //.
+
+	// code to show all the urls. only for development
+	// if len(pathBytes) >= 17 && string(pathBytes)[:17] == "/showmealltheurls" {
+	// 	ctx.WriteString(fmt.Sprintf("%v", urls))
+	// } else
+
 	if len(pathBytes) > 9 && string(pathBytes)[:9] == "/add-url/" {
 		path := string(pathBytes)
 		url := path[9:] // length of /add-url/
 
-		mutex.Lock()
 		idx := len(urls)
-		// appending to the file and to the array must happen at the same time.
 		urls = append(urls, url)
-		_, err2 := file.WriteString(url + "\n")
-		mutex.Unlock()
 
 		ctx.WriteString("your url is " + idxToBase64String(int32(idx)))
-		breakOn(err2)
 	} else {
 		reqHex := pathBytes[1:]
 		index := base64StringToIdx(reqHex)
@@ -103,6 +104,16 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 		url := urls[index]
 		ctx.Response.Header.Set("Location", url)
 		ctx.SetStatusCode(301)
+	}
+}
+
+func saveUrls() {
+	if len(urls) > savedUrlCount {
+		oldSavedUrlCount := savedUrlCount
+		savedUrlCount = len(urls)
+		fmt.Printf("writing %v urls\n", savedUrlCount-oldSavedUrlCount)
+		_, err2 := file.WriteString(strings.Join(urls[oldSavedUrlCount:savedUrlCount], "\n") + "\n")
+		breakOn(err2)
 	}
 }
 
@@ -117,11 +128,22 @@ func main() {
 		urls = urls[:len(urls)-1]
 		// each line is appended with a newline, so we have to remove the trailing newline
 	}
+	savedUrlCount = len(urls)
 
 	file, err = os.OpenFile(filePath,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		0644)
 	breakOn(err)
+
+	ticker := time.NewTicker(5 * time.Millisecond)
+
+	go func() {
+		for {
+			<-ticker.C
+			saveUrls()
+		}
+	}()
+	println("ready to accept requests")
 
 	// Start service
 	fasthttp.ListenAndServe("127.0.0.1:8090", rootHandler)
