@@ -171,7 +171,6 @@ const serverHandler = async (req, res) => { // todo benchmark removing await
   res.setHeader('Access-Control-Expose-Headers', '*')
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Headers', '*')
-  res.setHeader('Access-Control-Expose-Headers', 'commitid')
   // nodejs automatically lowercases all header keys because they're officially supposed to be case insensitive
   // I have to send out header keys captialized because some clients need that, though
   if (req.headers["access-control-request-headers"] !== undefined) {
