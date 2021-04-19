@@ -1,1 +1,1 @@
-httperf --server=127.0.0.1 --port=8090 --uri=/add-url/nsnsnew --rate=6000 --num-conns=500 --http-version=1.1 --timeout 2
+/mnt/c/Users/Tao/downloads/bombardier-linux-amd64 -c 250 -n 1000000 http://127.0.0.1:8090/f
