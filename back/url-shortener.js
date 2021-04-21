@@ -26,18 +26,15 @@ http.createServer((req, res) => {
     fs.appendFileSync(dataPath, addMatch[1] + "\n")
     res.writeHead(200, { link: urlNumber.toString(36) })
     res.end()
-    console.log('added')
   } else {
     const number = parseInt(path, 36)
     const url = lookup[number]
     if (!url) {
       res.writeHead(404)
       res.end()
-      console.log('failed')
       return
     }
     res.writeHead(302, { Location1: url })
     res.end()
-    console.log('did')
   }
 }).listen(8888)

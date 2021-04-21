@@ -1,1 +1,1 @@
-/mnt/c/Users/Tao/downloads/bombardier-linux-amd64 -c 250 -n 1000000 http://localhost:8090/dd
+/mnt/c/Users/Tao/downloads/bombardier-linux-amd64 -c 250 -n 1 http://localhost:8888/0
