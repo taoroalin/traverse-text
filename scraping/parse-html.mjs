@@ -1,6 +1,4 @@
-import { exampleHtmlDanLuu } from "./examples/danluu-html.mjs";
-
-const getFirstGroup = (arr) => {
+const getIndexOfFirstExistingRegexGroup = (arr) => {
   for (let i = 1; i < arr.length; i++) {
     if (arr[i]) return i
   }
@@ -18,7 +16,7 @@ const makeParser = (regex, functions, onInBetween, postprocess) => {
       let betweenString = text.substring(state.idx, match.index)
       onInBetween(betweenString, state)
 
-      const matchIdx = getFirstGroup(match)
+      const matchIdx = getIndexOfFirstExistingRegexGroup(match)
       if (matchIdx !== -1)
         functions[matchIdx](match, state)
 
@@ -32,15 +30,15 @@ const makeParser = (regex, functions, onInBetween, postprocess) => {
   }
 }
 
-//                      tag-start  tag-end           attribute
-//                      1          2             3   4             5         6
+//                      tag-start    tag-end               attribute
+//                      1            2                     3   
 const htmlParseRegex = /<([a-z0-9]+)|<\/([a-z0-9\-]+)>|(>)|([a-z\-]+)=(?:([^><" ]+)|"([^><"]+)")|<!doctypehtml>/g
 
 const emptyTags = { meta: 1, br: 1, input: 1, link: 1, hr: 1, img: 1, keygen: 1, param: 1, source: 1, track: 1, wbr: 1, area: 1, base: 1, col: 1, embed: 1 }
 
-const htmlUnescape = (string) => {
-  return string.replaceAll('&amp;', '&').replaceAll('&lt', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&apos;', "'").replaceAll(/&#([0-9]+);/).replaceAll(/&#x([a-f0-9]+)/g,)
-}
+// const htmlUnescape = (string) => {
+//   return string.replaceAll('&amp;', '&').replaceAll('&lt', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&apos;', "'").replaceAll(/&#([0-9]+);/).replaceAll(/&#x([a-f0-9]+)/g,)
+// }
 
 export const parseHTML = makeParser(htmlParseRegex, {
   1: (match, state) => {
@@ -81,10 +79,6 @@ export const htmlGetFirstTag = (html, tag) => {
   }
 }
 
-const htmlFilter = (html, test) => {
-
-}
-
 export const htmlFind = (html, test) => {
   if (typeof html === 'string') return
   if (test(html)) return html
@@ -98,4 +92,5 @@ export const htmlFind = (html, test) => {
 const exampleHTML = `<div id="hi"><a id=unquoted href="http://thing.thing">thingeys!</a></div>`
 
 
+import { exampleHtmlDanLuu } from "./examples/danluu-html.mjs";
 console.log(parseHTML(exampleHtmlDanLuu))
