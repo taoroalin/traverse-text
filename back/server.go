@@ -24,6 +24,27 @@ func breakOn(e error) {
 	}
 }
 
+func writeFileThroughTemp(content []byte, name string) {
+	tempFile, err := ioutil.TempFile(temppath, "")
+	breakOn(err)
+	_, writeError := tempFile.Write(content)
+	breakOn(writeError)
+	tempFile.Close()
+	renameError := os.Rename(tempFile.Name(), datapath+"blox-br/"+name)
+	breakOn(renameError)
+}
+
+func openFileForAppend(path string) *os.File {
+	result, err := os.OpenFile(path,
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0644)
+	breakOn(err)
+	return result
+}
+
+// Go isn't the type of language where you pass arbitrary stuff through
+// so stuff like this isn't as general as in JS
+// this is not a good pattern for production though, so I don't blame Go too much
 func timed(v func()) {
 	start := time.Now()
 	v()
@@ -31,50 +52,12 @@ func timed(v func()) {
 	fmt.Println(duration)
 }
 
-type Account struct {
-	UserReadable     UserReadable
-	PasswordHashHash string
-}
-
-type UserReadable struct {
-	Email    string `json:"e"`
-	Username string `json:"u"`
-	// neither go nor json have built in sets, so it's key:1 or nothing
-	ReadableGraphs   map[string]int8  `json:"r"` // makeshift set of string
-	WriteableGraphs  map[string]int8  `json:"w"` // makeshift set of string
-	FrontEndSettings FrontEndSettings `json:"s"`
-}
-
-type FrontEndSettings struct {
-	// todo switch javascript to use uppercase json to mesh better with Go
-
-	Theme   string `json:"theme"`  // options are: light purple green dark
-	TopBar  string `json:"topBar"` // options are: visible hidden
-	Logging bool   `json:"logging"`
-
-	Spellcheck       bool `json:"spellcheck"`
-	EditingSpotlight bool `json:"editingSpotlight"`
-}
-
-// store and blox
-type Store struct {
-	Name string
-	Blox map[string]Bloc
-}
-
-type Bloc struct {
-	CreateTime int64    `json:"ct"`
-	EditTime   int64    `json:"et"`
-	String     string   `json:"s"`
-	Parent     string   `json:"p"`
-	Kids       []string `json:"k"`
-}
-
 const keypath = "/etc/letsencrypt/live/traversetext.com/"
 
 const datapath = "../user-data-go/"
 
-// temppath exists because apparently in WSL you can't rename between Windows folders and temp folder
+// normally Go has its own default temp dir,
+// but apparently that doesn't work on the interface between Windows and WSL.
 const temppath = "../server-log/server-temp/"
 const logpath = "../server-log/"
 
@@ -89,12 +72,15 @@ type Server struct {
 	AccountsByHash     map[string]*Account
 	AccountsByEmail    map[string]*Account
 	AccountsByUsername map[string]*Account
-
 	// do I need a mutex for each graph to avoid out of order operations on graphs?
-
+	logFile        *os.File
+	errorFile      *os.File
+	frontLogFile   *os.File
+	frontErrorFile *os.File
+	issueFile      *os.File
 }
 
-func accountsServerFromDataPath(datapath string) (result Server) {
+func accountsServerFromDataPath(datapath string, logpath string) (result Server) {
 	result = Server{}
 	result.AccountsByEmail = make(map[string]*Account)
 	result.AccountsByUsername = make(map[string]*Account)
@@ -108,6 +94,12 @@ func accountsServerFromDataPath(datapath string) (result Server) {
 		result.AccountsByUsername[account.UserReadable.Username] = &account
 		result.AccountsByHash[account.PasswordHashHash] = &account
 	}
+
+	result.errorFile = openFileForAppend(logpath + "error.txt")
+	result.logFile = openFileForAppend(logpath + "log.txt")
+	result.frontErrorFile = openFileForAppend(logpath + "error-front.txt")
+	result.frontLogFile = openFileForAppend(logpath + "log-front.txt")
+	result.issueFile = openFileForAppend(logpath + "issues.txt")
 	return
 }
 
@@ -127,9 +119,8 @@ func (as Server) checkAcountUnique(account Account) error {
 func (this Server) persistAllAccounts() {
 	jsonBytes, err := binary.Marshal(this.Accounts)
 	breakOn(err)
-	err = ioutil.WriteFile(datapath+"accounts.json", jsonBytes, 0644)
+	writeFileThroughTemp(jsonBytes, datapath+"accounts.json")
 	fmt.Printf("%v\n", jsonBytes)
-	breakOn(err)
 }
 
 func (as Server) addAccount(account Account) (err error) {
@@ -173,7 +164,7 @@ func (as Server) userFromHash(hash string) *Account {
 }
 
 // server state
-var server Server = accountsServerFromDataPath(datapath)
+var server Server = accountsServerFromDataPath(datapath, logpath)
 
 // this handles all the requests. Right now none of the API methods are their own functions. this will work for awhile, but they want to be factored out eventually if I want to run API code on multiple servers
 
@@ -253,15 +244,8 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SendFile(datapath + "blox-br/" + string(match[2]))
 	case "edit":
 	case "put":
-		body := ctx.Request.Body()
-
-		tempFile, err := ioutil.TempFile(temppath, "")
-		breakOn(err)
-		_, writeError := tempFile.Write(body)
-		breakOn(writeError)
-		tempFile.Close()
-		renameError := os.Rename(tempFile.Name(), datapath+"blox-br/"+string(match[2]))
-		breakOn(renameError)
+		writeFileThroughTemp(ctx.Request.Body(),
+			datapath+"blox-br/"+string(match[2]))
 	case "creategraph":
 	case "searchgraphs":
 	case "auth":
@@ -277,8 +261,11 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 		}
 		server.persistAllAccounts()
 	case "issue":
+		server.issueFile.Write(ctx.Request.Body())
 	case "error":
+		server.frontErrorFile.Write(ctx.Request.Body())
 	case "log":
+		server.frontLogFile.Write(ctx.Request.Body())
 	default:
 		ctx.SetStatusCode(400)
 	}
@@ -288,14 +275,13 @@ func main() {
 
 	fmt.Println("running traversetext server")
 
-	_, certErr := ioutil.ReadFile(keypath + "fullchain.pem")
-	_, keyErr := ioutil.ReadFile(keypath + "privkey.pem")
-
 	fasthttpServer := fasthttp.Server{
 		Handler:               timedRootHandler,
 		NoDefaultServerHeader: true,
 	}
 
+	_, certErr := ioutil.ReadFile(keypath + "fullchain.pem")
+	_, keyErr := ioutil.ReadFile(keypath + "privkey.pem")
 	if keyErr != nil || certErr != nil {
 		fmt.Println("INSECURE")
 		fasthttpServer.ListenAndServe(":3000")
