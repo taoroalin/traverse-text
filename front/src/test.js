@@ -159,6 +159,38 @@ const monitor = (string) => {
   eval(js)
 }
 
+const encrypt = async () => {
+  const str = JSON.stringify(store.blox).repeat(100)
+  const stime = performance.now()
+  const hu8 = textEncoder.encode(user.h)
+  const u8 = textEncoder.encode(str)
+  const pwHash = await crypto.subtle.digest('SHA-256', hu8)
+
+  // initialization vector is here to make the same value encrypted with the same key look different every time
+  const initializationVector = crypto.getRandomValues(new Uint8Array(16))
+  const alg = { name: "AES-GCM", iv: initializationVector }
+  const key = await crypto.subtle.importKey('raw', pwHash, alg, false, ["encrypt"])
+  const ctBuffer = await crypto.subtle.encrypt(alg, key, u8)
+  console.log(`encrypt took ${performance.now() - stime}`)
+  // need to return iv concatted with 
+}
+
+const decrypt = async () => {
+  const str = JSON.stringify(store.blox).repeat(100)
+  const stime = performance.now()
+  const hu8 = textEncoder.encode(user.h)
+  const u8 = textEncoder.encode(str)
+  const pwHash = await crypto.subtle.digest('SHA-256', hu8)
+
+  // initialization vector is here to make the same value encrypted with the same key look different every time
+  const initializationVector = crypto.getRandomValues(new Uint8Array(12))
+  const alg = { name: "AES-GCM", iv: initializationVector }
+  const key = await crypto.subtle.importKey('raw', pwHash, alg, false, ["encrypt"])
+  const ctBuffer = await crypto.subtle.encrypt(alg, key, u8)
+  console.log(`encrypt took ${performance.now() - stime}`)
+  // need to return iv concatted with 
+}
+
 
 const terminalCommands = {
   reset, flash, log, nolog, pr, downloadBinary, monitor

@@ -34,6 +34,7 @@ const makeParser = (regex, functions, onInBetween, postprocess) => {
 //                      1            2                     3   
 const htmlParseRegex = /<([a-z0-9]+)|<\/([a-z0-9\-]+)>|(>)|([a-z\-]+)=(?:([^><" ]+)|"([^><"]+)")|<!doctypehtml>/g
 
+// https://developer.mozilla.org/en-US/docs/Glossary/Empty_element
 const emptyTags = { meta: 1, br: 1, input: 1, link: 1, hr: 1, img: 1, keygen: 1, param: 1, source: 1, track: 1, wbr: 1, area: 1, base: 1, col: 1, embed: 1 }
 
 // const htmlUnescape = (string) => {
@@ -54,7 +55,6 @@ export const parseHTML = makeParser(htmlParseRegex, {
   },
   3: (match, state) => {
     const topTag = state.stack[state.stack.length - 1].tag
-    // https://developer.mozilla.org/en-US/docs/Glossary/Empty_element
     if (emptyTags[topTag]) state.stack.pop()
   },
   4: (match, state) => {
