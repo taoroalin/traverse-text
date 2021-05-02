@@ -31,19 +31,19 @@ func breakOn(e error) {
 
 func writeFileThroughTemp(content []byte, name string) {
 	tempFile, err := ioutil.TempFile(temppath, "")
-	emailTaoIfItsAnError(err)
+	emailDevIfItsAnError(err)
 	_, writeError := tempFile.Write(content)
-	emailTaoIfItsAnError(writeError)
+	emailDevIfItsAnError(writeError)
 	tempFile.Close()
 	renameError := os.Rename(tempFile.Name(), datapath+"blox-br/"+name)
-	emailTaoIfItsAnError(renameError)
+	emailDevIfItsAnError(renameError)
 }
 
 func openFileForAppend(path string) *os.File {
 	result, err := os.OpenFile(path,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		0644)
-	emailTaoIfItsAnError(err)
+	emailDevIfItsAnError(err)
 	return result
 }
 
@@ -99,12 +99,15 @@ type Bloc struct {
 
 type BloxEdit struct {
 	Id   string
+	time time.Time
 	Edit string
 }
 
 type BloxMeta struct {
-	Public bool
-	Edits  []BloxEdit
+	Public     bool
+	ReadKeys   map[string][256]byte
+	WriteUsers map[string]bool
+	Edits      []BloxEdit
 }
 
 type AllBloxMeta struct {
@@ -135,7 +138,7 @@ type Server struct {
 	AccountsByUsername map[string]*Account
 	// do I need a mutex for each graph to avoid out of order operations on graphs?
 
-	BloxMeta AllBloxMeta
+	AllBloxMeta AllBloxMeta
 
 	logFile        *os.File
 	errorFile      *os.File
@@ -151,7 +154,7 @@ func accountsServerFromDataPath(datapath string, logpath string) (result Server)
 	result.AccountsByHash = make(map[string]*Account)
 	filename := datapath + "accounts.json"
 	file, err := ioutil.ReadFile(filename)
-	emailTaoIfItsAnError(err)
+	emailDevIfItsAnError(err)
 	binary.Unmarshal(file, &result.Accounts)
 	for _, account := range result.Accounts {
 		result.AccountsByEmail[account.UserReadable.Email] = &account
@@ -160,8 +163,8 @@ func accountsServerFromDataPath(datapath string, logpath string) (result Server)
 	}
 
 	graphMetaBytes, err := ioutil.ReadFile(datapath + "graphs.json")
-	emailTaoIfItsAnError(err)
-	binary.Unmarshal(graphMetaBytes, &result.BloxMeta)
+	emailDevIfItsAnError(err)
+	binary.Unmarshal(graphMetaBytes, &result.AllBloxMeta)
 
 	result.errorFile = openFileForAppend(logpath + "error.txt")
 	result.logFile = openFileForAppend(logpath + "log.txt")
@@ -186,7 +189,7 @@ func (as Server) checkAcountUnique(account Account) error {
 
 func (this Server) persistAllAccounts() {
 	jsonBytes, err := binary.Marshal(this.Accounts)
-	emailTaoIfItsAnError(err)
+	emailDevIfItsAnError(err)
 	writeFileThroughTemp(jsonBytes, datapath+"accounts.json")
 	fmt.Printf("%v\n", jsonBytes)
 }
@@ -229,7 +232,7 @@ func validateAccountAlone(account Account) (err error) {
 
 func (as Server) canUserReadGraphName(account *Account, graphName string) bool {
 	_, userHasPermissions := account.UserReadable.ReadableGraphs[graphName]
-	isPublic := userHasPermissions || as.BloxMeta.BloxMeta[graphName].Public
+	isPublic := userHasPermissions || as.AllBloxMeta.BloxMeta[graphName].Public
 	return isPublic
 }
 
@@ -249,7 +252,6 @@ var server Server = accountsServerFromDataPath(datapath, logpath)
 
 // HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER
 func rootHandler(ctx *fasthttp.RequestCtx) {
-
 	ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
 	ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
 
@@ -322,6 +324,34 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 		}
 		ctx.SendFile(datapath + "blox-br/" + graphName)
 	case "edit":
+		graphName := string(match[2])
+		if !server.canUserWriteGraphName(account, graphName) {
+			ctx.SetStatusCode(fasthttp.StatusUnauthorized)
+			ctx.WriteString("Your account doesn't have access to that graph")
+			return
+		}
+
+		incomingCommitId := string(ctx.Request.Header.Peek("commit-id"))
+		incomingCommitTime := ctx.Time()
+
+		bloxMeta := server.AllBloxMeta.BloxMeta[graphName]
+		lenEdits := len(bloxMeta.Edits)
+		if lenEdits == 0 || bloxMeta.Edits[lenEdits-1].Id == string(incomingCommitId) {
+			incomingCommitBytes := ctx.Request.Body()
+			edit := BloxEdit{time: incomingCommitTime, Id: incomingCommitId, Edit: string(incomingCommitBytes) + "\n"}
+			bloxMeta.Edits = append(bloxMeta.Edits, edit)
+			ctx.WriteString("Edit successful")
+			return
+		}
+
+		for i := lenEdits - 1; i >= 0; i++ {
+
+		}
+
+		// file := openFileForAppend(datapath + "edits-br/" + graphName)
+		// file.Write(ctx.Request.Body())
+		// closeError := file.Close()
+		// emailDevIfItsAnError(closeError)
 	case "put":
 		graphName := string(match[2])
 		if !server.canUserWriteGraphName(account, graphName) {
@@ -335,7 +365,7 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 	case "searchgraphs":
 	case "auth":
 		userReadableAccountJson, err := json.Marshal(account.UserReadable)
-		emailTaoIfItsAnError(err)
+		emailDevIfItsAnError(err)
 		ctx.Write(userReadableAccountJson)
 	case "settings":
 		err = json.Unmarshal(ctx.Request.Body(), &account.UserReadable.FrontEndSettings)
@@ -363,13 +393,15 @@ func timedRootHandler(ctx *fasthttp.RequestCtx) {
 	fmt.Println(duration)
 }
 
+// EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL
+
 var (
 	// google says they do 500 email-recipients/day for free
 	// sending more than that would be so yikes. I can't imagine being that annoying
 	// or maybe I already am :)
 	emailServer   string   = "smtp.gmail.com"
 	serverAccount string   = "traversetext@gmail.com"
-	emailPassword string   = ""
+	emailPassword string   = "" // set in main from seperate file for security
 	devEmails     []string = []string{"taoroalin@gmail.com"}
 )
 
@@ -388,7 +420,7 @@ const timeBetweenEmails = time.Minute * 30
 
 var lastTimeTaoWasEmailed time.Time = time.Now().Add(-timeBetweenEmails)
 
-func emailTaoIfItsAnError(err error) {
+func emailDevIfItsAnError(err error) {
 	if err != nil {
 		if time.Since(lastTimeTaoWasEmailed) > timeBetweenEmails {
 			lastTimeTaoWasEmailed = time.Now()
@@ -399,6 +431,7 @@ func emailTaoIfItsAnError(err error) {
 }
 
 // MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN
+
 func main() {
 	emailPasswordBytes, err := ioutil.ReadFile("./email-password.txt")
 	breakOn(err)
