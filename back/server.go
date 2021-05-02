@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -10,9 +8,15 @@ import (
 	"regexp"
 	"time"
 
+	"crypto/sha256"
+	"encoding/base64"
+
+	"net/smtp"
+
 	// faster drop in replacement for "encoding/json"
 	"github.com/goccy/go-json"
 
+	// not compatible with net/http
 	"github.com/valyala/fasthttp"
 
 	"github.com/Kelindar/binary"
@@ -27,19 +31,19 @@ func breakOn(e error) {
 
 func writeFileThroughTemp(content []byte, name string) {
 	tempFile, err := ioutil.TempFile(temppath, "")
-	breakOn(err)
+	emailTaoIfItsAnError(err)
 	_, writeError := tempFile.Write(content)
-	breakOn(writeError)
+	emailTaoIfItsAnError(writeError)
 	tempFile.Close()
 	renameError := os.Rename(tempFile.Name(), datapath+"blox-br/"+name)
-	breakOn(renameError)
+	emailTaoIfItsAnError(renameError)
 }
 
 func openFileForAppend(path string) *os.File {
 	result, err := os.OpenFile(path,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		0644)
-	breakOn(err)
+	emailTaoIfItsAnError(err)
 	return result
 }
 
@@ -92,37 +96,6 @@ type Bloc struct {
 	Parent     string   `json:"p"`
 	Kids       []string `json:"k"`
 }
-
-// I could parse edits on server like this
-// but edits are stored in a JS friendly, Go unfriendly way and I don't really
-// need to parse them on the server
-
-// const (
-// 	BloxEditCreate uint8 = iota
-// 	BloxEditDiff
-// 	BloxEditMove
-// 	BloxEditDelete
-// )
-
-// type DiffEdit struct {
-// 	Idx    int
-// 	Delete string
-// 	Insert string
-// }
-
-// type MoveEdit struct {
-// 	ParentId    string
-// 	OldParentId string
-// 	Idx         int
-// 	OldIdx      int
-// }
-
-// type BloxEdit struct {
-// 	Id       string
-// 	Diff     *DiffEdit
-// 	OldBloc  *Bloc
-// 	MoveEdit *MoveEdit
-// }
 
 type BloxEdit struct {
 	Id   string
@@ -178,7 +151,7 @@ func accountsServerFromDataPath(datapath string, logpath string) (result Server)
 	result.AccountsByHash = make(map[string]*Account)
 	filename := datapath + "accounts.json"
 	file, err := ioutil.ReadFile(filename)
-	breakOn(err)
+	emailTaoIfItsAnError(err)
 	binary.Unmarshal(file, &result.Accounts)
 	for _, account := range result.Accounts {
 		result.AccountsByEmail[account.UserReadable.Email] = &account
@@ -187,7 +160,7 @@ func accountsServerFromDataPath(datapath string, logpath string) (result Server)
 	}
 
 	graphMetaBytes, err := ioutil.ReadFile(datapath + "graphs.json")
-	breakOn(err)
+	emailTaoIfItsAnError(err)
 	binary.Unmarshal(graphMetaBytes, &result.BloxMeta)
 
 	result.errorFile = openFileForAppend(logpath + "error.txt")
@@ -213,7 +186,7 @@ func (as Server) checkAcountUnique(account Account) error {
 
 func (this Server) persistAllAccounts() {
 	jsonBytes, err := binary.Marshal(this.Accounts)
-	breakOn(err)
+	emailTaoIfItsAnError(err)
 	writeFileThroughTemp(jsonBytes, datapath+"accounts.json")
 	fmt.Printf("%v\n", jsonBytes)
 }
@@ -362,7 +335,7 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 	case "searchgraphs":
 	case "auth":
 		userReadableAccountJson, err := json.Marshal(account.UserReadable)
-		breakOn(err)
+		emailTaoIfItsAnError(err)
 		ctx.Write(userReadableAccountJson)
 	case "settings":
 		err = json.Unmarshal(ctx.Request.Body(), &account.UserReadable.FrontEndSettings)
@@ -390,8 +363,48 @@ func timedRootHandler(ctx *fasthttp.RequestCtx) {
 	fmt.Println(duration)
 }
 
+var (
+	// google says they do 500 email-recipients/day for free
+	// sending more than that would be so yikes. I can't imagine being that annoying
+	// or maybe I already am :)
+	emailServer   string   = "smtp.gmail.com"
+	serverAccount string   = "traversetext@gmail.com"
+	emailPassword string   = ""
+	devEmails     []string = []string{"taoroalin@gmail.com"}
+)
+
+func sendEmail(recipients []string, subject string, body string) error {
+	message := []byte("To: " + recipients[0] + "\r\nSubject: " + subject + "\r\n\r\n" + body + "\r\n")
+	auth := smtp.PlainAuth("Tao", serverAccount, emailPassword, emailServer)
+	sendError := smtp.SendMail(emailServer+":587", auth, serverAccount, recipients, message)
+	return sendError
+}
+
+func emailDevAboutError(message string) error {
+	return sendEmail(devEmails, "Traversetext.com Api Error", message)
+}
+
+const timeBetweenEmails = time.Minute * 30
+
+var lastTimeTaoWasEmailed time.Time = time.Now().Add(-timeBetweenEmails)
+
+func emailTaoIfItsAnError(err error) {
+	if err != nil {
+		if time.Since(lastTimeTaoWasEmailed) > timeBetweenEmails {
+			lastTimeTaoWasEmailed = time.Now()
+			go emailDevAboutError(fmt.Sprint(err))
+		}
+		panic(err)
+	}
+}
+
 // MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN
 func main() {
+	emailPasswordBytes, err := ioutil.ReadFile("./email-password.txt")
+	breakOn(err)
+	emailPassword = string(emailPasswordBytes)
+
+	go sendEmail(devEmails, "Traversetext.com Api Started", "")
 
 	fmt.Println("running traversetext server")
 
