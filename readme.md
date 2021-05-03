@@ -1,34 +1,16 @@
-# Micro Roam
+# Traverse Text
 
-Fast note taking and sharing app inspired by Roam Research.
+A Roam Research clone focused on performance and shareability, with ambitions to be more.
 
-A Roam Research clone focused on performance and shareability.
-
-
-
-# Mission
-
-Write, share, and read linked documents 10x faster.
-
-What that will look like: Open Traverse Text and start writing in half a second. Never lose your flow state to slow page loads, renders, queries, edits. Share pages *that run just as fast as a static blog*. Write for years without the software slowing down.
-
-How is 10x performance achievable? Because other tools spend *1 billion cpu cycles* to render a simple page. Why is that? Are there a billion letters on the page? No. Are there a billion pixels in your screen? No. Are those projects (and their dependencies) made by tens of thousands of low-quality developers, each of whom spends 100,000 of your cpu cycles? Yes.  
-
-# Why did I make Micro Roam?
+# Why did I make Traverse Text?
 
 I love Roam Research. I think that sort of freeform, linked text should be the default for all writing. However, Roam Research doesn't scale to large documents, and isn't quick to share. From my conversations with them, these issues are not a priority for Roam Research, and thus I am solving them myself.
 
-# The Stack
+# Software Dependencies
 
-This project is made with *System Complexity*, in mind. That means instead of writing your own code to be elegant, you write code such that the entire project, including the platform, libraries, frameworks, as a whole is as as simple as possible.
-
-I chose my tech stack, JS and Node, because the language is familiar and it allows me to spend my time writing code, not reading documentation, and it can achieve reasonable performance. Tech I'm considering down the road includes more HTML Canvas, C, C++, SycllaDB, PostgreSQL, NGINX, and JAI.
-
-I'm currently using 1 npm package: html-minifier, because it's trivial to remove from the project and would be an extreme amount of work to recreate myself.
+NodeJS, html-minifier, Go, `github.com/valyala/fasthttp`, nginx. JavaScript (vanilla, based off HTML `<template>`) on the front end
 
 # Intentional differences compared to Roam
-
-Few/no extensions. Running user written code in your product is inherently slow and unreliable. I am not interested in open distribution JavaScript extensions, and will only support CSS extensions if I find a new way to make them far more reliable.
 
 Sharing focus. I want to share my notes, and want to make sharing and commenting good. I prioritize linking between users more than multiple users on the same account.
 
@@ -91,7 +73,7 @@ All event handling for non-permanent elements (anything without id) is done thro
 
 ## Pulling in other text sources
 
-I plan to pull in text from a lot of different sites such as blogs, twitter, ect, so that their full text can be referenced and searched from within Micro Roam.
+I plan to pull in text from a lot of different sites such as blogs, twitter, ect, so that their full text can be referenced and searched from within Traverse Text.
 
 Key point is that it doesn't crawl between sites on its own. You find a site you like on your own, and it brings in that specific site.
 
@@ -115,4 +97,7 @@ exporting / importing markdown files
 
 making signup and login work and have good ui
 
-Plan for non-editing blocs: have seperate class for editing bloc, still have contenteditable on noedit blocs, on focusin record position then rerender as editbloc
+
+Switching backend to Go for 10x server performance.
+
+Finding a more reliable / efficient change sync model
