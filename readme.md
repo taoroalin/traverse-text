@@ -2,13 +2,19 @@
 
 A Roam Research clone focused on performance and shareability, with ambitions to be more.
 
+# How to get started developing Traverse Text
+
+Use text wrap in your editor. This codebase is made using text wrap, and you will have a very hard time reading the code otherwise.
+
+Clone on an Ubuntu machine, then run `./start-fresh.sh`. This will create empty data folders, install nodejs and (optional) npm dependencies, and start the site and API server. If all goes well the site will be up on `localhost:8081`. Whenever you change the code, you can reload the page to see the changes. Otherwise it's up to you to read and debug the script.
+
 # Why did I make Traverse Text?
 
 I love Roam Research. I think that sort of freeform, linked text should be the default for all writing. However, Roam Research doesn't scale to large documents, and isn't quick to share. From my conversations with them, these issues are not a priority for Roam Research, and thus I am solving them myself.
 
 # Software Dependencies
 
-NodeJS, html-minifier, Go, `github.com/valyala/fasthttp`, nginx. JavaScript (vanilla, based off HTML `<template>`) on the front end
+NodeJS, html-minifier, Go, `github.com/valyala/fasthttp`, nginx. JavaScript (vanilla, based off HTML `<template>`) on the front end.
 
 # Intentional differences compared to Roam
 
