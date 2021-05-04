@@ -14,13 +14,20 @@ const compress = (fileName) => new Promise(resolve => {
     console.log("brotli " + fileName + " in " + Math.floor(performance.now() - cpystime))
     resolve()
   })
+
+  const source2 = fs.createReadStream(`../front/public/${fileName}`)
+  const target2 = fs.createWriteStream(`../front/public/${fileName}.gz`)
+  common.gzCompressStream(source2, target2, (err) => {
+    console.log("gzip " + fileName + " in " + Math.floor(performance.now() - cpystime))
+    resolve()
+  })
 })
 
 const compressPublic = async () => {
   const fileNames = fs.readdirSync("../front/public")
   for (let fileName of fileNames) {
     const ext = fileName.match(/\.[a-z0-9]+$/)
-    if (ext && ext != ".woff2" && ext != '.br')
+    if (ext && ext != ".woff2" && ext != '.br' && ext != '.gz')
       await compress(fileName)
   }
 }
@@ -83,10 +90,13 @@ const build = async () => {
   fs.copyFile("../front/src/Inconsolata-latin.woff2", "../front/public/Inconsolata-latin.woff2", () => { })
   fs.copyFile("../front/src/welcome-from-roam.html", "../front/public/welcome-from-roam.html", () => { })
   await compressPublic()
-  await copyPublicForNginx()
+
+  if (fs.existsSync('/www/data/')) {
+    await copyPublicForNginx()
+  }
 }
 
-let mainEvaluation = (async () => {
+let _ = (async () => {
 
   await build()
 
