@@ -1,7 +1,5 @@
 const fs = require('fs')
-const zlib = require('zlib')
-const stream = require('stream')
-const minify = require('html-minifier').minify;
+const minify = require('html-minifier').minify; // this line takes like 2 seconds
 const common = require('./common')
 
 const { performance } = require('perf_hooks')
@@ -66,7 +64,7 @@ const buildWorker = (workerName = 'worker') => {
 }
 
 const build = async () => {
-
+  const bstime = performance.now()
   const regexScriptImport = /<script src="([^":]+)"( async)?><\/script>/g
   const scriptReplacer = (match, fname, async) => {
     let js = fs.readFileSync("../front/src/" + fname, "utf8")
@@ -84,7 +82,7 @@ const build = async () => {
   const html = fs.readFileSync("../front/src/index.html", "utf8")
   const result = html.replace(regexScriptImport, scriptReplacer).replace(regexStyleImport, styleReplacer).replace(/<\/script>\s*<script( async)?>/g, "").replace(/<\/style>[\t\r\n ]*<style>/g, "")
   // todo use minify(text, {toplevel:true}) for more mangling
-
+  console.log(`read files in ${Math.round(performance.now() - bstime)}`)
   // fs.writeFileSync("../front/public/index-no-min.html", result)
   const minifySTime = performance.now()
   const htmlmin = minify(result, {
@@ -96,8 +94,12 @@ const build = async () => {
 
   fs.copyFile("../front/src/favicon.ico", "../front/public/favicon.ico", () => { })
   fs.copyFile("../front/src/default-store.json", "../front/public/default-store.json", () => { })
-  fs.copyFile("../front/src/Inter-latin.woff2", "../front/public/Inter-latin.woff2", () => { })
-  fs.copyFile("../front/src/Inconsolata-latin.woff2", "../front/public/Inconsolata-latin.woff2", () => { })
+
+  fs.copyFile("../front/src/Inter-latin-600.woff2", "../front/public/Inter-latin-600.woff2", () => { })
+  fs.copyFile("../front/src/Inter-latin-400.woff2", "../front/public/Inter-latin-400.woff2", () => { })
+  fs.copyFile("../front/src/Inter-latin-300.woff2", "../front/public/Inter-latin-300.woff2", () => { })
+  fs.copyFile("../front/src/Inconsolata-latin-400.woff2", "../front/public/Inconsolata-latin-400.woff2", () => { })
+
   fs.copyFile("../front/src/welcome-from-roam.html", "../front/public/welcome-from-roam.html", () => { })
   await compressPublic()
 
