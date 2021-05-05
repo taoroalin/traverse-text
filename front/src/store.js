@@ -98,6 +98,10 @@ const setLinks = (store, blocId, doCreatePages = true, doInnerOuterRefs = false,
   }
 
   const bloc = store.blox[blocId]
+  if (bloc === undefined) {
+    console.warn(`bloc does not exist in setLinks`)
+    return
+  }
   const text = bloc.s
   const matches = text.matchAll(parseRegexJustLinks)
   // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.

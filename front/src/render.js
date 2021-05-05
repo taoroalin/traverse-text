@@ -173,7 +173,7 @@ const renderBlockBody = (store, parent, text, editMode = false) => {
     } else if (match[2] !== undefined) {
       if (stackTop.className === "page-ref__body") {
         stackTop.parentNode.endIdx = idx
-        stackTop.parentNode.title = stackTop.innerText
+        stackTop.parentNode.dataset.title = stackTop.innerText
         stackTop.parentNode.endIdx = idx + 2
         if (editMode)
           stackTop.parentNode.children[3].appendChild(newTextNode("]]"))
@@ -344,7 +344,7 @@ const renderBlockBody = (store, parent, text, editMode = false) => {
       match[18] = match[18] || ""; // uglify-js doesn't support ||= operator
       tagElement.children[0].appendChild(newTextNode("#" + match[18]))
       tagElement.graphName = match[18].substring(0, match[18].length - 1)
-      tagElement.title = match[19]
+      tagElement.dataset.title = match[19]
 
       const theTextNode = document.createTextNode(match[19])
       theTextNode.startIdx = idx + match[18].length + 1
