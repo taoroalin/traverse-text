@@ -616,36 +616,38 @@ let transformComputeElement
 
 
 
-const renderResultSet = (parent, resultSet, resultFrame, startIdx = 0) => {
-  if (resultSet.length === 0) {
-    resultFrame.style.display = "none"
+const renderResultSet = (parent, resultArray, resultFrameElement, startIdx = 0) => {
+  if (resultArray.length === 0) {
+    resultFrameElement.style.display = "none"
     focusSuggestion = null
     return
   }
-  const resultTemplate = getTemp(resultFrame.dataset.templateName)
-  resultFrame.innerHTML = ""
-  resultFrame.style.display = "block"
+  const resultTemplate = getTemp(resultFrameElement.dataset.templateName)
+  resultFrameElement.innerHTML = ""
+  resultFrameElement.style.display = "block"
   const rect = parent.getBoundingClientRect()
-  resultFrame.style.top = rect.bottom
-  resultFrame.style.left = rect.left
-  resultFrame.dataset.resultStartIdx = startIdx
-  const resultLength = Math.min(resultSet.length, startIdx + SEARCH_RESULT_LENGTH)
+  resultFrameElement.style.top = rect.bottom
+  resultFrameElement.style.left = rect.left
+  resultFrameElement.dataset.resultStartIdx = startIdx
+  const resultLength = Math.min(resultArray.length, startIdx + SEARCH_RESULT_LENGTH)
   for (let i = startIdx; i < resultLength; i++) {
-    matchingTitle = resultSet[i]
+    matchingTitle = resultArray[i]
     const suggestion = resultTemplate.cloneNode(true)
     if (i == startIdx) {
       focusSuggestion = suggestion
       suggestion.dataset.selected = "true"
     }
     suggestion.dataset.id = matchingTitle.id
-    if (matchingTitle.title) {
+    if (matchingTitle.title !== undefined) {
       suggestion.dataset.title = matchingTitle.title
+      console.log(matchingTitle)
       suggestion.innerText = truncateElipsis(matchingTitle.title, 50)
     } else {
+      console.log(matchingTitle)
       suggestion.dataset.string = matchingTitle.string
       suggestion.innerText = truncateElipsis(matchingTitle.string, 50)
     }
-    resultFrame.appendChild(suggestion)
+    resultFrameElement.appendChild(suggestion)
   }
 }
 

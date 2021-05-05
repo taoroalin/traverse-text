@@ -24,6 +24,10 @@ const bloxProps = [
 ]
 
 const gcPage = (pageId) => {
+  if (store.blox[pageId] === undefined) {
+    console.warn(`isPageEmpty called on nonexistant page`)
+    return
+  }
   if (isPageEmpty(store, pageId))
     macros.nocommit.delete(pageId)
 }
@@ -51,6 +55,10 @@ const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-
 
 const setLinks = (store, blocId, doCreatePages = true, doInnerOuterRefs = false, nogc = false) => {
   for (let ref of store.forwardRefs[blocId] || []) {
+    if (store.refs[ref] === undefined) {
+      console.warn(`forward ref not matched with backward ref ${ref}`)
+      continue
+    }
     store.refs[ref] = store.refs[ref].filter(x => x !== blocId)
     if (!nogc) gcPage(ref)
   }
@@ -76,6 +84,7 @@ const setLinks = (store, blocId, doCreatePages = true, doInnerOuterRefs = false,
   }
 
   const doTitle = (title) => {
+    if (title === "") return
     let ref = store.titles[title]
     if (ref === undefined) {
       if (doCreatePages) {

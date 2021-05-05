@@ -60,9 +60,8 @@ const formatTime = (date) => {
 const formatDateYMD = (date) => `${date.getFullYear()}-${formatInt(date.getMonth() + 1, 2)}-${formatInt(date.getDate(), 2)}`
 
 const truncateElipsis = (text, limit = 40) => {
-  if (text.length > limit) {
+  if (text.length > limit)
     return text.substring(0, limit - 3) + "..."
-  }
   return text
 }
 
