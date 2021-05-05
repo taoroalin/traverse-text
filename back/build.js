@@ -6,21 +6,31 @@ const common = require('./common')
 
 const { performance } = require('perf_hooks')
 
+const argset = {}
+for (let i = 2; i < process.argv.length; i++) {
+  argset[process.argv[i]] = 1
+}
+
 const compress = (fileName) => new Promise(resolve => {
   const cpystime = performance.now()
-  const source = fs.createReadStream(`../front/public/${fileName}`)
-  const target = fs.createWriteStream(`../front/public/${fileName}.br`)
-  common.brCompressExpensiveStream(source, target, (err) => {
-    console.log("brotli " + fileName + " in " + Math.floor(performance.now() - cpystime))
-    resolve()
-  })
 
-  const source2 = fs.createReadStream(`../front/public/${fileName}`)
-  const target2 = fs.createWriteStream(`../front/public/${fileName}.gz`)
-  common.gzCompressStream(source2, target2, (err) => {
-    console.log("gzip " + fileName + " in " + Math.floor(performance.now() - cpystime))
-    resolve()
-  })
+  if (argset.brotli) {
+    const source = fs.createReadStream(`../front/public/${fileName}`)
+    const target = fs.createWriteStream(`../front/public/${fileName}.br`)
+    common.brCompressExpensiveStream(source, target, (err) => {
+      console.log("brotli " + fileName + " in " + Math.floor(performance.now() - cpystime))
+      resolve()
+    })
+  }
+
+  if (!argset.nogzip) {
+    const source2 = fs.createReadStream(`../front/public/${fileName}`)
+    const target2 = fs.createWriteStream(`../front/public/${fileName}.gz`)
+    common.gzCompressStream(source2, target2, (err) => {
+      console.log("gzip " + fileName + " in " + Math.floor(performance.now() - cpystime))
+      resolve()
+    })
+  }
 })
 
 const compressPublic = async () => {
@@ -100,17 +110,19 @@ let _ = (async () => {
 
   await build()
 
-  let watchFnTimeout = null
-  const watchFnDebounced = () => {
-    clearTimeout(watchFnTimeout)
-    watchFnTimeout = setTimeout(build, 50)
-  }
-
-  fs.watch("../front/src", (eventType, fileName) => {
-    if (eventType === "change") {
-      watchFnDebounced()
+  if (argset.watch) {
+    let watchFnTimeout = null
+    const watchFnDebounced = () => {
+      clearTimeout(watchFnTimeout)
+      watchFnTimeout = setTimeout(build, 50)
     }
-  })
+
+    fs.watch("../front/src", (eventType, fileName) => {
+      if (eventType === "change") {
+        watchFnDebounced()
+      }
+    })
+  }
 })()
 
 exports.build = build

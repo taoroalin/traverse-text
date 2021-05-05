@@ -17,6 +17,9 @@ secrets.js
 **/email-password.txt
 
 scraping/output/**
+back/server
+
+**/**.gz
 
 test-data/**
 test-data/graphminer-current-old.json
