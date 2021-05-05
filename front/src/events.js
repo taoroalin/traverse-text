@@ -289,9 +289,10 @@ const globalHotkeys = {
       }
     }
   },
-  "p": {
+  "hide bullets": {
     key: "p", control: true, fn: () => {
-      console.log("at least it wasn't print")
+      user.s.hideBulletsUnlessHover = !user.s.hideBulletsUnlessHover
+      saveUser()
     }
   }
 }

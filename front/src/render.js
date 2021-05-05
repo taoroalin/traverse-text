@@ -173,6 +173,7 @@ const renderBlockBody = (store, parent, text, editMode = false) => {
     } else if (match[2] !== undefined) {
       if (stackTop.className === "page-ref__body") {
         stackTop.parentNode.endIdx = idx
+        // getting inner text here causes style recalculation, which is performance hog when there are lots of / nested pages
         stackTop.parentNode.dataset.title = stackTop.innerText
         stackTop.parentNode.endIdx = idx + 2
         if (editMode)

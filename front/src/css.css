@@ -390,6 +390,7 @@ a:visited {
   top:7px;
 }
 
+
 .block__bullet {
   cursor: pointer;
   position: absolute;
@@ -397,10 +398,15 @@ a:visited {
   top: 4px;
 }
 
+[data-hide-bullets-unless-hover="true"] .block__bullet:not(:hover){
+  --bullet: var(--background);
+}
+
 .block__children {
   margin-left: 22px;
   position:relative;
 }
+
 .block__children::before{
   display:block;
   position:absolute;
@@ -414,6 +420,10 @@ a:visited {
   transform:translateX(-34px);
   border-left: 1px solid var(--bar);
   /* border-width: 0 0 0 1px; */
+}
+
+[data-hide-bullets-unless-hover="true"] .block__children{ /* :not(:hover) ?*/
+  --bar: var(--background);
 }
 
 .block-focus-frame {

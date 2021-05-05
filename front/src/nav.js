@@ -212,6 +212,8 @@ const saveUser = () => {
   document.body.spellcheck = user.s.spellcheck
   document.body.dataset['editingspotlight'] = user.s.editingSpotlight
 
+  document.body.dataset['hideBulletsUnlessHover'] = user.s.hideBulletsUnlessHover
+
   if (user.h) {
     topButtons["Sign Out"].style.display = "block"
     topButtons["Sign Up"].style.display = "none"
