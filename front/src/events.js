@@ -142,6 +142,9 @@ document.addEventListener("input", (event) => {
     let string = focusBlockBody.innerText
     let wasInputPlain = event.data !== null && event.data.length === 1 && event.inputType === "insertText"
     if (event.data !== null) {
+      if (getSelection().isCollapsed) {
+        wasInputPlain = false
+      }
       if (event.data === "[") {
         const pageRefClosesMissingOpens = event.target.querySelectorAll(".page-ref-close-missing-open")
         let broke = false
