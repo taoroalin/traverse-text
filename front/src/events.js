@@ -181,7 +181,7 @@ document.addEventListener("input", (event) => {
     }
 
     if (editingLink) {
-      const matchingTitles = titleExactFullTextSearch(editingLink.title)
+      const matchingTitles = titleExactFullTextSearch(editingLink.dataset.title)
       renderResultSet(editingLink, matchingTitles, autocompleteList, 0)
     }
 
@@ -245,7 +245,7 @@ const globalHotkeys = {
       console.log(editingLink)
       console.log(editingUrlElement)
       if (editingLink) {
-        goto("pageTitle", editingLink.title, editingLink.graphName)
+        goto("pageTitle", editingLink.dataset.title, editingLink.graphName)
       }
       else if (editingUrlElement) {
         followUrlElement(editingUrlElement)
@@ -567,7 +567,7 @@ document.addEventListener("mousedown", (event) => {
 
   const clickedPageLink = getClosestPageLink(event.target)
   if (clickedPageLink) {
-    goto("pageTitle", clickedPageLink.title, clickedPageLink.graphName)
+    goto("pageTitle", clickedPageLink.dataset.title, clickedPageLink.graphName)
     return
   }
 

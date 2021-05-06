@@ -163,7 +163,7 @@ const getClosestPageLink = (node) => {
 
 const getPageTitleOfNode = (node) => {
   const linkNode = getClosestPageLink(node)
-  return linkNode && linkNode.title
+  return linkNode && linkNode.dataset.title
 }
 
 const followUrlElement = (element) => {

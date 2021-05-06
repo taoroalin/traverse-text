@@ -144,18 +144,18 @@ const doEditDom = (edit) => {
 }
 
 const doEdit = (...edit) => {
-  const time = intToBase64(Date.now())
-  doEditBlox(edit, store.blox, time)
-  doEditNoBlox(...edit)
+  doEditNoDOM(...edit)
+  doEditDom(edit)
 }
 
-const doEditNoBlox = (...edit) => {
+const doEditNoDOM = (...edit) => {
+  const time = intToBase64(Date.now())
   undoCommitInProgress.push(edit)
   masterCommitInProgress.push(edit)
   print(edit)
   // console.log(edit)
+  doEditBlox(edit, store.blox, time)
   doEditCacheStuff(edit)
-  doEditDom(edit)
 }
 
 const commit = () => {
@@ -299,11 +299,11 @@ macros.nocommit = {
     }
     console.log(`making page ${title}`)
     const id = newUid()
-    // if you create a new page it's guaranteed to not be rendered on the current page, so I can skip editing blox
-    doEditNoBlox("cr", id)
-    doEditNoBlox("df", id, diff(title, ""))
+    // if you create a new page it's guaranteed to not be rendered on the current page, so I can skip editing dom
+    doEditNoDOM("cr", id)
+    doEditNoDOM("df", id, diff(title, ""))
     const firstChildId = newUid()
-    doEditNoBlox('cr', firstChildId, id, 0)
+    doEditNoDOM('cr', firstChildId, id, 0)
     return id
   },
   create: (parentId, idx) => {

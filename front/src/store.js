@@ -441,7 +441,8 @@ const generateTitles = (store) => {
     const bloc = store.blox[id]
     if (bloc.p === undefined) {
       if (store.titles[bloc.s]) {
-        console.error(`duplicate title ${bloc.s}`)
+        console.warn(`duplicate title ${bloc.s}`)
+        // fixDuplicatePages()
       } else
         store.titles[bloc.s] = id
     }

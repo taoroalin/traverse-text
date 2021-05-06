@@ -506,7 +506,7 @@ let transformComputeElement
           const el = seq[i]
           const title = getPageTitleOfNode(el)
           if (title) {
-            newNode.title = title
+            newNode.dataset.title = title
             newNode.op = "page"
             if (cur.l === undefined) {
               cur.l = newNode

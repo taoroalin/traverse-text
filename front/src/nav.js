@@ -33,7 +33,6 @@ const renderSessionState = () => {
   pageFrame.innerHTML = ""
   searchInput.value = ""
 
-  console.log('TITLE CONAW ' + store.titles["Conaw"])
   console.log(sessionState.page)
   // render state
   switch (sessionState.pageFrame) {
