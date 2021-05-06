@@ -18,6 +18,7 @@ secrets.js
 
 scraping/output/**
 back/server
+front/minify
 
 **/**.gz
 

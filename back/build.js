@@ -1,5 +1,6 @@
 const fs = require('fs')
-const minify = require('html-minifier').minify; // this line takes like 2 seconds
+const child_process = require('child_process')
+
 const common = require('./common')
 
 const { performance } = require('perf_hooks')
@@ -83,24 +84,20 @@ const build = async () => {
   const result = html.replace(regexScriptImport, scriptReplacer).replace(regexStyleImport, styleReplacer).replace(/<\/script>\s*<script( async)?>/g, "").replace(/<\/style>[\t\r\n ]*<style>/g, "")
   // todo use minify(text, {toplevel:true}) for more mangling
   console.log(`read files in ${Math.round(performance.now() - bstime)}`)
-  // fs.writeFileSync("../front/public/index-no-min.html", result)
-  const minifySTime = performance.now()
-  const htmlmin = minify(result, {
-    collapseWhitespace: true, minifyCSS: true, minifyJS: true, removeComments: true, removeOptionalTags: true, removeRedundantAttributes: true, useShortDoctype: true
-  })
-  console.log(`minified in ${Math.round(performance.now() - minifySTime)}`)
 
-  fs.writeFileSync("../front/public/index.html", htmlmin)
+  fs.writeFileSync("../front/public/index-max.html", result)
+  const mstime = performance.now()
+  child_process.execSync(`../front/minify`)
+  console.log(`minify took ${performance.now() - mstime}`)
+  fs.unlinkSync("../front/public/index-max.html")
 
   fs.copyFile("../front/src/favicon.ico", "../front/public/favicon.ico", () => { })
-  fs.copyFile("../front/src/default-store.json", "../front/public/default-store.json", () => { })
 
   fs.copyFile("../front/src/Inter-latin-600.woff2", "../front/public/Inter-latin-600.woff2", () => { })
   fs.copyFile("../front/src/Inter-latin-400.woff2", "../front/public/Inter-latin-400.woff2", () => { })
   fs.copyFile("../front/src/Inter-latin-300.woff2", "../front/public/Inter-latin-300.woff2", () => { })
   fs.copyFile("../front/src/Inconsolata-latin-400.woff2", "../front/public/Inconsolata-latin-400.woff2", () => { })
 
-  fs.copyFile("../front/src/welcome-from-roam.html", "../front/public/welcome-from-roam.html", () => { })
   await compressPublic()
 
   if (fs.existsSync('/www/data/')) {
