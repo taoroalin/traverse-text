@@ -180,12 +180,12 @@ const saveStore = (force = false) => {
       fullString += '"' + key + '":' + JSON.stringify(store[key]) + ","
   }
   fullString += '"blox":' + bloxText + '}'
-  saveStoreToBasicBitchServer(bloxText, force)
+  saveStoreToNodeJsServer(bloxText, force)
   saveStoreStringLocal(fullString)
 }
 
 const saveStoreIncremental = () => {
-  syncEditsWithBasicBitchServer()
+  syncEditsWithNodeJsServer()
   saveStoreStringLocal(JSON.stringify(store))
 }
 

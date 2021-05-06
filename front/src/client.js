@@ -6,7 +6,7 @@ const reset = () => {
   window.location.href = window.location.href
 }
 
-const syncEditsWithBasicBitchServer = async () => {
+const syncEditsWithNodeJsServer = async () => {
   if (masterCommitInProgress.length === 0) {
     return
   }
@@ -17,7 +17,7 @@ const syncEditsWithBasicBitchServer = async () => {
   masterCommitInProgress = []
   headers.set('body', JSON.stringify(commit))
   headers.set('synccommitid', user.s.syncCommitId)
-  const response = await fetch(`${basicBitchServerUrl}/edit/${store.graphName}`, { headers })
+  const response = await fetch(`${nodeJsServerUrl}/edit/${store.graphName}`, { headers })
   if (response.status === 200) {
     user.s.syncCommitId = newCommitId
     masterCommitList.push(commit)
@@ -29,7 +29,7 @@ const syncEditsWithBasicBitchServer = async () => {
   }
 }
 
-const saveStoreToBasicBitchServer = async (blox, force = false) => {
+const saveStoreToNodeJsServer = async (blox, force = false) => {
   const putSentTime = performance.now()
   const headers = new Headers()
   headers.set('h', user.h)
@@ -37,7 +37,7 @@ const saveStoreToBasicBitchServer = async (blox, force = false) => {
   headers.set('commitid', syncCommitId)
   headers.set('synccommitid', user.s.syncCommitId)
   if (force) headers.set('force', 'true')
-  const response = await fetch(`${basicBitchServerUrl}/put/${store.graphName}`,
+  const response = await fetch(`${nodeJsServerUrl}/put/${store.graphName}`,
     {
       method: "POST", body: blox,
       headers
@@ -50,9 +50,9 @@ const saveStoreToBasicBitchServer = async (blox, force = false) => {
   }
 }
 
-const getBloxFromBasicBitchServer = async (graphName) => {
+const getBloxFromNodeJsServer = async (graphName) => {
   const getSentTime = performance.now()
-  const response = await fetch(`${basicBitchServerUrl}/get/${graphName}`,
+  const response = await fetch(`${nodeJsServerUrl}/get/${graphName}`,
     { headers: { h: user.h } })
   switch (response.status) {
     case 200:
@@ -66,7 +66,7 @@ const getBloxFromBasicBitchServer = async (graphName) => {
 
 let bloxDanLuu
 const addOtherStore = async (graphName) => {
-  const blox = await getBloxFromBasicBitchServer(graphName)
+  const blox = await getBloxFromNodeJsServer(graphName)
   for (let x in blox) { // @todo @TEMP @uncorrupt I hate uncorrupting
     // i'm also bad at code tags
     if (blox[x].s === undefined) {
@@ -84,7 +84,7 @@ const addGraph = async () => {
   headers.set('h', user.h)
   headers.set('commitid', user.s.commitId)
   const syncCommitId = user.s.commitId
-  const response = await fetch(`${basicBitchServerUrl}/creategraph/${store.graphName}`, { headers, method: 'POST', body: JSON.stringify(store.blox) })
+  const response = await fetch(`${nodeJsServerUrl}/creategraph/${store.graphName}`, { headers, method: 'POST', body: JSON.stringify(store.blox) })
   if (!response.ok) {
     notifyText("failed to add graph")
     return
@@ -97,7 +97,7 @@ const addGraphBloxBr = async (graphName, blob) => {
   headers.set('h', user.h)
   headers.set('commitid', "MYVERYFIRSTCOMMITEVER")
   headers.set('format', 'blox-br')
-  const response = await fetch(`${basicBitchServerUrl}/creategraph/${graphName}`, { headers, method: 'POST', body: blob })
+  const response = await fetch(`${nodeJsServerUrl}/creategraph/${graphName}`, { headers, method: 'POST', body: blob })
   if (!response.ok) {
     notifyText("failed to add graph")
     return
@@ -107,11 +107,11 @@ const addGraphBloxBr = async (graphName, blob) => {
   invalidateLocal()
 }
 
-const saveSettingsToBasicBitchServer = async () => {
+const saveSettingsToNodeJsServer = async () => {
   const headers = new Headers()
   headers.set('h', user.h)
   headers.set('body', JSON.stringify(user.s))
-  const response = await fetch(`${basicBitchServerUrl}/settings`,
+  const response = await fetch(`${nodeJsServerUrl}/settings`,
     { headers })
   if (response.status !== 200) {
     console.log("failed to save settings")
@@ -144,7 +144,7 @@ const saveSettingsToBasicBitchServer = async () => {
     const password = loginPasswordElement.value
     loginPasswordElement.value = ""
     const passwordHash = await hashPassword(password, email)
-    const response = await fetch(`${basicBitchServerUrl}/auth`, { method: "POST", headers: { h: passwordHash } })
+    const response = await fetch(`${nodeJsServerUrl}/auth`, { method: "POST", headers: { h: passwordHash } })
     if (response.status === 200) {
       user = await response.json()
       saveUser()
@@ -169,7 +169,7 @@ const saveSettingsToBasicBitchServer = async () => {
     console.log(jsonBody)
     const headers = new Headers()
     headers.set('body', jsonBody)
-    const response = await fetch(`${basicBitchServerUrl}/signup`, { method: "POST", headers })
+    const response = await fetch(`${nodeJsServerUrl}/signup`, { method: "POST", headers })
     if (response.status === 200) {
       console.log(response)
       user = await response.json()

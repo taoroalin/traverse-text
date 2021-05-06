@@ -14,7 +14,7 @@ let meta = {}
   if (metaText) meta = JSON.parse(metaText)
 }
 
-const basicBitchServerUrl = location.protocol + "//" + location.hostname + ":8756"
+const nodeJsServerUrl = location.protocol + "//" + location.hostname + ":8756"
 
 //~frontskip
 document.title = "Local Traverse Text"
@@ -55,7 +55,7 @@ if (userText) {
     const headers = new Headers()
     headers.set('h', user.h)
     if (user.s.syncCommitId) headers.set('commitid', user.s.syncCommitId)
-    let reqUrl = `${basicBitchServerUrl}/get/${user.s.graphName}`
+    let reqUrl = `${nodeJsServerUrl}/get/${user.s.graphName}`
     fetch(reqUrl, { method: 'POST', headers: headers }).then(async (res) => {
       if (res.status === 304) {
         console.log(`already up to date`)

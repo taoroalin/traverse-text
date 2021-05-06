@@ -185,7 +185,7 @@ const logError = async (message, url, lineNumber, columnNumber, error) => {
   console.log("LOGGING ERROR")
   const headers = new Headers()
   headers.set('h', user.h)
-  const res = await fetch(`${basicBitchServerUrl}/error`, { headers, method: 'POST', body: `${user.e}\n${error.stack}\n` })
+  const res = await fetch(`${nodeJsServerUrl}/error`, { headers, method: 'POST', body: `${user.e}\n${error.stack}\n` })
   if (res.statusCode !== 200) {
     console.log(res)
   } else {
@@ -224,7 +224,7 @@ const saveUser = () => {
     topButtons["Login"].style.display = "block"
   }
   saveUserJustLocalStorage()
-  saveSettingsToBasicBitchServer()
+  saveSettingsToNodeJsServer()
 }
 
 const saveUserJustLocalStorage = () => {
