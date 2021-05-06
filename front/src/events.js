@@ -807,7 +807,8 @@ const preprocessImportedStore = async () => {
 }
 
 
-const topHamburgerClickOutsideListener = () => {
+const topHamburgerClickOutsideListener = (event) => {
+  if (event.target.closest("#options-frame")) return
   optionsFrame.style.display = 'none'
   document.removeEventListener('click', topHamburgerClickOutsideListener)
 }
@@ -864,6 +865,13 @@ topButtons["Sign Out"].addEventListener('click', (event) => {
 })
 
 reallyWantToLeaveElement.children[0].addEventListener('click', reset)
+
+// handle 
+topButtons["Create New Graph"].addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    createAndSwitchToNewStore(event.target.value)
+  }
+})
 
 topButtons["Create New Graph"].addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
