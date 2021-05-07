@@ -299,7 +299,7 @@ macros.nocommit = {
       console.error(`tried to create page that already exists ${title}`)
       return
     }
-    console.log(`making page ${title}`)
+    // console.log(`making page ${title}`)
     const id = newUid()
     // if you create a new page it's guaranteed to not be rendered on the current page, so I can skip editing dom
     doEditNoDOM("cr", id)

@@ -290,16 +290,12 @@ const searchInput = elById("search-input")
 const terminalElement = elById("terminal")
 
 const searchResultList = elById("search-result-list")
-searchResultList.dataset.templateName = "search-result"
 
 const autocompleteList = elById("autocomplete-list")
-autocompleteList.dataset.templateName = "autocomplete__suggestion"
 
 const inlineCommandList = elById("command-list")
-inlineCommandList.dataset.templateName = "command__suggestion"
 
 const templateList = elById("template-list")
-templateList.dataset.templateName = "template__suggestion"
 
 const switchToLogin = elById("switch-to-login")
 const switchToSignup = elById("switch-to-signup")
@@ -349,3 +345,11 @@ const aliasTemplate = getTemp("alias")
 const textEncoder = new TextEncoder()
 
 const colorThemeOrder = ["light", "purple", "green", "dark"]
+
+const autocompleteSuggestionTemplate = getTemp("autocomplete__suggestion")
+const commandSuggestionTemplate = getTemp("command__suggestion")
+const templateSuggestionTemplate = getTemp("template__suggestion")
+searchResultList.templateElement = searchResultTemplate
+autocompleteList.templateElement = autocompleteSuggestionTemplate
+inlineCommandList.templateElement = commandSuggestionTemplate
+templateList.templateElement = templateSuggestionTemplate

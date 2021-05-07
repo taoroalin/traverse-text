@@ -87,13 +87,11 @@ const autocomplete = () => {
       setFocusedBlockString(string)
     } else {
       const string = origString.slice(0, editingLink.startIdx) + "[[" + focusSuggestion.dataset.title + "]]" + origString.slice(editingLink.endIdx)
-      console.log(string)
       sessionState.position = editingLink.startIdx + focusSuggestion.dataset.title.length + 4
       setFocusedBlockString(string)
     }
   } else {
     const string = origString.slice(0, editingLink.startIdx) + "[[" + focusSuggestion.dataset.title + "]]" + origString.slice(editingLink.endIdx)
-    console.log(string)
     sessionState.position = editingLink.startIdx + focusSuggestion.dataset.title.length + 4
     setFocusedBlockString(string)
   }
@@ -149,7 +147,6 @@ document.addEventListener("input", (event) => {
         const pageRefClosesMissingOpens = event.target.querySelectorAll(".page-ref-close-missing-open")
         let broke = false
         for (let x of pageRefClosesMissingOpens) {
-          console.log(x)
           if (x.childNodes[0].startIdx > sessionState.position) {
             broke = true
             break
@@ -196,7 +193,6 @@ document.addEventListener("input", (event) => {
     renderResultSet(searchInput, matchingTitles, searchResultList, 0)
 
   } else if (event.target.className === "page__title") {
-    console.log("edit title")
     const pageId = event.target.parentNode.dataset.id
     macros.writePageTitle(pageId, event.target.innerText)
   }
@@ -338,7 +334,6 @@ document.addEventListener("keydown", (event) => {
       did = true
     }
     if (event.key === "Backspace" || event.key === "Delete" || (event.key === "x" && getCtrlKey(event))) {
-      console.log(dragSelect)
       if (dragSelect.rooted) {
         focusBlockVerticalOffset(-1, dragSelect.root)
         macros.delete(dragSelect.root.dataset.id)
@@ -386,7 +381,6 @@ document.addEventListener("keydown", (event) => {
           if (!getCtrlKey(event)) {
             idx += 1
           }
-          console.log(idx)
           macros.create(store.blox[sessionState.focusId].p, idx)
           focusBlockVerticalOffset(idx === oldIdx ? -1 : 1)
           event.preventDefault()
@@ -535,7 +529,6 @@ document.addEventListener('paste', (event) => {
 
 const navigateDropdownWithKeyboard = (parent, list, cache, focused, event) => {
   // todo factor this so the same logic works on search all, block, title, and template
-  console.log(event)
   const moveDirection = ((event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey)) && -1) ||
     ((event.key === "ArrowDown" || event.key === "Tab") && 1)
   if (moveDirection) {

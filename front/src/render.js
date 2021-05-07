@@ -626,9 +626,9 @@ const renderResultSet = (parent, resultArray, resultFrameElement, startIdx = 0) 
     focusSuggestion = null
     return
   }
-  const resultTemplate = getTemp(resultFrameElement.dataset.templateName)
+  const resultTemplate = resultFrameElement.templateElement
   resultFrameElement.innerHTML = ""
-  resultFrameElement.style.display = "block"
+  if (resultFrameElement.style.display !== "block") resultFrameElement.style.display = "block"
   const rect = parent.getBoundingClientRect()
   resultFrameElement.style.top = rect.bottom
   resultFrameElement.style.left = rect.left
@@ -644,10 +644,8 @@ const renderResultSet = (parent, resultArray, resultFrameElement, startIdx = 0) 
     suggestion.dataset.id = matchingTitle.id
     if (matchingTitle.title !== undefined) {
       suggestion.dataset.title = matchingTitle.title
-      console.log(matchingTitle)
       suggestion.innerText = truncateElipsis(matchingTitle.title, 50)
     } else {
-      console.log(matchingTitle)
       suggestion.dataset.string = matchingTitle.string
       suggestion.innerText = truncateElipsis(matchingTitle.string, 50)
     }
