@@ -137,7 +137,10 @@ document.addEventListener("input", (event) => {
 
     // reparse block and insert cursor into correct position while typing
 
+    const oldString = store.blox[sessionState.focusId].s
     let string = focusBlockBody.innerText
+
+    if (string === oldString + "\n\n") string = oldString + "\n"
     let wasInputPlain = event.data !== null && event.data.length === 1 && event.inputType === "insertText"
     if (event.data !== null) {
       if (getSelection().isCollapsed) {
@@ -163,8 +166,7 @@ document.addEventListener("input", (event) => {
         }
       }
     }
-
-    let diff = { d: store.blox[sessionState.focusId].s, i: string }
+    let diff = { d: oldString, i: string }
     if (wasInputPlain) {
       if (sessionState.position === string.length)
         diff = { i: event.data }
@@ -290,6 +292,15 @@ const globalHotkeys = {
       user.s.hideBulletsUnlessHover = !user.s.hideBulletsUnlessHover
       saveUser()
     }
+  },
+  "copy block reference": {
+    key: "i", alt: true, fn: () => {
+      const id = sessionState.focusId
+      if (id)
+        navigator.clipboard.writeText("((" + id + "))")
+      else
+        notifyText("no block focused, cannot copy block id")
+    }
   }
 }
 
@@ -375,7 +386,9 @@ document.addEventListener("keydown", (event) => {
     let newActiveBlock
     switch (event.key) {
       case "Enter":
-        if (!event.shiftKey) {
+        if (event.shiftKey) {
+
+        } else {
           let oldIdx = store.blox[store.blox[sessionState.focusId].p].k.indexOf(sessionState.focusId)
           let idx = oldIdx
           if (!getCtrlKey(event)) {
