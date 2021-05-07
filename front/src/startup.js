@@ -116,12 +116,27 @@ if (userText) {
   }
 } else {
   user = { s: { graphName: "default", theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "purple" : "light", topBar: "visible", logging: false, spellcheck: false, editingSpotlight: true } }
-  fetch("./default-store.json").then(text => {
-    text.json().then(json => {
-      setActiveStore(json)
-      setDataLoaded()
-    })
+  setActiveStore({
+    localOnly: true,
+
+    graphName: "default",
+    blox: {},
+    titles: {},
+
+    refs: {},
+    forwardRefs: {},
+    innerRefs: {},
+    outerRefs: {},
+    roamProps: {},
+    ownerRoamId: undefined,
   })
+  setDataLoaded()
+  // fetch("./default-store.json").then(text => {
+  //   text.json().then(json => {
+  //     setActiveStore(json)
+  //     setDataLoaded()
+  //   })
+  // })
   r = indexedDB.open("microroam", 5)
   r.onsuccess = (e1) => idb = e1.target.result
 }
