@@ -1,25 +1,29 @@
-<script src="startup.js"></script>
-<link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="css.css">
-<div id="html">
-  <!-- Inter font on the pre-js text to force font to load faster, might not actually be working -->
-  <p style="font-family: Inter">please enable JavaScript</p>
-</div>
+<head>
+  <script src="startup.js"></script>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="css.css">
+</head>
 
-<script src="declarations.js"></script>
-<script src="front-back-shared.js"></script>
-<script src="utils.js"></script>
-<script src="commands.js"></script>
-<script src="store.js"></script>
-<script src="cursor.js"></script>
-<script src="render.js"></script>
-<script src="client.js"></script>
-<script src="nav.js"></script>
+<body>
+  <div id="html">
+    <!-- Inter font on the pre-js text to force font to load faster, might not actually be working -->
+    <p style="font-family: Inter">please enable JavaScript</p>
+  </div>
 
-<!-- THIS COMMENT IS FUNCTIONAL because it stops the script inliner from combining the scripts above and below it so the bottom ones can load after the page renders-->
+  <script src="declarations.js"></script>
+  <script src="front-back-shared.js"></script>
+  <script src="utils.js"></script>
+  <script src="commands.js"></script>
+  <script src="store.js"></script>
+  <script src="cursor.js"></script>
+  <script src="render.js"></script>
+  <script src="client.js"></script>
+  <script src="nav.js"></script>
 
-<script src="events.js" async></script>
-<script src="inline-commands.js" async></script>
-<script src="convert.js" async></script>
-<script src="test.js" async></script>
+  <!-- THIS COMMENT IS FUNCTIONAL because it stops the script inliner from combining the scripts above and below it so the bottom ones can load after the page renders-->
+
+  <script src="events.js" async></script>
+  <script src="inline-commands.js" async></script>
+  <script src="convert.js" async></script>
+  <script src="test.js" async></script>
 </body>

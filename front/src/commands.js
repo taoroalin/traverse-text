@@ -30,7 +30,7 @@ let masterCommitInProgress = []
 
 const undoEditCacheStuff = (edit) => {
   const [op, id, p1, p2, p3, p4] = edit
-  console.log(edit)
+  // console.log(edit)
   switch (op) {
     case 'cr':
       if (p1 === undefined) {
@@ -99,9 +99,8 @@ const doEditCacheStuff = (edit, includeInnerOuter = false) => {
   }
 }
 
-const doEditDom = (edit) => {
-  console.log(`doEditDom ${JSON.stringify(edit)}`)
-
+let doEditDom
+{
   const removeAll = (id) => {
     const targetElements = document.querySelectorAll(`.block[data-id="${id}"]`)
     for (let targetElement of targetElements) {
@@ -121,25 +120,28 @@ const doEditDom = (edit) => {
     }
   }
 
-  const [op, id, p1, p2, p3, p4] = edit
-  switch (op) {
-    case 'dl':
-      removeAll(id)
-      break
-    case 'mv': {
-      const newParentId = p1, nidx = p2, oldParent = p3
-      removeAll(id)
-      addChild(id, newParentId, nidx)
-    }
-      break
-    case 'cr':
-      addChild(id, p1, p2)
-      break
-    case 'df':
-      const blocks = document.querySelectorAll(`.block[data-id="${id}"]`)
-      for (let block of blocks) {
-        renderBlockBody(store, block.children[1], store.blox[id].s, false)
+  doEditDom = (edit) => {
+
+    const [op, id, p1, p2, p3, p4] = edit
+    switch (op) {
+      case 'dl':
+        removeAll(id)
+        break
+      case 'mv': {
+        const newParentId = p1, nidx = p2, oldParent = p3
+        removeAll(id)
+        addChild(id, newParentId, nidx)
       }
+        break
+      case 'cr':
+        addChild(id, p1, p2)
+        break
+      case 'df':
+        const blocks = document.querySelectorAll(`.block[data-id="${id}"]`)
+        for (let block of blocks) {
+          renderBlockBody(store, block.children[1], store.blox[id].s, false)
+        }
+    }
   }
 }
 
@@ -217,7 +219,7 @@ const saveStoreStringIndexedDB = (string) => {
   }
   req.onerror = (event) => {
     console.log("save error")
-    console.log(event)
+    // console.log(event)
   }
 }
 
