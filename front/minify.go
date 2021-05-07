@@ -1,8 +1,7 @@
 package main
 
 import (
-	"bufio"
-	"os"
+	"io/ioutil"
 	"regexp"
 
 	"github.com/tdewolff/minify/v2"
@@ -26,20 +25,12 @@ func main() {
 	configuredMinifier.AddFunc("text/html", html.Minify)
 	configuredMinifier.AddFuncRegexp(jsRegex, js.Minify)
 
-	inputFile, err := os.Open("../front/public/index-max.html")
+	inputBytes, err := ioutil.ReadFile("../front/public/index-max.html")
 	breakOn(err)
 
-	outputFile, err := os.Create("../front/public/index.html")
-	outputFileWriter := bufio.NewWriter(outputFile)
+	outputBytes, err := configuredMinifier.Bytes("text/html", inputBytes)
 	breakOn(err)
-	defer inputFile.Close()
-	defer outputFile.Close()
-	// gzipWriter, err := gzip.NewWriterLevel(outputFile, gzip.BestCompression)
-	// breakOn(err)
-
-	// var minified bytes.Buffer
-	err = configuredMinifier.Minify("text/html", outputFileWriter, inputFile)
-	breakOn(err)
+	ioutil.WriteFile("../front/public/index.html", outputBytes, 0644)
 
 	// outputFileGzip, err := os.Create("./public/index.html.gz")
 	// breakOn(err)

@@ -65,6 +65,7 @@ const buildWorker = (workerName = 'worker') => {
 }
 
 const build = async () => {
+
   const bstime = performance.now()
   const regexScriptImport = /<script src="([^":]+)"( async)?><\/script>/g
   const scriptReplacer = (match, fname, async) => {
@@ -86,10 +87,12 @@ const build = async () => {
   console.log(`read files in ${Math.round(performance.now() - bstime)}`)
 
   fs.writeFileSync("../front/public/index-max.html", result)
+  // fs.writeFileSync("../front/public/index.html", result)
+
   const mstime = performance.now()
   child_process.execSync(`../front/minify`)
   console.log(`minify took ${performance.now() - mstime}`)
-  fs.unlinkSync("../front/public/index-max.html")
+  fs.unlinkSync("../front/public/index-max.html") // delete, called unlink for some reason
 
   fs.copyFile("../front/src/favicon.ico", "../front/public/favicon.ico", () => { })
 
@@ -103,6 +106,7 @@ const build = async () => {
   if (fs.existsSync('/www/data/')) {
     await copyPublicForNginx()
   }
+
 }
 
 let _ = (async () => {
