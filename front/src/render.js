@@ -509,7 +509,7 @@ let transformComputeElement
           const el = seq[i]
           const title = getPageTitleOfNode(el)
           if (title) {
-            newNode.dataset.title = title
+            newNode.title = title
             newNode.op = "page"
             if (cur.l === undefined) {
               cur.l = newNode
@@ -541,7 +541,7 @@ let transformComputeElement
         }
         tree = tree.l
 
-        const queryStime = performance.now()
+        // const queryStime = performance.now()
         const blocksWithQueries = {}
         for (let id of store.refs[store.titles["query"]]) {
           blocksWithQueries[id] = 1
