@@ -1,12 +1,8 @@
-
 const searchRefCountWeight = 0.05
 const pageOverBlockWeight = 1
 
 const searchStrategies = {
-  regex: (string) => {
-    const regex = newSearchRegex(string)
-    return regex
-  },
+  regex: (string) => newSearchRegex(string),
   replacementForgiving: (pattern) => {
     const allowedReplacements = 1
     return {
@@ -70,7 +66,6 @@ const fullTextSearch = (string, strategy = searchStrategies.regex) => {
   return fullTextSearchCache
 }
 
-
 let templateSearchCache = []
 const searchTemplates = (string, strategy = searchStrategies.regex) => {
   const templatePageId = store.titles["roam/templates"]
@@ -81,9 +76,7 @@ const searchTemplates = (string, strategy = searchStrategies.regex) => {
   if (templatePage) {
     const fn = (blockId) => {
       const block = store.blox[blockId]
-      console.log(block.s)
       const match = matcher.exec(block.s)
-      console.log(match)
       if (match) {
         templateSearchCache.push({
           id: blockId,
@@ -100,10 +93,7 @@ const searchTemplates = (string, strategy = searchStrategies.regex) => {
       for (let blockId of store.blox[templatePageId].k)
         fn(blockId)
     }
-    console.log(templateSearchCache)
     templateSearchCache = templateSearchCache.sort((a, b) => b.idx - a.idx)
-    console.log(templateSearchCache)
-
   }
   return templateSearchCache
 }
