@@ -128,6 +128,7 @@ const dedentFocusedBlock = () => {
 // Event listners --------------------------------------------------------------------------------------------------------
 
 document.addEventListener("input", (event) => {
+  console.log("input???")
   if (sessionState.isFocused) {
     updateCursorPosition()
     if (focusBlockBody.innerText === " " || focusBlockBody.innerText === "") {
@@ -141,8 +142,8 @@ document.addEventListener("input", (event) => {
     let string = focusBlockBody.innerText
 
     if (string === oldString + "\n\n") string = oldString + "\n"
-    let wasInputPlain = event.data !== null && event.data.length === 1 && event.inputType === "insertText"
-    if (event.data !== null) {
+    let wasInputPlain = event.data && event.data.length === 1 && event.inputType === "insertText"
+    if (event.data) {
       if (getSelection().isCollapsed) {
         wasInputPlain = false
       }

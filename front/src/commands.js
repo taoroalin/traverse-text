@@ -139,7 +139,9 @@ let doEditDom
       case 'df':
         const blocks = document.querySelectorAll(`.block[data-id="${id}"]`)
         for (let block of blocks) {
-          renderBlockBody(store, block.children[1], store.blox[id].s, false)
+          const blockBody = block.children[1]
+          blockBody.innerHTML = ""
+          renderBlockBody(store, blockBody, store.blox[id].s, false)
         }
     }
   }
