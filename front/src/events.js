@@ -180,7 +180,7 @@ document.addEventListener("input", (event) => {
     }
 
     if (editingLink) {
-      const matchingTitles = titleExactFullTextSearch(editingLink.dataset.title)
+      const matchingTitles = titleSearch(editingLink.dataset.title)
       renderResultSet(editingLink, matchingTitles, autocompleteList, 0)
     }
 
@@ -191,7 +191,7 @@ document.addEventListener("input", (event) => {
     }
 
   } else if (event.target.id === "search-input") {
-    const matchingTitles = exactFullTextSearch(event.target.value)
+    const matchingTitles = fullTextSearch(event.target.value)
     renderResultSet(searchInput, matchingTitles, searchResultList, 0)
 
   } else if (event.target.className === "page__title") {
@@ -368,7 +368,7 @@ document.addEventListener("keydown", (event) => {
       autocomplete()
       event.preventDefault()
     }
-    navigateDropdownWithKeyboard(editingLink, autocompleteList, titleExactFullTextSearchCache, focusSuggestion, event)
+    navigateDropdownWithKeyboard(editingLink, autocompleteList, titleSearchCache, focusSuggestion, event)
   } else if (templateList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       expandTemplate()
@@ -490,7 +490,7 @@ document.addEventListener("keydown", (event) => {
       return
     }
 
-    navigateDropdownWithKeyboard(searchInput, searchResultList, exactFullTextSearchCache, focusSuggestion, event)
+    navigateDropdownWithKeyboard(searchInput, searchResultList, fullTextSearchCache, focusSuggestion, event)
   }
 
   if (terminalElement.style.display !== "none") {
