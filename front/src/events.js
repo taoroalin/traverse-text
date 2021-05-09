@@ -185,6 +185,7 @@ document.addEventListener("input", (event) => {
     const oldString = store.blox[sessionState.focusId].s
     let string = focusBlockBody.innerText
 
+    console.log("STRING is " + string)
     let diff = { d: oldString, i: string }
     setFocusedBlockString(string, diff)
 
@@ -294,6 +295,7 @@ const globalHotkeys = {
     }
   },
   "copy block reference": {
+    // does this actually belong in global hotkeys? only applies in block
     key: "i", alt: true, fn: () => {
       const id = sessionState.focusId
       if (id)
@@ -495,10 +497,10 @@ document.addEventListener("keydown", (event) => {
       case "c":
         if (getCtrlKey(event)) { // LEGITTODO copy md text and check paste text against, 
           clipboardData = null
-          break
         }
+        break
       default:
-        if (!event.altKey && !getCtrlKey(event) && !getSelection().isCollapsed) {
+        if (!event.altKey && !getCtrlKey(event) && getSelection().isCollapsed) {
           if (event.key.length === 1) {// check if it's a typeable char
             // need a more correct way to do this later
             console.log(event.key)
