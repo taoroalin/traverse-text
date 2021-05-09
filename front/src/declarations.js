@@ -1,6 +1,17 @@
 const elById = (str) => document.getElementById(str)
 const getTemp = (str) => elById(str).content.firstElementChild
 
+/**
+Why do I have all my HTML inside my JS, you may wonder?
+it's because I don't want the DOM to render before the JS loads.
+Loading JS, making dynamic DOM can happen in 200ms,
+so I don't want to waste time rendering a loading screen or anything beforehand.
+If I have visible HTML inside my DOM, that will be style-calculated before the JS is compiled
+(that's just how browser priority works) and the page load will be delayed by a few ms.
+This way I add static DOM immediately before dynamic DOM, and they're both rendered together
+
+This could be moved to an HTML file (to improve IDE support, clean up code) by inlining an html file in build.js, or by finding an option to tell the browser that the JS is more important than the DOM
+ */
 const allHtml = `<div id="app">
   <div id="top-bar" style="margin-top:-43px">
     <div id="top-bar-left">

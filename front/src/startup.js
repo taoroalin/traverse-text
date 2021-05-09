@@ -1,3 +1,11 @@
+/**
+This script, inlined by itself, is the first thing in the HTML, 
+this is done to make sure our initial request to server happens ASAP
+it also creates issues because it necessitates global variable sharing between this and the main script which loads later
+
+this doesn't actually work very well though, because the JS running on the main thread crowds out packet handling (idk why, I would think the browser would receive packets on a different thread while main thread is busy) which means this first request we make takes way too long to finish. need to reevaluate my options here eventually
+*/
+
 let idb = null
 let store = null
 let otherStores = {}

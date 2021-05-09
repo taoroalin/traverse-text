@@ -1,4 +1,12 @@
 // Event Listener Helpers -----------------------------------------------------------------------------------------------
+/**
+Event listeners are only placed on static ID'd elements and document.body
+(no event listeners on dynamic generated content like blocks, pages)
+this makes rendering faster (no need to attach listeners) and makes event handling faster because routing events on document.body to their appropriate sub-handler in JS is faster than using DOM event bubbling
+
+this gives the codebase a very different feel than most codebases
+you're always operating at global scope, "puppeteering" the DOM, never working from inside the DOM
+ */
 const isOsMac = navigator.platform.substring(0, 3) === "Mac"
 
 let getCtrlKey = (event) => event.ctrlKey
@@ -297,6 +305,7 @@ const globalHotkeys = {
 }
 
 document.addEventListener("keydown", (event) => {
+  console.log(sessionState.position)
   console.log("keydown")
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
@@ -489,7 +498,7 @@ document.addEventListener("keydown", (event) => {
           break
         }
       default:
-        if (!event.altKey && !getCtrlKey(event)) {
+        if (!event.altKey && !getCtrlKey(event) && !getSelection().isCollapsed) {
           if (event.key.length === 1) {// check if it's a typeable char
             // need a more correct way to do this later
             console.log(event.key)

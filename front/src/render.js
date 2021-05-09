@@ -1,3 +1,8 @@
+/**
+Each render function takes store, DOM parentNode, and identifying information (id)
+and appends a "page" of DOM as a child of parentNode. This is sometimes used to append elements to a list (like block children) and sometimes used to fill in a single-capacity slot (like renderBlockBody). It is up to the caller to remove the previous child of parentNode if needed.
+ */
+
 const renderPage = (store, parentNode, uid, hasBackrefs = true) => {
   const page = store.blox[uid]
   const element = pageTemplate.cloneNode(true)
