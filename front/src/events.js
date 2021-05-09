@@ -124,11 +124,47 @@ const dedentFocusedBlock = () => {
   }
 }
 
+const doAutocompletesIfApplicable = () => {
+  if (editingCommandElement) {
+    const matchingInlineCommands = matchInlineCommand(editingCommandElement.innerText.substring(1))
+    renderResultSet(editingCommandElement, matchingInlineCommands, inlineCommandList, 0)
+  }
+
+  if (editingLink) {
+    const matchingTitles = titleSearch(editingLink.dataset.title)
+    renderResultSet(editingLink, matchingTitles, autocompleteList, 0)
+  }
+
+  if (editingTemplateExpander) {
+    const editingTemplateText = editingTemplateExpander.innerText.substring(2)
+    const matchingTemplates = searchTemplates(editingTemplateText)
+    renderResultSet(editingTemplateExpander, matchingTemplates, templateList, 0)
+  }
+}
+
+const cursorWriteText = (text, offset = 0) => {
+
+  const oldString = store.blox[sessionState.focusId].s
+  const newString = oldString.substring(0, sessionState.position) + text + oldString.substring(sessionState.position)
+  sessionState.position += text.length + offset
+  setFocusedBlockString(newString)
+
+  updateCursorPosition()
+  doAutocompletesIfApplicable()
+}
+
+const cursorRemoveText = (backward, forward) => {
+  const oldString = store.blox[sessionState.focusId].s
+  const newString = oldString.substring(0, sessionState.position - backward) + oldString.substring(sessionState.position + forward)
+  sessionState.position -= backward
+  setFocusedBlockString(newString)
+
+  updateCursorPosition()
+  doAutocompletesIfApplicable()
+}
 
 // Event listners --------------------------------------------------------------------------------------------------------
-
 document.addEventListener("input", (event) => {
-  console.log("input???")
   if (sessionState.isFocused) {
     updateCursorPosition()
     if (focusBlockBody.innerText === " " || focusBlockBody.innerText === "") {
@@ -141,55 +177,10 @@ document.addEventListener("input", (event) => {
     const oldString = store.blox[sessionState.focusId].s
     let string = focusBlockBody.innerText
 
-    if (string === oldString + "\n\n") string = oldString + "\n"
-    let wasInputPlain = event.data && event.data.length === 1 && event.inputType === "insertText"
-    if (event.data) {
-      if (getSelection().isCollapsed) {
-        wasInputPlain = false
-      }
-      if (event.data === "[") {
-        const pageRefClosesMissingOpens = event.target.querySelectorAll(".page-ref-close-missing-open")
-        let broke = false
-        for (let x of pageRefClosesMissingOpens) {
-          if (x.childNodes[0].startIdx > sessionState.position) {
-            broke = true
-            break
-          }
-        }
-        if (!broke) {
-          string = string.substring(0, sessionState.position) + "]" + string.substring(sessionState.position)
-          wasInputPlain = false
-        }
-      } else if (event.data === "]") {
-        if (string[sessionState.position] === "]") {
-          string = string.substring(0, sessionState.position - 1) + string.substring(sessionState.position)
-          wasInputPlain = false
-        }
-      }
-    }
     let diff = { d: oldString, i: string }
-    if (wasInputPlain) {
-      if (sessionState.position === string.length)
-        diff = { i: event.data }
-      else diff = { i: event.data, s: sessionState.position - 1 }
-    }
     setFocusedBlockString(string, diff)
 
-    if (editingCommandElement) {
-      const matchingInlineCommands = matchInlineCommand(editingCommandElement.innerText.substring(1))
-      renderResultSet(editingCommandElement, matchingInlineCommands, inlineCommandList, 0)
-    }
-
-    if (editingLink) {
-      const matchingTitles = titleSearch(editingLink.dataset.title)
-      renderResultSet(editingLink, matchingTitles, autocompleteList, 0)
-    }
-
-    if (editingTemplateExpander) {
-      const editingTemplateText = editingTemplateExpander.innerText.substring(2)
-      const matchingTemplates = searchTemplates(editingTemplateText)
-      renderResultSet(editingTemplateExpander, matchingTemplates, templateList, 0)
-    }
+    doAutocompletesIfApplicable()
 
   } else if (event.target.id === "search-input") {
     const matchingTitles = fullTextSearch(event.target.value)
@@ -306,6 +297,7 @@ const globalHotkeys = {
 }
 
 document.addEventListener("keydown", (event) => {
+  console.log("keydown")
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
     if (event.key.toLowerCase() === hotkey.key &&
@@ -344,6 +336,7 @@ document.addEventListener("keydown", (event) => {
       console.log(clipboardData)
       navigator.clipboard.writeText(text)
       did = true
+      return
     }
     if (event.key === "Backspace" || event.key === "Delete" || (event.key === "x" && getCtrlKey(event))) {
       if (dragSelect.rooted) {
@@ -363,26 +356,38 @@ document.addEventListener("keydown", (event) => {
       dragSelect = null
       did = true
     }
-    if (did) event.preventDefault()
-  } else if (autocompleteList.style.display !== "none") {
+    if (did) {
+      event.preventDefault()
+      return
+    }
+  }
+
+  if (autocompleteList.style.display !== "none") {
     if (event.key === "Enter") {
       autocomplete()
       event.preventDefault()
+      return
     }
-    navigateDropdownWithKeyboard(editingLink, autocompleteList, titleSearchCache, focusSuggestion, event)
-  } else if (templateList.style.display !== "none") {
+    if (navigateDropdownWithKeyboard(editingLink, autocompleteList, titleSearchCache, focusSuggestion, event)) return
+  }
+  if (templateList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       expandTemplate()
       event.preventDefault()
+      return
     }
-    navigateDropdownWithKeyboard(editingTemplateExpander, templateList, templateSearchCache, focusSuggestion, event)
-  } else if (inlineCommandList.style.display !== "none") {
+    if (navigateDropdownWithKeyboard(editingTemplateExpander, templateList, templateSearchCache, focusSuggestion, event)) return
+  }
+  if (inlineCommandList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       execInlineCommand()
       event.preventDefault()
+      return
     }
-    navigateDropdownWithKeyboard(editingCommandElement, inlineCommandList, commandSearchCache, focusSuggestion, event)
-  } else if (sessionState.isFocused) {
+    if (navigateDropdownWithKeyboard(editingCommandElement, inlineCommandList, commandSearchCache, focusSuggestion, event)) return
+  }
+  if (sessionState.isFocused) {
+    console.log("isfocused")
     let blocks
     let newActiveBlock
     switch (event.key) {
@@ -416,6 +421,16 @@ document.addEventListener("keydown", (event) => {
             macros.delete(currentFocusBlock.dataset.id)
             event.preventDefault()
           }
+        } else { // handling deleting a char here to save ~3ms vs catching it in onInput
+          cursorRemoveText(1, 0)
+          event.preventDefault()
+        }
+        break
+      case "Delete":
+        if (sessionState.position === store.blox[sessionState.focusId].s.length) {
+        } else {
+          cursorRemoveText(0, 1)
+          event.preventDefault()
         }
         break
       case "ArrowDown":
@@ -471,8 +486,47 @@ document.addEventListener("keydown", (event) => {
       case "c":
         if (getCtrlKey(event)) { // LEGITTODO copy md text and check paste text against, 
           clipboardData = null
+          break
         }
-        break
+      default:
+        if (!event.altKey && !getCtrlKey(event)) {
+          if (event.key.length === 1) {// check if it's a typeable char
+            // need a more correct way to do this later
+            console.log(event.key)
+            switch (event.key) {
+              case "[":
+                const pageRefClosesMissingOpens = focusBlockBody.querySelectorAll(".page-ref-close-missing-open")
+                let broke = false
+                for (let x of pageRefClosesMissingOpens) {
+                  if (x.childNodes[0].startIdx > sessionState.position) {
+                    broke = true
+                    break
+                  }
+                }
+                if (!broke) {
+                  cursorWriteText("[]", -1)
+                  event.preventDefault()
+                  return
+                }
+                break
+              case "]":
+                const string = store.blox[sessionState.focusId].s
+                console.log(string[sessionState.position])
+                if (string[sessionState.position] === "]") {
+                  sessionState.position++
+                  focusIdPosition()
+                  event.preventDefault()
+                  return
+                }
+                break
+              default:
+                cursorWriteText(event.key)
+                event.stopPropagation()
+                event.preventDefault()
+                return
+            }
+          }
+        }
     }
   }
 
@@ -491,7 +545,7 @@ document.addEventListener("keydown", (event) => {
       return
     }
 
-    navigateDropdownWithKeyboard(searchInput, searchResultList, fullTextSearchCache, focusSuggestion, event)
+    if (navigateDropdownWithKeyboard(searchInput, searchResultList, fullTextSearchCache, focusSuggestion, event)) return
   }
 
   if (terminalElement.style.display !== "none") {
@@ -519,7 +573,6 @@ document.addEventListener("keydown", (event) => {
       }
     }
   }
-  print(sessionState)
 })
 
 document.addEventListener('paste', (event) => {
@@ -561,6 +614,7 @@ const navigateDropdownWithKeyboard = (parent, list, cache, focused, event) => {
       }
     }
     event.preventDefault()
+    return true // returning true to tell caller to return
   }
 }
 
