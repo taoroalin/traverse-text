@@ -73,6 +73,9 @@ const inlineCommands = {
   highlight: () => {
     inlineCommandReplaceString("^^^^", -2)
   },
+  DONE: () => {
+    inlineCommandPrefixString("{{#DONE}}", /^{{(#DONE|#TODO|\[\[DONE\]\]|\[\[DONE\]\])}}/)
+  },
 }
 
 let commandSearchCache = []
