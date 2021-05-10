@@ -11,10 +11,10 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 
-	"net/smtp"
-
 	// faster drop in replacement for "encoding/json"
 	"github.com/goccy/go-json"
+
+	"net/smtp"
 
 	// not compatible with net/http
 	"github.com/valyala/fasthttp"

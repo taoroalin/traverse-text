@@ -23,6 +23,7 @@ let meta = {}
 }
 
 const nodeJsServerUrl = location.protocol + "//" + location.hostname + ":8756"
+const goServerUrl = location.protocol + "//" + location.hostname + ":3000"
 
 //~frontskip
 document.title = "Local Traverse Text"

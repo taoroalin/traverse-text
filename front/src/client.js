@@ -1,11 +1,5 @@
 // API knowingly does not follow REST spec because CORS sucks and this isn't CRUD
 
-const reset = () => {
-  localStorage.clear()
-  const r = indexedDB.deleteDatabase("microroam")
-  window.location.href = window.location.href
-}
-
 const syncEditsWithNodeJsServer = async () => {
   if (masterCommitInProgress.length === 0) {
     return

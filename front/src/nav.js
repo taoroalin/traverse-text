@@ -232,6 +232,14 @@ const saveUserJustLocalStorage = () => {
 }
 
 
+const reset = async () => {
+  localStorage.clear()
+  const r = indexedDB.deleteDatabase("microroam")
+  r.
+    window.location.href = window.location.href
+}
+
+
 // Finally starting the program after everything's compiled
 if (dataLoaded) start()
 scriptsLoaded = true
