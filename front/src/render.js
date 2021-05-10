@@ -335,13 +335,12 @@ const renderBlockBody = (store, parent, text, editMode = false) => {
     } else if (match[17] !== undefined) {
       if (stackTop.className === "compute-failed__body") {
         const el = stackTop.parentNode
-        el.endIdx = idx
+        el.endIdx = idx + 2
         el.text = text.substring(el.startIdx, el.endIdx)
         el.children[2].appendChild(newTextNode("}}"))
         transformComputeElement(store, el, editMode)
         stack.pop()
         stackTop = stack[stack.length - 1]
-        lastTextNode.endIdx += 2
       } else {
         const el = document.createElement("span")
         el.appendChild(newTextNode("}}"))
@@ -565,7 +564,6 @@ let transformComputeElement
         block.children[2].appendChild(queryFrame)
         el.className = "compute-kept"
         return
-        break
       default:
         return
     }
