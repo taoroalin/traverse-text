@@ -303,12 +303,88 @@ const globalHotkeys = {
       else
         notifyText("no block focused, cannot copy block id")
     }
-  }
+  },
+  "move block to link": {
+    key: "m", control: true, shift: true,
+    fn: () => {
+      updateCursorSpanInfo()
+      if (!editingLink) {
+        notifyText(`move the current block to the page link you're hovering. 
+      No page link hovered `)
+        return
+      }
+
+      const title = getPageTitleOfNode(editingLink)
+      console.log(title)
+      const newParentId = store.titles[title]
+      if (!newParentId) {
+        console.warn("dom page link without page!!!")
+      }
+      const currentPosition = editingLink.startIdx
+      editingLink.outerHTML = ""
+      const string = focusBlockBody.innerText
+
+      // have to save cursor position because switching pages normally erasis this info
+      const currentId = sessionState.focusId
+
+      macros.nocommit.move(currentId, newParentId)
+      macros.nocommit.write(currentId, string)
+      commit()
+
+      goto("pageTitle", title)
+
+      sessionState.focusId = currentId
+      sessionState.position = currentPosition
+
+      focusIdPosition()
+    }
+  },
+  "invert link": {
+    key: "p", control: true, shift: true,// very temporary hotkey
+    fn: () => {
+      updateCursorSpanInfo()
+      if (!editingLink) {
+        notifyText(`move the current block to the page link you're hovering. 
+      No page link hovered `)
+        return
+      }
+
+      if (!sessionState.page) {
+        notifyText("need to be on a page to invert page link")
+        // could deep find this for block view?
+        return
+      }
+
+      const title = getPageTitleOfNode(editingLink)
+      console.log(title)
+      const newParentId = store.titles[title]
+      if (!newParentId) {
+        console.warn("dom page link without page!!!")
+      }
+      // could accelerate this by using innerT
+      const newPageLink = "[[" + sessionState.page + "]]"
+      const currentPosition = editingLink.startIdx + newPageLink.length
+      editingLink.outerHTML = newPageLink
+      const string = focusBlockBody.innerText
+
+      // have to save cursor position because switching pages normally erasis this info
+      const currentId = sessionState.focusId
+
+      macros.nocommit.move(currentId, newParentId)
+      macros.nocommit.write(currentId, string)
+      commit()
+
+      goto("pageTitle", title)
+
+      sessionState.focusId = currentId
+      sessionState.position = currentPosition
+
+      focusIdPosition()
+    }
+  },
 }
 
 document.addEventListener("keydown", (event) => {
-  console.log(sessionState.position)
-  console.log("keydown")
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
     if (event.key.toLowerCase() === hotkey.key &&
@@ -482,6 +558,7 @@ document.addEventListener("keydown", (event) => {
           event.preventDefault()
         } else { // have to adjust sessionState.position manually because no updateCursorPosition at the head of keydown anymore. instead all cursor updates come from oninput, onselectionchange, key left/right, and scripts that change position
           sessionState.position -= 1
+          updateCursorPosition()
         }
         break
       case "ArrowRight":
@@ -492,6 +569,7 @@ document.addEventListener("keydown", (event) => {
           event.preventDefault()
         } else {
           sessionState.position += 1
+          updateCursorPosition()
         }
         break
       case "c":
