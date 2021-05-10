@@ -105,3 +105,9 @@ const pushToArrInObj = (obj, key, val) => {
     obj[key] = [val]
   } else obj[key].push(val)
 }
+
+const kebabToCamel = (str) =>
+  str.replaceAll(/-([a-z])/g, (_match, letter) => letter.toUpperCase())
+
+const camelToKebab = (str) =>
+  str.replaceAll(/([a-z])([A-Z])/g, (_match, lower, upper) => lower + "-" + upper.toLowerCase())

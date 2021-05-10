@@ -5,7 +5,7 @@ and appends a "page" of DOM as a child of parentNode. This is sometimes used to 
 
 const renderPage = (store, parentNode, uid, hasBackrefs = true) => {
   const page = store.blox[uid]
-  const element = pageTemplate.cloneNode(true)
+  const element = templates.page.cloneNode(true)
   const title = element.firstElementChild
   const body = element.children[1]
   element.dataset.id = uid
@@ -23,7 +23,7 @@ const renderPage = (store, parentNode, uid, hasBackrefs = true) => {
 
   const refs = store.refs[uid]
   if (hasBackrefs && refs && refs.length > 0) {
-    const backrefsListElement = backrefListTemplate.cloneNode(true)
+    const backrefsListElement = templates.backrefList.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
     renderBackrefs(store, backrefsListElement.children[1], refs)
   }
@@ -35,7 +35,7 @@ const renderPage = (store, parentNode, uid, hasBackrefs = true) => {
 const renderBackrefs = (store, parent, refs) => {
   sortByLastEdited(store, refs)
   for (let backref of refs) {
-    const backrefFrame = backrefFrameTemplate.cloneNode(true)
+    const backrefFrame = templates.backrefFrame.cloneNode(true)
     renderBreadcrumb(store, backrefFrame.children[0], backref)
     renderBlock(store, backrefFrame.children[1], backref)
     parent.appendChild(backrefFrame)
@@ -43,7 +43,7 @@ const renderBackrefs = (store, parent, refs) => {
 }
 
 const renderBlock = (store, parentNode, uid, idx) => {
-  const element = blockTemplate.cloneNode(true)
+  const element = templates.block.cloneNode(true)
   const body = element.children[1]
   const childrenContainer = element.children[3]
   element.dataset.id = uid
@@ -74,13 +74,13 @@ const renderBlock = (store, parentNode, uid, idx) => {
 }
 
 const renderBlockAsMainWithBacklinks = (theStore, parentNode, uid) => {
-  const blockFocusFrame = blockFocusFrameTemplate.cloneNode(true)
+  const blockFocusFrame = templates.blockFocusFrame.cloneNode(true)
   renderBreadcrumb(theStore, blockFocusFrame.children[0], uid)
   renderBlock(theStore, blockFocusFrame.children[1], uid)
   const backRefs = store.refs[uid]
   if (backRefs) {
     backRefs.sort((a, b) => store.blox[b].et - store.blox[a].et)
-    const backrefsListElement = backrefListTemplate.cloneNode(true)
+    const backrefsListElement = templates.backrefList.cloneNode(true)
     blockFocusFrame.children[2].appendChild(backrefsListElement)
     for (let backref of backRefs) {
       renderBlock(theStore, backrefsListElement.children[1], backref)
@@ -101,13 +101,13 @@ const renderBreadcrumb = (store, parent, blockId) => {
     blockId = block.p
   }
   if (list.length > 0) {
-    const node = breadcrumbPageTemplate.cloneNode(true)
+    const node = templates.breadcrumbPage.cloneNode(true)
     const title = list[list.length - 1].title
     renderBlockBody(store, node, title)
     node.dataset.title = title
     parent.appendChild(node)
     for (let i = list.length - 2; i >= 0; i--) {
-      const node = breadcrumbBlockTemplate.cloneNode(true)
+      const node = templates.breadcrumbBlock.cloneNode(true)
       const nodeBody = node.children[1]
       renderBlockBody(store, nodeBody, truncateElipsis(list[i].string, 22))
       node.dataset.id = list[i].id
@@ -159,7 +159,7 @@ const renderBlockBody = (store, parent, text, editMode = false) => {
     idx = match.index
 
     if (match[1] !== undefined) {
-      const pageRefElement = pageRefTemplate.cloneNode(true)
+      const pageRefElement = templates.pageRef.cloneNode(true)
       pageRefElement.startIdx = idx + 2
       stackTop.appendChild(pageRefElement)
       if (match[1].length > 3) pageRefElement.graphName = match[1].substring(2, match[1].length - 1)
@@ -320,13 +320,13 @@ const renderBlockBody = (store, parent, text, editMode = false) => {
         imageJustTextElement.appendChild(newTextNode(match[0]))
         stackTop.appendChild(imageJustTextElement)
       } else {
-        const imageElement = imageEmbedTemplate.cloneNode(true)
+        const imageElement = templates.imageEmbed.cloneNode(true)
         imageElement.alt = match[14]
         imageElement.src = match[15]
         stackTop.appendChild(imageElement)
       }
     } else if (match[16] !== undefined) {
-      const computeFailedElement = computeFailedTemplate.cloneNode(true)
+      const computeFailedElement = templates.computeFailed.cloneNode(true)
       computeFailedElement.startIdx = idx + 2
       stackTop.appendChild(computeFailedElement)
       computeFailedElement.children[0].appendChild(newTextNode("{{"))
@@ -347,7 +347,7 @@ const renderBlockBody = (store, parent, text, editMode = false) => {
         stackTop.appendChild(el)
       }
     } else if (match[19] !== undefined) { // 18 is optional graphname
-      const tagElement = tagTemplate.cloneNode(true);
+      const tagElement = templates.tag.cloneNode(true);
 
       match[18] = match[18] || ""; // uglify-js doesn't support ||= operator
       tagElement.children[0].appendChild(newTextNode("#" + match[18]))
@@ -431,7 +431,7 @@ let transformComputeElement
       case "TODO":
         if (!editMode) {
           el.textContent = ""
-          const checkbox = todoCheckboxTemplate.cloneNode(true)
+          const checkbox = templates.todoCheckbox.cloneNode(true)
           el.appendChild(checkbox)
         } else {
           el.className = "compute-kept"
@@ -441,7 +441,7 @@ let transformComputeElement
       case "DONE":
         if (!editMode) {
           el.textContent = ""
-          const checkedCheckbox = todoCheckboxTemplate.cloneNode(true)
+          const checkedCheckbox = templates.todoCheckbox.cloneNode(true)
           checkedCheckbox.checked = true
           el.appendChild(checkedCheckbox)
         } else {
@@ -463,7 +463,7 @@ let transformComputeElement
             el.className = "compute-kept"
             return
           }
-          const videoEmbedElement = videoEmbedTemplate.cloneNode(true)
+          const videoEmbedElement = templates.videoEmbed.cloneNode(true)
           videoEmbedElement.src = embedLink
           el.textContent = ""
           el.appendChild(videoEmbedElement)
@@ -478,7 +478,7 @@ let transformComputeElement
         if (!isLinkLike(lastOfSeq)) {
           return
         }
-        const aliasElement = aliasTemplate.cloneNode(true)
+        const aliasElement = templates.alias.cloneNode(true)
         const aliasVisible = aliasElement.children[0]
         const aliasHidden = aliasElement.children[1]
         const seqNodes = Array.from(el.children[1].childNodes)
@@ -558,7 +558,7 @@ let transformComputeElement
         // console.log(result)
 
         // todo UGGGH make after-body-before-children node in DOM, changing getChildren(node) and such
-        const queryFrame = queryFrameTemplate.cloneNode(true)
+        const queryFrame = templates.queryFrame.cloneNode(true)
         renderBackrefs(store, queryFrame, result)
         const block = el.closest(".block")
         block.children[2].appendChild(queryFrame)
@@ -657,7 +657,7 @@ const renderResultSet = (parent, resultArray, resultFrameElement, startIdx = 0) 
 }
 
 const notifyText = (text, duration) => {
-  const el = notificationTemplate.cloneNode(true)
+  const el = templates.notification.cloneNode(true)
   el.innerText = text
   appElement.appendChild(el)
   setTimeout(() => el.style.top = "60px", 50)

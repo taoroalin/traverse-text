@@ -1,5 +1,4 @@
 const elById = (str) => document.getElementById(str)
-const getTemp = (str) => elById(str).content.firstElementChild
 
 /**
 Why do I have all my HTML inside my JS, you may wonder?
@@ -23,15 +22,15 @@ const allHtml = `<div id="app">
     </div>
 
     <svg id="top-connect" width="25" height="25">
-      <line x1="12.5" y1="20" x2="21" y2="9" stroke="var(--bullet)"/>
+      <line x1="12.5" y1="20" x2="21" y2="9" stroke="var(--bullet)" />
       <line x1="12.5" y1="20" x2="4" y2="9" stroke="var(--bullet)" />
       <line x1="12.5" y1="20" x2="12.5" y2="5" stroke="var(--bullet)" />
 
-      <circle cx="4" cy="9" r="3.5" stroke="var(--bullet)"  fill="var(--background)" />
-      <circle cx="12.5" cy="5" r="3.5" stroke="var(--bullet)"  fill="var(--background)" />
-      <circle cx="21" cy="9" r="3.5" stroke="var(--bullet)"  fill="var(--background)" />
+      <circle cx="4" cy="9" r="3.5" stroke="var(--bullet)" fill="var(--background)" />
+      <circle cx="12.5" cy="5" r="3.5" stroke="var(--bullet)" fill="var(--background)" />
+      <circle cx="21" cy="9" r="3.5" stroke="var(--bullet)" fill="var(--background)" />
 
-      <circle cx="12.5" cy="20" r="4.5" stroke="var(--bullet)"  fill="var(--background)" />
+      <circle cx="12.5" cy="20" r="4.5" stroke="var(--bullet)" fill="var(--background)" />
       <circle cx="12.5" cy="20" r="2.5" fill="var(--bullet)" />
     </svg>
 
@@ -92,10 +91,7 @@ const allHtml = `<div id="app">
   </div>
 </div>
 
-<title>Traverse Text</title>
-
-
-<template id="page">
+<template id="templates-container" style="display:none;">
   <div class="page">
     <h1 class="page__title" contenteditable="true" tabindex="-1"></h1>
 
@@ -106,9 +102,7 @@ const allHtml = `<div id="app">
 
     </div>
   </div>
-</template>
 
-<template id="block">
   <div class="block">
     <svg class="block__bullet" width="20" height="20">
       <circle cx="10" cy="10.5" r="3" fill="var(--bullet)" />
@@ -119,97 +113,62 @@ const allHtml = `<div id="app">
 
     </div>
   </div>
-</template>
 
-<template id="backref-list">
   <div class="backref-list">
     <div class="backref-list__title">Linked References</div>
     <div class="backref-list__body"></div>
   </div>
-</template>
 
-<template id="query-frame">
   <div class="query-frame"></div>
-</template>
 
-<template id="block-focus-frame">
   <div class="block-focus-frame">
     <div class="block-focus-frame__breadcrumb"></div>
     <div class="block-focus-frame__body"></div>
     <div class="block-focus-frame__backlinks"></div>
   </div>
-</template>
 
-<template id="backref-frame">
   <div class="backref-frame">
     <div class="backref-frame__breadcrumb"></div>
     <div class="backref-frame__body"></div>
   </div>
-</template>
 
-<template id="page-ref">
-  <span class="page-ref"><span class="page-ref__brackets"></span><span class="page-ref__graphname"></span><span class="page-ref__body"></span><span
-      class="page-ref__brackets"></span></span>
-</template>
+  <span class="page-ref"><span class="page-ref__brackets"></span><span class="page-ref__graphname"></span><span
+      class="page-ref__body"></span><span class="page-ref__brackets"></span></span>
 
-<template id="tag">
   <span class="tag"><span class="tag__graph-name"></span><span class="tag__body"></span></span>
-</template>
 
-<template id="image-embed">
   <img class="image-embed">
-</template>
 
-<template id="compute-failed">
   <span class="compute-failed"><span class="compute-failed__brackets"></span><span
       class="compute-failed__body"></span><span class="compute-failed__brackets"></span></span>
-</template>
 
-<template id="alias">
   <span class="alias"><span class="alias__visible"></span><span class="alias__hidden"></span></span>
-</template>
 
-<template id="todo-checkbox">
   <input type="checkbox" class="todo-checkbox">
-</template>
 
-<template id="video-embed">
   <iframe class="video-embed" width="560" height="315" title="YouTube video player" frameborder="0"
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     allowfullscreen></iframe>
-</template>
 
-<template id="breadcrumb-page">
   <span class="breadcrumb-page"></span>
-</template>
 
-<template id="notification">
   <div class="notification"></div>
-</template>
 
-<template id="breadcrumb-block">
   <span class="breadcrumb-block"><span class="breadcrumb-block__arrow">-></span><span
       class="breadcrumb-block__body"></span></span>
-</template>
 
-<template id="autocomplete__suggestion">
   <div class="autocomplete__suggestion"></div>
-</template>
 
-<template id="command__suggestion">
   <div class="command__suggestion"></div>
-</template>
 
-<template id="template__suggestion">
   <div class="template__suggestion"></div>
-</template>
 
-<template id="search-result">
-  <div class="search-result"></div>
-</template>`
-
-const onboardHTML = `
-`
+  <div class="search-result">
+  
+  <canvas class="overview"></canvas>
+  
+  </template>
+</div>`
 
 const allFrame = elById("html")
 
@@ -333,34 +292,22 @@ const signupEmailElement = elById("signup-email")
 const signupPasswordElement = elById("signup-password")
 
 // Templates
-const pageTemplate = getTemp("page")
-const blockTemplate = getTemp("block")
-const backrefListTemplate = getTemp("backref-list")
-const blockFocusFrameTemplate = getTemp("block-focus-frame")
-const searchResultTemplate = getTemp("search-result")
-const breadcrumbBlockTemplate = getTemp("breadcrumb-block")
-const breadcrumbPageTemplate = getTemp("breadcrumb-page")
-const backrefFrameTemplate = getTemp("backref-frame")
-const notificationTemplate = getTemp("notification")
 
-// Block parsing Templates
-const tagTemplate = getTemp("tag")
-const pageRefTemplate = getTemp("page-ref")
-const imageEmbedTemplate = getTemp("image-embed")
-const computeFailedTemplate = getTemp("compute-failed")
-const todoCheckboxTemplate = getTemp("todo-checkbox")
-const videoEmbedTemplate = getTemp("video-embed")
-const queryFrameTemplate = getTemp("query-frame")
-const aliasTemplate = getTemp("alias")
+const templates = {}
+for (let template of elById("templates-container").content.children) {
+  // convert ids to camel case because it allows . syntax, which is slightly faster
+  // and prettier
+  const camelCaseClassName = kebabToCamel(template.className)
+  templates[camelCaseClassName] = template
+}
+console.log(templates)
+
 
 const textEncoder = new TextEncoder()
 
 const colorThemeOrder = ["light", "purple", "green", "dark"]
 
-const autocompleteSuggestionTemplate = getTemp("autocomplete__suggestion")
-const commandSuggestionTemplate = getTemp("command__suggestion")
-const templateSuggestionTemplate = getTemp("template__suggestion")
-searchResultList.templateElement = searchResultTemplate
-autocompleteList.templateElement = autocompleteSuggestionTemplate
-inlineCommandList.templateElement = commandSuggestionTemplate
-templateList.templateElement = templateSuggestionTemplate
+searchResultList.templateElement = templates.searchResult
+autocompleteList.templateElement = templates.autocomplete__suggestion
+inlineCommandList.templateElement = templates.command__suggestion
+templateList.templateElement = templates.template__suggestion
