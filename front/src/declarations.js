@@ -1,5 +1,3 @@
-const elById = (str) => document.getElementById(str)
-
 /**
 Why do I have all my HTML inside my JS, you may wonder?
 it's because I don't want the DOM to render before the JS loads.
@@ -169,14 +167,21 @@ const allHtml = `<div id="app">
   
   </template>
 </div>`
-
-const allFrame = elById("html")
-
+const allFrame = document.getElementById("html")
 allFrame.innerHTML = allHtml
 
-const topBarRight = elById('top-bar-right')
-const topBarLeft = elById('top-bar-left')
-const optionsFrame = elById('options-frame')
+
+const templates = {}
+for (let template of document.getElementById("templates-container").content.children) {
+  // convert ids to camel case because it allows . syntax, which is slightly faster and prettier
+  templates[kebabToCamel(template.className)] = template
+}
+
+const idElements = {}
+for (let uniqueElement of document.querySelectorAll("[id]")) {
+  idElements[kebabToCamel(uniqueElement.id)] = uniqueElement
+}
+
 
 const topButtons = {}
 
@@ -203,14 +208,14 @@ let toShowOnTopBar = ["Daily Notes", "Report Issue", "Sign Up", "Upload",]
 const layoutTopBar = () => {
   const split = Math.floor(toShowOnTopBar.length / 2)
   for (let i = 0; i < split; i++) {
-    topBarLeft.appendChild(topButtons[toShowOnTopBar[i]])
+    idElements.topBarLeft.appendChild(topButtons[toShowOnTopBar[i]])
   }
   for (let i = split; i < toShowOnTopBar.length; i++) {
-    topBarRight.appendChild(topButtons[toShowOnTopBar[i]])
+    idElements.topBarRight.appendChild(topButtons[toShowOnTopBar[i]])
   }
   for (let name of topButtonNames) {
     if (!toShowOnTopBar.includes(name)) {
-      optionsFrame.appendChild(topButtons[name])
+      idElements.optionsFrame.appendChild(topButtons[name])
     }
   }
 }
@@ -244,70 +249,19 @@ const SEARCH_RESULT_LENGTH = 12
 
 document.body.className = user.s.theme
 
-const topBar = document.getElementById("top-bar")
-const topBarHiddenHitbox = document.getElementById("top-bar-hidden-hitbox")
 
 if (user.s.topBar === 'visible') {
-  topBar.style.marginTop = "0px"
-  topBarHiddenHitbox.style.display = "none"
+  idElements.topBar.style.marginTop = "0px"
+  idElements.topBarHiddenHitbox.style.display = "none"
 }
-setTimeout(() => topBar.className = "top-bar-transition", 200)
-
-
-const pageFrame = elById("page-frame")
-const pageFrameOuter = elById("page-frame-outer")
-const searchInput = elById("search-input")
-const terminalElement = elById("terminal")
-
-const searchResultList = elById("search-result-list")
-
-const autocompleteList = elById("autocomplete-list")
-
-const inlineCommandList = elById("command-list")
-
-const templateList = elById("template-list")
-
-const switchToLogin = elById("switch-to-login")
-const switchToSignup = elById("switch-to-signup")
-const signupElement = elById("signup")
-const loginElement = elById("login")
-
-const reallyWantToLeaveElement = elById("really-want-to-leave")
-
-const appElement = elById('app')
-
-const topHamburgerElement = elById('top-hamburger')
-
-const connectFrame = elById('connect-frame')
-
-
-// login/signup
-const loginForm = elById("login-form")
-const loginEmailElement = elById("login-email")
-const loginPasswordElement = elById("login-password")
-const signupForm = elById("signup-form")
-
-const signupUsernameElement = elById("signup-username")
-const signupEmailElement = elById("signup-email")
-const signupPasswordElement = elById("signup-password")
-
-// Templates
-
-const templates = {}
-for (let template of elById("templates-container").content.children) {
-  // convert ids to camel case because it allows . syntax, which is slightly faster
-  // and prettier
-  const camelCaseClassName = kebabToCamel(template.className)
-  templates[camelCaseClassName] = template
-}
-console.log(templates)
+setTimeout(() => idElements.topBar.className = "top-bar-transition", 200)
 
 
 const textEncoder = new TextEncoder()
 
 const colorThemeOrder = ["light", "purple", "green", "dark"]
 
-searchResultList.templateElement = templates.searchResult
-autocompleteList.templateElement = templates.autocomplete__suggestion
-inlineCommandList.templateElement = templates.command__suggestion
-templateList.templateElement = templates.template__suggestion
+idElements.searchResultList.templateElement = templates.searchResult
+idElements.autocompleteList.templateElement = templates.autocomplete__suggestion
+idElements.commandList.templateElement = templates.command__suggestion
+idElements.templateList.templateElement = templates.template__suggestion

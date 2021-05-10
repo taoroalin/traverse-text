@@ -28,10 +28,10 @@ const sessionStateToUrl = (sessionState) => {
 const renderSessionState = () => {
 
   // clear screen
-  searchResultList.style.display = "none"
-  pageFrameOuter.removeEventListener("scroll", dailyNotesInfiniteScrollListener)
-  pageFrame.innerHTML = ""
-  searchInput.value = ""
+  idElements.searchResultList.style.display = "none"
+  idElements.pageFrameOuter.removeEventListener("scroll", dailyNotesInfiniteScrollListener)
+  idElements.pageFrame.innerHTML = ""
+  idElements.searchInput.value = ""
 
   console.log(sessionState.page)
   // render state
@@ -45,13 +45,13 @@ const renderSessionState = () => {
           console.log('creating block')
           existingPage = macros.createPage(sessionState.page)
         }
-        renderPage(store, pageFrame, existingPage)
+        renderPage(store, idElements.pageFrame, existingPage)
       } else if (graphName in otherStores) {
         let existingPage = otherStores[graphName].titles[sessionState.page]
         if (existingPage === undefined) {
           existingPage = macros.createPage(sessionState.page)
         }
-        renderPage(otherStores[graphName], pageFrame, existingPage)
+        renderPage(otherStores[graphName], idElements.pageFrame, existingPage)
       } else {
         addOtherStore(graphName).then(store => {
           renderSessionState()
@@ -60,10 +60,10 @@ const renderSessionState = () => {
       break
     case "block":
       const theStore = sessionState.graphName ? otherStores[sessionState.graphName] : store
-      renderBlockAsMainWithBacklinks(theStore, pageFrame, sessionState.block)
+      renderBlockAsMainWithBacklinks(theStore, idElements.pageFrame, sessionState.block)
       break
     case "dailyNotes":
-      pageFrameOuter.addEventListener("scroll", dailyNotesInfiniteScrollListener)
+      idElements.pageFrameOuter.addEventListener("scroll", dailyNotesInfiniteScrollListener)
       sessionState.oldestDate = new Date(Date.now())
       let numNotesLoaded = 0
       console.log(store.titles)
@@ -76,10 +76,10 @@ const renderSessionState = () => {
       for (let i = 0; i < 1000; i++) {
         const daysNotes = store.titles[dateString]
         if (daysNotes) {
-          renderPage(store, pageFrame, daysNotes)
+          renderPage(store, idElements.pageFrame, daysNotes)
           const pageBreak = document.createElement("div")
           pageBreak.className = "page-break"
-          pageFrame.appendChild(pageBreak)
+          idElements.pageFrame.appendChild(pageBreak)
           numNotesLoaded += 1
           if (numNotesLoaded >= initialDailyNotes) {
             break
@@ -91,13 +91,13 @@ const renderSessionState = () => {
         dateString = formatDate(sessionState.oldestDate)
 
       }
-      if (numNotesLoaded < initialDailyNotes) pageFrame.lastChild.remove() // remove last page divider
+      if (numNotesLoaded < initialDailyNotes) idElements.pageFrame.lastChild.remove() // remove last page divider
       break
   }
 
   if (sessionState.graphName === user.s.graphName) {
-    if (!sessionState.isFocused || !pageFrame.querySelector(`.block[data-id="${sessionState.focusId}"]`)) {
-      const firstBlockElement = pageFrame.querySelector('.block')
+    if (!sessionState.isFocused || !idElements.pageFrame.querySelector(`.block[data-id="${sessionState.focusId}"]`)) {
+      const firstBlockElement = idElements.pageFrame.querySelector('.block')
       sessionState.position = 0
       sessionState.focusId = firstBlockElement.dataset.id
     } else {
@@ -106,7 +106,7 @@ const renderSessionState = () => {
     focusIdPosition()
   }
 
-  pageFrameOuter.scrollTop = sessionState.scroll || 0
+  idElements.pageFrameOuter.scrollTop = sessionState.scroll || 0
 
 }
 
@@ -134,7 +134,7 @@ const gotoNoHistory = (commandName, ...command) => {
 }
 
 const goto = (...command) => {
-  sessionState.scroll = pageFrameOuter.scrollTop
+  sessionState.scroll = idElements.pageFrameOuter.scrollTop
 
   const oldSessionState = cpy(sessionState)
 
@@ -164,16 +164,16 @@ window.addEventListener("popstate", (event) => {
 
 const dailyNotesInfiniteScrollListener = () => {
   const fromBottom =
-    pageFrame.getBoundingClientRect().bottom - innerHeight
+    idElements.pageFrame.getBoundingClientRect().bottom - innerHeight
   if (fromBottom < 700) {
     for (let i = 0; i < 100; i++) {
       sessionState.oldestDate.setDate(sessionState.oldestDate.getDate() - 1)
       const daysNotes = store.titles[formatDate(sessionState.oldestDate)]
       if (daysNotes) {
-        renderPage(otherStores[sessionState.graphName], pageFrame, daysNotes)
+        renderPage(otherStores[sessionState.graphName], idElements.pageFrame, daysNotes)
         const pageBreak = document.createElement("div")
         pageBreak.className = "page-break"
-        pageFrame.appendChild(pageBreak)
+        idElements.pageFrame.appendChild(pageBreak)
         break
       }
     }
@@ -196,12 +196,12 @@ window.onerror = logError
 
 
 const showTopBar = () => {
-  topBar.style.marginTop = "0px"
-  topBarHiddenHitbox.style.display = "none"
+  idElements.topBar.style.marginTop = "0px"
+  idElements.topBarHiddenHitbox.style.display = "none"
 }
 const hideTopBar = () => {
-  topBar.style.marginTop = "-36px"
-  topBarHiddenHitbox.style.display = "block"
+  idElements.topBar.style.marginTop = "-36px"
+  idElements.topBarHiddenHitbox.style.display = "block"
 }
 const saveUser = () => {
   document.body.className = user.s.theme

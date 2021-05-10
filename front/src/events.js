@@ -56,7 +56,7 @@ const expandTemplate = () => {
     commit()
   } else
     notifyText("can't use a template inside a block that has children")
-  templateList.style.display = "none"
+  idElements.templateList.style.display = "none"
 }
 
 const pasteBlocks = () => {
@@ -103,7 +103,7 @@ const autocomplete = () => {
     sessionState.position = editingLink.startIdx + focusSuggestion.dataset.title.length + 4
     setFocusedBlockString(string)
   }
-  autocompleteList.style.display = "none"
+  idElements.autocompleteList.style.display = "none"
 }
 
 const indentFocusedBlock = () => {
@@ -135,18 +135,18 @@ const dedentFocusedBlock = () => {
 const doAutocompletesIfApplicable = () => {
   if (editingCommandElement) {
     const matchingInlineCommands = matchInlineCommand(editingCommandElement.innerText.substring(1))
-    renderResultSet(editingCommandElement, matchingInlineCommands, inlineCommandList, 0)
+    renderResultSet(editingCommandElement, matchingInlineCommands, idElements.commandList, 0)
   }
 
   if (editingLink) {
     const matchingTitles = titleSearch(editingLink.dataset.title)
-    renderResultSet(editingLink, matchingTitles, autocompleteList, 0)
+    renderResultSet(editingLink, matchingTitles, idElements.autocompleteList, 0)
   }
 
   if (editingTemplateExpander) {
     const editingTemplateText = editingTemplateExpander.innerText.substring(2)
     const matchingTemplates = searchTemplates(editingTemplateText)
-    renderResultSet(editingTemplateExpander, matchingTemplates, templateList, 0)
+    renderResultSet(editingTemplateExpander, matchingTemplates, idElements.templateList, 0)
   }
 }
 
@@ -193,7 +193,7 @@ document.addEventListener("input", (event) => {
 
   } else if (event.target.id === "search-input") {
     const matchingTitles = fullTextSearch(event.target.value)
-    renderResultSet(searchInput, matchingTitles, searchResultList, 0)
+    renderResultSet(idElements.searchInput, matchingTitles, idElements.searchResultList, 0)
 
   } else if (event.target.className === "page__title") {
     const pageId = event.target.parentNode.dataset.id
@@ -206,15 +206,15 @@ const globalHotkeys = {
     key: "b",
     control: true,
     fn: () => {
-      if (topBar.style.marginTop === "0px") user.s.topBar = "hidden"
+      if (idElements.topBar.style.marginTop === "0px") user.s.topBar = "hidden"
       else user.s.topBar = "visible"
       saveUser()
     }
   },
   "escape": {
     key: "Escape", fn: () => {
-      autocompleteList.style.display = "none"
-      templateList.style.display = "none"
+      idElements.autocompleteList.style.display = "none"
+      idElements.templateList.style.display = "none"
     }
   },
   "upload": {
@@ -233,8 +233,8 @@ const globalHotkeys = {
   },
   "search": {
     key: "u", control: true, fn: () => {
-      if (topBar.style.marginTop !== "0px") topBar.style.marginTop = "0px"
-      searchInput.focus()
+      if (idElements.topBar.style.marginTop !== "0px") idElements.topBar.style.marginTop = "0px"
+      idElements.searchInput.focus()
     }
   },
   "open": {
@@ -280,11 +280,11 @@ const globalHotkeys = {
   },
   "terminal": {
     key: "i", control: true, alt: true, fn: () => {
-      if (terminalElement.style.display === "none") {
-        terminalElement.style.display = "block"
-        terminalElement.focus()
+      if (idElements.terminal.style.display === "none") {
+        idElements.terminal.style.display = "block"
+        idElements.terminal.focus()
       } else {
-        terminalElement.style.display = "none"
+        idElements.terminal.style.display = "none"
       }
     }
   },
@@ -449,29 +449,29 @@ document.addEventListener("keydown", (event) => {
     }
   }
 
-  if (autocompleteList.style.display !== "none") {
+  if (idElements.autocompleteList.style.display !== "none") {
     if (event.key === "Enter") {
       autocomplete()
       event.preventDefault()
       return
     }
-    if (navigateDropdownWithKeyboard(editingLink, autocompleteList, titleSearchCache, focusSuggestion, event)) return
+    if (navigateDropdownWithKeyboard(editingLink, idElements.autocompleteList, titleSearchCache, focusSuggestion, event)) return
   }
-  if (templateList.style.display !== "none") {
+  if (idElements.templateList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       expandTemplate()
       event.preventDefault()
       return
     }
-    if (navigateDropdownWithKeyboard(editingTemplateExpander, templateList, templateSearchCache, focusSuggestion, event)) return
+    if (navigateDropdownWithKeyboard(editingTemplateExpander, idElements.templateList, templateSearchCache, focusSuggestion, event)) return
   }
-  if (inlineCommandList.style.display !== "none") {
+  if (idElements.commandList.style.display !== "none") {
     if (event.key === "Tab" || event.key === "Enter") {
       execInlineCommand()
       event.preventDefault()
       return
     }
-    if (navigateDropdownWithKeyboard(editingCommandElement, inlineCommandList, commandSearchCache, focusSuggestion, event)) return
+    if (navigateDropdownWithKeyboard(editingCommandElement, idElements.commandList, commandSearchCache, focusSuggestion, event)) return
   }
   if (sessionState.isFocused) {
     console.log("isfocused")
@@ -634,10 +634,10 @@ document.addEventListener("keydown", (event) => {
       return
     }
 
-    if (navigateDropdownWithKeyboard(searchInput, searchResultList, fullTextSearchCache, focusSuggestion, event)) return
+    if (navigateDropdownWithKeyboard(idElements.searchInput, idElements.searchResultList, fullTextSearchCache, focusSuggestion, event)) return
   }
 
-  if (terminalElement.style.display !== "none") {
+  if (idElements.terminal.style.display !== "none") {
     if (event.key === "Enter" && !getCtrlKey(event) && !event.shiftKey && !event.altKey) {
       const string = event.target.innerText
       const first = string.match(/^[a-z]+/)
@@ -645,15 +645,15 @@ document.addEventListener("keydown", (event) => {
         const fn = terminalCommands[first[0]]
         fn(string.substring(first[0].length))
         event.preventDefault()
-        terminalElement.style.display = "none"
-        terminalElement.innerHTML = ""
+        idElements.terminal.style.display = "none"
+        idElements.terminal.innerHTML = ""
       }
       else {
         try {
           eval(string)
           if (!getCtrlKey(event)) {
-            terminalElement.style.display = "none"
-            terminalElement.innerHTML = ""
+            idElements.terminal.style.display = "none"
+            idElements.terminal.innerHTML = ""
           }
         } catch (error) {
           console.log(error)
@@ -731,7 +731,7 @@ document.addEventListener("mousedown", (event) => {
     }
     return
   } else if (event.target.id !== "search-input") {
-    searchResultList.style.display = "none"
+    idElements.searchResultList.style.display = "none"
   }
 
   const closestBreadcrumbPage = event.target.closest(".breadcrumb-page")
@@ -767,8 +767,8 @@ document.addEventListener("mousedown", (event) => {
   } else if (closestBreadcrumbBlock) {
     goto("block", closestBreadcrumbBlock.dataset.id)
   } else if (event.target.className == "exit-to-main") {
-    signupElement.style.display = "none"
-    loginElement.style.display = "none"
+    idElements.signup.style.display = "none"
+    idElements.login.style.display = "none"
   } else if (event.target.className === "command__suggestion") {
     execInlineCommand()
   } else if (event.target.className === "image-embed") {
@@ -790,12 +790,12 @@ document.addEventListener("mousedown", (event) => {
     macros.write(id, string)
     event.preventDefault()
   } else if (event.target.id === "top-connect") {
-    if (connectFrame.style.display === "none") { // todo make the "connect" button show loaded graphs
-      connectFrame.style.display = "block"
+    if (idElements.connectFrame.style.display === "none") { // todo make the "connect" button show loaded graphs
+      idElements.connectFrame.style.display = "block"
       for (let otherStore in otherStores) {
 
       }
-    } else connectFrame.style.display = "none"
+    } else idElements.connectFrame.style.display = "none"
   } else if (event.target.closest('.alias')) {
     const aliasHidden = event.target.closest('.alias').children[1]
     followLinkLike(aliasHidden.firstElementChild)
@@ -901,12 +901,12 @@ const showTopBarFn = () => {
 }
 let showTopBarTimeout = null
 
-topBarHiddenHitbox.addEventListener("mouseover", () => {
+idElements.topBarHiddenHitbox.addEventListener("mouseover", () => {
   clearTimeout(showTopBarTimeout)
   showTopBarTimeout = setTimeout(showTopBarFn, 400)
 })
 
-topBarHiddenHitbox.addEventListener("mouseout", () => {
+idElements.topBarHiddenHitbox.addEventListener("mouseout", () => {
   clearTimeout(showTopBarTimeout)
   showTopBarTimeout = null
 })
@@ -959,15 +959,15 @@ const preprocessImportedStore = async () => {
 
 const topHamburgerClickOutsideListener = (event) => {
   if (event.target.closest("#options-frame")) return
-  optionsFrame.style.display = 'none'
+  idElements.optionsFrame.style.display = 'none'
   document.removeEventListener('click', topHamburgerClickOutsideListener)
 }
-topHamburgerElement.addEventListener('click', (event) => {
-  if (optionsFrame.style.display == 'block') {
-    optionsFrame.style.display = 'none'
+idElements.topHamburger.addEventListener('click', (event) => {
+  if (idElements.optionsFrame.style.display == 'block') {
+    idElements.optionsFrame.style.display = 'none'
   } else {
     document.addEventListener('click', topHamburgerClickOutsideListener)
-    optionsFrame.style.display = 'block'
+    idElements.optionsFrame.style.display = 'block'
     event.stopPropagation()
     event.preventDefault()
   }
@@ -980,25 +980,25 @@ topButtons["Sign Up"].addEventListener('click', (event) => {
 })
 
 const focusSignup = () => {
-  signupElement.style.display = "block"
-  loginElement.style.display = "none"
-  signupEmailElement.focus()
+  idElements.signup.style.display = "block"
+  idElements.login.style.display = "none"
+  idElements.signupEmail.focus()
 }
 
 const focusLogin = () => {
-  loginElement.style.display = "block"
-  signupElement.style.display = "none"
-  loginEmailElement.focus()
+  idElements.login.style.display = "block"
+  idElements.signup.style.display = "none"
+  idElements.loginEmail.focus()
 }
 
-switchToSignup.addEventListener('click', focusSignup)
+idElements.switchToSignup.addEventListener('click', focusSignup)
 
-switchToLogin.addEventListener('click', focusLogin)
+idElements.switchToLogin.addEventListener('click', focusLogin)
 
 const rwlClickOutListener = (event) => {
   console.log("rwlclick")
   if (event.target.closest('.really-want-to') === null) {
-    reallyWantToLeaveElement.style.display = "none"
+    idElements.reallyWantToLeave.style.display = "none"
     document.removeEventListener('click', rwlClickOutListener)
   }
 }
@@ -1008,13 +1008,13 @@ topButtons["Login"].addEventListener('click', focusLogin)
 topButtons["Sign Out"].addEventListener('click', (event) => {
   if (isSynced()) reset()
   else {
-    reallyWantToLeaveElement.style.display = "flex"
+    idElements.reallyWantToLeave.style.display = "flex"
     document.addEventListener('click', (event) => rwlClickOutListener(event))
     event.stopPropagation()
   }
 })
 
-reallyWantToLeaveElement.children[0].addEventListener('click', reset)
+idElements.reallyWantToLeave.children[0].addEventListener('click', reset)
 
 
 topButtons["Create New Graph"].addEventListener("keydown", (event) => {

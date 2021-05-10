@@ -659,7 +659,7 @@ const renderResultSet = (parent, resultArray, resultFrameElement, startIdx = 0) 
 const notifyText = (text, duration) => {
   const el = templates.notification.cloneNode(true)
   el.innerText = text
-  appElement.appendChild(el)
+  idElements.app.appendChild(el)
   setTimeout(() => el.style.top = "60px", 50)
   const durationMillis = (duration && duration * 1000) || 5000
   setTimeout(() => el.style.opacity = "0", durationMillis)

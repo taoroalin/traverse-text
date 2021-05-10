@@ -112,11 +112,11 @@ let updateCursorSpanInfo
 
     editingCommandElement = getEditingSimpleSpan("command")
     if (editingCommandElement === undefined)
-      inlineCommandList.style.display = "none"
+      idElements.commandList.style.display = "none"
     if (editingTemplateExpander === undefined)
-      templateList.style.display = "none"
+      idElements.templateList.style.display = "none"
     if (editingLink === undefined)
-      autocompleteList.style.display = "none"
+      idElements.searchResultList.style.display = "none"
   }
 }
 
@@ -140,7 +140,7 @@ const focusBlockVerticalOffset = (offset, block = focusBlock, start = false) => 
   const newActiveBlock = blocks[newIndex]
   if (newActiveBlock) {
     if (newIndex === 0)
-      pageFrameOuter.scrollTop = 0
+      idElements.pageFrameOuter.scrollTop = 0
     else
       newActiveBlock.scrollIntoView({ block: 'nearest', inline: 'nearest' })
 

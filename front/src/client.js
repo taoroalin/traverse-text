@@ -131,12 +131,12 @@ const saveSettingsToNodeJsServer = async () => {
     return passwordHash
   }
 
-  loginForm.addEventListener("submit", async (event) => {
+  idElements.loginForm.addEventListener("submit", async (event) => {
     event.preventDefault()
-    const email = loginEmailElement.value
-    loginEmailElement.value = ""
-    const password = loginPasswordElement.value
-    loginPasswordElement.value = ""
+    const email = idElements.loginEmail.value
+    idElements.loginEmail.value = ""
+    const password = idElements.loginPassword.value
+    idElements.loginPassword.value = ""
     const passwordHash = await hashPassword(password, email)
     const response = await fetch(`${nodeJsServerUrl}/auth`, { method: "POST", headers: { h: passwordHash } })
     if (response.status === 200) {
@@ -150,14 +150,14 @@ const saveSettingsToNodeJsServer = async () => {
   })
 
 
-  signupForm.addEventListener("submit", async (event) => {
+  idElements.signupForm.addEventListener("submit", async (event) => {
     event.preventDefault()
-    const email = signupEmailElement.value
-    signupEmailElement.value = ""
-    const username = signupUsernameElement.value
-    signupUsernameElement.value = ""
-    const password = signupPasswordElement.value
-    signupPasswordElement.value = ""
+    const email = idElements.signupEmail.value
+    idElements.signupEmail.value = ""
+    const username = idElements.signupUsername.value
+    idElements.signupUsername.value = ""
+    const password = idElements.signupPassword.value
+    idElements.signupPassword.value = ""
     const passwordHash = await hashPassword(password, email)
     const jsonBody = JSON.stringify({ h: passwordHash, u: username, e: email, s: user.s })
     console.log(jsonBody)

@@ -96,6 +96,6 @@ const matchInlineCommand = (string) => {
 }
 
 const execInlineCommand = () => {
-  inlineCommandList.style.display = "none"
+  idElements.commandList.style.display = "none"
   inlineCommands[focusSuggestion.dataset.string]()
 }
