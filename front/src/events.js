@@ -349,26 +349,19 @@ const globalHotkeys = {
         return
       }
 
-      if (!sessionState.page) {
-        notifyText("need to be on a page to invert page link")
-        // could deep find this for block view?
-        return
-      }
-
       const title = getPageTitleOfNode(editingLink)
-      console.log(title)
+      const currentId = sessionState.focusId
       const newParentId = store.titles[title]
       if (!newParentId) {
         console.warn("dom page link without page!!!")
       }
       // could accelerate this by using innerT
-      const newPageLink = "[[" + sessionState.page + "]]"
+      const newPageLink = "[[" + getPageOfBlocId(currentId) + "]]"
       const currentPosition = editingLink.startIdx + newPageLink.length
       editingLink.outerHTML = newPageLink
       const string = focusBlockBody.innerText
 
       // have to save cursor position because switching pages normally erasis this info
-      const currentId = sessionState.focusId
 
       macros.nocommit.move(currentId, newParentId)
       macros.nocommit.write(currentId, string)
@@ -382,6 +375,18 @@ const globalHotkeys = {
       focusIdPosition()
     }
   },
+  collapse: {
+    key: "c", alt: true, fn: () => {
+      if (!sessionState.isFocused) {
+        notifyText(`Collapse children of current block. 
+      No block focused`)
+        return
+      }
+
+      toggleCollapsed(sessionState.focusId)
+      focusIdPosition()
+    }
+  }
 }
 
 document.addEventListener("keydown", (event) => {

@@ -42,7 +42,7 @@ const renderBackrefs = (store, parent, refs) => {
   }
 }
 
-const renderBlock = (store, parentNode, uid, idx) => {
+const renderBlock = (store, parentNode, uid, idx, collapsed) => {
   const element = templates.block.cloneNode(true)
   const body = element.children[1]
   const childrenContainer = element.children[3]
@@ -54,15 +54,15 @@ const renderBlock = (store, parentNode, uid, idx) => {
   }
 
   const string = store.blox[uid].s
-  if (string.length === 0 && !isEditable) {
-    body.innerText = " "
-  } else {
-    renderBlockBody(store, body, string)
-  }
+  renderBlockBody(store, body, string)
 
-  const children = store.blox[uid].k
-  for (let child of children || []) {
-    renderBlock(store, childrenContainer, child)
+  if (collapsed || (store.collapsed && store.collapsed[uid])) {
+    childrenContainer.appendChild(templates.childrenCollapsed.cloneNode(true))
+  } else {
+    const kids = store.blox[uid].k
+    for (let kid of kids || []) {
+      renderBlock(store, childrenContainer, kid)
+    }
   }
 
   if (idx !== undefined && parentNode.children.length >= idx) {

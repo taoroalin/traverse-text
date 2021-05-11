@@ -10,6 +10,7 @@ const blankStore = (name) => ({
   outerRefs: {},
 
   roamProps: {},
+  collapsed: {},
   ownerRoamId: undefined,
 })
 
@@ -384,4 +385,13 @@ const createAndSwitchToNewStore = async (storeName) => {
   await addGraph()
   saveStore()
   window.location.href = window.location.href
+}
+
+const getPageOfBlocId = (blocId) => {
+  let bloc = store.blox[blocId]
+  while (bloc.p) {
+    blocId = store.blox[blocId].p
+    bloc = store.blox[blocId]
+  }
+  return blocId
 }

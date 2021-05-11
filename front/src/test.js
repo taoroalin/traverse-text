@@ -208,3 +208,7 @@ const terminalCommands = {
 //   socket.send("Hi!")
 // }
 //~
+
+// CLEANUP
+
+if (!store.collapsed) store.collapsed = {}

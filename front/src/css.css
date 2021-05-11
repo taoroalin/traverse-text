@@ -705,3 +705,12 @@ a:visited {
   margin-top:30px;
   display:block;
 }
+
+/* todo make this css cleaner */
+.children-collapsed{
+  width:calc(100%+20px);
+  margin: 5px 0px 2px -20px;
+  border: 1px solid var(--bar);
+  border-width: 2px 0 0 0;
+  border-radius:3px;
+}

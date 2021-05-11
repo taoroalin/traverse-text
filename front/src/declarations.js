@@ -151,6 +151,8 @@ const allHtml = `<div id="app">
   <span class="breadcrumb-page"></span>
 
   <div class="notification"></div>
+  
+  <div class="children-collapsed"></div>
 
   <span class="breadcrumb-block"><span class="breadcrumb-block__arrow">-></span><span
       class="breadcrumb-block__body"></span></span>

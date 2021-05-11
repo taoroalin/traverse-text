@@ -99,9 +99,20 @@ const doEditCacheStuff = (edit, includeInnerOuter = false) => {
   }
 }
 
+const rerenderBlocId = (blocId) => {
+  const bloc = store.blox[blocId]
+  const parentBloc = store.blox[bloc.p]
+  const targetElements = document.querySelectorAll(`.block[data-id="${blocId}"]`)
+  for (let targetElement of targetElements) {
+    const parentElement = targetElement.parentNode
+    targetElement.remove()
+    renderBlock(store, parentElement, blocId, parentBloc.k.indexOf(blocId))
+  }
+}
+
 let doEditDom
 {
-  const removeAll = (id) => {
+  const unrenderBlocId = (id) => {
     const targetElements = document.querySelectorAll(`.block[data-id="${id}"]`)
     for (let targetElement of targetElements) {
       targetElement.remove()
@@ -111,7 +122,6 @@ let doEditDom
   const addChild = (id, parentId, idx) => {
     const newParents = document.querySelectorAll(`[data-id="${parentId}"]`)
     for (let newParent of newParents) {
-      let cl
       if (newParent.className === 'block') {
         renderBlock(store, newParent.children[3], id, idx)
       } else if (newParent.className === 'page') {
@@ -125,11 +135,11 @@ let doEditDom
     const [op, id, p1, p2, p3, p4] = edit
     switch (op) {
       case 'dl':
-        removeAll(id)
+        unrenderBlocId(id)
         break
       case 'mv': {
         const newParentId = p1, nidx = p2, oldParent = p3
-        removeAll(id)
+        unrenderBlocId(id)
         addChild(id, newParentId, nidx)
       }
         break
@@ -327,4 +337,9 @@ for (let k in macros.nocommit) {
     commit()
     return result
   }
+}
+
+const toggleCollapsed = (blocId) => {
+  store.collapsed[blocId] = !store.collapsed[blocId]
+  rerenderBlocId(blocId)
 }
