@@ -451,6 +451,7 @@ document.addEventListener("keydown", (event) => {
 
   if (idElements.autocompleteList.style.display !== "none") {
     if (event.key === "Enter") {
+      updateCursorSpanInfo()
       autocomplete()
       event.preventDefault()
       return

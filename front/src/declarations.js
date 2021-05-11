@@ -161,12 +161,10 @@ const allHtml = `<div id="app">
 
   <div class="template__suggestion"></div>
 
-  <div class="search-result">
-  
-  <canvas class="overview"></canvas>
-  
-  </template>
-</div>`
+  <div class="search-result"></div>
+
+  <canvas class="overview" width="400" width="300"></canvas>
+</template>`
 const allFrame = document.getElementById("html")
 allFrame.innerHTML = allHtml
 
