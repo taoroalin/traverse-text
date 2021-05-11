@@ -651,7 +651,10 @@ document.addEventListener("keydown", (event) => {
       }
       else {
         try {
-          eval(string)
+          // wrap eval in function to avoid names leaking out
+          function evalfunc() { eval(string) }
+          evalfunc()
+
           if (!getCtrlKey(event)) {
             idElements.terminal.style.display = "none"
             idElements.terminal.innerHTML = ""
