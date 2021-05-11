@@ -393,5 +393,5 @@ const getPageOfBlocId = (blocId) => {
     blocId = store.blox[blocId].p
     bloc = store.blox[blocId]
   }
-  return blocId
+  return bloc.s
 }
