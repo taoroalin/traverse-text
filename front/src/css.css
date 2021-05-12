@@ -498,6 +498,8 @@ a:visited {
 
 .block-ref {
   background-color: var(--block-ref);
+  padding:5px 2px;
+  border-radius: 5px;
 }
 
 .block-ref:hover {
