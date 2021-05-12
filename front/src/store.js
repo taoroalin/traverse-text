@@ -12,6 +12,9 @@ const blankStore = (name) => ({
   roamProps: {},
   collapsed: {},
   ownerRoamId: undefined,
+
+  editsInFlight: [],
+  syncCommitId: undefined,
 })
 
 const bloxProps = [
@@ -55,32 +58,36 @@ const isBlockEmpty = (store, blockId) => {
 const parseRegexJustLinks = /(\[\[)|(\]\])|#([\/a-zA-Z0-9_-]+)|\(\(([a-zA-Z0-9\-_]+)\)\)|(^[\/a-zA-Z0-9_-]+)::|`([^`]+)`|```/g
 
 const setLinks = (store, blocId, doCreatePages = true, doInnerOuterRefs = false, nogc = false) => {
-  for (let ref of store.forwardRefs[blocId] || []) {
-    if (store.refs[ref] === undefined) {
-      console.warn(`forward ref not matched with backward ref ${ref}`)
-      continue
-    }
-    store.refs[ref] = store.refs[ref].filter(x => x !== blocId)
-    if (!nogc) gcPage(ref)
-  }
+  const newLinks = {} // keep track of new added links to remove old links later
+
   const forwardRefs = []
   store.forwardRefs[blocId] = forwardRefs
 
   let doRef
   if (doInnerOuterRefs) {
     doRef = (ref) => {
+      if (!store.blox[ref]) {
+        console.warn("see dead ref in setLinks")
+        return
+      }
       if (ref in store.refs) {
         store.refs[ref].push(blocId)
       } else {
         store.refs[ref] = [blocId]
       }
       forwardRefs.push(ref)
+      newLinks[ref] = 1
     }
   } else {
     doRef = (ref) => {
+      if (!store.blox[ref]) {
+        console.warn("see dead ref in setLinks")
+        return
+      }
       if (ref in store.refs) store.refs[ref].push(blocId)
       else store.refs[ref] = [blocId]
       forwardRefs.push(ref)
+      newLinks[ref] = 1
     }
   }
 
@@ -174,7 +181,19 @@ const setLinks = (store, blocId, doCreatePages = true, doInnerOuterRefs = false,
     }
     idx = match.index + match[0].length
   }
-  if (forwardRefs.length === 0) delete store.forwardRefs[blocId]
+
+  for (let ref of store.forwardRefs[blocId] || []) {
+    if (store.refs[ref] === undefined) {
+      console.warn(`forward ref not matched with backward ref ${ref}`)
+      continue
+    }
+    if (!newLinks[ref]) {
+      store.refs[ref] = store.refs[ref].filter(x => x !== blocId)
+      if (!nogc) gcPage(ref)
+    }
+  }
+
+  // if (forwardRefs.length === 0) delete store.forwardRefs[blocId]
 }
 
 const generateRefs = (store) => {
@@ -352,8 +371,9 @@ const generateTitles = (store) => {
       if (store.titles[bloc.s]) {
         console.warn(`duplicate title ${bloc.s}`)
         // fixDuplicatePages()
-      } else
+      } else {
         store.titles[bloc.s] = id
+      }
     }
   }
 }

@@ -228,15 +228,12 @@ const saveUser = () => {
 
 const saveUserJustLocalStorage = () => {
   localStorage.setItem("user", JSON.stringify(user))
-
 }
-
 
 const reset = async () => {
   localStorage.clear()
   const r = indexedDB.deleteDatabase("microroam")
-  r.
-    window.location.href = window.location.href
+  window.location.href = window.location.href
 }
 
 

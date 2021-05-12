@@ -50,11 +50,10 @@ const start = () => {
 
 const invalidateLocal = () => {
   const r = indexedDB.deleteDatabase("microroam")
-  console.error(`Local replica invalid. Resetting from server`)
   user.s.commitId = undefined
   user.s.syncCommitId = undefined
+  localStorage.clear()
   localStorage.setItem("user", JSON.stringify(user))
-  localStorage.removeItem('store')
   window.location.href = window.location.href
 }
 

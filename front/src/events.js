@@ -794,7 +794,7 @@ document.addEventListener("mousedown", (event) => {
 
     let string = store.blox[id].s
     string = string.substring(0, fe.startIdx) +
-      "[[" + newLink + "]]" +
+      "[[" + newLink + "]]" + "}}" + // @todo make consistent endIndex that's either beginning of content or markup
       string.substring(fe.endIdx)
     macros.write(id, string)
     event.preventDefault()

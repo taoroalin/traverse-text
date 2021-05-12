@@ -3,7 +3,7 @@ Each render function takes store, DOM parentNode, and identifying information (i
 and appends a "page" of DOM as a child of parentNode. This is sometimes used to append elements to a list (like block children) and sometimes used to fill in a single-capacity slot (like renderBlockBody). It is up to the caller to remove the previous child of parentNode if needed.
  */
 
-const renderPage = (store, parentNode, uid, hasBackrefs = true) => {
+const renderPage = (store, parentNode, uid, withBackrefs = true) => {
   const page = store.blox[uid]
   const element = templates.page.cloneNode(true)
   const title = element.firstElementChild
@@ -22,7 +22,7 @@ const renderPage = (store, parentNode, uid, hasBackrefs = true) => {
   }
 
   const refs = store.refs[uid]
-  if (hasBackrefs && refs && refs.length > 0) {
+  if (withBackrefs && refs) {
     const backrefsListElement = templates.backrefList.cloneNode(true)
     element.children[2].appendChild(backrefsListElement)
     renderBackrefs(store, backrefsListElement.children[1], refs)
@@ -90,14 +90,19 @@ const renderBlockAsMainWithBacklinks = (theStore, parentNode, uid) => {
 }
 
 const renderBreadcrumb = (store, parent, blockId) => {
+  if (!store.blox[blockId]) {
+    console.error(`thought there was block ${blockId}`)
+    return
+  }
   blockId = store.blox[blockId].p
   const list = []
   while (blockId !== undefined) {
     const block = store.blox[blockId]
     if (block.p !== undefined) {
       list.push({ string: block.s, id: blockId })
-    } else
+    } else {
       list.push({ title: block.s, id: blockId })
+    }
     blockId = block.p
   }
   if (list.length > 0) {
