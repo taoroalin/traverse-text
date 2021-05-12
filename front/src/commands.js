@@ -110,15 +110,15 @@ const rerenderBlocId = (blocId) => {
   }
 }
 
+const unrenderBlocId = (id) => {
+  const targetElements = document.querySelectorAll(`.block[data-id="${id}"]`)
+  for (let targetElement of targetElements) {
+    targetElement.remove()
+  }
+}
+
 let doEditDom
 {
-  const unrenderBlocId = (id) => {
-    const targetElements = document.querySelectorAll(`.block[data-id="${id}"]`)
-    for (let targetElement of targetElements) {
-      targetElement.remove()
-    }
-  }
-
   const addChild = (id, parentId, idx) => {
     const newParents = document.querySelectorAll(`[data-id="${parentId}"]`)
     for (let newParent of newParents) {

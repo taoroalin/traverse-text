@@ -5,6 +5,7 @@
   outline: none;
   scrollbar-width: none;
   transition: background-color 0.06s;
+  --shadow-deep:#0a0b14;
 }
 
 
@@ -44,7 +45,7 @@
   --break: #9494b8;
   --highlight: #fffd97;
   --page-ref: #7afc9b;
-  --shadow: rgb(51, 51, 51);
+  --shadow: #1d1e2c;
   --notification: #45495f;
   --query-background: #42485f;
   --editing-background: #424450;
@@ -197,7 +198,7 @@ a:visited {
 #top-bar button {
   font-size: 0.9em;
   color:var(--bullet);
-  padding: 10px 10px 8px;
+  padding: 9px 10px 8px;
 }
 
 .top-bar-transition{
@@ -210,7 +211,7 @@ a:visited {
 }
 
 #top-hamburger, #top-connect{
-  padding:7px 6px 2px 4px;
+  padding:9px 6px 2px 4px;
   cursor:pointer;
 }
 
@@ -237,13 +238,17 @@ a:visited {
 #search-input {
   background-color: var(--background);
   color: var(--text);
-  padding: 3px 13px;
+  padding: 6px 13px;
   margin: 5px 3px 5px;
   display: block;
   font-size: 1.1em;
-  box-shadow: 0 0 2px var(--bullet);
+  box-shadow: 0px 0px 5px var(--shadow);
   border-radius: 100px;
   flex-grow: 1;
+}
+
+#search-input:focus, #search-input:hover{ 
+  box-shadow: 0px 0px 5px var(--shadow-deep);
 }
 
 #search-input::placeholder{

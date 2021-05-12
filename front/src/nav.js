@@ -200,7 +200,7 @@ const showTopBar = () => {
   idElements.topBarHiddenHitbox.style.display = "none"
 }
 const hideTopBar = () => {
-  idElements.topBar.style.marginTop = "-36px"
+  idElements.topBar.style.marginTop = "-48px"
   idElements.topBarHiddenHitbox.style.display = "block"
 }
 const saveUser = () => {
