@@ -12,9 +12,6 @@ const blankStore = (name) => ({
   roamProps: {},
   collapsed: {},
   ownerRoamId: undefined,
-
-  editsInFlight: [],
-  syncCommitId: undefined,
 })
 
 const bloxProps = [

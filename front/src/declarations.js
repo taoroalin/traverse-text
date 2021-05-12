@@ -221,6 +221,7 @@ const layoutTopBar = () => {
 }
 layoutTopBar()
 
+let editInFlight = false
 
 // these two stored for re-focusing dom nodes after they're moved
 let focusNode = null

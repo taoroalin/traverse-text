@@ -4,23 +4,36 @@ const syncEditsWithNodeJsServer = async () => {
   if (masterCommitInProgress.length === 0) {
     return
   }
+  editInFlight = true
   const headers = new Headers()
   headers.set('h', user.h)
   const newCommitId = newUUID()
   const commit = { id: newCommitId, t: intToBase64(Date.now()), edits: masterCommitInProgress }
   masterCommitInProgress = []
+  const saveEditLocallyForFutureSync = () => {
+    console.log("no server?")
+    commit.edits.push(...masterCommitInProgress)
+    masterCommitInProgress = commit.edits
+    localStorage.setItem("edits", JSON.stringify(masterCommitInProgress))
+
+  }
   headers.set('body', JSON.stringify(commit))
   headers.set('synccommitid', user.s.syncCommitId)
-  const response = await fetch(`${nodeJsServerUrl}/edit/${store.graphName}`, { headers })
-  if (response.status === 200) {
-    user.s.syncCommitId = newCommitId
-    masterCommitList.push(commit)
-  } else if (response.status === 409) {
-    console.log("conflicting edit")
-    invalidateLocal()
-  } else {
-    masterCommitInProgress = [...commit.edits, ...masterCommitInProgress]
+  try {
+    const response = await fetch(`${nodeJsServerUrl}/edit/${store.graphName}`, { headers })
+    if (response.status === 200) {
+      user.s.syncCommitId = newCommitId
+      masterCommitList.push(commit)
+    } else if (response.status === 409) {
+      console.log("conflicting edit")
+      invalidateLocal()
+    } else {
+      saveEditLocallyForFutureSync()
+    }
+  } catch (e) {
+    saveEditLocallyForFutureSync()
   }
+  editInFlight = false
 }
 
 const saveStoreToNodeJsServer = async (blox, force = false) => {

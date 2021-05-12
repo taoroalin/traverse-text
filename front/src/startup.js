@@ -9,6 +9,7 @@ this doesn't actually work very well though, because the JS running on the main 
 let idb = null
 let store = null
 let otherStores = {}
+let masterCommitInProgress = []
 let r
 
 const setActiveStore = (inputStore) => {
@@ -86,6 +87,8 @@ if (userText) {
 
   const lsStore = localStorage.getItem('store')
   if (lsStore) {
+    const lsEdits = localStorage.getItem("edits")
+    if (lsEdits) masterCommitInProgress = JSON.parse(lsEdits)
     try {
       setActiveStore(JSON.parse(lsStore))
       setDataLoaded()

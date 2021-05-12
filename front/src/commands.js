@@ -25,8 +25,6 @@ let undoCommitSessionStateList = []
 let undoCommitInProgress = []
 
 let masterCommitList = []
-let masterCommitInProgress = []
-
 
 const undoEditCacheStuff = (edit) => {
   const [op, id, p1, p2, p3, p4] = edit
@@ -199,7 +197,7 @@ const saveStore = (force = false) => {
 }
 
 const saveStoreIncremental = () => {
-  syncEditsWithNodeJsServer()
+  if (!editInFlight) syncEditsWithNodeJsServer()
   saveStoreStringLocal(JSON.stringify(store))
 }
 
