@@ -68,14 +68,15 @@ const renderSessionState = () => {
       let numNotesLoaded = 0
       console.log(store.titles)
       let dateString = formatDate(sessionState.oldestDate)
-      generateTitles(store) // todo get rid of title corruption and remove this. it's here because the titles are always corrupted at this point, I have no idea why.
-      if (!store.titles[dateString]) {
+      if (!store.titles || Object.keys(store.titles).length === 0) generateTitles(store)
+      // todo get rid of title corruption and remove this. it's here because the titles are always corrupted at this point, I have no idea why.
+      if (store.titles[dateString] === undefined) {
         console.log(`creating page ${dateString}`)
         macros.createPage(dateString)
       }
       for (let i = 0; i < 1000; i++) {
         const daysNotes = store.titles[dateString]
-        if (daysNotes) {
+        if (daysNotes !== undefined) {
           renderPage(store, idElements.pageFrame, daysNotes)
           const pageBreak = document.createElement("div")
           pageBreak.className = "page-break"
@@ -89,7 +90,6 @@ const renderSessionState = () => {
           sessionState.oldestDate.getDate() - 1
         )
         dateString = formatDate(sessionState.oldestDate)
-
       }
       if (numNotesLoaded < initialDailyNotes) idElements.pageFrame.lastChild.remove() // remove last page divider
       break

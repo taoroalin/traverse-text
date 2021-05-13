@@ -480,9 +480,6 @@ document.addEventListener("keydown", (event) => {
     if (navigateDropdownWithKeyboard(editingCommandElement, idElements.commandList, commandSearchCache, focusSuggestion, event)) return
   }
   if (sessionState.isFocused) {
-    console.log("isfocused")
-    let blocks
-    let newActiveBlock
     switch (event.key) {
       case "Enter":
         if (event.shiftKey) {
@@ -587,7 +584,6 @@ document.addEventListener("keydown", (event) => {
         if (!event.altKey && !getCtrlKey(event) && getSelection().isCollapsed) {
           if (event.key.length === 1) {// check if it's a typeable char
             // need a more correct way to do this later
-            console.log(event.key)
             switch (event.key) {
               case "[":
                 const pageRefClosesMissingOpens = focusBlockBody.querySelectorAll(".page-ref-close-missing-open")

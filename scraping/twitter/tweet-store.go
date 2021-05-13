@@ -1,4 +1,4 @@
-package main
+package tweetstore
 
 import (
 	"github.com/dghubble/go-twitter/twitter"

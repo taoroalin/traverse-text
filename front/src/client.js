@@ -15,7 +15,6 @@ const syncEditsWithNodeJsServer = async () => {
     commit.edits.push(...masterCommitInProgress)
     masterCommitInProgress = commit.edits
     localStorage.setItem("edits", JSON.stringify(masterCommitInProgress))
-
   }
   headers.set('body', JSON.stringify(commit))
   headers.set('synccommitid', user.s.syncCommitId)
