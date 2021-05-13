@@ -88,7 +88,11 @@ if (userText) {
   const lsStore = localStorage.getItem('store')
   if (lsStore) {
     const lsEdits = localStorage.getItem("edits")
-    if (lsEdits) masterCommitInProgress = JSON.parse(lsEdits)
+    try {
+      if (lsEdits) masterCommitInProgress = JSON.parse(lsEdits)
+    } catch (e) {
+
+    }
     try {
       setActiveStore(JSON.parse(lsStore))
       setDataLoaded()
