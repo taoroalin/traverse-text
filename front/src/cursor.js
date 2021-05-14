@@ -6,7 +6,7 @@ let focusIdPosition, selectIdWholeNode
       focusBlock.dataset.id !== sessionState.focusId) {
 
       focusBlockBody.textContent = ""
-      renderBlockBody(store, focusBlockBody, store.blox[focusBlock.dataset.id].s)
+      render.blockBody(store, focusBlockBody, store.blox[focusBlock.dataset.id].s)
     }
 
     focusBlock = document.querySelector(`.block[data-id="${sessionState.focusId}"]`)
@@ -20,7 +20,7 @@ let focusIdPosition, selectIdWholeNode
 
     const text = store.blox[sessionState.focusId].s
     focusBlockBody.innerText = ""
-    renderBlockBody(store, focusBlockBody, text, true)
+    render.blockBody(store, focusBlockBody, text, true)
   }
 
   focusIdPosition = () => {

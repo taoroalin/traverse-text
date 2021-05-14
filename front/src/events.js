@@ -55,7 +55,7 @@ const expandTemplate = () => {
     }
     commit()
   } else
-    notifyText("can't use a template inside a block that has children")
+    render.notifyText("can't use a template inside a block that has children")
   idElements.templateList.style.display = "none"
 }
 
@@ -128,25 +128,25 @@ const dedentFocusedBlock = () => {
     macros.move(bid, grandparentId, idx + 1)
     focusIdPosition()
   } else {
-    // notifyText("can't dedent from page root", 2) // don't need error message here?
+    // render.notifyText("can't dedent from page root", 2) // don't need error message here?
   }
 }
 
 const doAutocompletesIfApplicable = () => {
   if (editingCommandElement) {
     const matchingInlineCommands = matchInlineCommand(editingCommandElement.innerText.substring(1))
-    renderResultSet(editingCommandElement, matchingInlineCommands, idElements.commandList, 0)
+    render.resultSet(editingCommandElement, matchingInlineCommands, idElements.commandList, 0)
   }
 
   if (editingLink) {
     const matchingTitles = titleSearch(editingLink.dataset.title)
-    renderResultSet(editingLink, matchingTitles, idElements.autocompleteList, 0)
+    render.resultSet(editingLink, matchingTitles, idElements.autocompleteList, 0)
   }
 
   if (editingTemplateExpander) {
     const editingTemplateText = editingTemplateExpander.innerText.substring(2)
     const matchingTemplates = searchTemplates(editingTemplateText)
-    renderResultSet(editingTemplateExpander, matchingTemplates, idElements.templateList, 0)
+    render.resultSet(editingTemplateExpander, matchingTemplates, idElements.templateList, 0)
   }
 }
 
@@ -193,7 +193,7 @@ document.addEventListener("input", (event) => {
 
   } else if (event.target.id === "search-input") {
     const matchingTitles = fullTextSearch(event.target.value)
-    renderResultSet(idElements.searchInput, matchingTitles, idElements.searchResultList, 0)
+    render.resultSet(idElements.searchInput, matchingTitles, idElements.searchResultList, 0)
 
   } else if (event.target.className === "page__title") {
     const pageId = event.target.parentNode.dataset.id
@@ -274,7 +274,7 @@ const globalHotkeys = {
         focusBlockVerticalOffset(-1)
         macros.delete(oldFocusId)
       } else {
-        notifyText(`no "delete block" for blocks with children or the only block in a page (at least right now)`)
+        render.notifyText(`no "delete block" for blocks with children or the only block in a page (at least right now)`)
       }
     }
   },
@@ -301,7 +301,7 @@ const globalHotkeys = {
       if (id)
         navigator.clipboard.writeText("((" + id + "))")
       else
-        notifyText("no block focused, cannot copy block id")
+        render.notifyText("no block focused, cannot copy block id")
     }
   },
   "move block to link": {
@@ -309,7 +309,7 @@ const globalHotkeys = {
     fn: () => {
       updateCursorSpanInfo()
       if (!editingLink) {
-        notifyText(`move the current block to the page link you're hovering. 
+        render.notifyText(`move the current block to the page link you're hovering. 
       No page link hovered `)
         return
       }
@@ -344,7 +344,7 @@ const globalHotkeys = {
     fn: () => {
       updateCursorSpanInfo()
       if (!editingLink) {
-        notifyText(`move the current block to the page link you're hovering. 
+        render.notifyText(`move the current block to the page link you're hovering. 
       No page link hovered `)
         return
       }
@@ -378,7 +378,7 @@ const globalHotkeys = {
   collapse: {
     key: "c", alt: true, fn: () => {
       if (!sessionState.isFocused) {
-        notifyText(`Collapse children of current block. 
+        render.notifyText(`Collapse children of current block. 
       No block focused`)
         return
       }
@@ -701,7 +701,7 @@ const navigateDropdownWithKeyboard = (parent, list, cache, focused, event) => {
     } else {
       const oldIdx = parseInt(list.dataset.resultStartIdx)
       const newIdx = clamp(oldIdx + moveDirection * SEARCH_RESULT_LENGTH, 0, cache.length - SEARCH_RESULT_LENGTH)
-      renderResultSet(store, parent, cache, list, newIdx)
+      render.resultSet(store, parent, cache, list, newIdx)
       if (moveDirection === -1) {
         delete list.firstElementChild.dataset.selected
         list.lastElementChild.dataset.selected = true
@@ -929,7 +929,7 @@ disconnectedFileInput.addEventListener('change', (event) => {
         setActiveStore(roamJsonToStore(files[0].name, files[0].text))
         preprocessImportedStore()
       } else {
-        notifyText("Markdown import doesn't work yet. Upload a .json file, or a .zip file containing a .json file instead.", 12)
+        render.notifyText("Markdown import doesn't work yet. Upload a .json file, or a .zip file containing a .json file instead.", 12)
         throw new Error("md import doesn't work")
         const mds = []
         for (let file of files) {
@@ -952,7 +952,7 @@ disconnectedFileInput.addEventListener('change', (event) => {
   } else if (extension === "br") {
     addGraphBloxBr(name, file)
   } else {
-    notifyText("Traverse Text only accepts a .json file or .zip file containing 1 .json file") // add "md" once that works
+    render.notifyText("Traverse Text only accepts a .json file or .zip file containing 1 .json file") // add "md" once that works
   }
 })
 

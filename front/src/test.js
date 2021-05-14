@@ -108,7 +108,7 @@ const benchmarkRenderAll = async () => {
   const duration = performance.now() - stime
   const message = `rendered ${count} pages in ${Math.round(duration)}ms, avg ${Math.round(duration / count)}ms \nfunction time avg ${Math.round(functionTime / count)}`
   console.log(message)
-  notifyText(message, 10)
+  render.notifyText(message, 10)
 }
 
 const testAll = () => {

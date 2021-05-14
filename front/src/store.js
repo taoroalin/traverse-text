@@ -198,7 +198,7 @@ const generateRefs = (store) => {
   store.refs = {}
   store.forwardRefs = {}
   for (let blocId in store.blox) {
-    setLinks(store, blocId, false)
+    setLinks(store, blocId) // this was set to no-create. why?
   }
   console.log(`gen refs took ${performance.now() - stime}`)
 }

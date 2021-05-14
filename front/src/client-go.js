@@ -20,7 +20,7 @@ const clientGo = {
       invalidateLocal()
       console.log(user)
     } else {
-      notifyText("Don't know that username + password.")
+      render.notifyText("Don't know that username + password.")
     }
   },
 
@@ -37,7 +37,7 @@ const clientGo = {
       console.log(`signed up`)
     } else {
       const responseText = await response.json()
-      notifyText(responseText)
+      render.notifyText(responseText)
     }
   },
 

@@ -104,7 +104,7 @@ const rerenderBlocId = (blocId) => {
   for (let targetElement of targetElements) {
     const parentElement = targetElement.parentNode
     targetElement.remove()
-    renderBlock(store, parentElement, blocId, parentBloc.k.indexOf(blocId))
+    render.block(store, parentElement, blocId, parentBloc.k.indexOf(blocId))
   }
 }
 
@@ -121,9 +121,9 @@ let doEditDom
     const newParents = document.querySelectorAll(`[data-id="${parentId}"]`)
     for (let newParent of newParents) {
       if (newParent.className === 'block') {
-        renderBlock(store, newParent.children[3], id, idx)
+        render.block(store, newParent.children[3], id, idx)
       } else if (newParent.className === 'page') {
-        renderBlock(store, newParent.children[1], id, idx)
+        render.block(store, newParent.children[1], id, idx)
       }
     }
   }
@@ -149,7 +149,7 @@ let doEditDom
         for (let block of blocks) {
           const blockBody = block.children[1]
           blockBody.innerHTML = ""
-          renderBlockBody(store, blockBody, store.blox[id].s, false)
+          render.blockBody(store, blockBody, store.blox[id].s, false)
         }
     }
   }

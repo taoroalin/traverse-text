@@ -410,7 +410,7 @@ let zipToFiles, filesToZip
 
         } else {
           console.log(compressionMethod)
-          notifyText("Traverse Text can't handle .zip files that are actually compressed. use a .json file or an uncompressed .zip file, like ones exported by Roam Research or Traverse Text", 10)
+          render.notifyText("Traverse Text can't handle .zip files that are actually compressed. use a .json file or an uncompressed .zip file, like ones exported by Roam Research or Traverse Text", 10)
           return
         }
       } else if (sigInt === END_CENTRAL_DIR_SIGNATURE) {

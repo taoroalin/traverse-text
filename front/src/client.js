@@ -92,7 +92,7 @@ const addGraph = async () => {
   const syncCommitId = user.s.commitId
   const response = await fetch(`${nodeJsServerUrl}/creategraph/${store.graphName}`, { headers, method: 'POST', body: JSON.stringify(store.blox) })
   if (!response.ok) {
-    notifyText("failed to add graph")
+    render.notifyText("failed to add graph")
     return
   }
   user.s.syncCommitId = syncCommitId
@@ -105,7 +105,7 @@ const addGraphBloxBr = async (graphName, blob) => {
   headers.set('format', 'blox-br')
   const response = await fetch(`${nodeJsServerUrl}/creategraph/${graphName}`, { headers, method: 'POST', body: blob })
   if (!response.ok) {
-    notifyText("failed to add graph")
+    render.notifyText("failed to add graph")
     return
   }
   user.s.graphName = graphName
@@ -157,7 +157,7 @@ const saveSettingsToNodeJsServer = async () => {
       invalidateLocal()
       console.log(user)
     } else {
-      notifyText("Don't know that username + password.")
+      render.notifyText("Don't know that username + password.")
     }
   })
 
@@ -184,7 +184,7 @@ const saveSettingsToNodeJsServer = async () => {
       console.log(`signed up`)
     } else {
       const responseText = await response.json()
-      notifyText(responseText)
+      render.notifyText(responseText)
     }
   })
 }

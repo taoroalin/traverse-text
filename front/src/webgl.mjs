@@ -186,7 +186,7 @@ function drawScene(gl, programInfo, buffers) {
 const renderOverview = (canvas) => {
   const gl = canvas.getContext("webgl")
   if (gl === null) {
-    notifyText("Unable to initialize WebGL. Try switching to Chrome / Brave");
+    render.notifyText("Unable to initialize WebGL. Try switching to Chrome / Brave");
     return;
   }
 

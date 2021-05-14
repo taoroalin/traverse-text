@@ -45,13 +45,13 @@ const renderSessionState = () => {
           console.log('creating block')
           existingPage = macros.createPage(sessionState.page)
         }
-        renderPage(store, idElements.pageFrame, existingPage)
+        render.page(store, idElements.pageFrame, existingPage)
       } else if (graphName in otherStores) {
         let existingPage = otherStores[graphName].titles[sessionState.page]
         if (existingPage === undefined) {
           existingPage = macros.createPage(sessionState.page)
         }
-        renderPage(otherStores[graphName], idElements.pageFrame, existingPage)
+        render.page(otherStores[graphName], idElements.pageFrame, existingPage)
       } else {
         addOtherStore(graphName).then(store => {
           renderSessionState()
@@ -60,7 +60,7 @@ const renderSessionState = () => {
       break
     case "block":
       const theStore = sessionState.graphName ? otherStores[sessionState.graphName] : store
-      renderBlockAsMainWithBacklinks(theStore, idElements.pageFrame, sessionState.block)
+      render.blockFramed(theStore, idElements.pageFrame, sessionState.block)
       break
     case "dailyNotes":
       idElements.pageFrameOuter.addEventListener("scroll", dailyNotesInfiniteScrollListener)
@@ -77,7 +77,7 @@ const renderSessionState = () => {
       for (let i = 0; i < 1000; i++) {
         const daysNotes = store.titles[dateString]
         if (daysNotes !== undefined) {
-          renderPage(store, idElements.pageFrame, daysNotes)
+          render.page(store, idElements.pageFrame, daysNotes)
           const pageBreak = document.createElement("div")
           pageBreak.className = "page-break"
           idElements.pageFrame.appendChild(pageBreak)
@@ -170,7 +170,7 @@ const dailyNotesInfiniteScrollListener = () => {
       sessionState.oldestDate.setDate(sessionState.oldestDate.getDate() - 1)
       const daysNotes = store.titles[formatDate(sessionState.oldestDate)]
       if (daysNotes) {
-        renderPage(otherStores[sessionState.graphName], idElements.pageFrame, daysNotes)
+        render.page(otherStores[sessionState.graphName], idElements.pageFrame, daysNotes)
         const pageBreak = document.createElement("div")
         pageBreak.className = "page-break"
         idElements.pageFrame.appendChild(pageBreak)
