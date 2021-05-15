@@ -125,7 +125,7 @@ const render = {
   // 16            17           18-19 20-21     22 23 24
   // compute-start compute-end  tag   attribute h1 h2 h3
   // Roam allows like whatevs in the tags and attributes. I only allow a few select chars.
-  _parseRegex: / (\[\[(?: [a - zA - Z0 - 9\-] +:)?)| (\]\])| (or) |\(\(([a - zA - Z0 - 9\-_] +) \) \)| (\*\*)| (\^\^)| (__) | ((?: https ?\: \/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(and)|(```)|(\/[ a-zA-Z0-9]{0,10})|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)|({{)|(}})|#([a-zA-Z0-9\-]+:)?([\/a-zA-Z0-9_-]+)|^([a-zA-Z0-9\-]+:)?([ \/a-zA-Z0-9_-]+)::|(^# )|(^## )|(^### )/g,
+  _parseRegex: /(\[\[(?:[a-zA-Z0-9\-]+:)?)|(\]\])|(or)|\(\(([a-zA-Z0-9\-_]+)\)\)|(\*\*)|(\^\^)|(__)|((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))|`([^`]+)`|;;([^ \n\r]+)|(and)|(```)|(\/[ a-zA-Z0-9]{0,10})|!\[([^\]]*)\]\(((?:https?\:\/\/)(?:[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))\)|({{)|(}})|#([a-zA-Z0-9\-]+:)?([\/a-zA-Z0-9_-]+)|^([a-zA-Z0-9\-]+:)?([ \/a-zA-Z0-9_-]+)::|(^# )|(^## )|(^### )/g,
 
   // This regex runs at 50-100M chars/s
   // a regex this large runs at 1/3 the speed of a regex like /d([a-z])/g for equivelent string lengths + match counts + group counts
@@ -337,7 +337,6 @@ const render = {
     }
 
     const youtubeLinkToEmbedLink = (link) => embedLinkOfYoutubeId(idOfYoutubeURL(link))
-
 
     if (parent.parentElement && parent.parentElement.className === "block") {
       parent.parentElement.dataset.header = ''
