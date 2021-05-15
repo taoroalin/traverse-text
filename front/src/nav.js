@@ -32,8 +32,7 @@ const renderSessionState = () => {
   idElements.pageFrameOuter.removeEventListener("scroll", dailyNotesInfiniteScrollListener)
   idElements.pageFrame.innerHTML = ""
   idElements.searchInput.value = ""
-
-  console.log(sessionState.page)
+  console.log(sessionState.pageFrame)
   // render state
   switch (sessionState.pageFrame) {
     case "pageTitle":
@@ -93,17 +92,28 @@ const renderSessionState = () => {
       }
       if (numNotesLoaded < initialDailyNotes) idElements.pageFrame.lastChild.remove() // remove last page divider
       break
+    case "overview":
+      console.log(`RENDERING OVERVIEW`)
+      idElements.pageFrame.innerHTML = ""
+      generateInnerOuterRefs(store)
+      renderOverview(idElements.pageFrame, store)
+      break
+    default:
+      notify(`unknown view: ${sessionState.pageFrame}`)
   }
 
   if (sessionState.graphName === user.s.graphName) {
     if (!sessionState.isFocused || !idElements.pageFrame.querySelector(`.block[data-id="${sessionState.focusId}"]`)) {
       const firstBlockElement = idElements.pageFrame.querySelector('.block')
-      sessionState.position = 0
-      sessionState.focusId = firstBlockElement.dataset.id
+      if (firstBlockElement) {
+        sessionState.position = 0
+        sessionState.focusId = firstBlockElement.dataset.id
+      }
     } else {
       console.log(`SESSION STATE ALREADY FOCUSED ON ${sessionState.focusId}`)
     }
-    focusIdPosition()
+    if (sessionState.focusId)
+      focusIdPosition()
   }
 
   idElements.pageFrameOuter.scrollTop = sessionState.scroll || 0

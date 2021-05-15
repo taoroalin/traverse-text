@@ -82,7 +82,10 @@ const doEditCacheStuff = (edit, includeInnerOuter = false) => {
       }
       break
     case 'df':
+      const forwardRefsBefore = [...store.forwardRefs[id] || []]
       setLinks(store, id, true, includeInnerOuter)
+      propagateRefs(id, store.forwardRefs[id], forwardRefsBefore)
+
       const bloc = store.blox[id]
       if (bloc.p === undefined) {
         const oldString = unapplyDif(bloc.s, p1) // this work could be deduplicated, but AAAAGGGGHHHH there's already so much coupling to deduplicate work!

@@ -1,17 +1,20 @@
 // Render roam graph on a canvas
 // Returns a function that stops rendering graph
-const graph = (canvas,store) => {
+const renderOverview = (parent, store) => {
+  const canvas = templates.overview.cloneNode(true)
+  parent.appendChild(canvas)
+
   const graphJsStartTime = performance.now() // measure when graph.js starts executing
   let lastFrameStartTime = 0 // for counting framerate
 
-  let nodes,edges
+  let nodes, edges // edges is array of [node,node] where the two nodes are literally references to things in var nodes
 
   let ctx // HTML5 canvas 2d context
 
   let clickedNode = null
   let clickedNodeAdjacent = []
-  let mousePosition = { x: 0,y: 0,prevX: 0,prevY: 0 }
-  let updating = true
+  let mousePosition = { x: 0, y: 0, prevX: 0, prevY: 0 }
+  let updating = false
   let running = true // use this to asynchronously stop rendering
 
   // whether anything changed, to know whether to render. Starts true to make sure it renders at least once
@@ -30,7 +33,7 @@ const graph = (canvas,store) => {
 
   // Constants that determine speed vs quality tradeoff
   let maxSizeRatioToApproximate = 0.5 // lower means quality, higher means speed
-  const simulationStepsBeforeRender = 200 // higher means quality, lower means speed
+  const simulationStepsBeforeRender = 0 // higher means quality, lower means speed
   let nodeRenderBatchSize = 6 // lower means quality, higher means names might overlap
 
   const twoPI = 2 * Math.PI // get a few percent performance by precomputing 2*pi once instead of in loop
@@ -70,7 +73,7 @@ const graph = (canvas,store) => {
   // applying forces to tree roots instead of nodes / leaves
   // The quadTree nodes have nothing to do conceptually with the graph - they're just for optimization
   // https://en.wikipedia.org/wiki/Barnes%E2%80%93Hut_simulation
-  const quadTreeNode = (x,y,r,kids = []) => ({
+  const quadTreeNode = (x, y, r, kids = []) => ({
     x,
     y,
     r,
@@ -80,17 +83,17 @@ const graph = (canvas,store) => {
   })
 
   // move all kids in quadtree to child quadtrees, recursively
-  const pushQuadTree = (branch,recursionDepth = 0) => {
+  const pushQuadTree = (branch, recursionDepth = 0) => {
     if (recursionDepth >= 20) {
       // Abort recursion if we've gone too deep
       return
     }
     const newR = branch.r * 0.5
     branch.tree = [
-      quadTreeNode(branch.x - newR,branch.y - newR,newR), // top left
-      quadTreeNode(branch.x + newR,branch.y - newR,newR), // top right
-      quadTreeNode(branch.x - newR,branch.y + newR,newR), // bottom left
-      quadTreeNode(branch.x + newR,branch.y + newR,newR), // bottom right
+      quadTreeNode(branch.x - newR, branch.y - newR, newR), // top left
+      quadTreeNode(branch.x + newR, branch.y - newR, newR), // top right
+      quadTreeNode(branch.x - newR, branch.y + newR, newR), // bottom left
+      quadTreeNode(branch.x + newR, branch.y + newR, newR), // bottom right
     ]
     let sumY = 0,
       sumX = 0
@@ -107,7 +110,7 @@ const graph = (canvas,store) => {
       const len = branch.tree[i].kids.length
       if (len > 1) {
         // if there are multiple nodes in child tree, then push that child tree
-        pushQuadTree(branch.tree[i],recursionDepth + 1)
+        pushQuadTree(branch.tree[i], recursionDepth + 1)
       } else if (len === 0) {
         branch.tree[i] = undefined
       } else {
@@ -117,7 +120,7 @@ const graph = (canvas,store) => {
     }
   }
 
-  const repelNodeByQuadTree = (node,quadTree) => {
+  const repelNodeByQuadTree = (node, quadTree) => {
     if (quadTree === undefined) {
       return
     }
@@ -135,12 +138,14 @@ const graph = (canvas,store) => {
       node.dx += dx * factor
       node.dy += dy * factor
     } else {
-      quadTree.tree.forEach((tree) => repelNodeByQuadTree(node,tree))
+      for (let tree of quadTree.tree) {
+        repelNodeByQuadTree(node, tree)
+      }
     }
   }
 
-  const [nodeLoop,nodeLoopTime] = timeFunc(() => {
-    nodes.forEach((node) => {
+  const nodeLoop = () => {
+    for (let node of nodes) {
       // Slow down nodes by friction ratio
       node.dx = node.dx * friction
       node.dy = node.dy * friction
@@ -152,13 +157,12 @@ const graph = (canvas,store) => {
       // 'tick' position forward by velocity
       node.x += node.dx
       node.y += node.dy
-    })
-  },"node loop")
-  console.log(nodeLoopTime)
+    }
+  }
 
   const physicsTick = () => {
     // Attract nodes on edges together
-    edges.forEach(([a,b]) => {
+    for (let [a, b] of edges) {
       const dx = a.x - b.x
       const dy = a.y - b.y
       // Use 'approximation' to square root that's faster than Math.sqrt
@@ -170,12 +174,14 @@ const graph = (canvas,store) => {
       b.dx += accX
       a.dy -= accY
       b.dy += accY
-    })
+    }
 
     // Repel all nodes apart using Barnes-Hut approximation
-    const quadTree = quadTreeNode(0.5,0.5,4,nodes)
+    const quadTree = quadTreeNode(0.5, 0.5, 4, nodes)
     pushQuadTree(quadTree)
-    nodes.forEach((node) => repelNodeByQuadTree(node,quadTree))
+    for (let node of nodes) {
+      repelNodeByQuadTree(node, quadTree)
+    }
 
     nodeLoop()
   }
@@ -211,14 +217,14 @@ const graph = (canvas,store) => {
     )
   const renderNodeText = (node) => {
     ctx.font = `bold ${node.mass * 0.015}px Verdana`
-    ctx.fillText(node.title,node.x - node.textWidth * 0.5,node.y + 0.006 * node.mass * 0.5)
+    ctx.fillText(node.title, node.x - node.textWidth * 0.5, node.y + 0.006 * node.mass * 0.5)
   }
 
   const clearCanvas = () => {
     // clear canvas in positive and negative directions
     ctx.save()
-    ctx.translate(-5000,-5000)
-    ctx.clearRect(0,0,10000,10000)
+    ctx.translate(-5000, -5000)
+    ctx.clearRect(0, 0, 10000, 10000)
     ctx.restore()
   }
 
@@ -228,10 +234,10 @@ const graph = (canvas,store) => {
     // draw edge lines first so they go underneath nodes
     ctx.strokeStyle = "#a7a7a7" // Set canvas state outside of loop for performance
     ctx.lineWidth = 0.002
-    for (let [startNode,endNode] of edges) {
+    for (let [startNode, endNode] of edges) {
       ctx.beginPath()
-      ctx.moveTo(startNode.x,startNode.y)
-      ctx.lineTo(endNode.x,endNode.y)
+      ctx.moveTo(startNode.x, startNode.y)
+      ctx.lineTo(endNode.x, endNode.y)
       ctx.stroke()
     }
 
@@ -262,20 +268,20 @@ const graph = (canvas,store) => {
       // draw edges and connected nodes from clicked node
       ctx.strokeStyle = clickedAdjacentColor // Set canvas state outside of loop for performance
       ctx.lineWidth = 0.003
-      clickedNodeAdjacent.forEach((adjacent) => {
+      for (let adjacent of clickedNodeAdjacent) {
         ctx.beginPath()
-        ctx.moveTo(clickedNode.x,clickedNode.y)
-        ctx.lineTo(adjacent.x,adjacent.y)
+        ctx.moveTo(clickedNode.x, clickedNode.y)
+        ctx.lineTo(adjacent.x, adjacent.y)
         ctx.stroke()
-      })
-      clickedNodeAdjacent.forEach((adjacent) => {
+      }
+      for (let adjacent of clickedNodeAdjacent) {
         // draw adjacent node label
         ctx.fillStyle = clickedAdjacentColor
         renderNodeBackground(adjacent)
         // draw all node labels at once
         ctx.fillStyle = textColor
         renderNodeText(adjacent)
-      })
+      }
       // draw clicked node label
       ctx.fillStyle = clickedColor
       renderNodeBackground(clickedNode)
@@ -326,7 +332,7 @@ const graph = (canvas,store) => {
 
   applyViewChanges()
 
-  canvas.addEventListener("mousemove",(event) => {
+  canvas.addEventListener("mousemove", (event) => {
     mousePosition.x = event.offsetX
     mousePosition.y = event.offsetY
     if (mousePosition.prevX) {
@@ -334,13 +340,13 @@ const graph = (canvas,store) => {
     }
   })
 
-  const screenCoordToSpaceCoord = (x,y) => [
+  const screenCoordToSpaceCoord = (x, y) => [
     (x - canvasOffsetX) / canvasInnerHeight,
     (y - canvasOffsetY) / canvasInnerHeight,
   ]
 
   const mouseDownHandler = (event) => {
-    const [mouseX,mouseY] = screenCoordToSpaceCoord(event.offsetX,event.offsetY)
+    const [mouseX, mouseY] = screenCoordToSpaceCoord(event.offsetX, event.offsetY)
 
     // Linearly searching through the nodes to find the node that's clicked on.
     // Could optimize this with the quadtree, but it only takes 0.5ms now
@@ -360,7 +366,7 @@ const graph = (canvas,store) => {
         // find nodes connected to clicked node in edge array
         // Don't already have a map of nodes -> their edges because there's no
         // other need for it.
-        for (let [source,target] of edges) {
+        for (let [source, target] of edges) {
           if (source === clickedNode) {
             clickedNodeAdjacent.push(target)
           }
@@ -379,18 +385,18 @@ const graph = (canvas,store) => {
 
   // whether currently dragging is controlled by whether prev position is nonzero
   // need to record where mouse was when started dragging
-  canvas.addEventListener("mousedown",mouseDownHandler)
+  canvas.addEventListener("mousedown", mouseDownHandler)
   const stopDragHandler = (event) => {
     mousePosition.prevX = 0
     mousePosition.prevY = 0
     somethingChangedThisFrame = true
   }
 
-  canvas.addEventListener("mouseup",stopDragHandler)
+  canvas.addEventListener("mouseup", stopDragHandler)
 
-  canvas.addEventListener("mouseleave",stopDragHandler)
+  canvas.addEventListener("mouseleave", stopDragHandler)
 
-  canvas.addEventListener("keypress",(event) => {
+  canvas.addEventListener("keypress", (event) => {
     if (event.code === "Space") {
       updating = !updating
       event.stopPropagation()
@@ -399,7 +405,7 @@ const graph = (canvas,store) => {
     }
   })
 
-  canvas.addEventListener("wheel",(event) => {
+  canvas.addEventListener("wheel", (event) => {
     const scaling = event.deltaY * 0.01 * zoomRatioPerMouseWheelTick
     const newCanvasInnerHeight = canvasInnerHeight * (1 - scaling)
     canvasInnerHeight = newCanvasInnerHeight
@@ -408,14 +414,36 @@ const graph = (canvas,store) => {
   })
 
   const extractGraph = (store) => {
-    const nodes = store.titles.map(title => {
-
-    })
+    nodes = []
+    edges = []
+    const idToNode = {}
+    for (let title in store.titles) {
+      const id = store.titles[title]
+      const node = newNode(title)
+      nodes.push(node)
+      idToNode[id] = node
+    }
+    for (let title in store.titles) {
+      const id = store.titles[title]
+      const refs = store.innerRefs[id]
+      for (let ref in refs) {
+        if (idToNode[ref]) {
+          const from = idToNode[id]
+          const to = idToNode[ref]
+          from.numConnections++
+          to.numConnections++
+          edges.push([from, to])
+        }
+      }
+    }
+    console.log(nodes)
+    console.log(edges)
   }
   extractGraph(store)
+  console.log("hello from graph.js!")
 
   // sort by increasing mass so most important nodes get rendered on top of less important nodes
-  nodes = nodes.sort((a,b) => a.mass - b.mass)
+  nodes = nodes.sort((a, b) => a.mass - b.mass)
 
   // simulate physics before render
   for (let i = 0; i < simulationStepsBeforeRender; i++) {

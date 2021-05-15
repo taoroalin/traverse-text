@@ -203,67 +203,80 @@ const generateRefs = (store) => {
   console.log(`gen refs took ${performance.now() - stime}`)
 }
 
-const mergeLists = (list1, list2) => {
-  for (let x of list2) {
-    if (!list1.includes(x)) list1.push(x)
-  }
-}
-
-// destructured return here costs me like 3ms over 10_000 calls. unfortunate
-const arrSetDiff = (cur, old) => {
-  let added = []
-  let deleted = []
-  for (let ref of cur) {
-    if (!old.includes(ref)) added.push(ref)
-  }
-  for (let oldRef of old) {
-    if (!cur.includes(oldRef)) deleted.push(oldRef)
-  }
-  return { added, deleted }
-}
-
 // @INPROGRESS
 const propagateRefs = (blocId, refs, oldRefs) => {
-  const { added, deleted } = arrSetDiff(refs, oldRefs)
-  const bloc = store.blox[blocId]
-  if (bloc.p) {
-    let p = bloc.p
-    while (p) {
-      const pbloc = store.blox[p]
-      const prefs = store.forwardRefs[p]
-      for (let i = 0; i < added.length; i++) { // warning i modified inside loop during deletions
-        const adr = added[i]
-        if (prefs.includes(adr)) {
-          added[i] = added.pop()
-          i -= 1
-        } else {
-          prefs.push(adr)
+
+  // diff old and new refs
+  let added = []
+  let deleted = []
+  for (let ref of refs) {
+    if (!oldRefs.includes(ref)) added.push(ref)
+  }
+  for (let oldRef of oldRefs) {
+    if (!refs.includes(oldRef)) deleted.push(oldRef)
+  }
+
+  // propagate inner refs
+  let parent = store.blox[blocId].p;
+  while (parent) {
+    if (!store.innerRefs[parent]) store.innerRefs[parent] = {}
+    for (let toAdd of added) {
+      if (!store.innerRefs[parent][toAdd]) store.innerRefs[parent][toAdd] = 1
+      else store.innerRefs[parent][toAdd]++
+    }
+    for (let toDelete of deleted) {
+      store.innerRefs[parent][toDelete]--
+      if (store.innerRefs[parent][toDelete] < 1) {
+        delete store.innerRefs[parent][toDelete]
+      }
+    }
+    parent = store.blox[parent].p
+  }
+
+  const propagateOuterRefs = (blocId) => {
+    const bloc = store.blox[blocId]
+    for (let kid of bloc.k || []) {
+      if (!store.outerRefs[kid]) store.outerRefs[kid] = {}
+
+      for (let toAdd of added) {
+        if (!store.outerRefs[kid][toAdd]) store.outerRefs[kid][toAdd] = 1
+        else store.outerRefs[kid][toAdd]++
+      }
+      for (let toDelete of deleted) {
+        store.outerRefs[kid][toDelete]--
+        if (store.outerRefs[kid][toDelete] < 1) {
+          delete store.outerRefs[kid][toDelete]
         }
       }
-      p = pbloc.p
+
+      propagateOuterRefs(kid)
     }
   }
-  let parent = bloc;
-  do {
-    parent = store.blox[parent.p]
-    for (let i = 0; i < added.length; i++) {
+  propagateOuterRefs(blocId)
+}
 
-    }
-  } while (parent.p)
-
+const addArrToRefCount = (refCount, arr) => {
+  for (let id of arr) {
+    if (refCount[id]) refCount[id]++
+    else refCount[id] = 1
+  }
 }
 
 // inner refs are refs in a page/block and any pages/blocks within it
-const generateInnerRefs = () => {
+const generateInnerRefs = (store) => {
+  console.log(store)
   // algorithm: for each ref anywhere, add it to each of its parent's uprefs
-  const stime = performance.now()
   store.innerRefs = {}
   for (let blocId in store.forwardRefs) {
     const refs = store.forwardRefs[blocId]
     let id = blocId
     while (id) {
-      if (!store.innerRefs[id]) store.innerRefs[id] = []
-      mergeLists(store.innerRefs[id], refs)
+      if (!store.innerRefs[id]) store.innerRefs[id] = {}
+      addArrToRefCount(store.innerRefs[id], refs)
+      if (!store.blox[id]) {
+        console.warn(`dangling ref ${id}`)
+        break
+      }
       id = store.blox[id].p
     }
   }
@@ -271,26 +284,28 @@ const generateInnerRefs = () => {
 }
 
 // outer refs are refs in a block / page and each block/page in its ancestry
-const generateOuterRefs = () => {
+const generateOuterRefs = (store) => {
+  console.log(store)
   const stime = performance.now()
   store.outerRefs = {}
   for (let blocId in store.forwardRefs) {
     const refs = store.forwardRefs[blocId]
-    const fn = (id) => {
-      if (!store.outerRefs[id]) store.outerRefs[id] = []
-      mergeLists(store.outerRefs[id], refs)
+    const genOuterRefChild = (id) => {
+      if (!store.outerRefs[id]) store.outerRefs[id] = {}
+      addArrToRefCount(store.outerRefs[id], refs)
       for (let cid of store.blox[id].k || []) {
-        fn(cid)
+        genOuterRefChild(cid)
       }
     }
-    fn(blocId)
+    genOuterRefChild(blocId)
   }
   // console.log(`outerrefs took ${performance.now() - stime}`)
 }
 
-const generateInnerOuterRefs = () => {
-  generateInnerRefs()
-  generateOuterRefs()
+const generateInnerOuterRefs = (store) => {
+  console.log(store)
+  generateInnerRefs(store)
+  generateOuterRefs(store)
 }
 
 const mergeStore = (otherStore) => {

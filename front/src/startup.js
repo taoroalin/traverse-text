@@ -198,7 +198,8 @@ const urlToSessionState = (url) => {
   }
 
   const paths = Array.from(url.matchAll(/(?:\/([a-zA-Z0-9_ \-]+))/g))
-  if (paths.length <= 2) {
+  console.log(paths)
+  if (paths.length < 2) {
     return theSessionState
   }
   theSessionState.graphName = paths[0][1]
@@ -209,7 +210,7 @@ const urlToSessionState = (url) => {
   if (theSessionState.pageFrame === 'block') {
     theSessionState.block = paths[2][1]
   }
-
+  console.log(theSessionState)
   return theSessionState
 }
 
