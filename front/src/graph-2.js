@@ -8,17 +8,56 @@ const charsToMeasure = `qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234
 const renderOverview = (parent, store) => {
   const canvas = templates.overview.cloneNode(true)
   parent.appendChild(canvas)
-  const ctx = canvas.getContext("2d",)// could try out desynchronized option, and alpha:false option
+  const ctx = canvas.getContext("2d")// could try out desynchronized option, and alpha:false option
 
   const ov = {
+    canvas,
+    ctx,
+
+    canvasMouseX: 0,
+    canvasMouseY: 0,
+
     baseFontSize: 20,
     baseFontHalfHeight: 0,
     textWidthLimit: 300,
+
+    /** earler I implemented zoom with canvas set transform, but that leads to the font being rendered at the wrong resolution and then being rescaled, so this time i'm keeping the canvas scale constant and moving and scaling all the entities in order to achieve zoom */
+    zoom: 1,
+    originX: 0,
+    originY: 0,
+
     nodes: [],
     edges: [],
-    ctx,
-    canvas,
-    viewBounds: [0, 0, 0, 0],
+
+    lastframeTime: 1,
+    lastFrameJsTime: 1,
+    lastFrameStartTime: 0,
+
+    screenToCanvas: (x, y) => {
+      return [x, y]
+    },
+    setOrdinaryFont: () => {
+      ov.ctx.font = `${ov.baseFontSize}px Verdana`
+    },
+    rescaleEverything: (zoomRatio, deltaOriginX, deltaOriginY) => {
+      for (let node of ov.nodes) {
+        node.x = node.x * zoomRatio + deltaOriginX
+        node.y = node.y * zoomRatio + deltaOriginY
+        node.textHalfWidth *= zoomRatio
+        for (let i = 0; i < node.textLineWidths.length; i++) {
+          node.textLineWidths[i] *= zoomRatio
+        }
+      }
+      ov.zoom *= zoomRatio
+      ov.originX -= deltaOriginX
+      ov.originY -= deltaOriginY
+      ov.baseFontSize *= zoomRatio
+      ov.baseFontAscent *= zoomRatio
+      ov.baseFontDescent *= zoomRatio
+      ov.baseFontHalfHeight *= zoomRatio
+      ov.setOrdinaryFont()
+    },
+
     exit: () => {
       canvas.remove()
     },
@@ -50,8 +89,7 @@ const renderOverview = (parent, store) => {
       ctx.fillRect(x, y, w, h)
     },
     renderTitles: () => {
-      ov.ctx.fillStyle = "#111"
-      ov.ctx.strokeStyle = "#111"
+      ov.ctx.fillStyle = "#333"
       for (let node of ov.nodes) {
         const textStartX = node.x - node.textHalfWidth
         const textStartY = node.y + ov.baseFontHalfHeight
@@ -76,22 +114,33 @@ const renderOverview = (parent, store) => {
       ov.renderTitles()
     },
     tick: () => {
+      ov.lastFrameTime = performance.now() - ov.lastFrameStartTime
+      ov.lastFrameStartTime = performance.now()
       ov.render()
+      ov.renderDebugInfo()
+      ov.lastFrameJsTime = performance.now() - ov.lastFrameStartTime
       requestAnimationFrame(ov.tick)
     },
+    renderDebugInfo: () => {
+      ov.ctx.font = `14px Verdana`
+      let wy = 30
+      for (let varName of ["lastFrameJsTime", "zoom", "originX", "originY", "canvasMouseX", "canvasMouseY"]) {
+        ov.ctx.fillText(`${varName} ${ov[varName]}`, 10, wy)
+        wy += 20
+      }
+      ov.setOrdinaryFont()
+    }
   }
   canvas.ov = ov
 
-  // canvas.height = (window.innerHeight - (user.s.topBar === "visible" ? 42 : 0)) * devicePixelRatio
-  // canvas.width = canvas.getBoundingClientRect().width * devicePixelRatio
   const width = canvas.getBoundingClientRect().width
-  const height = window.innerHeight - (user.s.topBar === "visible" ? 42 : 0)
-  canvas.width = width * devicePixelRatio
-  canvas.height = height * devicePixelRatio
-  ctx.scale(devicePixelRatio, devicePixelRatio)
+  const height = window.innerHeight - (user.s.topBar === "visible" ? 45 : 0)
+  canvas.width = width * window.devicePixelRatio
+  canvas.height = height * window.devicePixelRatio
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
   ctx.clearStyle = "#000000"
   // ctx.clearRect(0, 0, canvas.width, canvas.height)
-  ctx.font = `${ov.baseFontSize}px Verdana`
+  ov.setOrdinaryFont()
   ctx.fillStyle = "#ffffff"
   const textMetrics = ctx.measureText("Haggle")
   ov.baseFontHalfHeight = (textMetrics.fontBoundingBoxAscent) / 3
@@ -103,7 +152,7 @@ const renderOverview = (parent, store) => {
     charWidths[char] = ctx.measureText(char).width
   }
   const defaultCharWidth = charWidths["0"]
-
+  // console.log(JSON.stringify(charWidths))
 
   const charwiseMeasureText = (text) => {
     let result = 0
@@ -159,7 +208,7 @@ const renderOverview = (parent, store) => {
 
     return { textLines: lines, textLineWidths: lineWidths, maxTextWidth }
   }
-
+  console.log(canvas.height)
 
   const idToNode = {}
   for (let title in store.titles) {
@@ -192,11 +241,68 @@ const renderOverview = (parent, store) => {
       }
     }
   }
-  // console.log(ov.nodes)
-  // console.log(ov.edges)
+  const buttonNumbers = ["left", "wheeldown", "right"]
+  /**
+  interesting code style question. is that better than 
+  // must button codes: left:0, wheel:1, right:2 */
+  canvas.addEventListener("mousedown", (event) => {
+    switch (event.button) {
+      case 0:
+        ov.isDragging = true
+        break
+      case 1:
+        break
+      case 2:
+        break
+    }
+  })
+  canvas.addEventListener("mouseup", (event) => {
+    switch (event.button) {
+      case 0:
+        ov.isDragging = false
+        break
+      case 1:
+        break
+      case 2:
+        break
+    }
+  })
+  canvas.addEventListener("mousemove", (event) => {
+    console.log(event.clientX, event.clientY)
+    const [canvasX, canvasY] = ov.screenToCanvas(event.clientX, event.clientY)
+    if (ov.isDragging) {
+      ov.rescaleEverything(1, canvasX - ov.canvasMouseX, canvasY - ov.canvasMouseY)
+    }
+    ov.canvasMouseX = canvasX
+    ov.canvasMouseY = canvasY
+  })
+  canvas.addEventListener("keydown", (event) => {
+    console.log(event)
+  })
+  canvas.addEventListener("keyup", (event) => {
+    console.log(event)
+  })
+  canvas.addEventListener("wheel", (event) => {
+    const deltaModes = {
+      0: { name: "pixel", conversion: 1 },
+      1: { name: "line", conversion: 25 },
+      2: { name: "page", conversion: 600 }
+    }
+    // console.log(event.deltaMode)
+    if (event.deltaY !== 0) {
+      const normalizedDeltaY = event.deltaY * deltaModes[event.deltaMode].conversion
+      const zoomFraction = normalizedDeltaY / canvas.height
+      const zoomRatio = 1 + zoomFraction
+      const mouseDistanceX = ov.canvasMouseX
+      const mouseDistanceY = ov.canvasMouseY
+      ov.rescaleEverything(zoomRatio, -mouseDistanceX * zoomFraction, -mouseDistanceY * zoomFraction)
+      event.preventDefault()
+    }
+  })
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ov.tick()
   console.log("hi from graph-2")
-
+  window.ov = ov
   return ov
 }

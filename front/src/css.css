@@ -155,6 +155,11 @@ body {
   margin: 0;
   color: var(--text);
   background-color: var(--background);
+  
+    height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 a {
@@ -169,13 +174,6 @@ a:visited {
 /* ----------------------------------------------------------------------------------------*/
 
 /* singular element styles --------------------------------------------------------------------------------------- */
-
-#app {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
 
 #page-frame-outer {
   width: 100%;

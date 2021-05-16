@@ -9,7 +9,7 @@ This way I add static DOM immediately before dynamic DOM, and they're both rende
 
 This could be moved to an HTML file (to improve IDE support, clean up code) by inlining an html file in build.js, or by finding an option to tell the browser that the JS is more important than the DOM
  */
-const allHtml = `<div id="app">
+const allHtml = `
   <div id="top-bar" style="margin-top:-43px">
     <div id="top-bar-left">
 
