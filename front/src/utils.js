@@ -111,3 +111,11 @@ const kebabToCamel = (str) =>
 
 const camelToKebab = (str) =>
   str.replaceAll(/([a-z])([A-Z])/g, (_match, lower, upper) => lower + "-" + upper.toLowerCase())
+
+const stripWhitespace = (str) => {
+  const startMatch = str.match(/^[ \t\r\n]+/)
+  const endMatch = str.match(/[ \t\r\n]+$/)
+  const startIdx = startMatch ? startMatch[0].length : 0
+  const endIdx = endMatch ? endMatch[0].length : str.length
+  return str.substring(startIdx, endIdx)
+}
