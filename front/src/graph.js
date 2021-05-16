@@ -420,6 +420,7 @@ const renderOverview = (parent, store) => {
     for (let title in store.titles) {
       const id = store.titles[title]
       const node = newNode(title)
+      node.mass = 2
       nodes.push(node)
       idToNode[id] = node
     }

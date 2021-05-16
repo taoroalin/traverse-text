@@ -1,5 +1,3 @@
-
-
 // this code is based on https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Adding_2D_content_to_a_WebGL_context
 
 import * as mat4 from "./deps/mat4.js";
@@ -23,16 +21,10 @@ const webglConstants = {
 
 function initBuffers(gl) {
 
-  // Create a buffer for the square's positions.
-
   const positionBuffer = gl.createBuffer();
 
-  // Select the positionBuffer as the one to apply buffer
-  // operations to from here out.
-
+  console.log(gl.ARRAY_BUFFER)
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-  // Now create an array of positions for the square.
 
   const positions = [
     -1.0, 1.0,
@@ -40,10 +32,6 @@ function initBuffers(gl) {
     -1.0, -1.0,
     1.0, -1.0,
   ];
-
-  // Now pass the list of positions into WebGL to build the
-  // shape. We do this by creating a Float32Array from the
-  // JavaScript array, then use it to fill the current buffer.
 
   gl.bufferData(gl.ARRAY_BUFFER,
     new Float32Array(positions),
@@ -160,11 +148,7 @@ function drawScene(gl, programInfo, buffers) {
       programInfo.attribLocations.vertexPosition);
   }
 
-  // Tell WebGL to use our program when drawing
-
   gl.useProgram(programInfo.program);
-
-  // Set the shader uniforms
 
   gl.uniformMatrix4fv(
     programInfo.uniformLocations.projectionMatrix,
@@ -186,7 +170,7 @@ function drawScene(gl, programInfo, buffers) {
 const renderOverview = (canvas) => {
   const gl = canvas.getContext("webgl")
   if (gl === null) {
-    render.notifyText("Unable to initialize WebGL. Try switching to Chrome / Brave");
+    render.notifyText("Unable to initialize WebGL. Try switching to Chrome");
     return;
   }
 

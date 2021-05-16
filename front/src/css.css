@@ -183,7 +183,8 @@ a:visited {
 }
 
 #page-frame {
-  margin: 0 auto 30px;
+  margin: 0 auto 0;
+  /* margin: 0 auto 30px; @TODO get back bottom slack space on non-canvas pages*/
   max-width: min(900px, 100%);
 }
 

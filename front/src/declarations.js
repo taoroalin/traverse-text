@@ -165,7 +165,7 @@ const allHtml = `<div id="app">
 
   <div class="search-result"></div>
 
-  <canvas class="overview" width="400" width="300"></canvas>
+  <canvas class="overview" style="width:100%;height:100%;"></canvas>
 </template>`
 const allFrame = document.getElementById("html")
 allFrame.innerHTML = allHtml
