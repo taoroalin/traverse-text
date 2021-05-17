@@ -27,6 +27,10 @@ const sessionStateToUrl = (sessionState) => {
 
 const renderSessionState = () => {
 
+  if (idElements.pageFrameOuter.firstElementChild !== idElements.pageFrame) {
+    idElements.pageFrameOuter.appendChild(idElements.pageFrame)
+  }
+
   // clear screen
   idElements.searchResultList.style.display = "none"
   idElements.pageFrameOuter.removeEventListener("scroll", dailyNotesInfiniteScrollListener)
@@ -94,9 +98,9 @@ const renderSessionState = () => {
       break
     case "overview":
       console.log(`RENDERING OVERVIEW`)
-      idElements.pageFrame.innerHTML = ""
+      idElements.pageFrameOuter.innerHTML = ""
       generateInnerOuterRefs(store)
-      renderOverview(idElements.pageFrame, store)
+      renderOverview(idElements.pageFrameOuter, store)
       break
     default:
       notify(`unknown view: ${sessionState.pageFrame}`)

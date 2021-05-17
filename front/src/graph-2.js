@@ -113,9 +113,26 @@ const renderOverview = (parent, store) => {
       ov.renderEdges()
       ov.renderTitles()
     },
+
+    simulate: () => {
+      for (let node1 of ov.nodes) {
+        for (let node2 of ov.nodes) {
+          if (node1 === node2)
+            continue
+          // check collisions
+          // if (rect1.x < rect2.x + rect2.width &&
+          //   rect1.x + rect1.width > rect2.x &&
+          //   rect1.y < rect2.y + rect2.height &&
+          //   rect1.y + rect1.height > rect2.y) {
+
+          // }
+        }
+      }
+    },
     tick: () => {
       ov.lastFrameTime = performance.now() - ov.lastFrameStartTime
       ov.lastFrameStartTime = performance.now()
+      ov.simulate()
       ov.render()
       ov.renderDebugInfo()
       ov.lastFrameJsTime = performance.now() - ov.lastFrameStartTime
@@ -208,7 +225,6 @@ const renderOverview = (parent, store) => {
 
     return { textLines: lines, textLineWidths: lineWidths, maxTextWidth }
   }
-  console.log(canvas.height)
 
   const idToNode = {}
   for (let title in store.titles) {
@@ -242,9 +258,9 @@ const renderOverview = (parent, store) => {
     }
   }
   const buttonNumbers = ["left", "wheeldown", "right"]
-  /**
-  interesting code style question. is that better than 
+  /** interesting code style question. is that better than 
   // must button codes: left:0, wheel:1, right:2 */
+
   canvas.addEventListener("mousedown", (event) => {
     switch (event.button) {
       case 0:
@@ -276,19 +292,20 @@ const renderOverview = (parent, store) => {
     ov.canvasMouseX = canvasX
     ov.canvasMouseY = canvasY
   })
-  canvas.addEventListener("keydown", (event) => {
-    console.log(event)
-  })
-  canvas.addEventListener("keyup", (event) => {
+  canvas.addEventListener("keypress", (event) => {
+    switch (event.key) {
+      case "Space":
+
+        break
+    }
     console.log(event)
   })
   canvas.addEventListener("wheel", (event) => {
     const deltaModes = {
       0: { name: "pixel", conversion: 1 },
       1: { name: "line", conversion: 25 },
-      2: { name: "page", conversion: 600 }
+      2: { name: "page", conversion: 600 },
     }
-    // console.log(event.deltaMode)
     if (event.deltaY !== 0) {
       const normalizedDeltaY = event.deltaY * deltaModes[event.deltaMode].conversion
       const zoomFraction = normalizedDeltaY / canvas.height
