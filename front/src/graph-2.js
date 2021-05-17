@@ -17,9 +17,13 @@ const renderOverview = (parent, store) => {
     canvasMouseX: 0,
     canvasMouseY: 0,
 
+    radius: 4,
     baseFontSize: 20,
     baseFontHalfHeight: 0,
     textWidthLimit: 300,
+
+    animationFrameDelay: 1,
+    curAnimationFrame: 0,
 
     /** earler I implemented zoom with canvas set transform, but that leads to the font being rendered at the wrong resolution and then being rescaled, so this time i'm keeping the canvas scale constant and moving and scaling all the entities in order to achieve zoom */
     zoom: 1,
@@ -53,7 +57,7 @@ const renderOverview = (parent, store) => {
       ov.originY -= deltaOriginY
       ov.baseFontSize *= zoomRatio
       ov.baseFontAscent *= zoomRatio
-      ov.baseFontDescent *= zoomRatio
+      ov.baseFontHeight *= zoomRatio
       ov.baseFontHalfHeight *= zoomRatio
       ov.setOrdinaryFont()
     },
@@ -71,7 +75,8 @@ const renderOverview = (parent, store) => {
         ov.ctx.stroke()
       }
     },
-    renderRoundCorneredBox: (x, y, w, h, r = 4) => {
+    renderRoundCorneredBox: (x, y, w, h) => {
+      const r = ov.radius
       const o = r * 0.8
       ov.ctx.beginPath()
       ov.ctx.moveTo(x - r, y)
@@ -93,7 +98,7 @@ const renderOverview = (parent, store) => {
       for (let node of ov.nodes) {
         const textStartX = node.x - node.textHalfWidth
         const textStartY = node.y + ov.baseFontHalfHeight
-        ov.renderRoundCorneredBox(textStartX, textStartY - ov.baseFontAscent, node.textHalfWidth * 2, (ov.baseFontAscent + ov.baseFontDescent) * node.textLines.length)
+        ov.renderRoundCorneredBox(textStartX, textStartY - ov.baseFontAscent, node.textHalfWidth * 2, ov.baseFontHeight * node.textLines.length)
       }
       ov.ctx.fillStyle = "#ffffff"
       for (let node of ov.nodes) {
@@ -103,7 +108,7 @@ const renderOverview = (parent, store) => {
           const textLine = node.textLines[i]
           const lineWidth = node.textLineWidths[i]
           ov.ctx.fillText(textLine, textStartX + (node.textHalfWidth - lineWidth / 2), textStartY)
-          textStartY += ov.baseFontAscent + ov.baseFontDescent
+          textStartY += ov.baseFontHeight
         }
       }
     },
@@ -113,29 +118,59 @@ const renderOverview = (parent, store) => {
       ov.renderEdges()
       ov.renderTitles()
     },
-
     simulate: () => {
-      for (let node1 of ov.nodes) {
-        for (let node2 of ov.nodes) {
-          if (node1 === node2)
-            continue
-          // check collisions
-          // if (rect1.x < rect2.x + rect2.width &&
-          //   rect1.x + rect1.width > rect2.x &&
-          //   rect1.y < rect2.y + rect2.height &&
-          //   rect1.y + rect1.height > rect2.y) {
+      const baseDistanceY = ov.radius * 2 + ov.baseFontHeight
 
-          // }
+      for (let idx1 = 0; idx1 < ov.nodes.length - 1; idx1++) {
+        const node1 = ov.nodes[idx1]
+        for (let idx2 = idx1 + 1; idx2 < ov.nodes.length; idx2++) {
+          const node2 = ov.nodes[idx2]
+          // could be faster to use textLineWidths.length instead of lineWidths.lenght if that was going to be used later
+          const ydist = baseDistanceY + (node1.textLineWidths.length + node2.textLineWidths.length - 2) * ov.baseFontHeight
+          const xdist = ov.radius * 2 + node1.textHalfWidth + node2.textHalfWidth
+          const topDist = node2.y - node1.y - ydist
+          const bottomDist = node1.y - node2.y - ydist
+          const rightDist = node2.x - node1.x - xdist
+          const leftDist = node1.x - node2.x - xdist
+          if (topDist < 0 &&
+            bottomDist < 0 &&
+            rightDist < 0 &&
+            leftDist < 0) {
+            let sideDist = leftDist
+            if (rightDist > leftDist) {
+              sideDist = -rightDist
+            }
+            let verticalDist = topDist
+            if (topDist < bottomDist) {
+              verticalDist = -bottomDist
+            }
+            if (verticalDist < sideDist) {
+              node2.x += sideDist / 2
+              node1.x -= sideDist / 2
+              node2.y += verticalDist / 4
+              node1.y -= verticalDist / 4
+            } else {
+              node2.y += verticalDist / 2
+              node1.y -= verticalDist / 2
+              node2.x += sideDist / 4
+              node1.x -= sideDist / 4
+            }
+            // console.log(`${node1.title} and ${node2.title} intersect`)
+          }
         }
       }
     },
     tick: () => {
-      ov.lastFrameTime = performance.now() - ov.lastFrameStartTime
-      ov.lastFrameStartTime = performance.now()
-      ov.simulate()
-      ov.render()
-      ov.renderDebugInfo()
-      ov.lastFrameJsTime = performance.now() - ov.lastFrameStartTime
+      if (ov.curAnimationFrame === 0) {
+
+        ov.lastFrameTime = performance.now() - ov.lastFrameStartTime
+        ov.lastFrameStartTime = performance.now()
+        ov.simulate()
+        ov.render()
+        ov.renderDebugInfo()
+        ov.lastFrameJsTime = performance.now() - ov.lastFrameStartTime
+      }
+      ov.curAnimationFrame = (ov.curAnimationFrame + 1) % ov.animationFrameDelay
       requestAnimationFrame(ov.tick)
     },
     renderDebugInfo: () => {
@@ -162,7 +197,7 @@ const renderOverview = (parent, store) => {
   const textMetrics = ctx.measureText("Haggle")
   ov.baseFontHalfHeight = (textMetrics.fontBoundingBoxAscent) / 3
   ov.baseFontAscent = textMetrics.fontBoundingBoxAscent
-  ov.baseFontDescent = textMetrics.fontBoundingBoxDescent
+  ov.baseFontHeight = textMetrics.fontBoundingBoxDescent + ov.baseFontAscent
 
   const charWidths = {}
   for (let char of charsToMeasure) {
@@ -284,7 +319,6 @@ const renderOverview = (parent, store) => {
     }
   })
   canvas.addEventListener("mousemove", (event) => {
-    console.log(event.clientX, event.clientY)
     const [canvasX, canvasY] = ov.screenToCanvas(event.clientX, event.clientY)
     if (ov.isDragging) {
       ov.rescaleEverything(1, canvasX - ov.canvasMouseX, canvasY - ov.canvasMouseY)
@@ -318,6 +352,8 @@ const renderOverview = (parent, store) => {
   })
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ov.simulate()
+
   ov.tick()
   console.log("hi from graph-2")
   window.ov = ov
