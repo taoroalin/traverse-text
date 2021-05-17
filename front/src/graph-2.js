@@ -25,8 +25,10 @@ const renderOverview = (parent, store) => {
     animationFrameDelay: 1,
     curAnimationFrame: 0,
 
-    centerForce: 0,
+    centerForce: 0.01,
     attractionForce: 0,
+    drag: 0.7,
+    collisionForce: 5,
 
     /** earler I implemented zoom with canvas set transform, but that leads to the font being rendered at the wrong resolution and then being rescaled, so this time i'm keeping the canvas scale constant and moving and scaling all the entities in order to achieve zoom */
     zoom: 1,
@@ -46,22 +48,23 @@ const renderOverview = (parent, store) => {
     setOrdinaryFont: () => {
       ov.ctx.font = `${ov.baseFontSize}px Verdana`
     },
-    rescaleEverything: (zoomRatio, deltaOriginX, deltaOriginY) => {
+    rescaleEverything: (zoomRatio, deltaX, deltaY) => {
       for (let node of ov.nodes) {
-        node.x = node.x * zoomRatio + deltaOriginX
-        node.y = node.y * zoomRatio + deltaOriginY
+        node.x = node.x * zoomRatio + deltaX
+        node.y = node.y * zoomRatio + deltaY
         node.textHalfWidth *= zoomRatio
         for (let i = 0; i < node.textLineWidths.length; i++) {
           node.textLineWidths[i] *= zoomRatio
         }
       }
       ov.zoom *= zoomRatio
-      ov.originX -= deltaOriginX
-      ov.originY -= deltaOriginY
       ov.baseFontSize *= zoomRatio
       ov.baseFontAscent *= zoomRatio
       ov.baseFontHeight *= zoomRatio
       ov.baseFontHalfHeight *= zoomRatio
+
+      ov.originX = ov.originX * zoomRatio + deltaX
+      ov.originY = ov.originY * zoomRatio + deltaY
       ov.setOrdinaryFont()
     },
 
@@ -123,19 +126,32 @@ const renderOverview = (parent, store) => {
     },
 
     simulate: () => {
-      if (ov.centerForce !== 0)
-        ov.center()
-      if (ov.attractionForce !== 0)
-        ov.attract()
+      if (ov.centerForce !== 0) ov.centerVelocity()
+      if (ov.attractionForce !== 0) ov.attractVelocity()
       ov.collide()
+      ov.velocityStep()
     },
-    center: () => {
+    velocityStep: () => {
+      for (let node of ov.nodes) {
+        node.x += node.dx
+        node.y += node.dy
+        node.dx *= ov.drag
+        node.dy *= ov.drag
+      }
+    },
+    centerPosition: () => {
       for (let node of ov.nodes) {
         node.x += (ov.originX - node.x) * ov.centerForce
         node.y += (ov.originY - node.y) * ov.centerForce
       }
     },
-    attract: () => {
+    centerVelocity: () => {
+      for (let node of ov.nodes) {
+        node.dx += (ov.originX - node.x) * ov.centerForce
+        node.dy += (ov.originY - node.y) * ov.centerForce
+      }
+    },
+    attractPosition: () => {
       for (let [node1, node2] of ov.edges) {
         const dx = node2.x - node1.x
         const dy = node2.y - node1.y
@@ -143,6 +159,16 @@ const renderOverview = (parent, store) => {
         node2.x -= dx * ov.attractionForce
         node1.y += dy * ov.attractionForce
         node2.y -= dy * ov.attractionForce
+      }
+    },
+    attractVelocity: () => {
+      for (let [node1, node2] of ov.edges) {
+        const ax = node2.x - node1.x
+        const ay = node2.y - node1.y
+        node1.dx += ax * ov.attractionForce
+        node2.dx -= ax * ov.attractionForce
+        node1.dy += ay * ov.attractionForce
+        node2.dy -= ay * ov.attractionForce
       }
     },
     collide: () => {
@@ -164,23 +190,23 @@ const renderOverview = (parent, store) => {
             rightDist < 0 &&
             leftDist < 0) {
             let sideDist = leftDist
+            let sideDirection = -1
             if (rightDist > leftDist) {
               sideDist = -rightDist
+              sideDirection = 1
             }
             let verticalDist = topDist
+            let verticalDirection = -1
             if (topDist < bottomDist) {
               verticalDist = -bottomDist
+              verticalDirection = 1
             }
-            if (verticalDist < sideDist) {
-              node2.x += sideDist / 1.5
-              node1.x -= sideDist / 1.5
-              node2.y += verticalDist / 4
-              node1.y -= verticalDist / 4
+            if (verticalDist * 6 < sideDist) {
+              node2.dx += sideDirection * ov.collisionForce
+              node1.dx -= sideDirection * ov.collisionForce
             } else {
-              node2.y += verticalDist / 1.5
-              node1.y -= verticalDist / 1.5
-              node2.x += sideDist / 4
-              node1.x -= sideDist / 4
+              node2.dy += verticalDirection * ov.collisionForce
+              node1.dy -= verticalDirection * ov.collisionForce
             }
             // console.log(`${node1.title} and ${node2.title} intersect`)
           }
@@ -202,7 +228,7 @@ const renderOverview = (parent, store) => {
     renderDebugInfo: () => {
       ov.ctx.font = `14px Verdana`
       let wy = 30
-      for (let varName of ["lastFrameJsTime", "zoom", "originX", "originY", "canvasMouseX", "canvasMouseY"]) {
+      for (let varName of ["lastFrameJsTime", "zoom", "canvasMouseX", "canvasMouseY", "originX", "originY"]) {
         ov.ctx.fillText(`${varName} ${ov[varName]}`, 10, wy)
         wy += 20
       }
@@ -296,6 +322,8 @@ const renderOverview = (parent, store) => {
     const node = {
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
+      dx: 0,
+      dy: 0,
       outgoing: [],
       incoming: [],
       title,
