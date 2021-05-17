@@ -25,6 +25,9 @@ const renderOverview = (parent, store) => {
     animationFrameDelay: 1,
     curAnimationFrame: 0,
 
+    centerForce: 0,
+    attractionForce: 0,
+
     /** earler I implemented zoom with canvas set transform, but that leads to the font being rendered at the wrong resolution and then being rescaled, so this time i'm keeping the canvas scale constant and moving and scaling all the entities in order to achieve zoom */
     zoom: 1,
     originX: 0,
@@ -118,7 +121,31 @@ const renderOverview = (parent, store) => {
       ov.renderEdges()
       ov.renderTitles()
     },
+
     simulate: () => {
+      if (ov.centerForce !== 0)
+        ov.center()
+      if (ov.attractionForce !== 0)
+        ov.attract()
+      ov.collide()
+    },
+    center: () => {
+      for (let node of ov.nodes) {
+        node.x += (ov.originX - node.x) * ov.centerForce
+        node.y += (ov.originY - node.y) * ov.centerForce
+      }
+    },
+    attract: () => {
+      for (let [node1, node2] of ov.edges) {
+        const dx = node2.x - node1.x
+        const dy = node2.y - node1.y
+        node1.x += dx * ov.attractionForce
+        node2.x -= dx * ov.attractionForce
+        node1.y += dy * ov.attractionForce
+        node2.y -= dy * ov.attractionForce
+      }
+    },
+    collide: () => {
       const baseDistanceY = ov.radius * 2 + ov.baseFontHeight
 
       for (let idx1 = 0; idx1 < ov.nodes.length - 1; idx1++) {
@@ -145,13 +172,13 @@ const renderOverview = (parent, store) => {
               verticalDist = -bottomDist
             }
             if (verticalDist < sideDist) {
-              node2.x += sideDist / 2
-              node1.x -= sideDist / 2
+              node2.x += sideDist / 1.5
+              node1.x -= sideDist / 1.5
               node2.y += verticalDist / 4
               node1.y -= verticalDist / 4
             } else {
-              node2.y += verticalDist / 2
-              node1.y -= verticalDist / 2
+              node2.y += verticalDist / 1.5
+              node1.y -= verticalDist / 1.5
               node2.x += sideDist / 4
               node1.x -= sideDist / 4
             }
@@ -162,7 +189,6 @@ const renderOverview = (parent, store) => {
     },
     tick: () => {
       if (ov.curAnimationFrame === 0) {
-
         ov.lastFrameTime = performance.now() - ov.lastFrameStartTime
         ov.lastFrameStartTime = performance.now()
         ov.simulate()
@@ -193,6 +219,8 @@ const renderOverview = (parent, store) => {
   ctx.clearStyle = "#000000"
   // ctx.clearRect(0, 0, canvas.width, canvas.height)
   ov.setOrdinaryFont()
+  ov.originX = canvas.width / 2
+  ov.originY = canvas.height / 2
   ctx.fillStyle = "#ffffff"
   const textMetrics = ctx.measureText("Haggle")
   ov.baseFontHalfHeight = (textMetrics.fontBoundingBoxAscent) / 3
