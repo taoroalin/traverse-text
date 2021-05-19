@@ -62,6 +62,7 @@ const renderOverview = (parent, store) => {
       ov.baseFontAscent *= zoomRatio
       ov.baseFontHeight *= zoomRatio
       ov.baseFontHalfHeight *= zoomRatio
+      ov.radius *= zoomRatio
 
       // origin is just another point in this frame!
       ov.originX = ov.originX * zoomRatio + deltaX
@@ -379,6 +380,7 @@ const renderOverview = (parent, store) => {
   // must button codes: left:0, wheel:1, right:2 */
 
   canvas.addEventListener("mousedown", (event) => {
+    handleMouseMove(event)
     switch (event.button) {
       case 0:
         ov.isDragging = true
@@ -390,6 +392,7 @@ const renderOverview = (parent, store) => {
     }
   })
   canvas.addEventListener("mouseup", (event) => {
+    handleMouseMove(event)
     switch (event.button) {
       case 0:
         ov.isDragging = false
@@ -400,14 +403,16 @@ const renderOverview = (parent, store) => {
         break
     }
   })
-  canvas.addEventListener("mousemove", (event) => {
+
+  const handleMouseMove = (event) => {
     const [canvasX, canvasY] = ov.screenToCanvas(event.clientX, event.clientY)
     if (ov.isDragging) {
       ov.rescaleEverything(1, canvasX - ov.canvasMouseX, canvasY - ov.canvasMouseY)
     }
     ov.canvasMouseX = canvasX
     ov.canvasMouseY = canvasY
-  })
+  }
+  canvas.addEventListener("mousemove", handleMouseMove)
   canvas.addEventListener("keypress", (event) => {
     switch (event.key) {
       case "Space":
@@ -416,7 +421,10 @@ const renderOverview = (parent, store) => {
     }
     console.log(event)
   })
+  /**
+  there's a problem where if you zoom before you ever move your mouse, I don't know where the mouse is */
   canvas.addEventListener("wheel", (event) => {
+    handleMouseMove(event)
     const deltaModes = {
       0: { name: "pixel", conversion: 1 },
       1: { name: "line", conversion: 25 },
