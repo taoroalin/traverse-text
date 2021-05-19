@@ -25,7 +25,7 @@ const renderOverview = (parent, store) => {
     animationFrameDelay: 1,
     curAnimationFrame: 0,
 
-    centerForce: 0.01,
+    centerForce: 0.0,
     attractionForce: 0,
     drag: 0.7,
     collisionForce: 5,
@@ -63,6 +63,7 @@ const renderOverview = (parent, store) => {
       ov.baseFontHeight *= zoomRatio
       ov.baseFontHalfHeight *= zoomRatio
 
+      // origin is just another point in this frame!
       ov.originX = ov.originX * zoomRatio + deltaX
       ov.originY = ov.originY * zoomRatio + deltaY
       ov.setOrdinaryFont()
@@ -171,7 +172,16 @@ const renderOverview = (parent, store) => {
         node2.dy -= ay * ov.attractionForce
       }
     },
+
+    /**
+    maybe a good reference for collisions https://github.com/erincatto/box2d-lite/blob/master/src/Collide.cpp
+    
+    seems like this just moves pairs of objects so they're barely touching. simple, didn't work for
+     */
     collide: () => {
+      for (let node of ov.nodes) {
+        node.collisionCount = 0
+      }
       const baseDistanceY = ov.radius * 2 + ov.baseFontHeight
 
       for (let idx1 = 0; idx1 < ov.nodes.length - 1; idx1++) {
@@ -202,13 +212,28 @@ const renderOverview = (parent, store) => {
               verticalDirection = 1
             }
             if (verticalDist * 6 < sideDist) {
-              node2.dx += sideDirection * ov.collisionForce
-              node1.dx -= sideDirection * ov.collisionForce
+              if (node2.collisionCount === 0 && node1.collisionCount !== 0) {
+                node1.x += sideDist
+              } else if (node1.collisionCount === 0 && node2.collisionCount !== 0) {
+                node2.x -= sideDist
+              } else {
+                node2.x += sideDist * 0.5
+                node1.x -= sideDist * 0.5
+              }
             } else {
-              node2.dy += verticalDirection * ov.collisionForce
-              node1.dy -= verticalDirection * ov.collisionForce
+              if (node2.collisionCount === 0 && node1.collisionCount !== 0) {
+                node1.y += verticalDist
+              } else if (node1.collisionCount === 0 && node2.collisionCount !== 0) {
+                node2.y -= verticalDist
+              } else {
+                node2.y += verticalDist * 0.5
+                node1.y -= verticalDist * 0.5
+              }
+
             }
             // console.log(`${node1.title} and ${node2.title} intersect`)
+            node1.collisionCount++
+            node2.collisionCount++
           }
         }
       }
@@ -326,6 +351,7 @@ const renderOverview = (parent, store) => {
       dy: 0,
       outgoing: [],
       incoming: [],
+      collisionCount: 0,
       title,
       textLines,
       textLineWidths,
