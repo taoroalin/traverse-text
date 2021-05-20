@@ -26,11 +26,12 @@ const renderOverview = (parent, store) => {
     onlyRenderOnInput: false,
 
     simulating: "collide",
-    simulationTicksPerRender: 1,
-    centerForce: 0.00,
-    attractionForce: 0.001,
+    simulationTicksPerRender: 10,
+    centerForce: 0.001,
+    attractionForce: 0.007,
     drag: 0.7,
     collisionForce: 5,
+    pushaside: 30,
 
     /** earler I implemented zoom with canvas set transform, but that leads to the font being rendered at the wrong resolution and then being rescaled, so this time i'm keeping the canvas scale constant and moving and scaling all the entities in order to achieve zoom */
     zoom: 1,
@@ -38,7 +39,7 @@ const renderOverview = (parent, store) => {
     originY: 0,
 
     isDragging: false,
-    draggingNodeIdx: -1,
+    draggingNode: null,
     dragOffsetX: 0,
     dragOffsetY: 0,
 
@@ -75,6 +76,7 @@ const renderOverview = (parent, store) => {
       }
       ov.zoom *= zoomRatio
       ov.radius *= zoomRatio
+      ov.pushaside *= zoomRatio * zoomRatio
       ov.collisionRadius *= zoomRatio
       ov.baseFontSize *= zoomRatio
       ov.baseFontAscent *= zoomRatio
@@ -149,8 +151,8 @@ const renderOverview = (parent, store) => {
     simulate: () => {
       if (ov.centerForce !== 0) ov.centerVelocity()
       if (ov.attractionForce !== 0) ov.attractVelocity()
-      ov.velocityStep()
       ov.collide()
+      ov.velocityStep()
     },
     velocityStep: () => {
       for (let node of ov.nodes) {
@@ -216,7 +218,7 @@ const renderOverview = (parent, store) => {
       instead of iterating in same arbitrary order, could spread by contact
        */
       const toCollide = [...ov.nodes]
-      if (ov.draggingNodeIdx !== -1) toCollide.push(ov.nodes[ov.draggingNodeIdx])
+      if (ov.draggingNode !== null) toCollide.push(ov.draggingNode)
       const collide = (node1) => {
         for (let idx2 = 0; idx2 < ov.nodes.length; idx2++) {
           const node2 = ov.nodes[idx2]
@@ -241,20 +243,30 @@ const renderOverview = (parent, store) => {
               verticalDist = -bottomDist
             }
             if (Math.abs(sideDist) < Math.abs(verticalDist)) {
+              let inverseVerticalDist = ov.pushaside / (1 + verticalDist)
+              if (Math.abs(inverseVerticalDist) > Math.abs(verticalDist)) inverseVerticalDist = verticalDist + 1
               if (node1.collisionMoved) {
                 node2.x += sideDist
+                node2.y -= inverseVerticalDist * 2
               } else {
                 node2.x += sideDist * 0.5
                 node1.x -= sideDist * 0.5
+                node2.y -= inverseVerticalDist
+                node1.y += inverseVerticalDist
               }
               node1.dx = 0
               node2.dx = 0
             } else {
+              let inverseSideDist = ov.pushaside / (1 + sideDist)
+              if (Math.abs(inverseSideDist) > Math.abs(sideDist)) inverseSideDist = sideDist + 1
               if (node1.collisionMoved) {
                 node2.y -= verticalDist
+                node2.x += inverseSideDist * 2
               } else {
                 node2.y -= verticalDist * 0.5
                 node1.y += verticalDist * 0.5
+                node2.x += inverseSideDist
+                node1.x -= inverseSideDist
               }
               node1.dy = 0
               node2.dy = 0
@@ -396,9 +408,8 @@ const renderOverview = (parent, store) => {
       outgoing: [],
       incoming: [],
 
-      collidedYet: false,
-      ufParent: null,
-      ufChildren: [],
+      collisionMoved: false,
+      collisionChecked: false,
 
       title,
       textLines,
@@ -433,7 +444,7 @@ const renderOverview = (parent, store) => {
         ov.inputHappenedThisFrame = true
         for (let i = 0; i < ov.nodes.length; i++) {
           if (ov.isPointInNodeIdx(i, ov.canvasMouseX, ov.canvasMouseY)) {
-            ov.draggingNodeIdx = i
+            ov.draggingNode = ov.nodes[i]
             ov.dragOffsetX = ov.nodes[i].x - ov.canvasMouseX
             ov.dragOffsetY = ov.nodes[i].y - ov.canvasMouseY
             return
@@ -452,7 +463,7 @@ const renderOverview = (parent, store) => {
     switch (event.button) {
       case 0:
         ov.isDragging = false
-        ov.draggingNodeIdx = -1
+        ov.draggingNode = null
         ov.inputHappenedThisFrame = true
         break
       case 1:
@@ -471,11 +482,10 @@ const renderOverview = (parent, store) => {
     }
     ov.canvasMouseX = canvasX
     ov.canvasMouseY = canvasY
-    if (ov.draggingNodeIdx !== -1) {
+    if (ov.draggingNode !== null) {
       ov.inputHappenedThisFrame = true
-      const node = ov.nodes[ov.draggingNodeIdx]
-      node.x = canvasX + ov.dragOffsetX
-      node.y = canvasY + ov.dragOffsetY
+      ov.draggingNode.x = canvasX + ov.dragOffsetX
+      ov.draggingNode.y = canvasY + ov.dragOffsetY
     }
   }
   canvas.addEventListener("mousemove", handleMouseMove)
