@@ -50,9 +50,9 @@ const renderOverview = (parent, store) => {
     isPointInNodeIdx: (idx, x, y) => {
       const node = ov.nodes[idx]
       const textStartX = node.x - node.textHalfWidth - ov.radius
-      const textStartY = node.y - (ov.baseFontHeight * node.textLines.length) / 2 - ov.radius
+      const textStartY = node.y - (ov.baseFontHeight * node.textLines.length) * 0.5 - ov.radius
       const textEndX = node.x + node.textHalfWidth + ov.radius
-      const textEndY = node.y + (ov.baseFontHeight * node.textLines.length) / 2 + ov.radius
+      const textEndY = node.y + (ov.baseFontHeight * node.textLines.length) * 0.5 + ov.radius
       return (x > textStartX && x < textEndX) && (y > textStartY && x < textEndY)
     },
 
@@ -120,13 +120,13 @@ const renderOverview = (parent, store) => {
       ov.ctx.fillStyle = "#333"
       for (let node of ov.nodes) {
         const textStartX = node.x - node.textHalfWidth
-        const textStartY = node.y - (ov.baseFontHeight * node.textLines.length) / 2
+        const textStartY = node.y - (ov.baseFontHeight * node.textLines.length) * 0.5
         ov.renderRoundCorneredBox(textStartX, textStartY, node.textHalfWidth * 2, ov.baseFontHeight * node.textLines.length)
       }
       ov.ctx.fillStyle = "#ffffff"
       for (let node of ov.nodes) {
         const textStartX = node.x - node.textHalfWidth
-        let textStartY = node.y + ov.baseFontHalfHeight - (ov.baseFontHeight * (node.textLines.length - 1)) / 2
+        let textStartY = node.y + ov.baseFontHalfHeight - (ov.baseFontHeight * (node.textLines.length - 1)) * 0.5
         for (let i = 0; i < node.textLines.length; i++) {
           const textLine = node.textLines[i]
           // const lineWidth = node.textLineWidths[i]
@@ -207,15 +207,16 @@ const renderOverview = (parent, store) => {
       for (let node of ov.nodes) {
         node.collisionCount = 0
       }
-      const baseDistanceY = ov.collisionRadius * 2 + ov.baseFontHeight
+      const baseDistanceY = ov.radius * 2
+      const baseDistanceX = ov.radius * 2
 
       for (let idx1 = 0; idx1 < ov.nodes.length - 1; idx1++) {
         const node1 = ov.nodes[idx1]
         for (let idx2 = idx1 + 1; idx2 < ov.nodes.length; idx2++) {
           const node2 = ov.nodes[idx2]
-          // could be faster to use textLineWidths.length instead of lineWidths.lenght if that was going to be used later
-          const ydist = baseDistanceY + (node1.textLineWidths.length + node2.textLineWidths.length - 2) * ov.baseFontHeight
-          const xdist = ov.radius * 2 + node1.textHalfWidth + node2.textHalfWidth
+
+          const ydist = baseDistanceY + (node2.textLineWidths.length + node1.textLineWidths.length) * ov.baseFontHeight * 0.5
+          const xdist = baseDistanceX + node1.textHalfWidth + node2.textHalfWidth
           const topDist = node2.y - node1.y - ydist
           const bottomDist = node1.y - node2.y - ydist
           const rightDist = node2.x - node1.x - xdist
@@ -232,11 +233,11 @@ const renderOverview = (parent, store) => {
             if (topDist < bottomDist) {
               verticalDist = -bottomDist
             }
-            if (verticalDist * 6 < sideDist) {
+            if (Math.abs(verticalDist * 3) < Math.abs(sideDist)) {
               if (node2.collisionCount === 0 && node1.collisionCount !== 0) {
-                node1.x += sideDist
+                node2.x += sideDist
               } else if (node1.collisionCount === 0 && node2.collisionCount !== 0) {
-                node2.x -= sideDist
+                node1.x -= sideDist
               } else {
                 node2.x += sideDist * 0.5
                 node1.x -= sideDist * 0.5
@@ -245,12 +246,12 @@ const renderOverview = (parent, store) => {
               node2.dx = 0
             } else {
               if (node2.collisionCount === 0 && node1.collisionCount !== 0) {
-                node1.y += verticalDist
-              } else if (node1.collisionCount === 0 && node2.collisionCount !== 0) {
                 node2.y -= verticalDist
+              } else if (node1.collisionCount === 0 && node2.collisionCount !== 0) {
+                node1.y += verticalDist
               } else {
-                node2.y += verticalDist * 0.5
-                node1.y -= verticalDist * 0.5
+                node2.y -= verticalDist * 0.5
+                node1.y += verticalDist * 0.5
               }
               node1.dy = 0
               node2.dy = 0
@@ -299,8 +300,8 @@ const renderOverview = (parent, store) => {
   ctx.clearStyle = "#000000"
   // ctx.clearRect(0, 0, canvas.width, canvas.height)
   ov.setOrdinaryFont()
-  ov.originX = canvas.width / 2
-  ov.originY = canvas.height / 2
+  ov.originX = canvas.width * 0.5
+  ov.originY = canvas.height * 0.5
   ctx.fillStyle = "#ffffff"
   const textMetrics = ctx.measureText("Haggle")
   ov.baseFontHalfHeight = (textMetrics.fontBoundingBoxAscent) / 3
@@ -384,7 +385,7 @@ const renderOverview = (parent, store) => {
       title,
       textLines,
       textLineWidths,
-      textHalfWidth: maxTextWidth / 2,
+      textHalfWidth: maxTextWidth * 0.5,
     }
     ov.nodes.push(node)
     idToNode[id] = node
