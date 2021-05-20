@@ -27,7 +27,7 @@ const renderOverview = (parent, store) => {
 
     simulating: "collide",
     simulationTicksPerRender: 1,
-    centerForce: 0.005,
+    centerForce: 0.00,
     attractionForce: 0.001,
     drag: 0.7,
     collisionForce: 5,
@@ -141,7 +141,6 @@ const renderOverview = (parent, store) => {
     },
     render: () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       ov.renderEdges()
       ov.renderTitles()
     },
@@ -208,17 +207,20 @@ const renderOverview = (parent, store) => {
      */
     collide: () => {
       for (let node of ov.nodes) {
-        node.collisionCount = 0
+        node.collisionMoved = false//means checked against all
+        node.collisionChecked = false
       }
       const baseDistanceY = ov.collisionRadius * 2
       const baseDistanceX = ov.collisionRadius * 2
       /**
       instead of iterating in same arbitrary order, could spread by contact
        */
-      for (let idx1 = 0; idx1 < ov.nodes.length - 1; idx1++) {
-        const node1 = ov.nodes[idx1]
-        for (let idx2 = idx1 + 1; idx2 < ov.nodes.length; idx2++) {
+      const toCollide = [...ov.nodes]
+      if (ov.draggingNodeIdx !== -1) toCollide.push(ov.nodes[ov.draggingNodeIdx])
+      const collide = (node1) => {
+        for (let idx2 = 0; idx2 < ov.nodes.length; idx2++) {
           const node2 = ov.nodes[idx2]
+          if (node2.collisionChecked || node2 == node1) continue
 
           const ydist = baseDistanceY + (node2.textLineWidths.length + node1.textLineWidths.length) * ov.baseFontHeight * 0.5
           const xdist = baseDistanceX + node1.textHalfWidth + node2.textHalfWidth
@@ -239,10 +241,8 @@ const renderOverview = (parent, store) => {
               verticalDist = -bottomDist
             }
             if (Math.abs(sideDist) < Math.abs(verticalDist)) {
-              if (node2.collisionCount === 0 && node1.collisionCount !== 0) {
+              if (node1.collisionMoved) {
                 node2.x += sideDist
-              } else if (node1.collisionCount === 0 && node2.collisionCount !== 0) {
-                node1.x -= sideDist
               } else {
                 node2.x += sideDist * 0.5
                 node1.x -= sideDist * 0.5
@@ -250,10 +250,8 @@ const renderOverview = (parent, store) => {
               node1.dx = 0
               node2.dx = 0
             } else {
-              if (node2.collisionCount === 0 && node1.collisionCount !== 0) {
+              if (node1.collisionMoved) {
                 node2.y -= verticalDist
-              } else if (node1.collisionCount === 0 && node2.collisionCount !== 0) {
-                node1.y += verticalDist
               } else {
                 node2.y -= verticalDist * 0.5
                 node1.y += verticalDist * 0.5
@@ -261,10 +259,18 @@ const renderOverview = (parent, store) => {
               node1.dy = 0
               node2.dy = 0
             }
-            // console.log(`${node1.title} and ${node2.title} intersect`)
-            node1.collisionCount++
-            node2.collisionCount++
+            node2.collisionMoved = true
+            node1.collisionMoved = true
+            toCollide.push(node2)
           }
+        }
+        node1.collisionChecked = true
+      }
+
+      while (toCollide.length > 0) {
+        const cur = toCollide.pop()
+        if (!cur.collisionChecked) {
+          collide(cur)
         }
       }
     },
@@ -389,7 +395,11 @@ const renderOverview = (parent, store) => {
       dy: 0,
       outgoing: [],
       incoming: [],
-      collisionCount: 0,
+
+      collidedYet: false,
+      ufParent: null,
+      ufChildren: [],
+
       title,
       textLines,
       textLineWidths,
@@ -423,7 +433,6 @@ const renderOverview = (parent, store) => {
         ov.inputHappenedThisFrame = true
         for (let i = 0; i < ov.nodes.length; i++) {
           if (ov.isPointInNodeIdx(i, ov.canvasMouseX, ov.canvasMouseY)) {
-            console.log("clicked on node ", ov.nodes[i].title)
             ov.draggingNodeIdx = i
             ov.dragOffsetX = ov.nodes[i].x - ov.canvasMouseX
             ov.dragOffsetY = ov.nodes[i].y - ov.canvasMouseY

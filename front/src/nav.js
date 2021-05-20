@@ -69,7 +69,6 @@ const renderSessionState = () => {
       idElements.pageFrameOuter.addEventListener("scroll", dailyNotesInfiniteScrollListener)
       sessionState.oldestDate = new Date(Date.now())
       let numNotesLoaded = 0
-      console.log(store.titles)
       let dateString = formatDate(sessionState.oldestDate)
       if (!store.titles || Object.keys(store.titles).length === 0) generateTitles(store)
       // todo get rid of title corruption and remove this. it's here because the titles are always corrupted at this point, I have no idea why.

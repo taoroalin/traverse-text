@@ -264,7 +264,6 @@ const addArrToRefCount = (refCount, arr) => {
 
 // inner refs are refs in a page/block and any pages/blocks within it
 const generateInnerRefs = (store) => {
-  console.log(store)
   // algorithm: for each ref anywhere, add it to each of its parent's uprefs
   store.innerRefs = {}
   for (let blocId in store.forwardRefs) {
@@ -285,7 +284,6 @@ const generateInnerRefs = (store) => {
 
 // outer refs are refs in a block / page and each block/page in its ancestry
 const generateOuterRefs = (store) => {
-  console.log(store)
   const stime = performance.now()
   store.outerRefs = {}
   for (let blocId in store.forwardRefs) {
@@ -303,7 +301,6 @@ const generateOuterRefs = (store) => {
 }
 
 const generateInnerOuterRefs = (store) => {
-  console.log(store)
   generateInnerRefs(store)
   generateOuterRefs(store)
 }
