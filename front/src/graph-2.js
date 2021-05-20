@@ -15,7 +15,7 @@ const renderOverview = (parent, store) => {
     canvasMouseY: 0,
 
     radius: 4,
-    collisionRadius: 7,
+    collisionRadius: 4,
     baseFontSize: 20,
     baseFontHalfHeight: 0,
     textWidthLimit: 300,
@@ -23,8 +23,10 @@ const renderOverview = (parent, store) => {
     animationFrameDelay: 1,
     curAnimationFrame: 0,
 
+    onlyRenderOnInput: false,
+
     simulating: "collide",
-    simulationTicksPerRender: 10,
+    simulationTicksPerRender: 1,
     centerForce: 0.005,
     attractionForce: 0.001,
     drag: 0.7,
@@ -53,7 +55,7 @@ const renderOverview = (parent, store) => {
       const textStartY = node.y - (ov.baseFontHeight * node.textLines.length) * 0.5 - ov.radius
       const textEndX = node.x + node.textHalfWidth + ov.radius
       const textEndY = node.y + (ov.baseFontHeight * node.textLines.length) * 0.5 + ov.radius
-      return (x > textStartX && x < textEndX) && (y > textStartY && x < textEndY)
+      return (x > textStartX && x < textEndX) && (y > textStartY && y < textEndY)
     },
 
     screenToCanvas: (x, y) => {
@@ -73,6 +75,7 @@ const renderOverview = (parent, store) => {
       }
       ov.zoom *= zoomRatio
       ov.radius *= zoomRatio
+      ov.collisionRadius *= zoomRatio
       ov.baseFontSize *= zoomRatio
       ov.baseFontAscent *= zoomRatio
       ov.baseFontHeight *= zoomRatio
@@ -207,9 +210,11 @@ const renderOverview = (parent, store) => {
       for (let node of ov.nodes) {
         node.collisionCount = 0
       }
-      const baseDistanceY = ov.radius * 2
-      const baseDistanceX = ov.radius * 2
-
+      const baseDistanceY = ov.collisionRadius * 2
+      const baseDistanceX = ov.collisionRadius * 2
+      /**
+      instead of iterating in same arbitrary order, could spread by contact
+       */
       for (let idx1 = 0; idx1 < ov.nodes.length - 1; idx1++) {
         const node1 = ov.nodes[idx1]
         for (let idx2 = idx1 + 1; idx2 < ov.nodes.length; idx2++) {
@@ -219,8 +224,8 @@ const renderOverview = (parent, store) => {
           const xdist = baseDistanceX + node1.textHalfWidth + node2.textHalfWidth
           const topDist = node2.y - node1.y - ydist
           const bottomDist = node1.y - node2.y - ydist
-          const rightDist = node2.x - node1.x - xdist
           const leftDist = node1.x - node2.x - xdist
+          const rightDist = node2.x - node1.x - xdist
           if (topDist < 0 &&
             bottomDist < 0 &&
             rightDist < 0 &&
@@ -230,10 +235,10 @@ const renderOverview = (parent, store) => {
               sideDist = -rightDist
             }
             let verticalDist = topDist
-            if (topDist < bottomDist) {
+            if (bottomDist > topDist) {
               verticalDist = -bottomDist
             }
-            if (Math.abs(verticalDist * 3) < Math.abs(sideDist)) {
+            if (Math.abs(sideDist) < Math.abs(verticalDist)) {
               if (node2.collisionCount === 0 && node1.collisionCount !== 0) {
                 node2.x += sideDist
               } else if (node1.collisionCount === 0 && node2.collisionCount !== 0) {
@@ -265,17 +270,20 @@ const renderOverview = (parent, store) => {
     },
     tick: () => {
       if (ov.curAnimationFrame === 0) {
-        ov.lastFrameTime = performance.now() - ov.lastFrameStartTime
-        ov.lastFrameStartTime = performance.now()
-        for (let i = 0; i < ov.simulationTicksPerRender; i++) {
-          if (ov.simulating === "all")
-            ov.simulate()
-          else if (ov.simulating === "collide")
-            ov.collide()
+        if (!ov.onlyRenderOnInput || ov.inputHappenedThisFrame) {
+          ov.lastFrameTime = performance.now() - ov.lastFrameStartTime
+          ov.lastFrameStartTime = performance.now()
+          for (let i = 0; i < ov.simulationTicksPerRender; i++) {
+            if (ov.simulating === "all")
+              ov.simulate()
+            else if (ov.simulating === "collide")
+              ov.collide()
+          }
+          ov.render()
+          ov.renderDebugInfo()
+          ov.lastFrameJsTime = performance.now() - ov.lastFrameStartTime
+          ov.inputHappenedThisFrame = false
         }
-        ov.render()
-        ov.renderDebugInfo()
-        ov.lastFrameJsTime = performance.now() - ov.lastFrameStartTime
       }
       ov.curAnimationFrame = (ov.curAnimationFrame + 1) % ov.animationFrameDelay
       requestAnimationFrame(ov.tick)
@@ -412,6 +420,7 @@ const renderOverview = (parent, store) => {
     handleMouseMove(event)
     switch (event.button) {
       case 0:
+        ov.inputHappenedThisFrame = true
         for (let i = 0; i < ov.nodes.length; i++) {
           if (ov.isPointInNodeIdx(i, ov.canvasMouseX, ov.canvasMouseY)) {
             console.log("clicked on node ", ov.nodes[i].title)
@@ -435,6 +444,7 @@ const renderOverview = (parent, store) => {
       case 0:
         ov.isDragging = false
         ov.draggingNodeIdx = -1
+        ov.inputHappenedThisFrame = true
         break
       case 1:
         break
@@ -447,11 +457,13 @@ const renderOverview = (parent, store) => {
     const [canvasX, canvasY] = ov.screenToCanvas(event.clientX, event.clientY)
     const deltaX = canvasX - ov.canvasMouseX, deltaY = canvasY - ov.canvasMouseY
     if (ov.isDragging) {
+      ov.inputHappenedThisFrame = true
       ov.rescaleEverything(1, deltaX, deltaY)
     }
     ov.canvasMouseX = canvasX
     ov.canvasMouseY = canvasY
     if (ov.draggingNodeIdx !== -1) {
+      ov.inputHappenedThisFrame = true
       const node = ov.nodes[ov.draggingNodeIdx]
       node.x = canvasX + ov.dragOffsetX
       node.y = canvasY + ov.dragOffsetY
@@ -459,11 +471,18 @@ const renderOverview = (parent, store) => {
   }
   canvas.addEventListener("mousemove", handleMouseMove)
   const keypressListener = (event) => {
+    const previhtf = ov.inputHappenedThisFrame
+    ov.inputHappenedThisFrame = true
     switch (event.code) {
       case "Space":
         if (ov.simulating === "all") ov.simulating = "collide"
         else if (ov.simulating === "collide") ov.simulating = "all"
         break
+      case "f":
+        ov.onlyRenderOnInput = !ov.onlyRenderOnInput
+        break
+      default:
+        ov.inputHappenedThisFrame = previhtf
     }
   }
   document.addEventListener("keypress", keypressListener)
@@ -477,6 +496,7 @@ const renderOverview = (parent, store) => {
       2: { name: "page", conversion: 600 },
     }
     if (event.deltaY !== 0) {
+      ov.inputHappenedThisFrame = true
       const normalizedDeltaY = event.deltaY * deltaModes[event.deltaMode].conversion
       const zoomFraction = normalizedDeltaY / canvas.height
       const zoomRatio = 1 + zoomFraction
