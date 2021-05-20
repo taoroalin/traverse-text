@@ -1,8 +1,5 @@
 /**
 there is an issue where if the font isn't loaded yet when this runs, this renders the wrong font, and it doesn't automatically rerender like dom does when font arrives */
-const PI = Math.PI
-const TAU = PI * 2
-const halfPI = PI / 2
 const charsToMeasure = `qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*()\`~-_=+[{\\|;:'",<.>/?}] `
 
 const renderOverview = (parent, store) => {
@@ -18,6 +15,7 @@ const renderOverview = (parent, store) => {
     canvasMouseY: 0,
 
     radius: 4,
+    collisionRadius: 7,
     baseFontSize: 20,
     baseFontHalfHeight: 0,
     textWidthLimit: 300,
@@ -25,8 +23,10 @@ const renderOverview = (parent, store) => {
     animationFrameDelay: 1,
     curAnimationFrame: 0,
 
-    centerForce: 0.0,
-    attractionForce: 0,
+    simulating: "collide",
+    simulationTicksPerRender: 10,
+    centerForce: 0.005,
+    attractionForce: 0.001,
     drag: 0.7,
     collisionForce: 5,
 
@@ -35,12 +35,26 @@ const renderOverview = (parent, store) => {
     originX: 0,
     originY: 0,
 
+    isDragging: false,
+    draggingNodeIdx: -1,
+    dragOffsetX: 0,
+    dragOffsetY: 0,
+
     nodes: [],
     edges: [],
 
     lastframeTime: 1,
     lastFrameJsTime: 1,
     lastFrameStartTime: 0,
+
+    isPointInNodeIdx: (idx, x, y) => {
+      const node = ov.nodes[idx]
+      const textStartX = node.x - node.textHalfWidth - ov.radius
+      const textStartY = node.y - (ov.baseFontHeight * node.textLines.length) / 2 - ov.radius
+      const textEndX = node.x + node.textHalfWidth + ov.radius
+      const textEndY = node.y + (ov.baseFontHeight * node.textLines.length) / 2 + ov.radius
+      return (x > textStartX && x < textEndX) && (y > textStartY && x < textEndY)
+    },
 
     screenToCanvas: (x, y) => {
       return [x, y]
@@ -58,11 +72,11 @@ const renderOverview = (parent, store) => {
         }
       }
       ov.zoom *= zoomRatio
+      ov.radius *= zoomRatio
       ov.baseFontSize *= zoomRatio
       ov.baseFontAscent *= zoomRatio
       ov.baseFontHeight *= zoomRatio
       ov.baseFontHalfHeight *= zoomRatio
-      ov.radius *= zoomRatio
 
       // origin is just another point in this frame!
       ov.originX = ov.originX * zoomRatio + deltaX
@@ -71,6 +85,7 @@ const renderOverview = (parent, store) => {
     },
 
     exit: () => {
+      document.removeEventListener("keypress", keypressListener)
       canvas.remove()
     },
     renderEdges: () => {
@@ -105,17 +120,18 @@ const renderOverview = (parent, store) => {
       ov.ctx.fillStyle = "#333"
       for (let node of ov.nodes) {
         const textStartX = node.x - node.textHalfWidth
-        const textStartY = node.y + ov.baseFontHalfHeight
-        ov.renderRoundCorneredBox(textStartX, textStartY - ov.baseFontAscent, node.textHalfWidth * 2, ov.baseFontHeight * node.textLines.length)
+        const textStartY = node.y - (ov.baseFontHeight * node.textLines.length) / 2
+        ov.renderRoundCorneredBox(textStartX, textStartY, node.textHalfWidth * 2, ov.baseFontHeight * node.textLines.length)
       }
       ov.ctx.fillStyle = "#ffffff"
       for (let node of ov.nodes) {
         const textStartX = node.x - node.textHalfWidth
-        let textStartY = node.y + ov.baseFontHalfHeight
+        let textStartY = node.y + ov.baseFontHalfHeight - (ov.baseFontHeight * (node.textLines.length - 1)) / 2
         for (let i = 0; i < node.textLines.length; i++) {
           const textLine = node.textLines[i]
-          const lineWidth = node.textLineWidths[i]
-          ov.ctx.fillText(textLine, textStartX + (node.textHalfWidth - lineWidth / 2), textStartY)
+          // const lineWidth = node.textLineWidths[i]
+          // const centeredStartY = textStartY + (node.textHalfWidth * 2 - lineWidth) / 2
+          ov.ctx.fillText(textLine, textStartX, textStartY)
           textStartY += ov.baseFontHeight
         }
       }
@@ -127,11 +143,12 @@ const renderOverview = (parent, store) => {
       ov.renderTitles()
     },
 
+
     simulate: () => {
       if (ov.centerForce !== 0) ov.centerVelocity()
       if (ov.attractionForce !== 0) ov.attractVelocity()
-      ov.collide()
       ov.velocityStep()
+      ov.collide()
     },
     velocityStep: () => {
       for (let node of ov.nodes) {
@@ -142,9 +159,16 @@ const renderOverview = (parent, store) => {
       }
     },
     centerPosition: () => {
+      let sumx = 0, sumy = 0
       for (let node of ov.nodes) {
-        node.x += (ov.originX - node.x) * ov.centerForce
-        node.y += (ov.originY - node.y) * ov.centerForce
+        sumx += node.x
+        sumy += node.y
+      }
+      let deltax = (sumx / ov.nodes.length) - ov.originX
+      let deltay = (sumy / ov.nodes.length) - ov.originY
+      for (let node of ov.nodes) {
+        node.x -= deltax
+        node.y -= deltay
       }
     },
     centerVelocity: () => {
@@ -183,7 +207,7 @@ const renderOverview = (parent, store) => {
       for (let node of ov.nodes) {
         node.collisionCount = 0
       }
-      const baseDistanceY = ov.radius * 2 + ov.baseFontHeight
+      const baseDistanceY = ov.collisionRadius * 2 + ov.baseFontHeight
 
       for (let idx1 = 0; idx1 < ov.nodes.length - 1; idx1++) {
         const node1 = ov.nodes[idx1]
@@ -201,16 +225,12 @@ const renderOverview = (parent, store) => {
             rightDist < 0 &&
             leftDist < 0) {
             let sideDist = leftDist
-            let sideDirection = -1
             if (rightDist > leftDist) {
               sideDist = -rightDist
-              sideDirection = 1
             }
             let verticalDist = topDist
-            let verticalDirection = -1
             if (topDist < bottomDist) {
               verticalDist = -bottomDist
-              verticalDirection = 1
             }
             if (verticalDist * 6 < sideDist) {
               if (node2.collisionCount === 0 && node1.collisionCount !== 0) {
@@ -221,6 +241,8 @@ const renderOverview = (parent, store) => {
                 node2.x += sideDist * 0.5
                 node1.x -= sideDist * 0.5
               }
+              node1.dx = 0
+              node2.dx = 0
             } else {
               if (node2.collisionCount === 0 && node1.collisionCount !== 0) {
                 node1.y += verticalDist
@@ -230,7 +252,8 @@ const renderOverview = (parent, store) => {
                 node2.y += verticalDist * 0.5
                 node1.y -= verticalDist * 0.5
               }
-
+              node1.dy = 0
+              node2.dy = 0
             }
             // console.log(`${node1.title} and ${node2.title} intersect`)
             node1.collisionCount++
@@ -243,7 +266,12 @@ const renderOverview = (parent, store) => {
       if (ov.curAnimationFrame === 0) {
         ov.lastFrameTime = performance.now() - ov.lastFrameStartTime
         ov.lastFrameStartTime = performance.now()
-        ov.simulate()
+        for (let i = 0; i < ov.simulationTicksPerRender; i++) {
+          if (ov.simulating === "all")
+            ov.simulate()
+          else if (ov.simulating === "collide")
+            ov.collide()
+        }
         ov.render()
         ov.renderDebugInfo()
         ov.lastFrameJsTime = performance.now() - ov.lastFrameStartTime
@@ -383,6 +411,15 @@ const renderOverview = (parent, store) => {
     handleMouseMove(event)
     switch (event.button) {
       case 0:
+        for (let i = 0; i < ov.nodes.length; i++) {
+          if (ov.isPointInNodeIdx(i, ov.canvasMouseX, ov.canvasMouseY)) {
+            console.log("clicked on node ", ov.nodes[i].title)
+            ov.draggingNodeIdx = i
+            ov.dragOffsetX = ov.nodes[i].x - ov.canvasMouseX
+            ov.dragOffsetY = ov.nodes[i].y - ov.canvasMouseY
+            return
+          }
+        }
         ov.isDragging = true
         break
       case 1:
@@ -396,6 +433,7 @@ const renderOverview = (parent, store) => {
     switch (event.button) {
       case 0:
         ov.isDragging = false
+        ov.draggingNodeIdx = -1
         break
       case 1:
         break
@@ -406,21 +444,28 @@ const renderOverview = (parent, store) => {
 
   const handleMouseMove = (event) => {
     const [canvasX, canvasY] = ov.screenToCanvas(event.clientX, event.clientY)
+    const deltaX = canvasX - ov.canvasMouseX, deltaY = canvasY - ov.canvasMouseY
     if (ov.isDragging) {
-      ov.rescaleEverything(1, canvasX - ov.canvasMouseX, canvasY - ov.canvasMouseY)
+      ov.rescaleEverything(1, deltaX, deltaY)
     }
     ov.canvasMouseX = canvasX
     ov.canvasMouseY = canvasY
+    if (ov.draggingNodeIdx !== -1) {
+      const node = ov.nodes[ov.draggingNodeIdx]
+      node.x = canvasX + ov.dragOffsetX
+      node.y = canvasY + ov.dragOffsetY
+    }
   }
   canvas.addEventListener("mousemove", handleMouseMove)
-  canvas.addEventListener("keypress", (event) => {
-    switch (event.key) {
+  const keypressListener = (event) => {
+    switch (event.code) {
       case "Space":
-
+        if (ov.simulating === "all") ov.simulating = "collide"
+        else if (ov.simulating === "collide") ov.simulating = "all"
         break
     }
-    console.log(event)
-  })
+  }
+  document.addEventListener("keypress", keypressListener)
   /**
   there's a problem where if you zoom before you ever move your mouse, I don't know where the mouse is */
   canvas.addEventListener("wheel", (event) => {
@@ -445,7 +490,7 @@ const renderOverview = (parent, store) => {
   ov.simulate()
 
   ov.tick()
-  console.log("hi from graph-2")
   window.ov = ov
+  document.activeElement = canvas
   return ov
 }
