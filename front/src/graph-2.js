@@ -15,7 +15,7 @@ const renderOverview = (parent, store) => {
     canvasMouseY: 0,
 
     radius: 4,
-    collisionRadius: 4,
+    collisionRadius: 7,
     baseFontSize: 20,
     baseFontHalfHeight: 0,
     textWidthLimit: 300,
@@ -27,12 +27,13 @@ const renderOverview = (parent, store) => {
 
     simulating: "collide",
     simulationTicksPerRender: 10,
-    centerForce: 0.001,
-    attractionForce: 0.007,
+    centerForce: 0.000000003,
+    attractionForce: 0.01,
     drag: 0.7,
     collisionForce: 5,
     pushaside: 5,
     extraPush: 0.1,
+    eccentricity: 0.05,
 
     /** earler I implemented zoom with canvas set transform, but that leads to the font being rendered at the wrong resolution and then being rescaled, so this time i'm keeping the canvas scale constant and moving and scaling all the entities in order to achieve zoom */
     zoom: 1,
@@ -178,28 +179,33 @@ const renderOverview = (parent, store) => {
     },
     centerVelocity: () => {
       for (let node of ov.nodes) {
-        node.dx += (ov.originX - node.x) * ov.centerForce
-        node.dy += (ov.originY - node.y) * ov.centerForce
+        const dx = (ov.originX - node.x)
+        const dy = (ov.originY - node.y)
+        const distanceSquared = dx * dx + dy * dy
+        node.dx += distanceSquared * dx * ov.centerForce * ov.eccentricity
+        node.dy += distanceSquared * dy * ov.centerForce
       }
     },
     attractPosition: () => {
       for (let [node1, node2] of ov.edges) {
         const dx = node2.x - node1.x
         const dy = node2.y - node1.y
-        node1.x += dx * ov.attractionForce
-        node2.x -= dx * ov.attractionForce
-        node1.y += dy * ov.attractionForce
-        node2.y -= dy * ov.attractionForce
+        const fx = dx * ov.attractionForce * ov.eccentricity
+        node1.x += fx
+        node2.x -= fx
+        const fy = dy * ov.attractionForce
+        node1.y += fy
+        node2.y -= fy
       }
     },
     attractVelocity: () => {
       for (let [node1, node2] of ov.edges) {
-        const ax = node2.x - node1.x
-        const ay = node2.y - node1.y
-        node1.dx += ax * ov.attractionForce
-        node2.dx -= ax * ov.attractionForce
-        node1.dy += ay * ov.attractionForce
-        node2.dy -= ay * ov.attractionForce
+        const ax = (node2.x - node1.x) * ov.attractionForce * ov.eccentricity
+        const ay = (node2.y - node1.y) * ov.attractionForce
+        node1.dx += ax
+        node2.dx -= ax
+        node1.dy += ay
+        node2.dy -= ay
       }
     },
 
@@ -244,7 +250,7 @@ const renderOverview = (parent, store) => {
               verticalDist = -bottomDist + ov.extraPush
             }
             if (Math.abs(sideDist) < Math.abs(verticalDist)) {
-              let inverseVerticalDist = ov.pushaside / (1 + verticalDist)
+              let inverseVerticalDist = 0.2 * ov.pushaside / (1 + verticalDist)
               if (Math.abs(inverseVerticalDist) > Math.abs(verticalDist)) inverseVerticalDist = verticalDist
               if (node1.collisionMoved) {
                 node2.x += sideDist
@@ -287,6 +293,7 @@ const renderOverview = (parent, store) => {
         }
       }
     },
+
     tick: () => {
       if (ov.curAnimationFrame === 0) {
         if (!ov.onlyRenderOnInput || ov.inputHappenedThisFrame) {

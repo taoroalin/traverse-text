@@ -119,3 +119,12 @@ const stripWhitespace = (str) => {
   const endIdx = endMatch ? endMatch[0].length : str.length
   return str.substring(startIdx, endIdx)
 }
+
+const shuffle = (arr) => {
+  for (let i = 0; i < arr.length; i++) {
+    const sidx = i + Math.floor(Math.random() * (arr.length - i))
+    const tmp = arr[i]
+    arr[i] = arr[sidx]
+    arr[sidx] = tmp
+  }
+}
