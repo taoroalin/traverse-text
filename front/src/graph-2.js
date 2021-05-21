@@ -31,7 +31,8 @@ const renderOverview = (parent, store) => {
     attractionForce: 0.007,
     drag: 0.7,
     collisionForce: 5,
-    pushaside: 30,
+    pushaside: 5,
+    extraPush: 0.1,
 
     /** earler I implemented zoom with canvas set transform, but that leads to the font being rendered at the wrong resolution and then being rescaled, so this time i'm keeping the canvas scale constant and moving and scaling all the entities in order to achieve zoom */
     zoom: 1,
@@ -60,7 +61,7 @@ const renderOverview = (parent, store) => {
     },
 
     screenToCanvas: (x, y) => {
-      return [x, y]
+      return [x + 0.5, y + 3.5]
     },
     setOrdinaryFont: () => {
       ov.ctx.font = `${ov.baseFontSize}px Verdana`
@@ -234,17 +235,17 @@ const renderOverview = (parent, store) => {
             bottomDist < 0 &&
             rightDist < 0 &&
             leftDist < 0) {
-            let sideDist = leftDist
+            let sideDist = leftDist - ov.extraPush
             if (rightDist > leftDist) {
-              sideDist = -rightDist
+              sideDist = -rightDist + ov.extraPush
             }
-            let verticalDist = topDist
+            let verticalDist = topDist - ov.extraPush
             if (bottomDist > topDist) {
-              verticalDist = -bottomDist
+              verticalDist = -bottomDist + ov.extraPush
             }
             if (Math.abs(sideDist) < Math.abs(verticalDist)) {
               let inverseVerticalDist = ov.pushaside / (1 + verticalDist)
-              if (Math.abs(inverseVerticalDist) > Math.abs(verticalDist)) inverseVerticalDist = verticalDist + 1
+              if (Math.abs(inverseVerticalDist) > Math.abs(verticalDist)) inverseVerticalDist = verticalDist
               if (node1.collisionMoved) {
                 node2.x += sideDist
                 node2.y -= inverseVerticalDist * 2
@@ -258,7 +259,7 @@ const renderOverview = (parent, store) => {
               node2.dx = 0
             } else {
               let inverseSideDist = ov.pushaside / (1 + sideDist)
-              if (Math.abs(inverseSideDist) > Math.abs(sideDist)) inverseSideDist = sideDist + 1
+              if (Math.abs(inverseSideDist) > Math.abs(sideDist)) inverseSideDist = sideDist
               if (node1.collisionMoved) {
                 node2.y -= verticalDist
                 node2.x += inverseSideDist * 2
@@ -314,6 +315,14 @@ const renderOverview = (parent, store) => {
         wy += 20
       }
       ov.setOrdinaryFont()
+      // ov.renderCursor()
+    },
+    renderCursor: () => {
+      ov.ctx.beginPath()
+      ov.ctx.moveTo(ov.canvasMouseX, ov.canvasMouseY)
+      ov.ctx.arc(ov.canvasMouseX, ov.canvasMouseY, 4, 0, 2 * Math.PI)
+      ov.ctx.closePath()
+      ov.ctx.fill()
     }
   }
   canvas.ov = ov
