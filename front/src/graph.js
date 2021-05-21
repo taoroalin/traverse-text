@@ -1,468 +1,595 @@
-// Render roam graph on a canvas
-// Returns a function that stops rendering graph
+/**
+there is an issue where if the font isn't loaded yet when this runs, this renders the wrong font, and it doesn't automatically rerender like dom does when font arrives */
+const charsToMeasure = `qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*()\`~-_=+[{\\|;:'",<.>/?}] `
+
 const renderOverview = (parent, store) => {
   const canvas = templates.overview.cloneNode(true)
   parent.appendChild(canvas)
+  const ctx = canvas.getContext("2d")// could try out desynchronized option, and alpha:false option
 
-  const graphJsStartTime = performance.now() // measure when graph.js starts executing
-  let lastFrameStartTime = 0 // for counting framerate
+  const ov = {
+    canvas,
+    ctx,
 
-  let nodes, edges // edges is array of [node,node] where the two nodes are literally references to things in var nodes
+    canvasMouseX: 0,
+    canvasMouseY: 0,
 
-  let ctx // HTML5 canvas 2d context
+    radius: 4,
+    collisionRadius: 9,
+    baseFontSize: 20,
+    baseFontHalfHeight: 0,
+    textWidthLimit: 300,
 
-  let clickedNode = null
-  let clickedNodeAdjacent = []
-  let mousePosition = { x: 0, y: 0, prevX: 0, prevY: 0 }
-  let updating = false
-  let running = true // use this to asynchronously stop rendering
+    animationFrameDelay: 1,
+    curAnimationFrame: 0,
 
-  // whether anything changed, to know whether to render. Starts true to make sure it renders at least once
-  let somethingChangedThisFrame = true
+    onlyRenderOnInput: false,
 
-  // ----------- Constants --------------------
+    simulating: "collide",
+    simulationTicksPerRender: 3,
+    centerForce: 0.00000000006,
+    attractionForce: 0.01,
+    drag: 0.7,
+    collisionForce: 5,
+    pushaside: 10,
+    extraPush: 0.1,
+    eccentricity: 0.02,
+    centeringEccentricity: 0.4,
 
-  // Physics constants
-  let attraction = 0.01
-  let friction = 0.9
-  let repulsion = 0.00000022
-  let centering = 0.001
-  const slowdown = 0.65
-  const attractionEpsilon = 0.001
-  const repulsionEpsilon = 0.0000001
+    /** 
+    earler I implemented zoom with canvas set transform, but that leads to the font being rendered at the wrong resolution and then being rescaled, so this time i'm keeping the canvas scale constant and moving and scaling all the entities in order to achieve zoom 
+    */
+    zoom: 1,
+    originX: 0,
+    originY: 0,
 
-  // Constants that determine speed vs quality tradeoff
-  let maxSizeRatioToApproximate = 0.5 // lower means quality, higher means speed
-  const simulationStepsBeforeRender = 0 // higher means quality, lower means speed
-  let nodeRenderBatchSize = 6 // lower means quality, higher means names might overlap
+    maxZoom: 7,
+    minZoom: 0.03,
+    zoomSpeed: 2,
 
-  const twoPI = 2 * Math.PI // get a few percent performance by precomputing 2*pi once instead of in loop
+    isDragging: false,
+    draggingNode: null,
+    dragOffsetX: 0,
+    dragOffsetY: 0,
 
-  // UI constants
-  const zoomRatioPerMouseWheelTick = 0.15
-  const labelPaddingX = 0.003
-  const labelPaddingY = 0.003
+    nodes: [],
+    edges: [],
 
-  const nodeBackgroundColor = "#eeeeee"
-  const textColor = "#000000"
-  const clickedAdjacentColor = "#80d7ff"
-  const clickedColor = "#28bbff"
+    lastframeTime: 1,
+    lastFrameJsTime: 1,
+    lastFrameStartTime: 0,
 
-  // faster, looser random
-  // https://en.wikipedia.org/wiki/Linear_congruential_generator#Parameters_in_common_use
-  const randomConstantA = 1664525
-  const randomConstantC = 1013904223
-  const randomConstantM = 4294967296 // 2^32
-  let randomSeed = Math.random()
-  const random = () =>
-    (randomSeed = (randomConstantA * randomSeed + randomConstantC) % randomConstantM) / randomConstantM
+    isPointInNodeIdx: (idx, x, y) => {
+      const node = ov.nodes[idx]
+      const textStartX = node.x - node.textHalfWidth - ov.radius
+      const textStartY = node.y - node.halfHeight - ov.radius
+      const textEndX = node.x + node.textHalfWidth + ov.radius
+      const textEndY = node.y + node.halfHeight + ov.radius
+      return (x > textStartX && x < textEndX) && (y > textStartY && y < textEndY)
+    },
 
-  // create graph node
-  const newNode = (title) => ({
-    x: random() - 0.5,
-    y: random() - 0.5,
-    dx: 0,
-    dy: 0,
-    title: title,
-    numConnections: 0,
-    mass: 1,
-  })
+    screenToCanvas: (x, y) => {
+      return [x + 0.5, y - 1.5]
+    },
+    setOrdinaryFont: () => {
+      ov.ctx.font = `${ov.baseFontSize}px Verdana`
+    },
+    rescaleEverything: (zoomRatio, deltaX, deltaY) => {
+      for (let node of ov.nodes) {
+        node.x = node.x * zoomRatio + deltaX
+        node.y = node.y * zoomRatio + deltaY
+        node.textHalfWidth *= zoomRatio
+        node.halfHeight *= zoomRatio
+        for (let i = 0; i < node.textLineWidths.length; i++) {
+          node.textLineWidths[i] *= zoomRatio
+        }
+      }
+      ov.zoom *= zoomRatio
+      ov.radius *= zoomRatio
+      ov.pushaside *= zoomRatio * zoomRatio
+      ov.collisionRadius *= zoomRatio
+      ov.baseFontSize *= zoomRatio
+      ov.baseFontAscent *= zoomRatio
+      ov.baseFontHeight *= zoomRatio
+      ov.baseFontHalfHeight *= zoomRatio
 
-  // This is the start of the Barnes-Hut n-body force approximation.
-  // It works by partitiioning space into a tree structure and
-  // applying forces to tree roots instead of nodes / leaves
-  // The quadTree nodes have nothing to do conceptually with the graph - they're just for optimization
-  // https://en.wikipedia.org/wiki/Barnes%E2%80%93Hut_simulation
-  const quadTreeNode = (x, y, r, kids = []) => ({
-    x,
-    y,
-    r,
-    kids,
-    tree: [],
-    mass: 0,
-  })
+      // origin is just another point in this frame!
+      ov.originX = ov.originX * zoomRatio + deltaX
+      ov.originY = ov.originY * zoomRatio + deltaY
+      ov.setOrdinaryFont()
+    },
 
-  // move all kids in quadtree to child quadtrees, recursively
-  const pushQuadTree = (branch, recursionDepth = 0) => {
-    if (recursionDepth >= 20) {
-      // Abort recursion if we've gone too deep
-      return
+    exit: () => {
+      document.removeEventListener("keypress", keypressListener)
+      canvas.remove()
+    },
+    renderEdges: () => {
+      ov.ctx.strokeStyle = ov.colors.bar
+      ov.ctx.lineWidth = 2
+      for (let [from, to] of ov.edges) {
+        ov.ctx.beginPath()
+        ov.ctx.moveTo(from.x, from.y)
+        ov.ctx.lineTo(to.x, to.y)
+        ov.ctx.stroke()
+      }
+    },
+    renderRoundCorneredBox: (x, y, w, h) => {
+      const r = ov.radius
+      const o = r * 0.8
+      ov.ctx.beginPath()
+      ov.ctx.moveTo(x - r, y)
+      ov.ctx.quadraticCurveTo(x - o, y - o, x, y - r,)
+      ov.ctx.lineTo(x + w, y - r)
+      ov.ctx.quadraticCurveTo(x + w + o, y - o, x + w + r, y,)
+      ov.ctx.lineTo(x + w + r, y + h)
+      ov.ctx.quadraticCurveTo(x + w + o, y + h + o, x + w, y + h + r,)
+      ov.ctx.lineTo(x, y + h + r)
+      ov.ctx.quadraticCurveTo(x - o, y + h + o, x - r, y + h,)
+      ov.ctx.closePath()
+      ov.ctx.stroke()
+      ov.ctx.fill()
+    },
+    renderSharpBox: (x, y, w, h) => {
+      ctx.fillRect(x, y, w, h)
+    },
+    renderTitles: () => {
+      ov.ctx.fillStyle = ov.colors["editing-background"]
+      ov.ctx.strokeStyle = ov.colors.shadow
+      ov.ctx.lineWidth = 2 * ov.zoom
+      for (let node of ov.nodes) {
+        const textStartX = node.x - node.textHalfWidth
+        const textStartY = node.y - node.halfHeight
+        ov.renderRoundCorneredBox(textStartX, textStartY, node.textHalfWidth * 2, node.halfHeight * 2)
+      }
+      ov.ctx.fillStyle = ov.colors.text
+      for (let node of ov.nodes) {
+        ov.ctx.font = `${ov.baseFontSize * node.size}px Verdana`
+        const textStartX = node.x - node.textHalfWidth
+        let textStartY = node.y + ov.baseFontAscent * node.size - node.halfHeight
+        for (let i = 0; i < node.textLines.length; i++) {
+          const textLine = node.textLines[i]
+          // const lineWidth = node.textLineWidths[i]
+          // const centeredStartY = textStartY + (node.textHalfWidth * 2 - lineWidth) / 2
+          ov.ctx.fillText(textLine, textStartX, textStartY)
+          textStartY += ov.baseFontHeight * node.size
+        }
+      }
+    },
+    render: () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ov.renderEdges()
+      ov.renderTitles()
+    },
+
+
+    simulate: () => {
+      if (ov.centerForce !== 0) ov.centerVelocity()
+      if (ov.attractionForce !== 0) ov.attractVelocity()
+      ov.collide()
+      ov.velocityStep()
+    },
+    velocityStep: () => {
+      for (let node of ov.nodes) {
+        node.x += node.dx
+        node.y += node.dy
+        node.dx *= ov.drag
+        node.dy *= ov.drag
+      }
+    },
+    centerPosition: () => {
+      let sumx = 0, sumy = 0
+      for (let node of ov.nodes) {
+        sumx += node.x
+        sumy += node.y
+      }
+      let deltax = (sumx / ov.nodes.length) - ov.originX
+      let deltay = (sumy / ov.nodes.length) - ov.originY
+      for (let node of ov.nodes) {
+        node.x -= deltax
+        node.y -= deltay
+      }
+    },
+    centerVelocity: () => {
+      for (let node of ov.nodes) {
+        const dx = (ov.originX - node.x)
+        const dy = (ov.originY - node.y)
+        const distanceSquared = (Math.abs(dx * dx * dx) + Math.abs(dy * dy * dy)) * ov.centerForce
+        node.dx += distanceSquared * dx * ov.eccentricity
+        node.dy += distanceSquared * dy
+      }
+    },
+    attractPosition: () => {
+      for (let [node1, node2] of ov.edges) {
+        const dx = node2.x - node1.x
+        const dy = node2.y - node1.y
+        const fx = dx * ov.attractionForce * ov.eccentricity
+        node1.x += fx
+        node2.x -= fx
+        const fy = dy * ov.attractionForce
+        node1.y += fy
+        node2.y -= fy
+      }
+    },
+    attractVelocity: () => {
+      for (let [node1, node2] of ov.edges) {
+        const ax = (node2.x - node1.x) * ov.attractionForce * ov.eccentricity
+        const ay = (node2.y - node1.y) * ov.attractionForce
+        node1.dx += ax
+        node2.dx -= ax
+        node1.dy += ay
+        node2.dy -= ay
+      }
+    },
+
+    /**
+    maybe a good reference for collisions https://github.com/erincatto/box2d-lite/blob/master/src/Collide.cpp
+    
+    seems like this just moves pairs of objects so they're barely touching. simple, didn't work for
+     */
+    collide: () => {
+      for (let node of ov.nodes) {
+        node.collisionMoved = false//means checked against all
+        node.collisionChecked = false
+      }
+      const baseDistanceY = ov.collisionRadius * 2
+      const baseDistanceX = ov.collisionRadius * 2
+      /**
+      instead of iterating in same arbitrary order, could spread by contact
+       */
+      const toCollide = [...ov.nodes]
+      if (ov.draggingNode !== null) toCollide.push(ov.draggingNode)
+      const collide = (node1) => {
+        for (let idx2 = 0; idx2 < ov.nodes.length; idx2++) {
+          const node2 = ov.nodes[idx2]
+          if (node2.collisionChecked || node2 == node1) continue
+
+          const ydist = baseDistanceY + (node2.halfHeight + node1.halfHeight)
+          const xdist = baseDistanceX + node1.textHalfWidth + node2.textHalfWidth
+          const topDist = node2.y - node1.y - ydist
+          const bottomDist = node1.y - node2.y - ydist
+          const leftDist = node1.x - node2.x - xdist
+          const rightDist = node2.x - node1.x - xdist
+
+          if (topDist < 0 &&
+            bottomDist < 0 &&
+            rightDist < 0 &&
+            leftDist < 0) {
+            let sideDist = leftDist - ov.extraPush
+            if (rightDist > leftDist) {
+              sideDist = -rightDist + ov.extraPush
+            }
+            let verticalDist = topDist - ov.extraPush
+            if (bottomDist > topDist) {
+              verticalDist = -bottomDist + ov.extraPush
+            }
+            if (Math.abs(sideDist) < Math.abs(verticalDist)) {
+              let inverseVerticalDist = 0.2 * ov.pushaside / (1 + verticalDist)
+              if (Math.abs(inverseVerticalDist) > Math.abs(verticalDist)) inverseVerticalDist = verticalDist
+              if (node1.collisionMoved) {
+                node2.x += sideDist
+                node2.y -= inverseVerticalDist * 2
+              } else {
+                node2.x += sideDist * 0.5
+                node1.x -= sideDist * 0.5
+                node2.y -= inverseVerticalDist
+                node1.y += inverseVerticalDist
+              }
+              const dxavg = (node1.dx + node2.dx) * 0.5
+              node1.dx = 0
+              node2.dx = 0
+            } else {
+              let inverseSideDist = ov.pushaside / (1 + sideDist)
+              if (Math.abs(inverseSideDist) > Math.abs(sideDist)) inverseSideDist = sideDist
+              if (node1.collisionMoved) {
+                node2.y -= verticalDist
+                node2.x += inverseSideDist * 2
+              } else {
+                node2.y -= verticalDist * 0.5
+                node1.y += verticalDist * 0.5
+                node2.x += inverseSideDist
+                node1.x -= inverseSideDist
+              }
+              const dyavg = (node1.dy + node2.dy) * 0.5
+              node1.dy = 0
+              node2.dy = 0
+            }
+            node2.collisionMoved = true
+            node1.collisionMoved = true
+            toCollide.push(node2)
+          }
+        }
+        node1.collisionChecked = true
+      }
+
+      while (toCollide.length > 0) {
+        const cur = toCollide.pop()
+        if (!cur.collisionChecked) {
+          collide(cur)
+        }
+      }
+    },
+
+    tick: () => {
+      if (ov.curAnimationFrame === 0) {
+        if (!ov.onlyRenderOnInput || ov.inputHappenedThisFrame) {
+          ov.lastFrameTime = performance.now() - ov.lastFrameStartTime
+          ov.lastFrameStartTime = performance.now()
+          for (let i = 0; i < ov.simulationTicksPerRender; i++) {
+            if (ov.simulating === "all")
+              ov.simulate()
+            else if (ov.simulating === "collide")
+              ov.collide()
+          }
+          ov.render()
+          ov.renderDebugInfo()
+          ov.lastFrameJsTime = performance.now() - ov.lastFrameStartTime
+          ov.inputHappenedThisFrame = false
+        }
+      }
+      ov.curAnimationFrame = (ov.curAnimationFrame + 1) % ov.animationFrameDelay
+      requestAnimationFrame(ov.tick)
+    },
+    renderDebugInfo: () => {
+      ov.ctx.font = `14px Verdana`
+      let wy = 30
+      for (let varName of ["lastFrameJsTime", "zoom", "canvasMouseX", "canvasMouseY", "originX", "originY"]) {
+        ov.ctx.fillText(`${varName} ${ov[varName]}`, 10, wy)
+        wy += 20
+      }
+      ov.setOrdinaryFont()
+      // ov.renderCursor()
+    },
+    renderCursor: () => {
+      ov.ctx.beginPath()
+      ov.ctx.moveTo(ov.canvasMouseX, ov.canvasMouseY)
+      ov.ctx.arc(ov.canvasMouseX, ov.canvasMouseY, 4, 0, 2 * Math.PI)
+      ov.ctx.closePath()
+      ov.ctx.fill()
     }
-    const newR = branch.r * 0.5
-    branch.tree = [
-      quadTreeNode(branch.x - newR, branch.y - newR, newR), // top left
-      quadTreeNode(branch.x + newR, branch.y - newR, newR), // top right
-      quadTreeNode(branch.x - newR, branch.y + newR, newR), // bottom left
-      quadTreeNode(branch.x + newR, branch.y + newR, newR), // bottom right
-    ]
-    let sumY = 0,
-      sumX = 0
-    for (let node of branch.kids) {
-      // casting boolean to 0/1 to index array
-      branch.tree[(node.x > branch.x) + 2 * (node.y > branch.y)].kids.push(node)
-      sumY += node.y
-      sumX += node.x
-      branch.mass += node.mass
+  }
+  canvas.ov = ov
+
+  const width = canvas.getBoundingClientRect().width
+  const height = window.innerHeight - (user.s.topBar === "visible" ? 45 : 0)
+  canvas.width = width * window.devicePixelRatio
+  canvas.height = height * window.devicePixelRatio
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+  ov.setOrdinaryFont()
+  ov.originX = canvas.width * 0.5
+  ov.originY = canvas.height * 0.5
+  ctx.fillStyle = "#ffffff"
+  const textMetrics = ctx.measureText("Haggle")
+  ov.baseFontHalfHeight = (textMetrics.fontBoundingBoxAscent) / 3
+  ov.baseFontAscent = textMetrics.fontBoundingBoxAscent
+  ov.baseFontHeight = textMetrics.fontBoundingBoxDescent + ov.baseFontAscent
+
+  ov.colors = {}
+  const css = window.getComputedStyle(idElements.pageFrameOuter)
+  const neededColors = ["background", "text", "editing-background", "border", "shadow", "bar"]
+  for (let colorName of neededColors) {
+    ov.colors[colorName] = css.getPropertyValue("--" + colorName)
+  }
+
+  const charWidths = {}
+  for (let char of charsToMeasure) {
+    charWidths[char] = ctx.measureText(char).width
+  }
+  const defaultCharWidth = charWidths["0"]
+  // console.log(JSON.stringify(charWidths))
+
+  const charwiseMeasureText = (text) => {
+    let result = 0
+    for (let char of text) {
+      result += charWidths[char] || defaultCharWidth
     }
-    branch.x = sumX / branch.kids.length
-    branch.y = sumY / branch.kids.length
-    for (let i = 0; i < 4; i++) {
-      const len = branch.tree[i].kids.length
-      if (len > 1) {
-        // if there are multiple nodes in child tree, then push that child tree
-        pushQuadTree(branch.tree[i], recursionDepth + 1)
-      } else if (len === 0) {
-        branch.tree[i] = undefined
+    return result
+  }
+
+  const wordWrapText = (text, widthLimit) => {
+    const allWidth = charwiseMeasureText(text)
+    if (allWidth < widthLimit) {
+      return { textLines: [text], textLineWidths: [allWidth], maxTextWidth: allWidth }
+    }
+
+    const matches = text.matchAll(/[^ \t\r\n]+/g)
+    const lines = [""]
+    const lineWidths = [0]
+    let idx = 0
+    let maxTextWidth = 0
+
+    for (let match of matches) {
+      const matchEndIdx = match.index + match[0].length
+
+      const matchTextIncludingPreSpace = text.substring(idx, matchEndIdx)
+      const wordWidth = charwiseMeasureText(matchTextIncludingPreSpace)
+
+      if (lineWidths[lineWidths.length - 1] + wordWidth < widthLimit) {
+        lines[lines.length - 1] += text.substring(idx, matchEndIdx)
+        lineWidths[lineWidths.length - 1] += wordWidth
+
+      } else if (wordWidth > widthLimit) {
+        for (let char of matchTextIncludingPreSpace) {
+          const charWidth = charWidths[char] || defaultCharWidth
+          if (charWidth + lineWidths[lineWidths.length - 1] > widthLimit) {
+            if (lineWidths[lineWidths.length - 1] > maxTextWidth) maxTextWidth = lineWidths[lineWidths.length - 1]
+            lines.push(char)
+            lineWidths.push(charWidth)
+          } else {
+            lines[lines.length - 1] += char
+            lineWidths[lineWidths.length - 1] += charWidth
+          }
+        }
+
       } else {
-        // if child tree has one node, replace the tree with the node
-        branch.tree[i] = branch.tree[i].kids[0]
+
+        if (lineWidths[lineWidths.length - 1] > maxTextWidth) maxTextWidth = lineWidths[lineWidths.length - 1]
+        lines.push(match[0])
+        lineWidths.push(charwiseMeasureText(match[0]))
+      }
+      idx = match.index + match[0].length
+    }
+
+    return { textLines: lines, textLineWidths: lineWidths, maxTextWidth }
+  }
+
+  const idToNode = {}
+  for (let title in store.titles) {
+    const id = store.titles[title]
+    const { textLines, textLineWidths, maxTextWidth } = wordWrapText(stripWhitespace(title), ov.textWidthLimit)
+    const node = {
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      dx: 0,
+      dy: 0,
+      outgoing: [],
+      incoming: [],
+
+      collisionMoved: false,
+      collisionChecked: false,
+
+      size: 0,
+      halfHeight: 0,
+
+      title,
+      textLines,
+      textLineWidths,
+      textHalfWidth: maxTextWidth * 0.5,
+    }
+    ov.nodes.push(node)
+    idToNode[id] = node
+  }
+  for (let title in store.titles) {
+    const id = store.titles[title]
+    const refs = store.innerRefs[id]
+    for (let ref in refs) {
+      if (idToNode[ref]) {
+        const from = idToNode[id]
+        const to = idToNode[ref]
+        const edge = [from, to]
+        from.outgoing.push(edge)
+        to.incoming.push(edge)
+        ov.edges.push(edge)
       }
     }
   }
 
-  const repelNodeByQuadTree = (node, quadTree) => {
-    if (quadTree === undefined) {
-      return
+  for (let node of ov.nodes) {
+    node.size = 1 + Math.max(Math.log(node.incoming.length + node.outgoing.length), 0) * 0.4
+    node.textHalfWidth *= node.size
+    for (let i = 0; i < node.textLineWidths.length; i++) {
+      node.textLineWidths[i] *= node.size
+      node.halfHeight += node.size * ov.baseFontHeight
     }
-    const dx = node.x - quadTree.x
-    const dy = node.y - quadTree.y
-    if (
-      // if quadtree has children but it's far away and should be approximated
-      (quadTree.tree !== undefined && quadTree.r / Math.sqrt(dx * dx + dy * dy) < maxSizeRatioToApproximate) ||
-      // if node is leaf
-      quadTree.numConnections !== undefined
-    ) {
-      // Use 'approximation' to square root that's faster than Math.sqrt
-      const distanceMangledForPerformance = dx * dx * dx * dx * 0.1 + dy * dy * dy * dy + repulsionEpsilon
-      const factor = (node.inverseMass * (quadTree.mass * repulsion)) / distanceMangledForPerformance
-      node.dx += dx * factor
-      node.dy += dy * factor
-    } else {
-      for (let tree of quadTree.tree) {
-        repelNodeByQuadTree(node, tree)
-      }
-    }
+    node.halfHeight *= 0.5
   }
 
-  const nodeLoop = () => {
-    for (let node of nodes) {
-      // Slow down nodes by friction ratio
-      node.dx = node.dx * friction
-      node.dy = node.dy * friction
+  ov.nodes.sort((a, b) => a.size - b.size)
 
-      // Pull nodes towards center
-      node.x -= Math.sign(node.x) * node.x * node.x * centering
-      node.y -= Math.sign(node.y) * node.y * node.y * centering
+  const buttonNumbers = ["left", "wheeldown", "right"]
+  /** interesting code style question. is that better than 
+  // must button codes: left:0, wheel:1, right:2 */
 
-      // 'tick' position forward by velocity
-      node.x += node.dx
-      node.y += node.dy
-    }
-  }
-
-  const physicsTick = () => {
-    // Attract nodes on edges together
-    for (let [a, b] of edges) {
-      const dx = a.x - b.x
-      const dy = a.y - b.y
-      // Use 'approximation' to square root that's faster than Math.sqrt
-      const distanceMangledForPerformance = Math.abs(dx) + Math.abs(dy) + attractionEpsilon
-      const factor = attraction / distanceMangledForPerformance
-      const accX = dx * factor
-      const accY = dy * factor
-      a.dx -= accX
-      b.dx += accX
-      a.dy -= accY
-      b.dy += accY
-    }
-
-    // Repel all nodes apart using Barnes-Hut approximation
-    const quadTree = quadTreeNode(0.5, 0.5, 4, nodes)
-    pushQuadTree(quadTree)
-    for (let node of nodes) {
-      repelNodeByQuadTree(node, quadTree)
-    }
-
-    nodeLoop()
-  }
-
-  const applyViewChanges = () => {
-    // Pan by the difference between mouse x and mouse x last frame
-    // not last mouseMove event
-    if (mousePosition.prevX !== 0) {
-      canvasOffsetY += mousePosition.y - mousePosition.prevY
-      canvasOffsetX += mousePosition.x - mousePosition.prevX
-      mousePosition.prevX = mousePosition.x
-      mousePosition.prevY = mousePosition.y
-    }
-    ctx.setTransform(
-      canvasInnerHeight, // scale width, we set this scale the same as the height to avoid stretching
-      0, // slant x
-      0, // slant y
-      canvasInnerHeight, // scale height
-      canvasOffsetX, // offset x
-      canvasOffsetY // offset y
-    )
-  }
-
-  // renderNodeBackground and renderNodeText don't set their own colors (fillStyle)
-  // for performance. Set the canvas to the color you want before calling
-  // can get 10-20% more render performance by inlining this, but that would just be bananas for maintainability
-  const renderNodeBackground = (node) =>
-    ctx.fillRect(
-      node.x - node.textWidth * 0.5 - labelPaddingX,
-      node.y - 0.008 * node.mass - labelPaddingY,
-      node.textWidth + labelPaddingX * 2,
-      0.015 * node.mass + labelPaddingY * 2
-    )
-  const renderNodeText = (node) => {
-    ctx.font = `bold ${node.mass * 0.015}px Verdana`
-    ctx.fillText(node.title, node.x - node.textWidth * 0.5, node.y + 0.006 * node.mass * 0.5)
-  }
-
-  const clearCanvas = () => {
-    // clear canvas in positive and negative directions
-    ctx.save()
-    ctx.translate(-5000, -5000)
-    ctx.clearRect(0, 0, 10000, 10000)
-    ctx.restore()
-  }
-
-  const render = () => {
-    clearCanvas()
-
-    // draw edge lines first so they go underneath nodes
-    ctx.strokeStyle = "#a7a7a7" // Set canvas state outside of loop for performance
-    ctx.lineWidth = 0.002
-    for (let [startNode, endNode] of edges) {
-      ctx.beginPath()
-      ctx.moveTo(startNode.x, startNode.y)
-      ctx.lineTo(endNode.x, endNode.y)
-      ctx.stroke()
-    }
-
-    // draw nodes in batches to save time switching fillStyle
-    const numBatches = Math.floor(nodes.length / nodeRenderBatchSize)
-    for (let batch = 0; batch < numBatches; batch++) {
-      ctx.fillStyle = nodeBackgroundColor
-      for (let i = batch * nodeRenderBatchSize; i < (batch + 1) * nodeRenderBatchSize; i++) {
-        renderNodeBackground(nodes[i])
-      }
-      // draw all node labels at once
-      ctx.fillStyle = textColor
-      for (let i = batch * nodeRenderBatchSize; i < (batch + 1) * nodeRenderBatchSize; i++) {
-        renderNodeText(nodes[i])
-      }
-    }
-    ctx.fillStyle = nodeBackgroundColor
-    for (let i = numBatches * nodeRenderBatchSize; i < nodes.length; i++) {
-      renderNodeBackground(nodes[i])
-    }
-    // draw all node labels at once
-    ctx.fillStyle = textColor
-    for (let i = numBatches * nodeRenderBatchSize; i < nodes.length; i++) {
-      renderNodeText(nodes[i])
-    }
-
-    if (clickedNode !== null) {
-      // draw edges and connected nodes from clicked node
-      ctx.strokeStyle = clickedAdjacentColor // Set canvas state outside of loop for performance
-      ctx.lineWidth = 0.003
-      for (let adjacent of clickedNodeAdjacent) {
-        ctx.beginPath()
-        ctx.moveTo(clickedNode.x, clickedNode.y)
-        ctx.lineTo(adjacent.x, adjacent.y)
-        ctx.stroke()
-      }
-      for (let adjacent of clickedNodeAdjacent) {
-        // draw adjacent node label
-        ctx.fillStyle = clickedAdjacentColor
-        renderNodeBackground(adjacent)
-        // draw all node labels at once
-        ctx.fillStyle = textColor
-        renderNodeText(adjacent)
-      }
-      // draw clicked node label
-      ctx.fillStyle = clickedColor
-      renderNodeBackground(clickedNode)
-      // draw all node labels at once
-      ctx.fillStyle = textColor
-      renderNodeText(clickedNode)
-    }
-  }
-
-  // This is called once per animation frame
-  const update = () => {
-    if (running) {
-      requestAnimationFrame(update)
-      if (updating) {
-        physicsTick()
-      }
-      const frameStartTime = performance.now()
-      if (updating || somethingChangedThisFrame) {
-        if (fpsCounterElement) fpsCounterElement.innerText = Math.round(1000 / (frameStartTime - lastFrameStartTime))
-        applyViewChanges()
-        render()
-      }
-      lastFrameStartTime = frameStartTime
-      somethingChangedThisFrame = false
-    } else {
-      clearCanvas()
-      canvas = null
-      ctx = null
-      fpsCounterElement = null
-      nodes = null
-      edges = null
-    }
-  }
-
-  // Setup canvas
-  ctx = canvas.getContext("2d")
-  canvas.width = window.innerWidth
-  // fit to whole window except for text at top
-  const fromTop = canvas.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop)
-  canvas.height = window.innerHeight - fromTop
-  let canvasOffsetX = canvas.width / 2
-  let canvasOffsetY = canvas.height / 2
-  let canvasInnerHeight = canvas.height * 0.25
-
-  let fpsCounterElement = document.getElementById("fps")
-  let statusElement = document.getElementById("status")
-  let startupTimeElement = document.getElementById("startupTime")
-
-  applyViewChanges()
-
-  canvas.addEventListener("mousemove", (event) => {
-    mousePosition.x = event.offsetX
-    mousePosition.y = event.offsetY
-    if (mousePosition.prevX) {
-      somethingChangedThisFrame = true
-    }
-  })
-
-  const screenCoordToSpaceCoord = (x, y) => [
-    (x - canvasOffsetX) / canvasInnerHeight,
-    (y - canvasOffsetY) / canvasInnerHeight,
-  ]
-
-  const mouseDownHandler = (event) => {
-    const [mouseX, mouseY] = screenCoordToSpaceCoord(event.offsetX, event.offsetY)
-
-    // Linearly searching through the nodes to find the node that's clicked on.
-    // Could optimize this with the quadtree, but it only takes 0.5ms now
-    // If I were to optimize it with the quadtree, the quadtree would need to consider how wide the node labels are
-    // which would be much easier if all labels were the same size / had small max size (which might be good for aesthetics)
-    for (let nodeIdx = nodes.length - 1; nodeIdx >= 0; nodeIdx--) {
-      // Iterate backwards through nodes to hit most recently drawn first
-      const node = nodes[nodeIdx]
-      if (
-        mouseX >= node.x - node.textWidth * 0.5 - labelPaddingX &&
-        mouseY >= node.y - 0.008 * node.mass - labelPaddingY &&
-        mouseX <= node.x + node.textWidth * 0.5 + labelPaddingX &&
-        mouseY <= node.y + 0.007 * node.mass + labelPaddingY
-      ) {
-        clickedNode = node
-        clickedNodeAdjacent = []
-        // find nodes connected to clicked node in edge array
-        // Don't already have a map of nodes -> their edges because there's no
-        // other need for it.
-        for (let [source, target] of edges) {
-          if (source === clickedNode) {
-            clickedNodeAdjacent.push(target)
-          }
-          if (target === clickedNode) {
-            clickedNodeAdjacent.push(source)
+  canvas.addEventListener("mousedown", (event) => {
+    handleMouseMove(event)
+    switch (event.button) {
+      case 0:
+        ov.inputHappenedThisFrame = true
+        for (let i = 0; i < ov.nodes.length; i++) {
+          if (ov.isPointInNodeIdx(i, ov.canvasMouseX, ov.canvasMouseY)) {
+            ov.draggingNode = ov.nodes[i]
+            ov.dragOffsetX = ov.nodes[i].x - ov.canvasMouseX
+            ov.dragOffsetY = ov.nodes[i].y - ov.canvasMouseY
+            return
           }
         }
-        somethingChangedThisFrame = true
-        return
-      }
+        ov.isDragging = true
+        break
+      case 1:
+        break
+      case 2:
+        break
     }
-    mousePosition.prevX = event.offsetX
-    mousePosition.prevY = event.offsetY
-    somethingChangedThisFrame = true
+  })
+  const handleUnClick = (event) => {
+    ov.isDragging = false
+    ov.draggingNode = null
+    ov.inputHappenedThisFrame = true
   }
-
-  // whether currently dragging is controlled by whether prev position is nonzero
-  // need to record where mouse was when started dragging
-  canvas.addEventListener("mousedown", mouseDownHandler)
-  const stopDragHandler = (event) => {
-    mousePosition.prevX = 0
-    mousePosition.prevY = 0
-    somethingChangedThisFrame = true
-  }
-
-  canvas.addEventListener("mouseup", stopDragHandler)
-
-  canvas.addEventListener("mouseleave", stopDragHandler)
-
-  canvas.addEventListener("keypress", (event) => {
-    if (event.code === "Space") {
-      updating = !updating
-      event.stopPropagation()
-      event.preventDefault()
-      somethingChangedThisFrame = true
+  canvas.addEventListener("mouseup", (event) => {
+    handleMouseMove(event)
+    switch (event.button) {
+      case 0:
+        handleUnClick()
+        break
+      case 1:
+        break
+      case 2:
+        break
     }
   })
 
+  const handleMouseMove = (event) => {
+    const [canvasX, canvasY] = ov.screenToCanvas(event.offsetX, event.offsetY)
+
+    const deltaX = canvasX - ov.canvasMouseX, deltaY = canvasY - ov.canvasMouseY
+    if (ov.isDragging) {
+      ov.inputHappenedThisFrame = true
+      ov.rescaleEverything(1, deltaX, deltaY)
+    }
+    ov.canvasMouseX = canvasX
+    ov.canvasMouseY = canvasY
+    if (ov.draggingNode !== null) {
+      ov.inputHappenedThisFrame = true
+      ov.draggingNode.x = canvasX + ov.dragOffsetX
+      ov.draggingNode.y = canvasY + ov.dragOffsetY
+    }
+  }
+  canvas.addEventListener("mousemove", handleMouseMove)
+  const keypressListener = (event) => {
+    const previhtf = ov.inputHappenedThisFrame
+    ov.inputHappenedThisFrame = true
+    switch (event.code) {
+      case "Space":
+        if (ov.simulating === "all") ov.simulating = "collide"
+        else if (ov.simulating === "collide") ov.simulating = "all"
+        break
+      case "f":
+        ov.onlyRenderOnInput = !ov.onlyRenderOnInput
+        break
+      default:
+        ov.inputHappenedThisFrame = previhtf
+    }
+  }
+  document.addEventListener("keypress", keypressListener)
+  /**
+  there's a problem where if you zoom before you ever move your mouse, I don't know where the mouse is */
   canvas.addEventListener("wheel", (event) => {
-    const scaling = event.deltaY * 0.01 * zoomRatioPerMouseWheelTick
-    const newCanvasInnerHeight = canvasInnerHeight * (1 - scaling)
-    canvasInnerHeight = newCanvasInnerHeight
-    event.preventDefault()
-    somethingChangedThisFrame = true
+    handleMouseMove(event)
+    const deltaModes = {
+      0: { name: "pixel", conversion: 1 },
+      1: { name: "line", conversion: 25 },
+      2: { name: "page", conversion: 600 },
+    }
+    if (event.deltaY !== 0) {
+      ov.inputHappenedThisFrame = true
+      const normalizedDeltaY = -event.deltaY * deltaModes[event.deltaMode].conversion
+      let zoomFraction = normalizedDeltaY / canvas.height * ov.zoomSpeed
+      let zoomRatio = 1 + zoomFraction
+
+      const newZoom = Math.min(Math.max(zoomRatio * ov.zoom, ov.minZoom), ov.maxZoom)
+      zoomRatio = newZoom / ov.zoom
+      zoomFraction = zoomRatio - 1
+
+      ov.rescaleEverything(zoomRatio, -ov.canvasMouseX * zoomFraction, -ov.canvasMouseY * zoomFraction)
+      event.preventDefault()
+    }
   })
 
-  const extractGraph = (store) => {
-    nodes = []
-    edges = []
-    const idToNode = {}
-    for (let title in store.titles) {
-      const id = store.titles[title]
-      const node = newNode(title)
-      node.mass = 2
-      nodes.push(node)
-      idToNode[id] = node
-    }
-    for (let title in store.titles) {
-      const id = store.titles[title]
-      const refs = store.innerRefs[id]
-      for (let ref in refs) {
-        if (idToNode[ref]) {
-          const from = idToNode[id]
-          const to = idToNode[ref]
-          from.numConnections++
-          to.numConnections++
-          edges.push([from, to])
-        }
-      }
-    }
-    console.log(nodes)
-    console.log(edges)
-  }
-  extractGraph(store)
-  console.log("hello from graph.js!")
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ov.simulate()
 
-  // sort by increasing mass so most important nodes get rendered on top of less important nodes
-  nodes = nodes.sort((a, b) => a.mass - b.mass)
-
-  // simulate physics before render
-  for (let i = 0; i < simulationStepsBeforeRender; i++) {
-    physicsTick()
-  }
-
-  // slow down simulation before rendering
-  // edit individual constants instead of one global constant for performance
-  attraction *= slowdown
-  friction *= slowdown
-  centering *= slowdown * slowdown
-  maxSizeRatioToApproximate *= slowdown
-
-  requestAnimationFrame(update)
-
-  if (startupTimeElement) startupTimeElement.innerText = Math.round(performance.now() - graphJsStartTime) * 0.001
-  if (statusElement) statusElement.innerText = "Running"
-
-  // return function to exit graph
-  return () => (running = false)
+  ov.tick()
+  window.ov = ov
+  document.activeElement = canvas
+  return ov
 }
