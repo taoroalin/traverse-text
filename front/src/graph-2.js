@@ -33,7 +33,8 @@ const renderOverview = (parent, store) => {
     collisionForce: 5,
     pushaside: 5,
     extraPush: 0.1,
-    eccentricity: 0.05,
+    eccentricity: 0.02,
+    centeringEccentricity: 0.4,
 
     /** earler I implemented zoom with canvas set transform, but that leads to the font being rendered at the wrong resolution and then being rescaled, so this time i'm keeping the canvas scale constant and moving and scaling all the entities in order to achieve zoom */
     zoom: 1,
@@ -72,6 +73,7 @@ const renderOverview = (parent, store) => {
         node.x = node.x * zoomRatio + deltaX
         node.y = node.y * zoomRatio + deltaY
         node.textHalfWidth *= zoomRatio
+        node.halfHeight *= zoomRatio
         for (let i = 0; i < node.textLineWidths.length; i++) {
           node.textLineWidths[i] *= zoomRatio
         }
@@ -127,19 +129,20 @@ const renderOverview = (parent, store) => {
       ov.ctx.fillStyle = "#333"
       for (let node of ov.nodes) {
         const textStartX = node.x - node.textHalfWidth
-        const textStartY = node.y - (ov.baseFontHeight * node.textLines.length) * 0.5
-        ov.renderRoundCorneredBox(textStartX, textStartY, node.textHalfWidth * 2, ov.baseFontHeight * node.textLines.length)
+        const textStartY = node.y - node.halfHeight
+        ov.renderRoundCorneredBox(textStartX, textStartY, node.textHalfWidth * 2, node.halfHeight * 2)
       }
       ov.ctx.fillStyle = "#ffffff"
       for (let node of ov.nodes) {
+        ov.ctx.font = `${ov.baseFontSize * node.size}px Verdana`
         const textStartX = node.x - node.textHalfWidth
-        let textStartY = node.y + ov.baseFontHalfHeight - (ov.baseFontHeight * (node.textLines.length - 1)) * 0.5
+        let textStartY = node.y + ov.baseFontAscent * node.size - node.halfHeight
         for (let i = 0; i < node.textLines.length; i++) {
           const textLine = node.textLines[i]
           // const lineWidth = node.textLineWidths[i]
           // const centeredStartY = textStartY + (node.textHalfWidth * 2 - lineWidth) / 2
           ov.ctx.fillText(textLine, textStartX, textStartY)
-          textStartY += ov.baseFontHeight
+          textStartY += ov.baseFontHeight * node.size
         }
       }
     },
@@ -231,12 +234,13 @@ const renderOverview = (parent, store) => {
           const node2 = ov.nodes[idx2]
           if (node2.collisionChecked || node2 == node1) continue
 
-          const ydist = baseDistanceY + (node2.textLineWidths.length + node1.textLineWidths.length) * ov.baseFontHeight * 0.5
+          const ydist = baseDistanceY + (node2.halfHeight + node1.halfHeight)
           const xdist = baseDistanceX + node1.textHalfWidth + node2.textHalfWidth
           const topDist = node2.y - node1.y - ydist
           const bottomDist = node1.y - node2.y - ydist
           const leftDist = node1.x - node2.x - xdist
           const rightDist = node2.x - node1.x - xdist
+
           if (topDist < 0 &&
             bottomDist < 0 &&
             rightDist < 0 &&
@@ -427,6 +431,9 @@ const renderOverview = (parent, store) => {
       collisionMoved: false,
       collisionChecked: false,
 
+      size: 0,
+      halfHeight: 0,
+
       title,
       textLines,
       textLineWidths,
@@ -449,6 +456,17 @@ const renderOverview = (parent, store) => {
       }
     }
   }
+
+  for (let node of ov.nodes) {
+    node.size = 1 + Math.log(node.incoming.length + node.outgoing.length) * 0.4
+    node.textHalfWidth *= node.size
+    for (let i = 0; i < node.textLineWidths.length; i++) {
+      node.textLineWidths[i] *= node.size
+      node.halfHeight += node.size * ov.baseFontHeight
+    }
+    node.halfHeight *= 0.5
+  }
+
   const buttonNumbers = ["left", "wheeldown", "right"]
   /** interesting code style question. is that better than 
   // must button codes: left:0, wheel:1, right:2 */
