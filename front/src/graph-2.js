@@ -15,7 +15,7 @@ const renderOverview = (parent, store) => {
     canvasMouseY: 0,
 
     radius: 4,
-    collisionRadius: 7,
+    collisionRadius: 9,
     baseFontSize: 20,
     baseFontHalfHeight: 0,
     textWidthLimit: 300,
@@ -42,6 +42,10 @@ const renderOverview = (parent, store) => {
     zoom: 1,
     originX: 0,
     originY: 0,
+
+    maxZoom: 7,
+    minZoom: 0.03,
+    zoomSpeed: 2,
 
     isDragging: false,
     draggingNode: null,
@@ -100,8 +104,8 @@ const renderOverview = (parent, store) => {
       canvas.remove()
     },
     renderEdges: () => {
-      ov.ctx.strokeStyle = "#a7a7a7"
-      ov.ctx.lineWidth = 1
+      ov.ctx.strokeStyle = ov.colors.bar
+      ov.ctx.lineWidth = 2
       for (let [from, to] of ov.edges) {
         ov.ctx.beginPath()
         ov.ctx.moveTo(from.x, from.y)
@@ -122,19 +126,22 @@ const renderOverview = (parent, store) => {
       ov.ctx.lineTo(x, y + h + r)
       ov.ctx.quadraticCurveTo(x - o, y + h + o, x - r, y + h,)
       ov.ctx.closePath()
+      ov.ctx.stroke()
       ov.ctx.fill()
     },
     renderSharpBox: (x, y, w, h) => {
       ctx.fillRect(x, y, w, h)
     },
     renderTitles: () => {
-      ov.ctx.fillStyle = "#333"
+      ov.ctx.fillStyle = ov.colors["editing-background"]
+      ov.ctx.strokeStyle = ov.colors.shadow
+      ov.ctx.lineWidth = 2 * ov.zoom
       for (let node of ov.nodes) {
         const textStartX = node.x - node.textHalfWidth
         const textStartY = node.y - node.halfHeight
         ov.renderRoundCorneredBox(textStartX, textStartY, node.textHalfWidth * 2, node.halfHeight * 2)
       }
-      ov.ctx.fillStyle = "#ffffff"
+      ov.ctx.fillStyle = ov.colors.text
       for (let node of ov.nodes) {
         ov.ctx.font = `${ov.baseFontSize * node.size}px Verdana`
         const textStartX = node.x - node.textHalfWidth
@@ -347,8 +354,6 @@ const renderOverview = (parent, store) => {
   canvas.width = width * window.devicePixelRatio
   canvas.height = height * window.devicePixelRatio
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
-  ctx.clearStyle = "#000000"
-  // ctx.clearRect(0, 0, canvas.width, canvas.height)
   ov.setOrdinaryFont()
   ov.originX = canvas.width * 0.5
   ov.originY = canvas.height * 0.5
@@ -357,6 +362,13 @@ const renderOverview = (parent, store) => {
   ov.baseFontHalfHeight = (textMetrics.fontBoundingBoxAscent) / 3
   ov.baseFontAscent = textMetrics.fontBoundingBoxAscent
   ov.baseFontHeight = textMetrics.fontBoundingBoxDescent + ov.baseFontAscent
+
+  ov.colors = {}
+  const css = window.getComputedStyle(idElements.pageFrameOuter)
+  const neededColors = ["background", "text", "editing-background", "border", "shadow", "bar"]
+  for (let colorName of neededColors) {
+    ov.colors[colorName] = css.getPropertyValue("--" + colorName)
+  }
 
   const charWidths = {}
   for (let char of charsToMeasure) {
@@ -556,12 +568,15 @@ const renderOverview = (parent, store) => {
     }
     if (event.deltaY !== 0) {
       ov.inputHappenedThisFrame = true
-      const normalizedDeltaY = event.deltaY * deltaModes[event.deltaMode].conversion
-      const zoomFraction = normalizedDeltaY / canvas.height
-      const zoomRatio = 1 + zoomFraction
-      const mouseDistanceX = ov.canvasMouseX
-      const mouseDistanceY = ov.canvasMouseY
-      ov.rescaleEverything(zoomRatio, -mouseDistanceX * zoomFraction, -mouseDistanceY * zoomFraction)
+      const normalizedDeltaY = -event.deltaY * deltaModes[event.deltaMode].conversion
+      let zoomFraction = normalizedDeltaY / canvas.height * ov.zoomSpeed
+      let zoomRatio = 1 + zoomFraction
+
+      const newZoom = Math.min(Math.max(zoomRatio * ov.zoom, ov.minZoom), ov.maxZoom)
+      zoomRatio = newZoom / ov.zoom
+      zoomFraction = zoomRatio - 1
+
+      ov.rescaleEverything(zoomRatio, -ov.canvasMouseX * zoomFraction, -ov.canvasMouseY * zoomFraction)
       event.preventDefault()
     }
   })
