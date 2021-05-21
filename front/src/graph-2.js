@@ -69,7 +69,7 @@ const renderOverview = (parent, store) => {
     },
 
     screenToCanvas: (x, y) => {
-      return [x + 0.5, y + 3.5]
+      return [x + 0.5, y - 1.5]
     },
     setOrdinaryFont: () => {
       ov.ctx.font = `${ov.baseFontSize}px Verdana`
@@ -510,13 +510,16 @@ const renderOverview = (parent, store) => {
         break
     }
   })
+  const handleUnClick = (event) => {
+    ov.isDragging = false
+    ov.draggingNode = null
+    ov.inputHappenedThisFrame = true
+  }
   canvas.addEventListener("mouseup", (event) => {
     handleMouseMove(event)
     switch (event.button) {
       case 0:
-        ov.isDragging = false
-        ov.draggingNode = null
-        ov.inputHappenedThisFrame = true
+        handleUnClick()
         break
       case 1:
         break
@@ -526,7 +529,8 @@ const renderOverview = (parent, store) => {
   })
 
   const handleMouseMove = (event) => {
-    const [canvasX, canvasY] = ov.screenToCanvas(event.clientX, event.clientY)
+    const [canvasX, canvasY] = ov.screenToCanvas(event.offsetX, event.offsetY)
+
     const deltaX = canvasX - ov.canvasMouseX, deltaY = canvasY - ov.canvasMouseY
     if (ov.isDragging) {
       ov.inputHappenedThisFrame = true
