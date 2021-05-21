@@ -26,17 +26,19 @@ const renderOverview = (parent, store) => {
     onlyRenderOnInput: false,
 
     simulating: "collide",
-    simulationTicksPerRender: 10,
-    centerForce: 0.000000003,
+    simulationTicksPerRender: 3,
+    centerForce: 0.00000000006,
     attractionForce: 0.01,
     drag: 0.7,
     collisionForce: 5,
-    pushaside: 5,
+    pushaside: 10,
     extraPush: 0.1,
     eccentricity: 0.02,
     centeringEccentricity: 0.4,
 
-    /** earler I implemented zoom with canvas set transform, but that leads to the font being rendered at the wrong resolution and then being rescaled, so this time i'm keeping the canvas scale constant and moving and scaling all the entities in order to achieve zoom */
+    /** 
+    earler I implemented zoom with canvas set transform, but that leads to the font being rendered at the wrong resolution and then being rescaled, so this time i'm keeping the canvas scale constant and moving and scaling all the entities in order to achieve zoom 
+    */
     zoom: 1,
     originX: 0,
     originY: 0,
@@ -56,9 +58,9 @@ const renderOverview = (parent, store) => {
     isPointInNodeIdx: (idx, x, y) => {
       const node = ov.nodes[idx]
       const textStartX = node.x - node.textHalfWidth - ov.radius
-      const textStartY = node.y - (ov.baseFontHeight * node.textLines.length) * 0.5 - ov.radius
+      const textStartY = node.y - node.halfHeight - ov.radius
       const textEndX = node.x + node.textHalfWidth + ov.radius
-      const textEndY = node.y + (ov.baseFontHeight * node.textLines.length) * 0.5 + ov.radius
+      const textEndY = node.y + node.halfHeight + ov.radius
       return (x > textStartX && x < textEndX) && (y > textStartY && y < textEndY)
     },
 
@@ -184,9 +186,9 @@ const renderOverview = (parent, store) => {
       for (let node of ov.nodes) {
         const dx = (ov.originX - node.x)
         const dy = (ov.originY - node.y)
-        const distanceSquared = dx * dx + dy * dy
-        node.dx += distanceSquared * dx * ov.centerForce * ov.eccentricity
-        node.dy += distanceSquared * dy * ov.centerForce
+        const distanceSquared = (Math.abs(dx * dx * dx) + Math.abs(dy * dy * dy)) * ov.centerForce
+        node.dx += distanceSquared * dx * ov.eccentricity
+        node.dy += distanceSquared * dy
       }
     },
     attractPosition: () => {
@@ -265,6 +267,7 @@ const renderOverview = (parent, store) => {
                 node2.y -= inverseVerticalDist
                 node1.y += inverseVerticalDist
               }
+              const dxavg = (node1.dx + node2.dx) * 0.5
               node1.dx = 0
               node2.dx = 0
             } else {
@@ -279,6 +282,7 @@ const renderOverview = (parent, store) => {
                 node2.x += inverseSideDist
                 node1.x -= inverseSideDist
               }
+              const dyavg = (node1.dy + node2.dy) * 0.5
               node1.dy = 0
               node2.dy = 0
             }
@@ -458,7 +462,7 @@ const renderOverview = (parent, store) => {
   }
 
   for (let node of ov.nodes) {
-    node.size = 1 + Math.log(node.incoming.length + node.outgoing.length) * 0.4
+    node.size = 1 + Math.max(Math.log(node.incoming.length + node.outgoing.length), 0) * 0.4
     node.textHalfWidth *= node.size
     for (let i = 0; i < node.textLineWidths.length; i++) {
       node.textLineWidths[i] *= node.size
@@ -466,6 +470,8 @@ const renderOverview = (parent, store) => {
     }
     node.halfHeight *= 0.5
   }
+
+  ov.nodes.sort((a, b) => a.size - b.size)
 
   const buttonNumbers = ["left", "wheeldown", "right"]
   /** interesting code style question. is that better than 
