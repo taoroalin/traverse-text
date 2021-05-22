@@ -28,10 +28,10 @@ const renderOverview = (parent, store) => {
     simulating: "collide",
     simulationTicksPerRender: 3,
     centerForce: 0.00000000006,
-    attractionForce: 0.01,
+    attractionForce: 0.05,
     drag: 0.7,
     collisionForce: 5,
-    pushaside: 10,
+    pushaside: 30,
     extraPush: 0.1,
     eccentricity: 0.02,
     centeringEccentricity: 0.4,
@@ -114,8 +114,8 @@ const renderOverview = (parent, store) => {
       }
     },
     renderRoundCorneredBox: (x, y, w, h) => {
-      const r = ov.radius
-      const o = r * 0.8
+      const r = ov.radius * 1.5
+      const o = r // offset of quadratic control point from corner
       ov.ctx.beginPath()
       ov.ctx.moveTo(x - r, y)
       ov.ctx.quadraticCurveTo(x - o, y - o, x, y - r,)
@@ -126,7 +126,6 @@ const renderOverview = (parent, store) => {
       ov.ctx.lineTo(x, y + h + r)
       ov.ctx.quadraticCurveTo(x - o, y + h + o, x - r, y + h,)
       ov.ctx.closePath()
-      ov.ctx.stroke()
       ov.ctx.fill()
     },
     renderSharpBox: (x, y, w, h) => {
@@ -134,13 +133,14 @@ const renderOverview = (parent, store) => {
     },
     renderTitles: () => {
       ov.ctx.fillStyle = ov.colors["editing-background"]
-      ov.ctx.strokeStyle = ov.colors.shadow
-      ov.ctx.lineWidth = 2 * ov.zoom
+      ctx.shadowColor = 'black';
+      ctx.shadowBlur = 7;
       for (let node of ov.nodes) {
         const textStartX = node.x - node.textHalfWidth
         const textStartY = node.y - node.halfHeight
         ov.renderRoundCorneredBox(textStartX, textStartY, node.textHalfWidth * 2, node.halfHeight * 2)
       }
+      ctx.shadowBlur = 0
       ov.ctx.fillStyle = ov.colors.text
       for (let node of ov.nodes) {
         ov.ctx.font = `${ov.baseFontSize * node.size}px Verdana`
@@ -165,8 +165,8 @@ const renderOverview = (parent, store) => {
     simulate: () => {
       if (ov.centerForce !== 0) ov.centerVelocity()
       if (ov.attractionForce !== 0) ov.attractVelocity()
-      ov.collide()
       ov.velocityStep()
+      ov.collide()
     },
     velocityStep: () => {
       for (let node of ov.nodes) {
@@ -177,16 +177,12 @@ const renderOverview = (parent, store) => {
       }
     },
     centerPosition: () => {
-      let sumx = 0, sumy = 0
       for (let node of ov.nodes) {
-        sumx += node.x
-        sumy += node.y
-      }
-      let deltax = (sumx / ov.nodes.length) - ov.originX
-      let deltay = (sumy / ov.nodes.length) - ov.originY
-      for (let node of ov.nodes) {
-        node.x -= deltax
-        node.y -= deltay
+        const dx = (ov.originX - node.x)
+        const dy = (ov.originY - node.y)
+        const distanceSquared = (Math.abs(dx * dx * dx) + Math.abs(dy * dy * dy)) * ov.centerForce
+        node.x += distanceSquared * dx * ov.eccentricity
+        node.y += distanceSquared * dy
       }
     },
     centerVelocity: () => {
@@ -227,17 +223,26 @@ const renderOverview = (parent, store) => {
     seems like this just moves pairs of objects so they're barely touching. simple, didn't work for
      */
     collide: () => {
+      /**
+      assuming that things will never collide when they're moving away from each other
+       */
+      const titleToGroupTop = {}
+      const groupToTitleTop = []
+      const titleToGroupSide = {}
+      const groupToTitleSide = []
+      const groupVSumsSide = []
+      const groupVSumsTop = []
+
       for (let node of ov.nodes) {
-        node.collisionMoved = false//means checked against all
+        node.collisionMoved = false //means checked against all
         node.collisionChecked = false
       }
       const baseDistanceY = ov.collisionRadius * 2
       const baseDistanceX = ov.collisionRadius * 2
-      /**
-      instead of iterating in same arbitrary order, could spread by contact
-       */
+
       const toCollide = [...ov.nodes]
       if (ov.draggingNode !== null) toCollide.push(ov.draggingNode)
+
       const collide = (node1) => {
         for (let idx2 = 0; idx2 < ov.nodes.length; idx2++) {
           const node2 = ov.nodes[idx2]
@@ -262,39 +267,54 @@ const renderOverview = (parent, store) => {
             if (bottomDist > topDist) {
               verticalDist = -bottomDist + ov.extraPush
             }
-            if (Math.abs(sideDist) < Math.abs(verticalDist)) {
+            const axisIsSide = Math.abs(sideDist) < Math.abs(verticalDist)
+            if (axisIsSide) {
               let inverseVerticalDist = 0.2 * ov.pushaside / (1 + verticalDist)
               if (Math.abs(inverseVerticalDist) > Math.abs(verticalDist)) inverseVerticalDist = verticalDist
-              if (node1.collisionMoved) {
-                node2.x += sideDist
-                node2.y -= inverseVerticalDist * 2
-              } else {
-                node2.x += sideDist * 0.5
-                node1.x -= sideDist * 0.5
-                node2.y -= inverseVerticalDist
-                node1.y += inverseVerticalDist
-              }
-              const dxavg = (node1.dx + node2.dx) * 0.5
-              node1.dx = 0
-              node2.dx = 0
+
+              // const node2group = titleToGroupSide[node2.title]
+              // if (node2group) {
+              //   const node1group = titleToGroupSide[node1.title]
+              //   if (node1group) {
+
+              //   } else {
+              //     titleToGroupSide[node1.title] = node2group
+              //     groupToTitleSide[node2group][node1.title]
+              //   }
+              //   titleToGroupSide[node1.title]
+
+              //   node2.x += sideDist
+              //   node2.y -= inverseVerticalDist * 2
+              // } else {
+              node2.x += sideDist * 0.5
+              node1.x -= sideDist * 0.5
+              node2.y -= inverseVerticalDist
+              node1.y += inverseVerticalDist
+
+              //   const groupIdx = groupToTitleSide.length
+              //   groupToTitleSide.push([node1.title, node2.title])
+              //   titleToGroupSide[node1.title] = groupIdx
+              //   titleToGroupSide[node2.title] = groupIdx
+              //   groupVSumsSide.push(node1.dx + node2.dx)
+              // }
+
             } else {
+              // axis is vertical
               let inverseSideDist = ov.pushaside / (1 + sideDist)
               if (Math.abs(inverseSideDist) > Math.abs(sideDist)) inverseSideDist = sideDist
-              if (node1.collisionMoved) {
-                node2.y -= verticalDist
-                node2.x += inverseSideDist * 2
-              } else {
-                node2.y -= verticalDist * 0.5
-                node1.y += verticalDist * 0.5
-                node2.x += inverseSideDist
-                node1.x -= inverseSideDist
-              }
-              const dyavg = (node1.dy + node2.dy) * 0.5
-              node1.dy = 0
-              node2.dy = 0
+              // if (node1.collisionMoved) {
+              //   node2.y -= verticalDist
+              //   node2.x += inverseSideDist * 2
+              // } else {
+              node2.y -= verticalDist * 0.5
+              node1.y += verticalDist * 0.5
+              node2.x += inverseSideDist
+              node1.x -= inverseSideDist
+              // }
+              // const dyavg = (node1.dy + node2.dy) * 0.5
+              // node1.dy = 0
+              // node2.dy = 0
             }
-            node2.collisionMoved = true
-            node1.collisionMoved = true
             toCollide.push(node2)
           }
         }
