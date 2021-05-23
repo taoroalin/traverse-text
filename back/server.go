@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
+	"text/template"
 	"time"
 
 	"crypto/sha256"
@@ -21,6 +23,9 @@ import (
 
 	"github.com/fasthttp/websocket"
 )
+
+//go:generate go get -u github.com/valyala/quicktemplate/qtc
+//go:generate qtc -dir=go-template-source
 
 var websocketUpgrader = websocket.FastHTTPUpgrader{
 	ReadBufferSize:  1024,
@@ -67,8 +72,9 @@ func timed(v func()) {
 
 // TYPES TYPES TYPES TYPES TYPES TYPES TYPES TYPES TYPES
 type Account struct {
-	UserReadable     UserReadable
-	PasswordHashHash string
+	UserReadable          UserReadable
+	PasswordHashHash      string
+	EmailVerificationCode string // if this is "" then the account's verified
 }
 
 type UserReadable struct {
@@ -476,15 +482,91 @@ var (
 	devEmails     []string = []string{"taoroalin@gmail.com"}
 )
 
-func sendEmail(recipients []string, subject string, body string) error {
-	message := []byte("To: " + recipients[0] + "\r\nSubject: " + subject + "\r\n\r\n" + body + "\r\n")
+type Email struct {
+	Recipients []string
+	Subject    string
+	Body       string
+	Html       bool
+}
+
+var emailTemplate, eterr = template.New("email").Parse(`To: {{.Recipients}}
+Subject: {{.Subject}}
+Content-Type: text/{{if .Html}}html{{else}}plain{{end}}; charset="utf-8"
+MIME Version: 1
+
+{{.Body}}`)
+
+var verifyEmailTemplate, _ = template.New("verifyEmail").Parse(`{{.EmailVerificationCode}}`)
+
+var testTemplate, _ = template.New("test").Parse(`<!DOCTYPE html>
+<html>
+	<head>
+		<title>Testing Title</title>
+	</head>
+	<body style="color:#000000;">
+    <table align="center" role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+			<tr>
+				<td align="center">
+					<p style="margin: 0; font-size:24px;">Traverse Text</p>
+			  </td>
+		  </tr>
+			<tr>
+				<td align="center">
+					<p style="margin: 0; font-size:16px;">Verify your email to set up your traversetext.com account</p>
+			  </td>
+		  </tr>
+			<tr style="">
+				<td align="center" style="color:#8BE9FD; font-size:24px;padding: 14px 14px 14px 14px;background-color:#45495f; border-radius:6px;">
+				<div style="margin:5px 30px 5px 30px;">
+					<a href="https://traversetext.com/verify-email/THING">Verify</a>
+				</div>
+			  </td>
+		  </tr>
+    </table>
+	</body>
+</html>`)
+
+func (email Email) Send() error {
+	buf := new(bytes.Buffer)
+	templateError := emailTemplate.Execute(buf, email)
+	breakOn(templateError)
 	auth := smtp.PlainAuth("Tao", serverAccount, emailPassword, emailServer)
-	sendError := smtp.SendMail(emailServer+":587", auth, serverAccount, recipients, message)
+	sendError := smtp.SendMail(emailServer+":587", auth, serverAccount, email.Recipients, buf.Bytes())
 	return sendError
 }
 
+func sendEmailConfirmationEmail(account Account) {
+	buf := new(bytes.Buffer)
+	verifyEmailTemplate.Execute(buf, account.EmailVerificationCode)
+	email := Email{
+		Recipients: []string{account.UserReadable.Email},
+		Subject:    "Verification code: " + account.EmailVerificationCode,
+		Body:       buf.String(),
+	}
+	email.Send()
+}
+
+func sendTestEmail() {
+	buf := new(bytes.Buffer)
+	testTemplate.Execute(buf, "hi")
+	email := Email{
+		Recipients: devEmails,
+		Subject:    "Test ",
+		Body:       buf.String(),
+		Html:       true,
+	}
+	email.Send()
+}
+
 func emailDevAboutError(message string) error {
-	return sendEmail(devEmails, "Traversetext.com Api Error", message)
+	email := Email{
+		Recipients: devEmails,
+		Subject:    "Traversetext.com Api Error",
+		Body:       message,
+	}
+	err := email.Send()
+	breakOn(err)
+	return err
 }
 
 const timeBetweenEmails = time.Minute * 30
@@ -504,11 +586,12 @@ func emailDevIfItsAnError(err error) {
 // MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN
 
 func main() {
+
 	emailPasswordBytes, err := ioutil.ReadFile("./email-password.txt")
 	breakOn(err)
 	emailPassword = string(emailPasswordBytes)
 
-	go sendEmail(devEmails, "Traversetext.com Api Started", "")
+	sendTestEmail()
 
 	fmt.Println("running traversetext server")
 
