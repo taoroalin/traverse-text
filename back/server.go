@@ -2,11 +2,14 @@ package main
 
 import (
 	"bytes"
+	cryptorand "crypto/rand"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"os"
 	"regexp"
+	"strconv"
 	"text/template"
 	"time"
 
@@ -74,7 +77,7 @@ func timed(v func()) {
 type Account struct {
 	UserReadable          UserReadable
 	PasswordHashHash      string
-	EmailVerificationCode string // if this is "" then the account's verified
+	EmailVerificationCode int32 // if this is "" then the account's verified
 }
 
 type UserReadable struct {
@@ -142,7 +145,7 @@ const logpath = "../server-log/"
 
 var hashAllZeros [32]byte
 
-var PathRegexp = regexp.MustCompile("^/(get|edit|put|creategraph|searchgraphs|auth|signup|settings|issue|error|log|websocket)(?:/([a-zA-Z_0-9-]+))?(?:/([a-zA-Z_0-9-]+))?$")
+var PathRegexp = regexp.MustCompile("^/(get|edit|put|creategraph|searchgraphs|auth|signup|settings|issue|error|log|websocket|verify-email)(?:/([a-zA-Z_0-9-]+))?(?:/([a-zA-Z_0-9-]+))?(?:/([a-zA-Z_0-9-]+))?$")
 
 var usernameRegexp = regexp.MustCompile("^[a-zA-Z0-9_-]{3,50}$")
 
@@ -210,6 +213,15 @@ func (server Server) persistAllAccounts() {
 	fmt.Printf("%v\n", jsonBytes)
 }
 
+func cryptoRandom6Digit() int32 {
+	biggy := big.Int{}
+	biggy.SetInt64(900_000)
+	bigint, randerr := cryptorand.Int(cryptorand.Reader, &biggy)
+	breakOn(randerr)
+	return int32(bigint.Int64() + 100_000)
+}
+
+// this takes the account by value. not sure if this is the right way to do it in Go...
 func (as Server) addAccount(account Account) (err error) {
 	if err = validateAccountAlone(account); err != nil {
 		return err
@@ -218,6 +230,10 @@ func (as Server) addAccount(account Account) (err error) {
 	if err = as.checkAcountUnique(account); err != nil {
 		return err
 	}
+
+	account.EmailVerificationCode = cryptoRandom6Digit()
+	fmt.Printf("email verification code is %v\n", account.EmailVerificationCode)
+	sendEmailConfirmationEmail(&account)
 
 	as.Accounts = append(as.Accounts, account)
 	as.AccountsByEmail[account.UserReadable.Email] = &account
@@ -335,6 +351,25 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 			}
 
 			ctx.Write(reJsoned)
+			return
+		} else if method == "verify-email" {
+			theAccount := server.AccountsByHash[string(match[2])]
+			code := string(match[3])
+			codeInt, err := strconv.ParseInt(code, 10, 32)
+			if err != nil {
+				ctx.SetStatusCode(400)
+				ctx.WriteString("code needs to be a 6 digit number")
+				return
+			}
+			if codeInt != int64(theAccount.EmailVerificationCode) {
+				ctx.SetStatusCode(401)
+				ctx.WriteString("that code is incorrect")
+				return
+			}
+			theAccount.EmailVerificationCode = 0
+			server.persistAllAccounts()
+			ctx.SetStatusCode(301)
+			ctx.Response.Header.Set("Location", "https://traversetext.com/verified")
 			return
 		}
 
@@ -489,41 +524,60 @@ type Email struct {
 	Html       bool
 }
 
-var emailTemplate, eterr = template.New("email").Parse(`To: {{.Recipients}}
+var emailTemplate, _ = template.New("email").Parse(`To: {{.Recipients}}
 Subject: {{.Subject}}
 Content-Type: text/{{if .Html}}html{{else}}plain{{end}}; charset="utf-8"
 MIME Version: 1
 
 {{.Body}}`)
 
-var verifyEmailTemplate, _ = template.New("verifyEmail").Parse(`{{.EmailVerificationCode}}`)
-
-var testTemplate, _ = template.New("test").Parse(`<!DOCTYPE html>
+var emailVerificationTemplate, _ = template.New("test").Parse(
+	`<!DOCTYPE html>
 <html>
-	<head>
-		<title>Testing Title</title>
-	</head>
-	<body style="color:#000000;">
-    <table align="center" role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-			<tr>
-				<td align="center">
-					<p style="margin: 0; font-size:24px;">Traverse Text</p>
-			  </td>
-		  </tr>
-			<tr>
-				<td align="center">
-					<p style="margin: 0; font-size:16px;">Verify your email to set up your traversetext.com account</p>
-			  </td>
-		  </tr>
-			<tr style="">
-				<td align="center" style="color:#8BE9FD; font-size:24px;padding: 14px 14px 14px 14px;background-color:#45495f; border-radius:6px;">
-				<div style="margin:5px 30px 5px 30px;">
-					<a href="https://traversetext.com/verify-email/THING">Verify</a>
-				</div>
-			  </td>
-		  </tr>
-    </table>
-	</body>
+
+<head>
+  <title>Testing Title</title>
+</head>
+
+<body style="color:#000000;">
+  <table align="center">
+    <tr>
+      <td>
+        <table align="center" bgcolor="#282A36" role="presentation" border="0" cellpadding="0" cellspacing="0"
+          style="color:#F8F8F2; border-radius:8px; padding:60px 100px; margin: 0px 100px 0px 100px;">
+          <tr>
+            <td align="center">
+              <p style="margin: 0; font-size:36px;">Traverse Text</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center">
+              <p style="margin: 0; font-size:16px;">Verify your email to set up your traversetext.com account</p>
+            </td>
+          </tr>
+          <tr style="">
+            <td align="center" style="color:#8BE9FD; font-size:24px;">
+              <table>
+                <tr>
+                  <td style="padding: 8px 12px;margin:12px 0px; background-color:#45495f; border-radius:6px;">
+                    <a style="color:#8BE9FD; text-decoration:none;"
+                      href="https://traversetext.com:3000/verify-email/{{.EmailVerificationCode}}">Verify</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+					<tr>
+						<td align="center" style="padding:10px">
+							<p style="margin:0;font-size:12px">tiny text</p>
+						</td>
+					</tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+
 </html>`)
 
 func (email Email) Send() error {
@@ -535,23 +589,22 @@ func (email Email) Send() error {
 	return sendError
 }
 
-func sendEmailConfirmationEmail(account Account) {
+/*
+how email confirmation works.
+
+when account is created, email code is generated.
+
+I guess I need a job to delete unverified accounts every week. delete every account not made in the past week every week. this is less overhead than checking a heap at small intervals to catch accounts at exactly 2 weeks or setting an OS timer per account
+
+the API has an endpoint for verifying emails
+*/
+func sendEmailConfirmationEmail(account *Account) {
 	buf := new(bytes.Buffer)
-	verifyEmailTemplate.Execute(buf, account.EmailVerificationCode)
+	templateError := emailVerificationTemplate.Execute(buf, account)
+	breakOn(templateError)
 	email := Email{
 		Recipients: []string{account.UserReadable.Email},
-		Subject:    "Verification code: " + account.EmailVerificationCode,
-		Body:       buf.String(),
-	}
-	email.Send()
-}
-
-func sendTestEmail() {
-	buf := new(bytes.Buffer)
-	testTemplate.Execute(buf, "hi")
-	email := Email{
-		Recipients: devEmails,
-		Subject:    "Test ",
+		Subject:    "Verification code: " + fmt.Sprint(account.EmailVerificationCode),
 		Body:       buf.String(),
 		Html:       true,
 	}
@@ -591,7 +644,9 @@ func main() {
 	breakOn(err)
 	emailPassword = string(emailPasswordBytes)
 
-	sendTestEmail()
+	go sendEmailConfirmationEmail(&Account{UserReadable: UserReadable{Email: "taoroalin@gmail.com"},
+		EmailVerificationCode: 123456,
+	})
 
 	fmt.Println("running traversetext server")
 
