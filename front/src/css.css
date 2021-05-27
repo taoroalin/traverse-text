@@ -1,4 +1,13 @@
 /* this file is called css.css so that I don't accidentally find it when searching for some _other_ sort of file */
+/*
+
+UNUSUAL CSS PATTERNS:
+
+I use classes as "component IDs", you could say, which means EACH ELEMENT HAS 1 CLASS or less. that's right. All the styles each "component" or "template" needs are in that one class. Global options the user sets, like color schemes, are body-scoped variables. Special attributes that can change are in the element dataset, accessed with [data-thing=""].
+
+I made this decision because I thought it would be higher performance, and also as a way for my global event handler to quickly check which template an element comes from.
+
+*/
 
 /* global styles ----------------------------------------------------------------------------- */
 * {

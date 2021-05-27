@@ -109,3 +109,20 @@ making signup and login work and have good ui
 Switching backend to Go for 10x server performance.
 
 Finding a more reliable / efficient change sync model
+
+# Make pages visible to search engines natively?
+
+You often need to show up in search engines. In order to do that you need to serve HTML (or plaintext). 
+
+Because there are no attached event handlers on contents, the JS can start right off with a premade DOM. Main problems are
+
+JS code generates DOM, not HTML, so I would need to use a VDOM or parallel renderer. DOM renderer is like 700 lines, and I'd guess an HTML renderer would be like 500 lines more code to maintain.
+
+Dom is created by JS, whereas the server is in Go. In order for the server to not be a mess, creating the HTML would happen in Go.
+If I made a parallel html generator in Go:
+either inside text/template, quicktemplate, or vanilla. vanilla would be fns that take buffer and append to it, just like json stringifier that I made.
+
+this is actually a strong argument for having Go parse the blox json
+
+HTML is served with NGINX, would need to switch to Go. Would probably have build.js make two versions, one to serve plain and one that's split in half for Go to add content in between
+
