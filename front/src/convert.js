@@ -335,6 +335,31 @@ const insertMdIntoBloc = (mdString, parentId, childIdx) => {
     macros.nocommit.write(stackTop.id, string)
 }
 
+const insertPlainTextIntoBloc = (ptString, parentId, childIdx) => {
+
+  if (childIdx === undefined) {
+    childIdx = (store.blox[parentId].k || []).length
+  }
+
+  const newlineMatches = ptString.matchAll(/^|\r?\n/g)
+  let idx = 0
+  let prevId = null
+  for (let match of newlineMatches) {
+    let string = ptString.substring(idx, match.index)
+    if (string.length > 0)
+      macros.nocommit.write(stackTop.id, string)
+
+    prevId = macros.nocommit.create(parentId, childIdx)
+
+    childIdx++;
+    idx = match.index + match[0].length
+  }
+
+  let string = ptString.substring(idx)
+  if (string.length > 0)
+    macros.nocommit.write(stackTop.id, string)
+}
+
 const storeToMdObjects = () => {
   const result = []
   for (let title in store.titles) {

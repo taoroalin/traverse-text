@@ -124,5 +124,6 @@ either inside text/template, quicktemplate, or vanilla. vanilla would be fns tha
 
 this is actually a strong argument for having Go parse the blox json
 
-HTML is served with NGINX, would need to switch to Go. Would probably have build.js make two versions, one to serve plain and one that's split in half for Go to add content in between
+HTML is served with NGINX, would need to switch to Go. Would probably have build.js make two versions, one to serve plain and one that's split in half for Go to add content in between. if I use quicktemplate, would need to run go generate after every build.js...
 
+one thing's for certain, I am NOT making this in the next few months!
