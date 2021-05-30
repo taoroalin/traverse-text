@@ -110,7 +110,7 @@ Switching backend to Go for 10x server performance.
 
 Finding a more reliable / efficient change sync model
 
-# Make pages visible to search engines natively?
+## Make pages visible to search engines natively?
 
 You often need to show up in search engines. In order to do that you need to serve HTML (or plaintext). 
 
@@ -127,3 +127,15 @@ this is actually a strong argument for having Go parse the blox json
 HTML is served with NGINX, would need to switch to Go. Would probably have build.js make two versions, one to serve plain and one that's split in half for Go to add content in between. if I use quicktemplate, would need to run go generate after every build.js...
 
 one thing's for certain, I am NOT making this in the next few months!
+
+## "making the world one graph"?
+
+obviously "conceptually simpler" to comment on things / link to things.
+
+obviously lose out on easy "send everything, edit locally"
+
+could have server handle preloading. that means instead of serving document, client parsing links then asking for those links preemptively, server could preload based on links instead.
+
+if there is restricted sharing, the more people use cross-user linking the more they run into private dead end links
+
+ofc have huge problems weeding out low-effort comments & spam
