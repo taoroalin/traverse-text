@@ -64,7 +64,6 @@ const setFocusedBlockString = (string, diff) => {
 
   if (diff !== undefined) {
     doEdit('df', sessionState.focusId, diff)
-    commit()
   } else {
     macros.write(sessionState.focusId, theString)
   }
@@ -119,7 +118,6 @@ let updateCursorSpanInfo
       idElements.searchResultList.style.display = "none"
   }
 }
-
 
 const focusBlockEnd = (blockNode) => {
   sessionState.focusId = blockNode.dataset.id

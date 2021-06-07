@@ -14,6 +14,14 @@ if (isOsMac) {
   getCtrlKey = (event) => event.metaKey
 }
 
+const eventHandlerWrapper = (fn) => {
+  return (event) => {
+    mut.startEdit() //@TODO swap this out with sessionState setter to avoid huge performance drain
+    fn(event)
+    mut.finishEdit()
+  }
+}
+
 const downloadHandler = () => {
   console.log("download")
   const json = storeToRoamJSON(store)
@@ -42,18 +50,17 @@ const expandTemplate = () => {
     const parentId = store.blox[sessionState.focusId].p
     const childIds = store.blox[id].k
     const currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
-    macros.nocommit.delete(sessionState.focusId, false)
+    macros.delete(sessionState.focusId, false)
     for (let i = 0; i < childIds.length; i++) {
       const childId = childIds[i]
       const idx = currentIdx + i
-      const newId = macros.nocommit.copyBlock(childId, parentId, idx)
+      const newId = macros.copyBlock(childId, parentId, idx)
       if (i === 0) {
         sessionState.position = 0
         sessionState.focusId = newId
         focusIdPosition()
       }
     }
-    commit()
   } else
     notifyText("can't use a template inside a block that has children")
   idElements.templateList.style.display = "none"
@@ -64,24 +71,23 @@ const pasteBlocks = () => {
   const parentId = block.p
   let currentIdx = store.blox[parentId].k.indexOf(sessionState.focusId)
   if (focusBlockBody.innerText === "") {
-    macros.nocommit.delete(sessionState.focusId)
+    macros.delete(sessionState.focusId)
   } else {
     currentIdx += 1
   }
   let firstId
   if (clipboardData.dragSelect.rooted) {
-    firstId = macros.nocommit.copyBlock(clipboardData.dragSelect.root, parentId, currentIdx)
+    firstId = macros.copyBlock(clipboardData.dragSelect.root, parentId, currentIdx)
   } else {
     for (let i = 0; i < clipboardData.dragSelect.endIdx + 1 - clipboardData.dragSelect.startIdx; i++) {
       const blockId = store.blox[clipboardData.dragSelect.root].k[i + clipboardData.dragSelect.startIdx]
-      const theId = macros.nocommit.copyBlock(blockId, parentId, i + currentIdx)
+      const theId = macros.copyBlock(blockId, parentId, i + currentIdx)
       if (!firstId) firstId = theId
     }
   }
   sessionState.position = 0
   sessionState.focusId = firstId
   focusIdPosition()
-  commit()
 }
 
 const autocomplete = () => {
@@ -172,7 +178,7 @@ const cursorRemoveText = (backward, forward) => {
 }
 
 // Event listners --------------------------------------------------------------------------------------------------------
-document.addEventListener("input", (event) => {
+document.addEventListener("input", eventHandlerWrapper((event) => {
   if (sessionState.isFocused) {
     updateCursorPosition()
     if (focusBlockBody.innerText === " " || focusBlockBody.innerText === "") {
@@ -199,16 +205,15 @@ document.addEventListener("input", (event) => {
     const pageId = event.target.parentNode.dataset.id
     macros.writePageTitle(pageId, event.target.innerText)
   }
-})
+}))
 
 const globalHotkeys = {
   "hide top bar": {
     key: "b",
     control: true,
     fn: () => {
-      if (idElements.topBar.style.marginTop === "0px") user.s.topBar = "hidden"
-      else user.s.topBar = "visible"
-      saveUser()
+      if (idElements.topBar.style.marginTop === "0px") mut.setUserSetting("topBar", "hidden")
+      else mut.setUserSetting("topBar", "visible")
     }
   },
   "escape": {
@@ -223,12 +228,10 @@ const globalHotkeys = {
     }
   },
   "download": { key: "s", control: true, shift: true, fn: downloadHandler },
-  "save": { key: "s", control: true, fn: debouncedSaveStore },
   "toggle color theme": {
     key: "m", control: true, fn: () => {
       const currentThemeIndex = colorThemeOrder.indexOf(user.s.theme)
-      user.s.theme = colorThemeOrder[(currentThemeIndex + 1) % colorThemeOrder.length]
-      saveUser()
+      mut.setUserSetting("theme", colorThemeOrder[(currentThemeIndex + 1) % colorThemeOrder.length])
     }
   },
   "search": {
@@ -290,8 +293,7 @@ const globalHotkeys = {
   },
   "hide bullets": {
     key: "p", control: true, fn: () => {
-      user.s.hideBulletsUnlessHover = !user.s.hideBulletsUnlessHover
-      saveUser()
+      mut.setUserSetting("hideBulletsUnlessHover", !user.s.hideBulletsUnlessHover)
     }
   },
   "copy block reference": {
@@ -327,9 +329,8 @@ const globalHotkeys = {
       // have to save cursor position because switching pages normally erasis this info
       const currentId = sessionState.focusId
 
-      macros.nocommit.move(currentId, newParentId)
-      macros.nocommit.write(currentId, string)
-      commit()
+      macros.move(currentId, newParentId)
+      macros.write(currentId, string)
 
       goto("pageTitle", title)
 
@@ -363,9 +364,8 @@ const globalHotkeys = {
 
       // have to save cursor position because switching pages normally erasis this info
 
-      macros.nocommit.move(currentId, newParentId)
-      macros.nocommit.write(currentId, string)
-      commit()
+      macros.move(currentId, newParentId)
+      macros.write(currentId, string)
 
       goto("pageTitle", title)
 
@@ -386,10 +386,31 @@ const globalHotkeys = {
       toggleCollapsed(sessionState.focusId)
       focusIdPosition()
     }
-  }
+  },
+  "remove empty blocks inside": {
+    key: "r", alt: true, fn: () => {
+      const removeEmtpyInside = (blocId) => {
+        const bloc = store.blox[blocId]
+        if (bloc.k === undefined || bloc.k.length === 0) {
+          if (bloc.s.length === 0) {
+            macros.delete(blocId)
+          }
+        } else {
+          for (let k of bloc.k) {
+            removeEmtpyInside(k)
+          }
+        }
+      }
+      if (!sessionState.focusId) {
+        notifyText(`"remove empty blocks inside" needs a block to be selected`)
+        return
+      }
+      removeEmtpyInside(sessionState.focusId)
+    }
+  },
 }
 
-document.addEventListener("keydown", (event) => {
+document.addEventListener("keydown", eventHandlerWrapper((event) => {
   for (let hotkeyName in globalHotkeys) {
     const hotkey = globalHotkeys[hotkeyName]
     if (event.key.toLowerCase() === hotkey.key &&
@@ -441,9 +462,8 @@ document.addEventListener("keydown", (event) => {
         // iterate backwards so the idxs don't shift underneath you
         for (let i = dragSelect.endIdx; i >= dragSelect.startIdx; i--) {
           const node = childNodes[i]
-          macros.nocommit.delete(node.dataset.id)
+          macros.delete(node.dataset.id)
         }
-        commit()
       }
       dragSelect = null
       did = true
@@ -667,9 +687,9 @@ document.addEventListener("keydown", (event) => {
       }
     }
   }
-})
+}))
 
-document.addEventListener('paste', (event) => {
+document.addEventListener('paste', eventHandlerWrapper((event) => {
   console.log(event)
   const clipboardText = event.clipboardData.getData('text')
   console.log(clipboardText.substring(0, 2))
@@ -683,10 +703,9 @@ document.addEventListener('paste', (event) => {
   if (clipboardText.substring(0, 2) === "- ") {
     console.log('Pasting Markdown')
     insertMdIntoBloc(clipboardText, sessionState.focusId, 0)
-    commit()
     event.preventDefault()
   }
-})
+}))
 
 const navigateDropdownWithKeyboard = (parent, list, cache, focused, event) => {
   // todo factor this so the same logic works on search all, block, title, and template
@@ -715,7 +734,7 @@ const navigateDropdownWithKeyboard = (parent, list, cache, focused, event) => {
 
 // The single event handler model has some problems. The cases need to appear in the same order they are nested in the DOM
 // maybe this should be click instead of mousedown
-document.addEventListener("mousedown", (event) => {
+document.addEventListener("mousedown", eventHandlerWrapper((event) => {
   if (event.button !== 0) {
     return
   }
@@ -808,7 +827,7 @@ document.addEventListener("mousedown", (event) => {
 
   // this is at the bottom so that autocomplete suggestion click handler still knows where the link is. 
   // todo have better tracking of active block
-})
+}))
 
 
 const commonAncestorNode = (a, b) => {
@@ -863,23 +882,23 @@ const mouseMoveListener = (event) => {
   }
 }
 
-document.addEventListener("mousedown", (event) => {
+document.addEventListener("mousedown", eventHandlerWrapper((event) => {
   setDragSelected(false)
   dragSelect = null
   if (event.target.closest(".block")) {
     document.addEventListener("mousemove", mouseMoveListener)
     dragSelectStartBlock = event.target.closest(".block")
   }
-})
+}))
 
-document.addEventListener("mouseup", (event) => {
+document.addEventListener("mouseup", eventHandlerWrapper((event) => {
   if (dragSelectStartBlock !== null) {
     document.removeEventListener("mousemove", mouseMoveListener)
     dragSelectStartBlock = null
   }
-})
+}))
 
-document.addEventListener("selectionchange", (event) => {
+document.addEventListener("selectionchange", eventHandlerWrapper((event) => {
   focusNode = getSelection().focusNode
   focusOffset = getSelection().focusOffset
   if (focusNode) {
@@ -896,13 +915,12 @@ document.addEventListener("selectionchange", (event) => {
     }
   }
   sessionState.isFocused = false
-})
+}))
 
 // ID'ed ELEMENT EVENT LISTENERS ----------------------------------------------------------
 
 const showTopBarFn = () => {
-  user.s.topBar = "visible"
-  saveUser()
+  mut.setUserSetting("topBar", "visible")
 }
 let showTopBarTimeout = null
 
@@ -996,6 +1014,11 @@ const focusLogin = () => {
   idElements.loginEmail.focus()
 }
 
+const unfocusLoginSignup = () => {
+  idElements.signup.style.display = "none"
+  idElements.login.style.display = "none"
+}
+
 idElements.switchToSignup.addEventListener('click', focusSignup)
 
 idElements.switchToLogin.addEventListener('click', focusLogin)
@@ -1011,7 +1034,7 @@ const rwlClickOutListener = (event) => {
 topButtons["Login"].addEventListener('click', focusLogin)
 
 topButtons["Sign Out"].addEventListener('click', (event) => {
-  if (isSynced()) reset()
+  if (isSynced()) mut.signOut()
   else {
     idElements.reallyWantToLeave.style.display = "flex"
     document.addEventListener('click', (event) => rwlClickOutListener(event))
@@ -1019,7 +1042,7 @@ topButtons["Sign Out"].addEventListener('click', (event) => {
   }
 })
 
-idElements.reallyWantToLeave.children[0].addEventListener('click', reset)
+idElements.reallyWantToLeave.children[0].addEventListener('click', mut.signOut)
 
 
 topButtons["Create New Graph"].addEventListener("keydown", (event) => {
@@ -1030,4 +1053,36 @@ topButtons["Create New Graph"].addEventListener("keydown", (event) => {
 
 topButtons["Report Issue"].addEventListener("click", (event) => {
   // todo report issue
+})
+
+
+idElements.loginForm.addEventListener("submit", async (event) => {
+  // this is at the top because this is async and you wouldn't want to wait before preventing default
+  event.preventDefault()
+  const email = idElements.loginEmail.value
+  idElements.loginEmail.value = ""
+  const password = idElements.loginPassword.value
+  idElements.loginPassword.value = ""
+  const logInError = await mut.login(email, password)
+  if (logInError) {
+    notifyText("Invalid email or password")// @TODO make good, specific error messages
+  } else {
+    unfocusLoginSignup()
+  }
+})
+
+idElements.signupForm.addEventListener("submit", async (event) => {
+  event.preventDefault()
+  const email = idElements.signupEmail.value
+  idElements.signupEmail.value = ""
+  const username = idElements.signupUsername.value
+  idElements.signupUsername.value = ""
+  const password = idElements.signupPassword.value
+  idElements.signupPassword.value = ""
+  const signUpError = await mut.signup(email, username, password)
+  if (signUpError) {
+    notifyText("Invalid email, username, or password")
+  } else {
+    unfocusLoginSignup()
+  }
 })

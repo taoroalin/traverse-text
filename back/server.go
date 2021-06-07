@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	cryptorand "crypto/rand"
 	"errors"
 	"fmt"
@@ -10,7 +9,6 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-	"text/template"
 	"time"
 
 	"crypto/sha256"
@@ -18,8 +16,6 @@ import (
 
 	// faster drop in replacement for "encoding/json"
 	"github.com/goccy/go-json"
-
-	"net/smtp"
 
 	// not compatible with net/http
 	"github.com/valyala/fasthttp"
@@ -145,7 +141,10 @@ const logpath = "../server-log/"
 
 var hashAllZeros [32]byte
 
-var PathRegexp = regexp.MustCompile("^/(get|edit|put|creategraph|searchgraphs|auth|signup|settings|issue|error|log|websocket|verify-email)(?:/([a-zA-Z_0-9-]+))?(?:/([a-zA-Z_0-9-]+))?(?:/([a-zA-Z_0-9-]+))?$")
+var loggedInMethodsList = []string{"get", "edit", "put", "creategraph", "searchgraphs", "settings", "websocket"}
+var loggedInMethods map[string]bool
+
+var PathRegexp = regexp.MustCompile("^/(get|edit|put|creategraph|searchgraphs|auth|signup|settings|issue|error|log|websocket|verify-email)(?:/([a-zA-Z_0-9-]+))?(?:/([a-zA-Z_0-9-]+))?(?:/([a-zA-Z_0-9-]+))?/?$")
 
 var usernameRegexp = regexp.MustCompile("^[a-zA-Z0-9_-]{3,50}$")
 
@@ -185,9 +184,9 @@ func accountsServerFromDataPath(datapath string, logpath string) (result Server)
 	emailDevIfItsAnError(err)
 	json.Unmarshal(graphMetaBytes, &result.AllBloxMeta)
 
-	result.errorFile = openFileForAppend(logpath + "error.txt")
+	result.errorFile = openFileForAppend(logpath + "errors.txt")
 	result.logFile = openFileForAppend(logpath + "log.txt")
-	result.frontErrorFile = openFileForAppend(logpath + "error-front.txt")
+	result.frontErrorFile = openFileForAppend(logpath + "errors-front.txt")
 	result.frontLogFile = openFileForAppend(logpath + "log-front.txt")
 	result.issueFile = openFileForAppend(logpath + "issues.txt")
 	return
@@ -294,11 +293,10 @@ type EditsResponse struct {
 }
 
 // this handles all the requests. Right now none of the API methods are their own functions. this will work for awhile, but they want to be factored out eventually if I want to run API code on multiple servers
-
 // HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER
 func rootHandler(ctx *fasthttp.RequestCtx) {
 	ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
-	ctx.Response.Header.Set("Access-Control-Allow-Origin", "traversetext.com")
+	ctx.Response.Header.Set("Access-Control-Allow-Origin", "*") // traversetext.com
 	ctx.Response.Header.Set("Access-Control-Expose-Headers", "*")
 
 	if ctx.Request.Header.Peek("Access-Control-Request-Headers") != nil {
@@ -315,20 +313,143 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 	}
 	method := string(match[1])
 
-	var wireHash []byte
-	// todo check wire hash length
-	_, err := base64.StdEncoding.Decode(wireHash, ctx.Request.Header.Peek("h"))
+	wireHash := make([]byte, 100)
+	wireHashRaw := ctx.Request.Header.Peek("h")
+	_, err := base64.StdEncoding.Decode(wireHash, wireHashRaw)
 	if err != nil {
 		ctx.SetStatusCode(400)
-		ctx.WriteString("Need wire hash!")
+		ctx.WriteString("Wire Hash needs to be base64 standard encoding!")
 		return
 	}
 	serverHashBytes := sha256.Sum256(wireHash)
 	serverHash := base64.StdEncoding.EncodeToString(serverHashBytes[:])
 	account := server.userFromHash(serverHash)
 
-	if account == nil {
-		if method == "signup" {
+	if loggedInMethods[method] {
+
+		if account == nil {
+			ctx.SetStatusCode(fasthttp.StatusUnauthorized)
+			ctx.WriteString("Need auth hash")
+			return
+		}
+
+		switch method {
+		case "get":
+			graphName := string(match[2])
+			if !server.canUserReadGraphName(account, graphName) {
+				ctx.SetStatusCode(fasthttp.StatusUnauthorized)
+				ctx.WriteString("Your account doesn't have access to that graph")
+				return
+			}
+
+			ctx.SendFile(datapath + "blox-br/" + graphName)
+		case "edit":
+			graphName := string(match[2])
+			if !server.canUserWriteGraphName(account, graphName) {
+				ctx.SetStatusCode(fasthttp.StatusUnauthorized)
+				ctx.WriteString("Your account doesn't have access to that graph")
+				return
+			}
+
+			request := EditsRequest{}
+			err := json.Unmarshal(ctx.Request.Body(), &request)
+			fmt.Printf("%v+\n", request)
+
+			if err != nil ||
+				request.LastSyncedCommitId == "" ||
+				request.Edit.Id == "" ||
+				request.Edit.Time != zeroTime ||
+				request.Edit.Edit == "" {
+				response := EditsResponse{Status: "commited"}
+				jsonResponse, err := json.Marshal(response)
+				emailDevIfItsAnError(err)
+				ctx.Write(jsonResponse)
+				return
+			}
+
+			bloxMeta := server.AllBloxMeta.BloxMeta[graphName]
+			lenEdits := len(bloxMeta.Edits)
+			previousCommitId := bloxMeta.Edits[lenEdits-1].Id
+			if previousCommitId == request.LastSyncedCommitId {
+				bloxMeta.Edits = append(bloxMeta.Edits, request.Edit)
+				response := EditsResponse{Status: "commited"}
+				jsonResponse, err := json.Marshal(response)
+				emailDevIfItsAnError(err)
+				ctx.Write(jsonResponse)
+				return
+			}
+			/*
+				when the client sends an edit over an old version of blox, and that version is still stored, then the server sends back the interim commits, and the client has to integrate those commits and retry
+
+			*/
+			for i := lenEdits - 2; i >= 0; i++ {
+				edit := bloxMeta.Edits[i]
+				if edit.Id == request.LastSyncedCommitId {
+					response := EditsResponse{Status: "get-up-to-date", CommitId: previousCommitId, Edits: bloxMeta.Edits[i:]}
+					jsonResponse, err := json.Marshal(response)
+					emailDevIfItsAnError(err)
+					ctx.Write(jsonResponse)
+					return
+				}
+			}
+			ctx.Response.Header.Add("status", "rebase")
+			return
+			// file := openFileForAppend(datapath + "edits-br/" + graphName)
+			// file.Write(ctx.Request.Body())
+			// closeError := file.Close()
+			// emailDevIfItsAnError(closeError)
+		case "put":
+			graphName := string(match[2])
+			if !server.canUserWriteGraphName(account, graphName) {
+				ctx.SetStatusCode(fasthttp.StatusUnauthorized)
+				ctx.WriteString("Your account doesn't have access to that graph")
+				return
+			}
+			writeFileThroughTemp(ctx.Request.Body(),
+				datapath+"blox-br/"+string(graphName))
+		case "create":
+		case "search":
+		case "auth":
+			userReadableAccountJson, err := json.Marshal(account.UserReadable)
+			emailDevIfItsAnError(err)
+			ctx.Write(userReadableAccountJson)
+		case "settings":
+			err := json.Unmarshal(ctx.Request.Body(), &account.UserReadable.FrontEndSettings)
+			if err != nil {
+				ctx.WriteString("congrats, you corrupted your settings")
+				ctx.SetStatusCode(400)
+				return
+			}
+			server.persistAllAccounts()
+		case "websocket":
+
+			websocketReadLoop := func(conn *websocket.Conn) {
+				// why callback? isn't the Go way to use goroutines?
+				for {
+					messageType, p, err := conn.ReadMessage()
+					if err != nil {
+						// log.Println(err)
+						return
+					}
+					if err := conn.WriteMessage(messageType, p); err != nil {
+						// log.Println(err)
+						return
+					}
+				}
+			}
+
+			err := websocketUpgrader.Upgrade(ctx, websocketReadLoop)
+			if err != nil {
+				// log.Println(err)
+				return
+			}
+		default:
+			ctx.SetStatusCode(400)
+		}
+
+	} else { // method is not-logged-in
+		switch method {
+		case "signup":
 			accountStruct := Account{}
 			accountStruct.PasswordHashHash = serverHash
 			schemaError := json.Unmarshal(ctx.Request.Body(), &accountStruct.UserReadable)
@@ -352,7 +473,7 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 
 			ctx.Write(reJsoned)
 			return
-		} else if method == "verify-email" {
+		case "verify-email":
 			theAccount := server.AccountsByHash[string(match[2])]
 			code := string(match[3])
 			codeInt, err := strconv.ParseInt(code, 10, 32)
@@ -371,282 +492,44 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 			ctx.SetStatusCode(301)
 			ctx.Response.Header.Set("Location", "https://traversetext.com/verified")
 			return
+		case "issue":
+			server.issueFile.Write(ctx.Request.Body())
+			server.issueFile.Write([]byte("\n"))
+			return
+		case "error":
+			server.frontErrorFile.Write(ctx.Request.Body())
+			server.frontErrorFile.Write([]byte("\n"))
+			return
+		case "log":
+			server.frontLogFile.Write(ctx.Request.Body())
+			server.frontLogFile.Write([]byte("\n"))
+			return
 		}
-
-		ctx.SetStatusCode(fasthttp.StatusUnauthorized)
-		ctx.WriteString("Need auth hash")
-		return
 	}
 
-	switch string(match[1]) {
-	case "get":
-		graphName := string(match[2])
-		if !server.canUserReadGraphName(account, graphName) {
-			ctx.SetStatusCode(fasthttp.StatusUnauthorized)
-			ctx.WriteString("Your account doesn't have access to that graph")
-			return
-		}
-		ctx.SendFile(datapath + "blox-br/" + graphName)
-	case "edit":
-		graphName := string(match[2])
-		if !server.canUserWriteGraphName(account, graphName) {
-			ctx.SetStatusCode(fasthttp.StatusUnauthorized)
-			ctx.WriteString("Your account doesn't have access to that graph")
-			return
-		}
-
-		request := EditsRequest{}
-		err := json.Unmarshal(ctx.Request.Body(), &request)
-		fmt.Printf("%v+\n", request)
-
-		if err != nil ||
-			request.LastSyncedCommitId == "" ||
-			request.Edit.Id == "" ||
-			request.Edit.Time != zeroTime ||
-			request.Edit.Edit == "" {
-			response := EditsResponse{Status: "commited"}
-			jsonResponse, err := json.Marshal(response)
-			emailDevIfItsAnError(err)
-			ctx.Write(jsonResponse)
-			return
-		}
-
-		bloxMeta := server.AllBloxMeta.BloxMeta[graphName]
-		lenEdits := len(bloxMeta.Edits)
-		previousCommitId := bloxMeta.Edits[lenEdits-1].Id
-		if previousCommitId == request.LastSyncedCommitId {
-			bloxMeta.Edits = append(bloxMeta.Edits, request.Edit)
-			response := EditsResponse{Status: "commited"}
-			jsonResponse, err := json.Marshal(response)
-			emailDevIfItsAnError(err)
-			ctx.Write(jsonResponse)
-			return
-		}
-		/*
-			when the client sends an edit over an old version of blox, and that version is still stored, then the server sends back the interim commits, and the client has to integrate those commits and retry
-
-		*/
-		for i := lenEdits - 2; i >= 0; i++ {
-			edit := bloxMeta.Edits[i]
-			if edit.Id == request.LastSyncedCommitId {
-				response := EditsResponse{Status: "get-up-to-date", CommitId: previousCommitId, Edits: bloxMeta.Edits[i:]}
-				jsonResponse, err := json.Marshal(response)
-				emailDevIfItsAnError(err)
-				ctx.Write(jsonResponse)
-				return
-			}
-		}
-		ctx.Response.Header.Add("status", "rebase")
-		return
-		// file := openFileForAppend(datapath + "edits-br/" + graphName)
-		// file.Write(ctx.Request.Body())
-		// closeError := file.Close()
-		// emailDevIfItsAnError(closeError)
-	case "put":
-		graphName := string(match[2])
-		if !server.canUserWriteGraphName(account, graphName) {
-			ctx.SetStatusCode(fasthttp.StatusUnauthorized)
-			ctx.WriteString("Your account doesn't have access to that graph")
-			return
-		}
-		writeFileThroughTemp(ctx.Request.Body(),
-			datapath+"blox-br/"+string(graphName))
-	case "create":
-	case "search":
-	case "auth":
-		userReadableAccountJson, err := json.Marshal(account.UserReadable)
-		emailDevIfItsAnError(err)
-		ctx.Write(userReadableAccountJson)
-	case "settings":
-		err = json.Unmarshal(ctx.Request.Body(), &account.UserReadable.FrontEndSettings)
-		if err != nil {
-			ctx.WriteString("congrats, you corrupted your settings")
-			ctx.SetStatusCode(400)
-			return
-		}
-		server.persistAllAccounts()
-	case "issue":
-		server.issueFile.Write(ctx.Request.Body())
-	case "error":
-		server.frontErrorFile.Write(ctx.Request.Body())
-	case "log":
-		server.frontLogFile.Write(ctx.Request.Body())
-	case "websocket":
-
-		websocketReadLoop := func(conn *websocket.Conn) {
-			// why callback? isn't the Go way to use goroutines?
-			for {
-				messageType, p, err := conn.ReadMessage()
-				if err != nil {
-					// log.Println(err)
-					return
-				}
-				if err := conn.WriteMessage(messageType, p); err != nil {
-					// log.Println(err)
-					return
-				}
-			}
-		}
-
-		err := websocketUpgrader.Upgrade(ctx, websocketReadLoop)
-		if err != nil {
-			// log.Println(err)
-			return
-		}
-	default:
-		ctx.SetStatusCode(400)
-	}
 }
 
 func timedRootHandler(ctx *fasthttp.RequestCtx) {
 	start := time.Now()
 	rootHandler(ctx)
 	duration := time.Since(start)
-	fmt.Println(duration)
-}
-
-// EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL EMAIL
-
-var (
-	// google says they do 500 email-recipients/day for free
-	// sending more than that would be so yikes. I can't imagine being that annoying
-	// or maybe I already am :)
-	emailServer   string   = "smtp.gmail.com"
-	serverAccount string   = "traversetext@gmail.com"
-	emailPassword string   = "" // set in main from seperate file for security
-	devEmails     []string = []string{"taoroalin@gmail.com"}
-)
-
-type Email struct {
-	Recipients []string
-	Subject    string
-	Body       string
-	Html       bool
-}
-
-var emailTemplate, _ = template.New("email").Parse(`To: {{.Recipients}}
-Subject: {{.Subject}}
-Content-Type: text/{{if .Html}}html{{else}}plain{{end}}; charset="utf-8"
-MIME Version: 1
-
-{{.Body}}`)
-
-var emailVerificationTemplate, _ = template.New("test").Parse(
-	`<!DOCTYPE html>
-<html>
-
-<head>
-  <title>Testing Title</title>
-</head>
-
-<body style="color:#000000;">
-  <table align="center">
-    <tr>
-      <td>
-        <table align="center" bgcolor="#282A36" role="presentation" border="0" cellpadding="0" cellspacing="0"
-          style="color:#F8F8F2; border-radius:8px; padding:60px 100px; margin: 0px 100px 0px 100px;">
-          <tr>
-            <td align="center">
-              <p style="margin: 0; font-size:36px;">Traverse Text</p>
-            </td>
-          </tr>
-          <tr>
-            <td align="center">
-              <p style="margin: 0; font-size:16px;">Verify your email to set up your traversetext.com account</p>
-            </td>
-          </tr>
-          <tr style="">
-            <td align="center" style="color:#8BE9FD; font-size:24px;">
-              <table>
-                <tr>
-                  <td style="padding: 8px 12px;margin:12px 0px; background-color:#45495f; border-radius:6px;">
-                    <a style="color:#8BE9FD; text-decoration:none;"
-                      href="https://traversetext.com:3000/verify-email/{{.EmailVerificationCode}}">Verify</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-					<tr>
-						<td align="center" style="padding:10px">
-							<p style="margin:0;font-size:12px">tiny text</p>
-						</td>
-					</tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-
-</html>`)
-
-func (email Email) Send() error {
-	buf := new(bytes.Buffer)
-	templateError := emailTemplate.Execute(buf, email)
-	breakOn(templateError)
-	auth := smtp.PlainAuth("Tao", serverAccount, emailPassword, emailServer)
-	sendError := smtp.SendMail(emailServer+":587", auth, serverAccount, email.Recipients, buf.Bytes())
-	return sendError
-}
-
-/*
-how email confirmation works.
-
-when account is created, email code is generated.
-
-I guess I need a job to delete unverified accounts every week. delete every account not made in the past week every week. this is less overhead than checking a heap at small intervals to catch accounts at exactly 2 weeks or setting an OS timer per account
-
-the API has an endpoint for verifying emails
-*/
-func sendEmailConfirmationEmail(account *Account) {
-	buf := new(bytes.Buffer)
-	templateError := emailVerificationTemplate.Execute(buf, account)
-	breakOn(templateError)
-	email := Email{
-		Recipients: []string{account.UserReadable.Email},
-		Subject:    "Verification code: " + fmt.Sprint(account.EmailVerificationCode),
-		Body:       buf.String(),
-		Html:       true,
-	}
-	email.Send()
-}
-
-func emailDevAboutError(message string) error {
-	email := Email{
-		Recipients: devEmails,
-		Subject:    "Traversetext.com Api Error",
-		Body:       message,
-	}
-	err := email.Send()
-	breakOn(err)
-	return err
-}
-
-const timeBetweenEmails = time.Minute * 30
-
-var lastTimeTaoWasEmailed time.Time = time.Now().Add(-timeBetweenEmails)
-
-func emailDevIfItsAnError(err error) {
-	if err != nil {
-		if time.Since(lastTimeTaoWasEmailed) > timeBetweenEmails {
-			lastTimeTaoWasEmailed = time.Now()
-			go emailDevAboutError(fmt.Sprint(err))
-		}
-		panic(err)
-	}
+	fmt.Printf("%v took %v\n", string(ctx.Path()), duration)
 }
 
 // MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN
 
 func main() {
+	for _, method := range loggedInMethodsList {
+		loggedInMethods[key] = true
+	}
 
 	emailPasswordBytes, err := ioutil.ReadFile("./email-password.txt")
 	breakOn(err)
 	emailPassword = string(emailPasswordBytes)
 
-	go sendEmailConfirmationEmail(&Account{UserReadable: UserReadable{Email: "taoroalin@gmail.com"},
-		EmailVerificationCode: 123456,
-	})
+	// go sendEmailConfirmationEmail(&Account{UserReadable: UserReadable{Email: "taoroalin@gmail.com"},
+	// 	EmailVerificationCode: 123456,
+	// })
 
 	fmt.Println("running traversetext server")
 

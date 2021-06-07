@@ -1,3 +1,62 @@
+const CHARS_64 = "-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ"
+const CHARS_16 = "0123456789abcdef"
+
+
+// this is v slow, 7M dates / s
+// not using bit shifts here because this needs to work with 64 bit ints and JS doesn't expose 64 bit bit-shifts
+const intToBase64 = (int) => {
+  if (int === undefined) return
+  let str = ""
+  while (int > 0) {
+    str = "" + CHARS_64[int % 64] + str
+    int = Math.floor(int / 64)
+  }
+  return str
+}
+
+const base64ToInt = (str) => {
+  let result = 0
+  for (let i = 0; i < str.length; i++) {
+    result += CHARS_64.indexOf(str[i]) * Math.pow(64, (str.length - i - 1))
+  }
+  return result
+}
+
+
+const escapeRegex = (string) => string.replaceAll(/([\[\]\(\)])/g, "\\$1").replaceAll("\\\\", "")
+
+const newSearchRegex = (string) => new RegExp(escapeRegex(string), "i")
+
+let newUid, newUUID, newUidPure
+{
+  let UidRandomContainer = new Uint8Array(9)
+  newUidPure = () => {
+    crypto.getRandomValues(UidRandomContainer)
+    result = ""
+    for (let i = 0; i < 9; i++) {
+      result += CHARS_64[UidRandomContainer[i] % 64]
+    }
+    return result
+  }
+  newUid = () => {
+    let result
+    do {
+      result = newUidPure()
+    } while (store.blox[result] !== undefined)
+    return result
+  }
+
+  let UuidRandomContainer = new Uint8Array(21)
+  newUUID = () => { // this is 126 bits, 21xbase64
+    crypto.getRandomValues(UuidRandomContainer)
+    let result = ""
+    for (let i = 0; i < 21; i++) {
+      result += CHARS_64[UuidRandomContainer[i] % 64]
+    }
+    return result
+  }
+}
+
 // deepcopy for JSON-ifiables, but faster than JSON.parse . JSON.stringify
 const cpy = (x) => {
   if (typeof x === "object") {
@@ -127,4 +186,44 @@ const shuffle = (arr) => {
     arr[i] = arr[sidx]
     arr[sidx] = tmp
   }
+}
+
+const promisify = (fn) => (...args) => new Promise((resolve, err) => fn(...args, resolve))
+
+const urlToSessionState = (url) => {
+  url = decodeURI(url)
+  const theSessionState = { scroll: 0, isFocused: false, position: 0, block: undefined, page: undefined }
+  theSessionState.pageFrame = "dailyNotes"
+  theSessionState.graphName = user.s.graphName
+
+  const queries = url.matchAll(/([a-zA-Z0-9\-_]+)=([a-zA-Z0-9\-_]+)/g)
+  for (let query of queries) {
+    theSessionState[query[1]] = query[2]
+    if (query[1] === 'focusId') theSessionState.isFocused = true
+  }
+
+  const paths = Array.from(url.matchAll(/(?:\/([a-zA-Z0-9_ \-]+))/g))
+  console.log(paths)
+  if (paths.length < 2) {
+    return theSessionState
+  }
+  theSessionState.graphName = paths[0][1]
+  theSessionState.pageFrame = paths[1][1]
+  if (theSessionState.pageFrame === 'pageTitle') {
+    theSessionState.page = paths[2][1]
+  }
+  if (theSessionState.pageFrame === 'block') {
+    theSessionState.block = paths[2][1]
+  }
+  console.log(theSessionState)
+  return theSessionState
+}
+
+const sortByLastEdited = (store, arr) => {
+  arr.sort((a, b) => {
+    if (store.blox[a].et > store.blox[b].et) {
+      return -1
+    }
+    return 1
+  })
 }

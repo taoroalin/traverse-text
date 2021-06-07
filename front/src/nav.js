@@ -194,73 +194,13 @@ const dailyNotesInfiniteScrollListener = () => {
 }
 
 const logError = async (message, url, lineNumber, columnNumber, error) => {
-  console.log("LOGGING ERROR")
-  const headers = new Headers()
-  headers.set('h', user.h)
-  const res = await fetch(`${nodeJsServerUrl}/error`, { headers, method: 'POST', body: `${user.e}\n${error.stack}\n` })
-  if (res.statusCode !== 200) {
-    console.log(res)
-  } else {
-    console.log("ERROR LOGGED")
-  }
+  clientGo.logError(error.stack)
 }
 
 window.onerror = logError
 
-
-const showTopBar = () => {
-  idElements.topBar.style.marginTop = "0px"
-  idElements.topBarHiddenHitbox.style.display = "none"
-}
-const hideTopBar = () => {
-  idElements.topBar.style.marginTop = "-48px"
-  idElements.topBarHiddenHitbox.style.display = "block"
-}
-const saveUser = () => {
-  document.body.className = user.s.theme
-  if (user.s.topBar === "visible") showTopBar()
-  else hideTopBar()
-
-  document.body.spellcheck = user.s.spellcheck
-  document.body.dataset['editingspotlight'] = user.s.editingSpotlight
-
-  document.body.dataset['hideBulletsUnlessHover'] = user.s.hideBulletsUnlessHover
-
-  if (user.h) {
-    topButtons["Sign Out"].style.display = "block"
-    topButtons["Sign Up"].style.display = "none"
-    topButtons["Login"].style.display = "none"
-  } else {
-    topButtons["Sign Out"].style.display = "none"
-    topButtons["Sign Up"].style.display = "block"
-    topButtons["Login"].style.display = "block"
-  }
-  saveUserJustLocalStorage()
-  saveSettingsToNodeJsServer()
-}
-
-const saveUserJustLocalStorage = () => {
-  localStorage.setItem("user", JSON.stringify(user))
-}
-
-const reset = async () => {
-  localStorage.clear()
-  const r = indexedDB.deleteDatabase("microroam")
-  window.location.href = window.location.href
-}
-
-
 // Finally starting the program after everything's compiled
-if (dataLoaded) start()
-scriptsLoaded = true
-
-
-const ptest = () => {
-  const t2 = performance.now()
-  for (let i = 0; i < 100; i++) {
-    generateInnerOuterRefs()
-  }
-  const took = (performance.now() - t2)
-  console.log(`thing took ${took}`)
+navLoaded = true
+if (graphState === "loaded") {
+  renderSessionState()
 }
-// ptest()

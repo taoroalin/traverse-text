@@ -1,92 +1,97 @@
-const clientGo = {
-  middlePepper: "76pCgT0lW6ES9yjt01MeH",
-  beginPepper: "CeoPPOv9rIq6O7YiYlSFX",
-  endPepper: "Rzw1dagomQGpoo2s7iGE3lYL2yruaJDGrUk6bFCvz",
+/**
+could have a wrapper that keeps track of what requests (fns) are in flight. Wrapper could also que requests so that one finishes before the next. That would ensure the server and client see events in the same order (the first time without client re-ordering time)
+ */
 
-  hashPassword: async (password, email) => {
-    const saltAndPeppered = `${beginPepper}${password}${middlePepper}${email}${endPepper}`
-    const buffer = textEncoder.encode(saltAndPeppered)
-    const hashed = await crypto.subtle.digest("SHA-256", buffer)
-    const passwordHashBuffer = new Uint8Array(hashed)
-    return btoa(String.fromCharCode(...passwordHashBuffer));
+/**
+These functions don't modify client side state!
+ */
+//Status Code 888 means: request timed out
+const clientGo = {
+  // this async await stuff looks like it would add 0.3ms or something
+  // if it adds much more than that would have to switch to callbacks
+  fetch: async (url, options, timeout = clientGo.defaultTimeout) => {
+    const abortController = new AbortController()
+    options.signal = abortController.signal
+    const timeoutPromise = promisify(() => setTimeout(() => {
+      abortController.abort()
+      return { status: 888 }
+    }, timeout))
+    return await Promise.race([fetch(goServerUrl + "/" + url, options), timeoutPromise])
   },
 
-  login: (email, password) => {
-    const passwordHash = await hashPassword(password, email)
-    const response = await fetch(`${nodeJsServerUrl}/auth`, { method: "POST", headers: { h: passwordHash } })
+  isTherePendingRequest: () => {
+    return clientGo.pendingRequest === null
+  },
+
+  defaultTimeout: 2000,
+  lastRequestTimedOut: false,
+
+  login: async (passwordHash) => {
+    const response = await clientGo.fetch(`auth`, { method: "POST", headers: { h: passwordHash } })
     if (response.status === 200) {
       user = await response.json()
-      saveUser()
-      invalidateLocal()
       console.log(user)
-    } else {
-      render.notifyText("Don't know that username + password.")
+      return user
     }
   },
 
-  signup: (email, username, password) => {
-    const passwordHash = await hashPassword(password, email)
+  signup: async (email, username, passwordHash) => {
     const jsonBody = JSON.stringify({ h: passwordHash, u: username, e: email, s: user.s })
     console.log(jsonBody)
-    const response = await fetch(`${nodeJsServerUrl}/signup`, { method: "POST", body: jsonBody })
+    const response = await clientGo.fetch(`signup`, { method: "POST", body: jsonBody })
     if (response.status === 200) {
-      console.log(response)
-      user = await response.json()
-      saveUser()
-      invalidateLocal()
-      console.log(`signed up`)
-    } else {
-      const responseText = await response.json()
-      render.notifyText(responseText)
+      const serverUser = await response.json()
+      return serverUser
     }
-  },
-
-  requestWrapper: async (endpoint, headers, body) => {
-    headers.h = user.h
-    const response = await fetch(`${nodeJsServerUrl}/${endpoint}`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body)
-      })
-    const json = await response.json()
-    return { status: response.status, body: json }
   },
 
   get: async (graphName) => {
-    const response = await clientGo.requestWrapper(`create/${graphName}`, {}, blox)
-    return response.status == 200 ? undefined : response.status
+    const response = await clientGo.fetch(`get/${graphName}`, { headers: { h: user.h } })
+    if (response.status === 200) {
+      const json = await response.json()
+      return json
+    }
+    return response.status
+  },
+  /**
+  qualified blox is 
+  {graphName, commitId, blox}
+   */
+  create: async (qualifiedBlox) => {
+    const response = await clientGo.fetch(`create`, { headers: { h: user.h }, method: "POST", body: JSON.stringify(qualifiedBlox) })
+    return response.status === 200 ? undefined : response.status
   },
 
-  create: async (graphName, blox) => {
-
+  write: async (qualifiedBlox) => {
+    const response = await clientGo.fetch(`write`, { headers: { h: user.h }, method: "POST", body: JSON.stringify(qualifiedBlox) })
+    return response.status === 200 ? undefined : response.status
   },
 
-  edit: async (graphName, syncCommitId, edits) => {
-
+  edit: async (graphName, commit) => {
+    const response = await clientGo.fetch(`edit/${graphName}`, { headers: { h: user.h }, method: "POST", body: JSON.stringify(commit) })
+    switch (response.status) {
+      case 200:
+        return
+      case 888:
+        return response.status
+      case 409:
+        const json = await response.json()
+        return json
+      default:
+        return response.status
+    }
   },
 
-  compact: async (graphName, beginCommitId, endCommitId) => {
-
+  logError: async (text) => {
+    const response = await clientGo.fetch(`error/`, { method: "POST", body: text })
   },
+
+  log: async (text) => {
+    const response = await clientGo.fetch(`log/`, { method: "POST", body: text })
+  },
+
+  settings: async (settings) => {
+    const response = await clientGo.fetch("settings/", { headers: { h: user.h }, method: "POST", body: JSON.stringify(settings) })
+    return response.status === 200 ? undefined : response.status
+  }
 }
-
-// idElements.loginForm.addEventListener("submit", async (event) => {
-//   event.preventDefault()
-//   const email = idElements.loginEmail.value
-//   idElements.loginEmail.value = ""
-//   const password = idElements.loginPassword.value
-//   idElements.loginPassword.value = ""
-//   login(email, password)
-// })
-
-// idElements.signupForm.addEventListener("submit", async (event) => {
-//   event.preventDefault()
-//   const email = idElements.signupEmail.value
-//   idElements.signupEmail.value = ""
-//   const username = idElements.signupUsername.value
-//   idElements.signupUsername.value = ""
-//   const password = idElements.signupPassword.value
-//   idElements.signupPassword.value = ""
-//   signup(email, username, password)
-// })

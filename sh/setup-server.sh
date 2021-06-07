@@ -23,10 +23,10 @@ echo "{}" > ./user-data-go/accounts.json
 mkdir ./user-data/blox-br/
 mkdir ./user-data/edits-br/
 
-# nginx
-cp ./back/nginx.conf /etc/nginx/nginx.conf
-sudo ufw allow 'Nginx HTTPS'
-mkdir -p /www/data
+# # nginx
+# cp ./back/nginx.conf /etc/nginx/nginx.conf
+# sudo ufw allow 'Nginx HTTPS'
+# mkdir -p /www/data
 
 chmod +x ./server
 ./server

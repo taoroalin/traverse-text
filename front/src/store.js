@@ -1,18 +1,35 @@
 // blox or bloc means either block or page. they're almost the same, just one has a parent and the other doesn't, and linking syntax is different
 const blankStore = (name) => ({
+  // properties of qualified blox
   graphName: name,
+  commitId: null,
   blox: {},
-  titles: {},
 
+  titles: {},
   refs: {},
   forwardRefs: {},
   innerRefs: {},
   outerRefs: {},
 
+  undoEditInProgress: [],
+  undoEdits: [],
+  redoEdits: [],
+  unsyncedEdits: [],
+  editStartSessionState: null,
+
   roamProps: {},
   collapsed: {},
   ownerRoamId: undefined,
 })
+
+const fillInMissingStoreProps = (store) => {
+  const blankStore = blankStore()
+  for (let key in blankStore) {
+    if (store[key] === undefined) {
+      store[key] = blankStore[key]
+    }
+  }
+}
 
 const bloxProps = [
   "s",  // string
@@ -30,7 +47,7 @@ const gcPage = (pageId) => {
     return
   }
   if (isPageEmpty(store, pageId))
-    macros.nocommit.delete(pageId)
+    macros.delete(pageId)
 }
 
 const isPageEmpty = (store, pageId) => {
@@ -93,7 +110,7 @@ const setLinks = (store, blocId, doCreatePages = true, doInnerOuterRefs = false,
     let ref = store.titles[title]
     if (ref === undefined) {
       if (doCreatePages) {
-        ref = macros.nocommit.createPage(title)
+        ref = macros.createPage(title)
         // todo manage the commit on this one. Need some standard for when to commit / when to do
         doRef(ref)
       }
@@ -385,35 +402,6 @@ const generateTitles = (store) => {
       }
     }
   }
-}
-
-const hydrateFromBlox = (graphName, blox) => {
-  console.log("hydratefromblox")
-  let theStore = blankStore(graphName)
-  theStore.blox = blox
-  theStore.graphName = graphName
-  generateTitles(theStore)
-  generateRefs(theStore)
-  return theStore
-}
-
-const sortByLastEdited = (store, arr) => {
-  arr.sort((a, b) => {
-    if (store.blox[a].et > store.blox[b].et) {
-      return -1
-    }
-    return 1
-  })
-}
-
-const createAndSwitchToNewStore = async (storeName) => {
-  setActiveStore(blankStore(storeName))
-  user.s.graphName = storeName
-  user.s.commitId = "MYVERYFIRSTCOMMITEVER"
-  saveUser()
-  await addGraph()
-  saveStore()
-  window.location.href = window.location.href
 }
 
 const getPageOfBlocId = (blocId) => {

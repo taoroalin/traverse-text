@@ -1,7 +1,8 @@
 const fs = require('fs')
 const zlib = require('zlib')
 const stream = require('stream')
-const { LruCache, promisify, doEditBlox, undoEditBlox } = require('../front/src/front-back-shared.js')
+
+const promisify = (fn) => (...args) => new Promise((resolve, err) => fn(...args, resolve))
 
 const brotliCompressParams = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT } }
 

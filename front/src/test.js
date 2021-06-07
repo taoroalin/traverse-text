@@ -34,10 +34,9 @@ const fixFirstBlocksOfPages = () => {
     const id = store.titles[title]
     const page = store.blox[id]
     if (page.k === undefined || page.k.length === 0) {
-      macros.nocommit.create(id, 0)
+      macros.create(id, 0)
     }
   }
-  commit()
 }
 
 
@@ -191,10 +190,20 @@ const decrypt = async () => {
   // need to return iv concatted with 
 }
 
-
 const terminalCommands = {
-  reset, flash, log, nolog, pr, downloadBinary, monitor
+  flash, log, nolog, pr, downloadBinary, monitor
 }
+
+
+const ptest = () => {
+  const t2 = performance.now()
+  for (let i = 0; i < 100; i++) {
+    generateInnerOuterRefs()
+  }
+  const took = (performance.now() - t2)
+  console.log(`thing took ${took}`)
+}
+// ptest()
 
 //~frontskip
 // const socket = new WebSocket("ws://localhost:4000//ws")
@@ -210,5 +219,3 @@ const terminalCommands = {
 //~
 
 // CLEANUP
-
-if (!store.collapsed) store.collapsed = {}
