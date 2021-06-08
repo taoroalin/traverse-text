@@ -39,7 +39,7 @@ func breakOn(e error) {
 	}
 }
 
-var zeroTime time.Time = time.Time{}
+var ZERO_TIME time.Time = time.Time{}
 
 func writeFileThroughTemp(content []byte, name string) {
 	tempFile, err := ioutil.TempFile(temppath, "")
@@ -49,14 +49,6 @@ func writeFileThroughTemp(content []byte, name string) {
 	tempFile.Close()
 	renameError := os.Rename(tempFile.Name(), datapath+"blox-br/"+name)
 	emailDevIfItsAnError(renameError)
-}
-
-func openFileForAppend(path string) *os.File {
-	result, err := os.OpenFile(path,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-		0644)
-	emailDevIfItsAnError(err)
-	return result
 }
 
 // Go isn't the type of language where you pass arbitrary stuff through
@@ -166,7 +158,23 @@ type Server struct {
 }
 
 func accountsServerFromDataPath(datapath string, logpath string) (result Server) {
-	result = Server{}
+
+	openFileForAppend := func(path string) *os.File {
+		result, err := os.OpenFile(path,
+			os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+			0644)
+		emailDevIfItsAnError(err)
+		return result
+	}
+
+	result = Server{
+		errorFile:      openFileForAppend(logpath + "errors.txt"),
+		logFile:        openFileForAppend(logpath + "log.txt"),
+		frontErrorFile: openFileForAppend(logpath + "errors-front.txt"),
+		frontLogFile:   openFileForAppend(logpath + "log-front.txt"),
+		issueFile:      openFileForAppend(logpath + "issues.txt"),
+	}
+
 	result.AccountsByEmail = make(map[string]*Account)
 	result.AccountsByUsername = make(map[string]*Account)
 	result.AccountsByHash = make(map[string]*Account)
@@ -184,12 +192,7 @@ func accountsServerFromDataPath(datapath string, logpath string) (result Server)
 	emailDevIfItsAnError(err)
 	json.Unmarshal(graphMetaBytes, &result.AllBloxMeta)
 
-	result.errorFile = openFileForAppend(logpath + "errors.txt")
-	result.logFile = openFileForAppend(logpath + "log.txt")
-	result.frontErrorFile = openFileForAppend(logpath + "errors-front.txt")
-	result.frontLogFile = openFileForAppend(logpath + "log-front.txt")
-	result.issueFile = openFileForAppend(logpath + "issues.txt")
-	return
+	return result
 }
 
 func (as Server) checkAcountUnique(account Account) error {
@@ -205,7 +208,7 @@ func (as Server) checkAcountUnique(account Account) error {
 	return nil
 }
 
-func (server Server) persistAllAccounts() {
+func (server Server) setAccountsDirty() {
 	jsonBytes, err := json.Marshal(server.Accounts)
 	emailDevIfItsAnError(err)
 	writeFileThroughTemp(jsonBytes, datapath+"accounts.json")
@@ -238,7 +241,7 @@ func (as Server) addAccount(account Account) (err error) {
 	as.AccountsByEmail[account.UserReadable.Email] = &account
 	as.AccountsByUsername[account.UserReadable.Username] = &account
 	as.AccountsByHash[account.PasswordHashHash] = &account
-	timed(as.persistAllAccounts)
+	timed(as.setAccountsDirty)
 	return
 }
 
@@ -358,7 +361,7 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 			if err != nil ||
 				request.LastSyncedCommitId == "" ||
 				request.Edit.Id == "" ||
-				request.Edit.Time != zeroTime ||
+				request.Edit.Time != ZERO_TIME ||
 				request.Edit.Edit == "" {
 				response := EditsResponse{Status: "commited"}
 				jsonResponse, err := json.Marshal(response)
@@ -380,7 +383,6 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 			}
 			/*
 				when the client sends an edit over an old version of blox, and that version is still stored, then the server sends back the interim commits, and the client has to integrate those commits and retry
-
 			*/
 			for i := lenEdits - 2; i >= 0; i++ {
 				edit := bloxMeta.Edits[i]
@@ -420,7 +422,7 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 				ctx.SetStatusCode(400)
 				return
 			}
-			server.persistAllAccounts()
+			server.setAccountsDirty()
 		case "websocket":
 
 			websocketReadLoop := func(conn *websocket.Conn) {
@@ -488,7 +490,7 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 				return
 			}
 			theAccount.EmailVerificationCode = 0
-			server.persistAllAccounts()
+			server.setAccountsDirty()
 			ctx.SetStatusCode(301)
 			ctx.Response.Header.Set("Location", "https://traversetext.com/verified")
 			return
@@ -520,7 +522,7 @@ func timedRootHandler(ctx *fasthttp.RequestCtx) {
 
 func main() {
 	for _, method := range loggedInMethodsList {
-		loggedInMethods[key] = true
+		loggedInMethods[method] = true
 	}
 
 	emailPasswordBytes, err := ioutil.ReadFile("./email-password.txt")

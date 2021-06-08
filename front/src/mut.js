@@ -204,6 +204,23 @@ const mut = {
   
   ["cr"|"dl"|"df"|"mv", ]
   
+  Pure String Edit Stream Representation
+  cr dl mv df
+  c  d  m  e
+  
+  "diff" stream representation
+  i[len].[string]
+  d[len].[string]
+  s[len]
+  
+  
+  ["cr","evIF6p0Ld","7ttoFbwPh",0]
+  cevIF6p0Ld7ttoFbwPh0
+  
+  ["df","evIF6p0Ld",[{"i":"hi"}]]  
+  eevIF6p0Ldi2.hi
+  31:15
+  
   */
   _applyDif: (string, dif) => {
     // not using dif.s||result.length because dif.s could be 0
