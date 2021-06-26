@@ -21,51 +21,14 @@ import (
 	"github.com/valyala/fasthttp"
 
 	"github.com/fasthttp/websocket"
+
+	ttxt "github.com/taoroalin/traverse-text"
 )
 
-//go:generate go get -u github.com/valyala/quicktemplate/qtc
-//go:generate qtc -dir=go-template-source
-
-var websocketUpgrader = websocket.FastHTTPUpgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	// handshake duration?
-}
-
-// UTIL UTIL UTIL UTIL UTIL UTIL UTIL UTIL UTIL UTIL UTIL UTIL
-func breakOn(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
-var ZERO_TIME time.Time = time.Time{}
-
-func writeFileThroughTemp(content []byte, name string) {
-	tempFile, err := ioutil.TempFile(temppath, "")
-	emailDevIfItsAnError(err)
-	_, writeError := tempFile.Write(content)
-	emailDevIfItsAnError(writeError)
-	tempFile.Close()
-	renameError := os.Rename(tempFile.Name(), datapath+"blox-br/"+name)
-	emailDevIfItsAnError(renameError)
-}
-
-// Go isn't the type of language where you pass arbitrary stuff through
-// so stuff like this isn't as general as in JS
-// this is not a good pattern for production though, so I don't blame Go too much
-func timed(v func()) {
-	start := time.Now()
-	v()
-	duration := time.Since(start)
-	fmt.Println(duration)
-}
-
-// TYPES TYPES TYPES TYPES TYPES TYPES TYPES TYPES TYPES
 type Account struct {
-	UserReadable          UserReadable
-	PasswordHashHash      string
-	EmailVerificationCode int32 // if this is "" then the account's verified
+	UserReadable          UserReadable `json:"user_readable,omitempty"`
+	PasswordHashHash      string       `json:"password_hash_hash,omitempty"`
+	EmailVerificationCode int32        `json:"email_verification_code,omitempty"` // if this is "" then the account's verified
 }
 
 type UserReadable struct {
@@ -86,39 +49,58 @@ type FrontEndSettings struct {
 	EditingSpotlight bool `json:"editingSpotlight"`
 }
 
-// store and blox
-// type Store struct {
-// 	Name string
-// 	Blox map[string]Bloc
-// }
-
-// type Bloc struct {
-// 	CreateTime int64    `json:"ct"`
-// 	EditTime   int64    `json:"et"`
-// 	String     string   `json:"s"`
-// 	Parent     string   `json:"p"`
-// 	Kids       []string `json:"k"`
-// }
-
-type BloxEdit struct {
-	Id   string
-	Time time.Time
-	Edit string
-}
+type BloxEdit []interface{}
 
 // blox meta starts with an empty commit with commitid
 // so that "the current commit id" doesn't have to be stored
 // outside the edits array.
 type BloxMeta struct {
-	Public     bool
-	Owner      string
-	WriteUsers map[string]bool
-	ReadKeys   map[string]string
-	Edits      []BloxEdit
+	Public           bool                    `json:"public,omitempty"`
+	Owner            string                  `json:"owner,omitempty"`
+	WriteUsers       map[string]bool         `json:"write_users,omitempty"`
+	ReadUsers        map[string]bool         `json:"read_users,omitempty"`
+	Commits          []Commit                `json:"commits,omitempty"`
+	ConnectedClients map[int]*websocket.Conn `json:"connected_clients,omitempty"`
+	CCIndex          int                     `json:"cc_index,omitempty"`
 }
 
-type AllBloxMeta struct {
-	BloxMeta map[string]BloxMeta
+type Commit struct {
+	Id     ttxt.UUID  `json:"commitId"`
+	PrevId ttxt.UUID  `json:"prevCommitId"`
+	Edits  []BloxEdit `json:"edits"`
+}
+
+// UTIL UTIL UTIL UTIL UTIL UTIL UTIL UTIL UTIL UTIL UTIL UTIL
+
+//go:generate go get -u github.com/valyala/quicktemplate/qtc
+//go:generate qtc -dir=go-template-source
+
+func breakOn(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+var ZERO_TIME time.Time = time.Time{}
+
+func writeFileThroughTemp(content []byte, name string) {
+	tempFile, err := ioutil.TempFile(temppath, "")
+	emailDevIfItsAnError(err)
+	_, writeError := tempFile.Write(content)
+	emailDevIfItsAnError(writeError)
+	tempFile.Close()
+	renameError := os.Rename(tempFile.Name(), datapath+name)
+	emailDevIfItsAnError(renameError)
+}
+
+// Go isn't the type of language where you pass arbitrary stuff through
+// so stuff like this isn't as general as in JS
+// this is not a good pattern for production though, so I don't blame Go too much
+func timed(v func()) {
+	start := time.Now()
+	v()
+	duration := time.Since(start)
+	fmt.Println(duration)
 }
 
 // CONST CONST CONST CONST CONST CONST CONST CONST CONST CONST CONST CONST
@@ -133,12 +115,18 @@ const logpath = "../server-log/"
 
 var hashAllZeros [32]byte
 
-var loggedInMethodsList = []string{"get", "edit", "put", "creategraph", "searchgraphs", "settings", "websocket"}
-var loggedInMethods map[string]bool
+var loggedInMethodsList = []string{"get", "edit", "put", "creategraph", "searchgraphs", "settings", "websocket", "auth"}
+var loggedInMethods = map[string]bool{}
 
-var PathRegexp = regexp.MustCompile("^/(get|edit|put|creategraph|searchgraphs|auth|signup|settings|issue|error|log|websocket|verify-email)(?:/([a-zA-Z_0-9-]+))?(?:/([a-zA-Z_0-9-]+))?(?:/([a-zA-Z_0-9-]+))?/?$")
+var PathRegexp = regexp.MustCompile("^/(get|create|searchgraphs|auth|signup|settings|issue|error|log|websocket|verify-email)(?:/([a-zA-Z_0-9-]+))?(?:/([a-zA-Z_0-9-]+))?(?:/([a-zA-Z_0-9-]+))?/?$")
 
 var usernameRegexp = regexp.MustCompile("^[a-zA-Z0-9_-]{3,50}$")
+
+var websocketUpgrader = websocket.FastHTTPUpgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	// handshake duration?
+}
 
 // SERVER SERVER SERVER SERVER SERVER SERVER SERVER SERVER SERVER SERVER SERVER
 type Server struct {
@@ -148,7 +136,7 @@ type Server struct {
 	AccountsByUsername map[string]*Account
 	// do I need a mutex for each graph to avoid out of order operations on graphs?
 
-	AllBloxMeta AllBloxMeta
+	AllBloxMeta map[string]*BloxMeta
 
 	logFile        *os.File
 	errorFile      *os.File
@@ -178,8 +166,7 @@ func accountsServerFromDataPath(datapath string, logpath string) (result Server)
 	result.AccountsByEmail = make(map[string]*Account)
 	result.AccountsByUsername = make(map[string]*Account)
 	result.AccountsByHash = make(map[string]*Account)
-	filename := datapath + "accounts.json"
-	file, err := ioutil.ReadFile(filename)
+	file, err := ioutil.ReadFile(datapath + "accounts.json")
 	emailDevIfItsAnError(err)
 	json.Unmarshal(file, &result.Accounts)
 	for _, account := range result.Accounts {
@@ -191,6 +178,10 @@ func accountsServerFromDataPath(datapath string, logpath string) (result Server)
 	graphMetaBytes, err := ioutil.ReadFile(datapath + "graphs.json")
 	emailDevIfItsAnError(err)
 	json.Unmarshal(graphMetaBytes, &result.AllBloxMeta)
+
+	if _, ok := os.Stat(datapath + "/blox"); ok != nil {
+		os.Mkdir(datapath+"/blox", 0600)
+	}
 
 	return result
 }
@@ -211,7 +202,14 @@ func (as Server) checkAcountUnique(account Account) error {
 func (server Server) setAccountsDirty() {
 	jsonBytes, err := json.Marshal(server.Accounts)
 	emailDevIfItsAnError(err)
-	writeFileThroughTemp(jsonBytes, datapath+"accounts.json")
+	writeFileThroughTemp(jsonBytes, "accounts.json")
+	fmt.Printf("%v\n", jsonBytes)
+}
+
+func (server Server) setBloxMetaDirty() {
+	jsonBytes, err := json.Marshal(server.AllBloxMeta)
+	emailDevIfItsAnError(err)
+	writeFileThroughTemp(jsonBytes, "graphs.json")
 	fmt.Printf("%v\n", jsonBytes)
 }
 
@@ -255,7 +253,7 @@ func validateAccountAlone(account Account) (err error) {
 	} else if account.UserReadable.Username == "" {
 		return errors.New("please fill out the username")
 
-	} else if account.PasswordHashHash == "" { // is there a better way to check if the hash is set?
+	} else if account.PasswordHashHash == "" {
 		return errors.New("please send the password hash")
 
 	} else if !usernameRegexp.MatchString(account.UserReadable.Username) {
@@ -265,16 +263,27 @@ func validateAccountAlone(account Account) (err error) {
 }
 
 func (as Server) canUserReadGraphName(account *Account, graphName string) bool {
-	bloxMeta := server.AllBloxMeta.BloxMeta[graphName]
-	_, userHasPermissions := bloxMeta.ReadKeys[account.UserReadable.Username]
+	bloxMeta := server.AllBloxMeta[graphName]
+	_, userHasPermissions := bloxMeta.ReadUsers[account.UserReadable.Username]
 	isPublic := userHasPermissions || bloxMeta.Public
 	return isPublic
 }
 
 func (as Server) canUserWriteGraphName(account *Account, graphName string) bool {
-	bloxMeta := server.AllBloxMeta.BloxMeta[graphName]
+	bloxMeta := server.AllBloxMeta[graphName]
 	_, isPublic := bloxMeta.WriteUsers[account.UserReadable.Username]
 	return isPublic
+}
+
+func (as Server) userFromWireHash(wireHashRaw []byte) (*Account, string) {
+	wireHash := make([]byte, 100)
+	_, err := base64.StdEncoding.Decode(wireHash, wireHashRaw) //decode destination is first for some reason???
+	if err != nil {
+		return nil, ""
+	}
+	serverHashBytes := sha256.Sum256(wireHash)
+	serverHash := base64.StdEncoding.EncodeToString(serverHashBytes[:])
+	return as.userFromHash(serverHash), serverHash
 }
 
 func (as Server) userFromHash(hash string) *Account {
@@ -283,17 +292,6 @@ func (as Server) userFromHash(hash string) *Account {
 
 // server state
 var server Server = accountsServerFromDataPath(datapath, logpath)
-
-type EditsRequest struct {
-	LastSyncedCommitId string
-	Edit               BloxEdit
-}
-
-type EditsResponse struct {
-	Status   string
-	Edits    []BloxEdit
-	CommitId string
-}
 
 // this handles all the requests. Right now none of the API methods are their own functions. this will work for awhile, but they want to be factored out eventually if I want to run API code on multiple servers
 // HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER HANDLER
@@ -316,17 +314,7 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 	}
 	method := string(match[1])
 
-	wireHash := make([]byte, 100)
-	wireHashRaw := ctx.Request.Header.Peek("h")
-	_, err := base64.StdEncoding.Decode(wireHash, wireHashRaw)
-	if err != nil {
-		ctx.SetStatusCode(400)
-		ctx.WriteString("Wire Hash needs to be base64 standard encoding!")
-		return
-	}
-	serverHashBytes := sha256.Sum256(wireHash)
-	serverHash := base64.StdEncoding.EncodeToString(serverHashBytes[:])
-	account := server.userFromHash(serverHash)
+	account, serverHash := server.userFromWireHash(ctx.Request.Header.Peek("h"))
 
 	if loggedInMethods[method] {
 
@@ -345,71 +333,33 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 				return
 			}
 
-			ctx.SendFile(datapath + "blox-br/" + graphName)
-		case "edit":
-			graphName := string(match[2])
-			if !server.canUserWriteGraphName(account, graphName) {
-				ctx.SetStatusCode(fasthttp.StatusUnauthorized)
-				ctx.WriteString("Your account doesn't have access to that graph")
-				return
-			}
-
-			request := EditsRequest{}
-			err := json.Unmarshal(ctx.Request.Body(), &request)
-			fmt.Printf("%v+\n", request)
-
-			if err != nil ||
-				request.LastSyncedCommitId == "" ||
-				request.Edit.Id == "" ||
-				request.Edit.Time != ZERO_TIME ||
-				request.Edit.Edit == "" {
-				response := EditsResponse{Status: "commited"}
-				jsonResponse, err := json.Marshal(response)
-				emailDevIfItsAnError(err)
-				ctx.Write(jsonResponse)
-				return
-			}
-
-			bloxMeta := server.AllBloxMeta.BloxMeta[graphName]
-			lenEdits := len(bloxMeta.Edits)
-			previousCommitId := bloxMeta.Edits[lenEdits-1].Id
-			if previousCommitId == request.LastSyncedCommitId {
-				bloxMeta.Edits = append(bloxMeta.Edits, request.Edit)
-				response := EditsResponse{Status: "commited"}
-				jsonResponse, err := json.Marshal(response)
-				emailDevIfItsAnError(err)
-				ctx.Write(jsonResponse)
-				return
-			}
-			/*
-				when the client sends an edit over an old version of blox, and that version is still stored, then the server sends back the interim commits, and the client has to integrate those commits and retry
-			*/
-			for i := lenEdits - 2; i >= 0; i++ {
-				edit := bloxMeta.Edits[i]
-				if edit.Id == request.LastSyncedCommitId {
-					response := EditsResponse{Status: "get-up-to-date", CommitId: previousCommitId, Edits: bloxMeta.Edits[i:]}
-					jsonResponse, err := json.Marshal(response)
-					emailDevIfItsAnError(err)
-					ctx.Write(jsonResponse)
-					return
-				}
-			}
-			ctx.Response.Header.Add("status", "rebase")
-			return
-			// file := openFileForAppend(datapath + "edits-br/" + graphName)
-			// file.Write(ctx.Request.Body())
-			// closeError := file.Close()
-			// emailDevIfItsAnError(closeError)
-		case "put":
-			graphName := string(match[2])
-			if !server.canUserWriteGraphName(account, graphName) {
-				ctx.SetStatusCode(fasthttp.StatusUnauthorized)
-				ctx.WriteString("Your account doesn't have access to that graph")
-				return
-			}
-			writeFileThroughTemp(ctx.Request.Body(),
-				datapath+"blox-br/"+string(graphName))
+			ctx.SendFile(datapath + "blox/" + graphName)
 		case "create":
+			_, ok := server.AllBloxMeta[string(match[2])]
+			if ok {
+				ctx.SetStatusCode(409)
+				return
+			}
+			graphName := string(match[2])
+
+			qualBlox := ttxt.QualifiedBlox{}
+			parseError := json.Unmarshal(ctx.Request.Body(), &qualBlox)
+			if parseError != nil {
+				ctx.SetStatusCode(400)
+				return
+			}
+
+			server.AllBloxMeta[graphName] = &BloxMeta{
+				Public:     false,
+				Owner:      account.UserReadable.Username,
+				ReadUsers:  map[string]bool{account.UserReadable.Username: true},
+				WriteUsers: map[string]bool{account.UserReadable.Username: true},
+				Commits:    []Commit{{Id: qualBlox.CommitId}},
+			}
+			server.setBloxMetaDirty()
+
+			bytes, _ := json.Marshal(qualBlox)
+			writeFileThroughTemp(bytes, "blox/"+graphName)
 		case "search":
 		case "auth":
 			userReadableAccountJson, err := json.Marshal(account.UserReadable)
@@ -423,28 +373,6 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 				return
 			}
 			server.setAccountsDirty()
-		case "websocket":
-
-			websocketReadLoop := func(conn *websocket.Conn) {
-				// why callback? isn't the Go way to use goroutines?
-				for {
-					messageType, p, err := conn.ReadMessage()
-					if err != nil {
-						// log.Println(err)
-						return
-					}
-					if err := conn.WriteMessage(messageType, p); err != nil {
-						// log.Println(err)
-						return
-					}
-				}
-			}
-
-			err := websocketUpgrader.Upgrade(ctx, websocketReadLoop)
-			if err != nil {
-				// log.Println(err)
-				return
-			}
 		default:
 			ctx.SetStatusCode(400)
 		}
@@ -454,9 +382,9 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 		case "signup":
 			accountStruct := Account{}
 			accountStruct.PasswordHashHash = serverHash
-			schemaError := json.Unmarshal(ctx.Request.Body(), &accountStruct.UserReadable)
-			if schemaError != nil {
-				fmt.Printf("%v\n", schemaError)
+			jsonError := json.Unmarshal(ctx.Request.Body(), &accountStruct.UserReadable)
+			if jsonError != nil {
+				fmt.Printf("%v\n", jsonError)
 				ctx.SetStatusCode(400)
 				ctx.WriteString("user json didn't match schema")
 				return
@@ -475,6 +403,39 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 
 			ctx.Write(reJsoned)
 			return
+		case "websocket":
+			graphName := string(match[2])
+			if !server.canUserWriteGraphName(account, graphName) {
+				ctx.SetStatusCode(fasthttp.StatusUnauthorized)
+				ctx.WriteString("Your account doesn't have write access to that graph")
+				return
+			}
+			websocketReadLoop := func(conn *websocket.Conn) {
+				meta := server.AllBloxMeta[graphName]
+				connIndex := meta.CCIndex
+				meta.ConnectedClients[connIndex] = conn
+				meta.CCIndex++
+				for {
+					messageType, p, err := conn.ReadMessage()
+					if err != nil {
+
+						delete(meta.ConnectedClients, connIndex)
+						conn.Close()
+						return
+					}
+					// echoing
+					if messageType == websocket.TextMessage {
+						fmt.Println(string(p))
+
+					}
+				}
+			}
+
+			err := websocketUpgrader.Upgrade(ctx, websocketReadLoop)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 		case "verify-email":
 			theAccount := server.AccountsByHash[string(match[2])]
 			code := string(match[3])
@@ -508,7 +469,6 @@ func rootHandler(ctx *fasthttp.RequestCtx) {
 			return
 		}
 	}
-
 }
 
 func timedRootHandler(ctx *fasthttp.RequestCtx) {
@@ -519,11 +479,12 @@ func timedRootHandler(ctx *fasthttp.RequestCtx) {
 }
 
 // MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN
-
 func main() {
 	for _, method := range loggedInMethodsList {
 		loggedInMethods[method] = true
 	}
+
+	fmt.Printf("%+v\n", server)
 
 	emailPasswordBytes, err := ioutil.ReadFile("./email-password.txt")
 	breakOn(err)
@@ -543,7 +504,7 @@ func main() {
 	_, certErr := ioutil.ReadFile(keypath + "fullchain.pem")
 	_, keyErr := ioutil.ReadFile(keypath + "privkey.pem")
 	if keyErr != nil || certErr != nil {
-		fmt.Println("INSECURE")
+		fmt.Println("NO HTTPS")
 		fasthttpServer.ListenAndServe(":3000")
 	} else {
 		fasthttpServer.ListenAndServeTLS(":3000", keypath+"fullchain.pem", keypath+"privkey.pem")

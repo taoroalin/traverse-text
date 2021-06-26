@@ -50,6 +50,7 @@ const mut = {
 
   editInFlight: false,
   localPersistTimeout: null,
+  editTime: null,
 
   connectIdb: promisify((resolve) => {
     const r = indexedDB.open("microroam", mut.idbVersion)
@@ -138,7 +139,7 @@ const mut = {
   loadGraphName: async (graphName, multiCallback) => {
 
     if (otherStores[graphName]) {
-      callback()
+      multiCallback()
       return
     }
     let fails = 0
@@ -153,6 +154,7 @@ const mut = {
       if (typeof qualifiedBlox === "object") {
         otherStores[qualifiedBlox.graphName] = qualifiedBlox
         multiCallback()
+        clientGo.saveOtherStore(graphName)
       } else {
         fail()
       }
@@ -161,8 +163,10 @@ const mut = {
     storeStore.get(graphName).onsuccess = (event) => {
       const wrapper = event.target.result
       if (wrapper) {
-        otherStores[graphName] = wrapper.store
-        multiCallback()
+        if (fails === 0) {
+          otherStores[graphName] = wrapper.store
+          multiCallback()
+        }
       } else {
         fail()
       }
@@ -194,6 +198,12 @@ const mut = {
 
   createEmpty: async (graphName) => {
     const qualifiedBlox = { graphName, commitId: "" }
+    const result = await clientGo.create(qualifiedBlox)
+    if (result !== undefined) {
+      otherStores[graphName] = qualifiedBlox
+      mut.saveOtherStore(graphName)
+    }
+    return "no worky"
   },
   /*
   Paralel difs are too much work. Switching to simpler single command buffer
@@ -204,15 +214,15 @@ const mut = {
   
   ["cr"|"dl"|"df"|"mv", ]
   
-  Pure String Edit Stream Representation
-  cr dl mv df
-  c  d  m  e
+  
+  Idea for Pure String Edit Stream Representation
+  cr dl mv df tm
+  c  d  m  e  t
   
   "diff" stream representation
   i[len].[string]
   d[len].[string]
   s[len]
-  
   
   ["cr","evIF6p0Ld","7ttoFbwPh",0]
   cevIF6p0Ld7ttoFbwPh0
@@ -221,6 +231,9 @@ const mut = {
   eevIF6p0Ldi2.hi
   31:15
   
+  ["df","evIF6p0Ld",[{"i":"ello","d":"i","s":1}]]  
+  eevIF6p0Ldi4.ellod1.is1
+  47:23
   */
   _applyDif: (string, dif) => {
     // not using dif.s||result.length because dif.s could be 0
@@ -231,7 +244,7 @@ const mut = {
   },
 
   _doEditBlox: (edit, blox, time) => {
-    const [op, id, p1, p2, p3, p4] = edit
+    const [op, id, p1, p2, p3] = edit
     switch (op) {
       case "dl":
         const parent = blox[id].p
@@ -342,11 +355,32 @@ const mut = {
     }
   },
 
-  doEdit: (edit, time) => {
-    if (time === undefined) time = Date.now()
+  doEditShadow: (edit, time) => {
+    if (edit[0] === "tm") {
+      return edit[1]
+    }
     mut._doEditBlox(edit, store.blox, time)
     mut._doEditCacheStuff(edit)
     mut._doEditDom(edit)
+    return time
+  },
+
+  doEdit: (edit) => {
+    if (edit[0] === "tm") {
+      mut.editTime = edit[1]
+      return
+    } else if (!mut.editTime) {
+      mut.editTime = Date.now()
+      const timeEdit = ["tm", mut.editTime]
+      store.undoEditInProgress.push(timeEdit)
+      store.unsyncedEdits.push(timeEdit)
+      store.editStartSessionState = cpy(sessionState)
+    }
+
+    mut._doEditBlox(edit, store.blox, mut.editTime)
+    mut._doEditCacheStuff(edit)
+    mut._doEditDom(edit)
+
     store.undoEditInProgress.push(edit)
     store.unsyncedEdits.push(edit)
   },
@@ -369,12 +403,11 @@ const mut = {
     }
   },
 
-  startEdit: () => {
-    store.editStartSessionState = cpy(sessionState)
-  },
-
   finishEdit: () => {
-    if (store.undoEditInProgress.length === 0) {
+    if (!store) return
+
+    mut.editTime = null
+    if (store.undoEditInProgress.length === 1) {
       return
     }
 
@@ -422,6 +455,22 @@ const mut = {
     }
   },
 
+  saveOtherStore: (graphName) => {
+    const string = JSON.stringify(otherStores[graphName])
+    const transaction = idb.transaction(["stores"], "readwrite")
+    const storeStore = transaction.objectStore("stores")
+    const req = storeStore.put({
+      graphName: store.graphName,
+      store: string
+    })
+    req.onsuccess = () => {
+      console.log("saved")
+    }
+    req.onerror = (event) => {
+      console.log("save error")
+    }
+  },
+
   checkUpOnEditSync: async () => {
     if (mut.editInFlight) {
       return
@@ -435,14 +484,14 @@ const mut = {
     } else if (typeof editStatus === "number") {
 
     } else if (typeof editStatus === "object") {// editStatus is commit from server
-      const { commitId, edits, time } = editStatus
       const reversedLocalEdits = reverseEdits(store.unsyncedEdits)
+      let time = null
       for (let edit of reversedLocalEdits) {
-        mut.doEdit(edit)
+        time = mut.doEditShadow(edit, time)
       }
       const operationalTransformData = generateOTData(edits)
       for (let edit of edits) {
-        mut.doEdit(edit, time)
+        time = mut.doEditShadow(edit, time)
       }
       editOT(operationalTransformData, store.unsyncedEdits)
       store.commitId = commitId

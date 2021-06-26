@@ -194,7 +194,7 @@ const urlToSessionState = (url) => {
   url = decodeURI(url)
   const theSessionState = { scroll: 0, isFocused: false, position: 0, block: undefined, page: undefined }
   theSessionState.pageFrame = "dailyNotes"
-  theSessionState.graphName = user.s.graphName
+  theSessionState.graphName = "default"
 
   const queries = url.matchAll(/([a-zA-Z0-9\-_]+)=([a-zA-Z0-9\-_]+)/g)
   for (let query of queries) {

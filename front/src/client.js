@@ -26,6 +26,8 @@ const clientGo = {
   defaultTimeout: 2000,
   lastRequestTimedOut: false,
 
+  graphWebsockets: {},
+
   login: async (passwordHash) => {
     const response = await clientGo.fetch(`auth`, { method: "POST", headers: { h: passwordHash } })
     if (response.status === 200) {
@@ -67,19 +69,34 @@ const clientGo = {
     return response.status === 200 ? undefined : response.status
   },
 
-  edit: async (graphName, commit) => {
-    const response = await clientGo.fetch(`edit/${graphName}`, { headers: { h: user.h }, method: "POST", body: JSON.stringify(commit) })
-    switch (response.status) {
-      case 200:
-        return
-      case 888:
-        return response.status
-      case 409:
-        const json = await response.json()
-        return json
-      default:
-        return response.status
+  connectGraphWebsocket: (graphName, onconnect, onedit, onclose) => {
+    const ws = new WebSocket(`${goServerUrl}/websocket/${graphName}/${user.h}`)
+    clientGo.graphWebsockets[graphName] = ws
+    ws.onmessage = onedit
+
+    ws.onclose = onclose
+
+    ws.onerror = () => {
+      onconnect("no connecty")
     }
+
+    ws.onopen = () => {
+      onconnect()
+    }
+  },
+
+  disconnectGraphWebsocket: async (graphName) => {
+    clientGo.graphWebsockets[graphName].close()
+    delete clientGo.graphWebsockets[graphName]
+  },
+
+  edit: async (graphName, commit) => {
+    const ws = clientGo.graphWebsockets[graphName]
+    if (!ws) {
+      throw new Error(`no websocket connected for ${graphName}`)
+    }
+
+    ws.send(JSON.stringify({ type: "edit", data: commit }))
   },
 
   logError: async (text) => {

@@ -1,20 +1,18 @@
-<head>
-  <!-- startup scripts. these don't need DOM -->
-  <!-- these scripts are the first thing in the HTML, 
+<!-- startup scripts. these don't need DOM -->
+<!-- these scripts are the first thing in the HTML, 
 this is done to make sure our initial request to server happens ASAP
 it also creates issues because it necessitates global variable sharing between this and the main script which loads later
 
 this doesn't actually work very well though, because the JS running on the main thread crowds out packet handling (idk why, I would think the browser would receive packets on a different thread while main thread is busy) which means this first request we make takes way too long to finish. need to reevaluate my options here eventually -->
-  <script src="util.js"></script>
-  <script src="declarations.js"></script>
-  <script src="client-go.js"></script>
-  <script src="mut.js"></script>
-  <script src="startup.js"></script>
-
-  <link rel="stylesheet" href="fonts.css">
-  <link rel="stylesheet" href="css.css">
-  <title>Traverse Text</title>
-</head>
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
+<script src="util.js"></script>
+<script src="declarations.js"></script>
+<script src="client.js"></script>
+<script src="mut.js"></script>
+<script src="startup.js"></script>
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="css.css">
+<title>Traverse Text</title>
 
 <body>
   <div id="html">

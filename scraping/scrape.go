@@ -45,8 +45,21 @@ func scrapeDomain(domain string, callback func(url string)) {
 }
 
 func main() {
-	scrapeDomain("go-colly.org", func(url string) {
-		fmt.Println("Visiting", url)
-	})
-	os.Exit(0)
+	// scrapeDomain("go-colly.org", func(url string) {
+	// 	fmt.Println("Visiting", url)
+	// })
+	// os.Exit(0)
+
+	// statusCode, body, err := fasthttp.Get([]byte{}, testSites[0])
+	// if statusCode == 200 && err == nil {
+	// 	reader := bytes.NewReader(body)
+	// 	blox := parseReader(reader)
+	// 	fmt.Printf("%v\n", blox)
+	// }
+	fmt.Println("done")
+	file, _ := os.Open("./examples/danluu-complexity.html")
+	blox := parseReader(file)
+	fmt.Printf("%+v\n", blox)
 }
+
+var testSites = []string{"https://danluu.com/octopress-speedup/", "https://forum.effectivealtruism.org/posts/yNn2o3kEhixZHkRga/certificates-of-impact"}

@@ -1,0 +1,467 @@
+<!doctypehtml>
+  <html lang=en>
+  <meta charset=utf-8>
+  <title>Against essential and accidental complexity</title>
+  <meta name=viewport content="width=device-width,initial-scale=1">
+  <style>
+    img {
+      max-width: 100%;
+      height: auto
+    }
+
+    pre {
+      max-width: 100%;
+      height: auto;
+      white-space: pre-wrap
+    }
+
+    .np {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      padding-bottom: .5em;
+      font-style: italic
+    }
+  </style>
+  <script> window.ga = window.ga || function () { (ga.q = ga.q || []).push(arguments) }; ga.l = +new Date; ga('create', 'UA-43852829-1', 'auto'); ga('send', 'pageview'); </script>
+  <script async src=//www.google-analytics.com/analytics.js></script>
+  <link rel=icon href="data:;base64,="> <strong>Against essential and accidental complexity</strong>
+  <hr>
+  <p>In the classic 1986 essay, <a href=http://worrydream.com/refs/Brooks-NoSilverBullet.pdf>No Silver Bullet</a>, Fred
+    Brooks argued that there is, in some sense, not that much that can be done to improve programmer productivity. His
+    line of reasoning is that programming tasks contain a core of essential/conceptual<sup class=footnote-ref
+      id=fnref:C><a rel=footnote href=#fn:C>1</a></sup> complexity that's fundamentally not amenable to attack by any
+    potential advances in technology (such as languages or tooling). He then uses an <a
+      href=https://en.wikipedia.org/wiki/Amdahl%27s_law>Ahmdahl's law</a> argument, saying that because 1/X of
+    complexity is essential, it's impossible to ever get more than a factor of X improvement via technological
+    improvements.</p>
+  <p>Towards the end of the essay, Brooks claims that at least 1/2 (most) of complexity in programming is essential,
+    bounding the potential improvement remaining for all technological programming innovations combined to, at most, a
+    factor of 2<sup class=footnote-ref id=fnref:T><a rel=footnote href=#fn:T>2</a></sup>:</p>
+  <blockquote>
+    <p>All of the technological attacks on the accidents of the software process are fundamentally limited by the
+      productivity equation:</p>
+    <p>Time of task = Sum over i { Frequency_i Time_i }</p>
+    <p>If, as I believe, the conceptual components of the task are now taking most of the time, then no amount of
+      activity on the task components that are merely the expression of the concepts can give large productivity gains.
+    </p>
+  </blockquote>
+  <p>Let's see how this essential complexity claim holds for a couple of things I did recently at work:</p>
+  <ul>
+    <li>scp from a bunch of hosts to read and download logs, and then parse the logs to understand the scope of a
+      problem</li>
+    <li>Query two years of metrics data from every instance of every piece of software my employer has, for some classes
+      of software and then generate a variety of plots that let me understand some questions I have about what our
+      software is doing and how it's using computer resources</li>
+  </ul>
+  <h4 id=logs>Logs</h4>
+  <p>If we break this task down, we have</p>
+  <ul>
+    <li>scp logs from a few hundred thousand machines to a local box <ul>
+        <li>used a Python script for this to get parallelism with more robust error handling than you'd get out of
+          pssh/parallel-scp</li>
+        <li>~1 minute to write the script</li>
+      </ul>
+    </li>
+    <li>do other work while logs download</li>
+    <li>parse downloaded logs (a few TB) <ul>
+        <li>used a Rust script for this, a few minutes to write (used Rust instead of Python for performance reasons
+          here — just opening the logs and scanning each line with idiomatic Python was already slower than I'd want if
+          I didn't want to farm the task out to multiple machines)</li>
+      </ul>
+    </li>
+  </ul>
+  <p>In 1986, perhaps I would have used telnet or ftp instead of scp. Modern scripting languages didn't exist yet (perl
+    was created in 1987 and perl5, the first version that some argue is modern, was released in 1994), so writing code
+    that would do this with parallelism and &quot;good enough&quot; error handling would have taken more than an order
+    of magnitude more time than it takes today. In fact, I think just getting semi-decent error handling while managing
+    a connection pool could have easily taken an order of magnitude longer than this entire task took me (not including
+    time spent downloading logs in the background).</p>
+  <p>Next up would be parsing the logs. It's not fair to compare an absolute number like &quot;1 TB&quot;, so let's just
+    call this &quot;enough that we care about performance&quot; (we'll talk about scale in more detail in the metrics
+    example). Today, we have our choice of high-performance languages where it's easy to write, fast, safe code and
+    harness the power of libraries (e.g., a regexp library<sup class=footnote-ref id=fnref:L><a rel=footnote
+        href=#fn:L>3</a></sup>) that make it easy to write a quick and dirty script to parse and classify logs, farming
+    out the work to all of the cores on my computer (I think Zig would've also made this easy, but I used Rust because
+    my team has a critical mass of Rust programmers).</p>
+  <p>In 1986, there would have been no comparable language, but more importantly, I wouldn't have been able to trivially
+    find, download, and compile the appropriate libraries and would've had to write all of the parsing code by hand,
+    turning a task that took a few minutes into a task that I'd be lucky to get done in an hour. Also, if I didn't know
+    how to use the library or that I could use a library, I could easily find out how I should solve the problem on
+    StackOverflow, which would massively reduce accidental complexity. Needless to say, there was no real equivalent to
+    Googling for StackOverflow solutions in 1986.</p>
+  <p>Moreover, even today, this task, a pretty standard programmer devops/SRE task, after at least an order of magnitude
+    speedup over the analogous task in 1986, is still nearly entirely accidental complexity.</p>
+  <p>If the data were exported into our metrics stack or if our centralized logging worked a bit differently, the entire
+    task would be trivial. And if neither of those were true, but the log format were more uniform, I wouldn't have had
+    to write any code after getting the logs; <a href=https://github.com/BurntSushi/ripgrep>rg</a> or <a
+      href=https://github.com/ggreer/the_silver_searcher>ag</a> would have been sufficient. If I look for how much time
+    I spent on the essential conceptual core of the task, it's so small that it's hard to estimate.</p>
+  <h4 id=query-metrics>Query metrics</h4>
+  <p>We really only need one counter-example, but I think it's illustrative to look at a more complex task to see how
+    Brooks' argument scales for a more involved task. If you'd like to skip this lengthy example, <a href=#summary>click
+      here to skip to the next section</a>.</p>
+  <p>We can view my metrics querying task as being made up of the following sub-tasks:</p>
+  <ul>
+    <li>Write a set of <a href=https://en.wikipedia.org/wiki/Presto_(SQL_query_engine)>Presto SQL</a> queries that
+      effectively scan on the order of 100 TB of data each, from a data set that would be on the order of 100 PB of data
+      if I didn't <a href=../metrics-analytics />maintain tables that only contain a subset of data that's relevant</a>
+      <ul>
+        <li>Maybe 30 seconds to write the first query and a few minutes for queries to finish, using on the order of 1
+          CPU-year of CPU time</li>
+      </ul>
+    </li>
+    <li>Write some ggplot code to plot the various properties that I'm curious about <ul>
+        <li>Not sure how long this took; less time than the queries took to complete, so this didn't add to the total
+          time of this task</li>
+      </ul>
+    </li>
+  </ul>
+  <p>The first of these tasks is so many orders of magnitude quicker to accomplish today that I'm not even able to
+    hazard a guess to as to how much quicker it is today within one or two orders of magnitude, but let's break down the
+    first task into component parts to get some idea about the ways in which the task has gotten easier.</p>
+  <p>It's not fair to port absolute numbers like 100 PB into 1986, but just the idea of having a pipeline that collects
+    and persists comprehensive data analogous to the data I was looking at for a consumer software company (various data
+    on the resource usage and efficiency of our software) would have been considered absurd in 1986. Here we see one
+    fatal flaw in the concept of accidental essential complexity providing an upper bound on productivity improvements:
+    tasks with too much accidental complexity wouldn't have even been considered possible. The limit on how much
+    accidental complexity Brooks sees is really a limit of his imagination, not something fundamental.</p>
+  <p>Brooks explicitly dismisses increased computational power as something that will not improve productivity
+    (&quot;Well, how many MIPS can one use fruitfully?&quot;, more on this later), but both storage and CPU power (not
+    to mention network speed and RAM) were sources of accidental complexity so large that they bounded the space of
+    problems Brooks was able to conceive of.</p>
+  <p>In this example, let's say that we somehow had enough storage to keep the data we want to query in 1986. The next
+    part would be to marshall on the order of 1 CPU-year worth of resources and have the query complete in minutes. As
+    with the storage problem, this would have also been absurd in 1986<sup class=footnote-ref id=fnref:F><a rel=footnote
+        href=#fn:F>4</a></sup>, so we've run into a second piece of non-essential complexity so large that it would stop
+    a person from 1986 from thinking of this problem at all.</p>
+  <p>Next up would be writing the query. If I were writing for the Cray-2 and wanted to be productive, I probably would
+    have written the queries in Cray's dialect of Fortran 77. Could I do that in less than 300 seconds per query? Not a
+    chance; I couldn't even come close with Scala/Scalding and I think it would be a near thing even with
+    Python/PySpark. This is the aspect where I think we see the smallest gain and we're still well above one order of
+    magnitude here.</p>
+  <p>After we have the data processed, we have to generate the plots. Even with today's technology, I think not using
+    ggplot would cost me at least 2x in terms of productivity. I've tried every major plotting library that's supposedly
+    equivalent (in any language) and every library I've tried either has multiple show-stopping bugs rendering plots
+    that I consider to be basic in ggplot or is so low-level that I lose more than 2x productivity by being forced to do
+    stuff manually that would be trivial in ggplot. In 2020, the existence of a single library already saves me 2x on
+    this one step. If we go back to 1986, before the concept of <a href=https://amzn.to/3r9Mvzw>the grammar of
+      graphics</a> and any reasonable implementation, there's no way that I wouldn't lose at least two orders of
+    magnitude of time on plotting even assuming some magical workstation hardware that was capable of doing the plotting
+    operations I do in a reasonable amount of time (my machine is painfully slow at rendering the plots; a Cray-2 would
+    not be able to do the rendering in anything resembling a reasonable timeframe).</p>
+  <p>The number of orders of magnitude of accidental complexity reduction for this problem from 1986 to today is so
+    large I can't even estimate it and yet this problem still contains such a large fraction of accidental complexity
+    that it's once again difficult to even guess at what fraction of complexity is essential. To write it all down all
+    of the accidental complexity I can think of would require at least 20k words, but just to provide a bit of the
+    flavor of the complexity, let me write down a few things.</p>
+  <ul>
+    <li>SQL; this is one of those things that's superficially simple <a
+        href=https://scattered-thoughts.net/writing/select-wat-from-sql />but actually extremely complex</a>
+      <ul>
+        <li>Also, Presto SQL</li>
+      </ul>
+    </li>
+    <li>Arbitrary Presto limits, some of which are from Presto and some of which are from the specific ways we operate
+      Presto and the version we're using <ul>
+        <li>There's an internal Presto data structure assert fail that gets triggered when I use both
+          <code>numeric_histogram</code> and <code>cross join unnest</code> in a particular way. Because it's a waste of
+          time to write the bug-exposing query, wait for it to fail, and then re-write it, I have a mental heuristic I
+          use to guess, for any query that uses both constructs, whether or not I'll hit the bug and I apply it to avoid
+          having to write two queries. If the heuristic applies, I'll instead write a more verbose query that's slower
+          to execute instead of the more straightforward query
+        </li>
+        <li>We partition data by date, but Presto throws this away when I join tables, resulting in very large and
+          therefore expensive joins when I join data across a long period of time even though, in principle, this could
+          be a series of cheap joins; if the join is large enough to cause my query to blow up, I'll write what's
+          essentially a little query compiler to execute day-by-day queries and then post-process the data as necessary
+          instead of writing the naive query <ul>
+            <li>There are a bunch of cases where some kind of optimization in the query will make the query feasible
+              without having to break the query across days (e.g., if I want to join host-level metrics data with the
+              table that contains what cluster a host is in, that's a very slow join across years of data, but I also
+              know what kinds of hosts are in which clusters, which, in some cases, lets me filter hosts out of the
+              host-level metrics data that's in there, like core count and total memory, which can make the larger input
+              to this join small enough that the query can succeed without manually partitioning the query)</li>
+          </ul>
+        </li>
+        <li>We have a Presto cluster that's &quot;fast&quot; but has &quot;low&quot; memory limits a cluster that's
+          &quot;slow&quot; but has &quot;high&quot; memory limits, so I mentally estimate how much per-node memory a
+          query will need so that I can schedule it to the right cluster</li>
+        <li>etc.</li>
+      </ul>
+    </li>
+    <li>When, for performance reasons, I should compute the CDF or histogram in Presto vs. leaving it to the end for
+      ggplot to compute</li>
+    <li>How much I need to downsample the data, if at all, for ggplot to be able to handle it, and how that may impact
+      analyses</li>
+    <li>Arbitrary ggplot stuff <ul>
+        <li>roughly how many points I need to put in a scatterplot before I should stop using
+          <code>size = [number]</code> and should switch to single-pixel plotting because plotting points as circles is
+          too slow
+        </li>
+        <li>what the minimum allowable opacity for points is</li>
+        <li>If I exceed the maximum density where you can see a gradient in a scatterplot due to this limit, how large I
+          need to make the image to reduce the density appropriately (when I would do this instead of using a heatmap
+          deserves its own post)</li>
+        <li>etc.</li>
+      </ul>
+    </li>
+    <li>All of the above is about tools that I use to write and examine queries, but there's also the mental model of
+      all of the data issues that must be taken into account when writing the query in order to generate a valid result,
+      which includes things like clock skew, Linux accounting bugs, issues with our metrics pipeline, issues with data
+      due to problems in the underlying data sources, etc.</li>
+    <li>etc.</li>
+  </ul>
+  <p>For each of Presto and ggplot I implicitly hold over a hundred things in my head to be able to get my queries and
+    plots to work and I choose to use these because these are the lowest overhead tools that I know of that are
+    available to me. If someone asked me to name the percentage of complexity I had to deal with that was essential, I'd
+    say that it was so low that there's no way to even estimate it. For some queries, it's arguably zero — my work was
+    necessary only because of some arbitrary quirk and there would be no work to do without the quirk. But even in cases
+    where some kind of query seems necessary, I think it's unbelievable that essential complexity could have been more
+    than 1% of the complexity I had to deal with.</p>
+  <p>Revisiting Brooks on computer performance, even though I deal with complexity due to the limitations of hardware
+    performance in 2020 and would love to have faster computers today, Brooks wrote off faster hardware as pretty much
+    not improving developer productivity in 1986:</p>
+  <blockquote>
+    <p>What gains are to be expected for the software art from the certain and rapid increase in the power and memory
+      capacity of the individual workstation? Well, how many MIPS can one use fruitfully? The composition and editing of
+      programs and documents is fully supported by today’s speeds. Compiling could stand a boost, but a factor of 10 in
+      machine speed would surely . . .</p>
+  </blockquote>
+  <p>But this is wrong on at least two levels. First, if I had access to faster computers, a huge amount of my
+    accidental complexity would go away (if computers were powerful enough, I wouldn't need complex tools like Presto; I
+    could just run a query on my local computer). We have much faster computers now, but it's still true that having
+    faster computers would make many involved engineering tasks trivial. As James Hague notes, in the mid-80s, <a
+      href=https://prog21.dadgum.com/29.html>writing a spellchecker was a serious engineering problem due to performance
+      constraints</a>.</p>
+  <p>Second, (just for example) ggplot only exists because computers are so fast. A common complaint from people who
+    work on performance is that tool X has somewhere between two and ten orders of magnitude of inefficiency when you
+    look at the fundamental operations it does vs. the speed of hardware today<sup class=footnote-ref id=fnref:O><a
+        rel=footnote href=#fn:O>5</a></sup>. But what fraction of programmers can realize even one half of the potential
+    performance of a modern multi-socket machine? I would guess fewer than one in a thousand and I would say certainly
+    fewer than one in a hundred. And performance knowledge isn't independent of other knowledge — controlling for age
+    and experience, it's negatively correlated with knowledge of non-&quot;systems&quot; domains since time spent
+    learning about the esoteric accidental complexity necessary to realize half of the potential of a computer is time
+    spent not learning about &quot;directly&quot; applicable domain knowledge. When we look software that requires a
+    significant amount of domain knowledge (e.g., ggplot) or that'slarge enough that it requires a large team to
+    implement (e.g., IntelliJ<sup class=footnote-ref id=fnref:V><a rel=footnote href=#fn:V>6</a></sup>), the vast
+    majority of it wouldn't exist if machines were orders of magnitude slower and writing usable software required
+    wringing most of the performance out of the machine. Luckily for us, hardware has gotten much faster, allowing the
+    vast majority of developers to ignore performance-related accidental complexity and instead focus on all of the
+    other accidental complexity necessary to be productive today.</p>
+  <p>Faster computers both reduce the amount of accidental complexity tool users run into as well as the amount of
+    accidental complexity that tool creators need to deal with, allowing more productive tools to come into existence.
+  </p>
+  <h3 id=summary>Summary</h3>
+  <p>To summarize, Brooks states a bound on how much programmer productivity can improve. But, in practice, to state
+    this bound correctly, one would have to be able to conceive of problems that no one would reasonably attempt to
+    solve due to the amount of friction involved in solving the problem with current technologies.</p>
+  <p>Without being able to predict the future, this is impossible to estimate. If we knew the future, it might turn out
+    that there's some practical limit on how much computational power or storage programmers can productively use,
+    bounding the resources available to a programmer, but getting a bound on the amount of accidental complexity would
+    still require one to correctly reason about how programmers are going to be able to use zillions times more
+    resources than are available today, which is so difficult we might as well call it impossible.</p>
+  <p>Moreover, for each class of tool that could exist, one would have to effectively anticipate all possible
+    innovations. Brooks' strategy for this was to look at existing categories of tools and state, for each, that they
+    would be ineffective or that they were effective but played out. This was wrong not only because it underestimated
+    gains from classes of tools that didn't exist yet, weren't yet effective, or he wasn't familiar with (e.g., he
+    writes off formal methods, but it doesn't even occur to him to mention fuzzers, static analysis tools that don't
+    fully formally verify code, tools like valgrind, etc.) but also because Brooks thought that every class of tool
+    where there was major improvement was played out and it turns out that none of them were (e.g., programming
+    languages, which Brooks wrote just before the rise of &quot;scripting languages&quot; as well as just before GC
+    langauges took over the vast majority of programming).</p>
+  <p>In some sense, this isn't too different from when <a href=../cli-complexity/#maven>we looked at Unix and found the
+      Unix mavens saying that we should write software like they did in the 70s</a> and that <a
+      href=https://twitter.com/danluu/status/885214004649615360>the languages they invented are as safe as any language
+      can be</a>. Long before computers were invented, elders have been telling the next generation that they've done
+    everything that there is to be done and that the next generation won't be able to achieve more. Even without knowing
+    any specifics about programming, we can look at how well these kinds of arguments have held up historically and have
+    decent confidence that the elders are not, in fact, correct this time.</p>
+  <p>Looking at the specifics with the benefit of hindsight, we can see that Brooks' 1986 claim that we've basically
+    captured all the productivity gains high-level languages can provide isn't too different from an assembly language
+    programmer saying the same thing in 1955, thinking that assembly is as good as any language can be<sup
+      class=footnote-ref id=fnref:A><a rel=footnote href=#fn:A>7</a></sup> and that his claims about other categories
+    are similar. The main thing these claims demonstrate are a lack of imagination. When Brooks referred to conceptual
+    complexity, he was referring to complexity of using the conceptual building blocks that Brooks was familiar with in
+    1986 (on problems that Brooks would've thought of as programming problems). There's no reason anyone should think
+    that Brooks' 1986 conception of programming is fundamental any more than they should think that how an assembly
+    programmer from 1955 thought was fundamental. People often make fun of the apocryphal &quot;640k should be enough
+    for anybody&quot; quote, but Brooks saying that, across all categories of potential productivity improvement, we've
+    done most of what's possible to do, is analogous and not apocryphal!</p>
+  <p>We've seen that, if we look at the future, the fraction of complexity that might be accidental is effectively
+    unbounded. One might argue that, if we look at the present, these terms wouldn't be meaningless. But, while this
+    will vary by domain, I've personally never worked on a non-trivial problem that isn't completely dominated by
+    accidental complexity, making the concept of essential complexity meaningless on any problem I've worked on that's
+    worth discussing.</p>
+  <p>Thanks to Peter Bhat Harkins, Ben Kuhn, Yuri Vishnevsky, Chris Granger, Wesley Aptekar-Cassels, Lifan Zeng, Scott
+    Wolchok, Martin Horenovsky, @realcmb, Kevin Burke, Aaron Brown, and Saul Pwanson for
+    comments/corrections/discussion.</p>
+  <p>
+    <link rel=prefetch href=../cli-complexity />
+    <link rel=prefetch href=../metrics-analytics />
+    <link rel=prefetch href=.. />
+    <link rel=prefetch href=../about />
+  </p>
+  <div class=footnotes>
+    <hr>
+    <ol>
+      <li id=fn:C>
+        <blockquote>
+          <p>The accidents I discuss in the next section. First let us consider the essence</p>
+          <p>The essence of a software entity is a construct of interlocking concepts: data sets, relationships among
+            data items, algorithms, and invocations of functions. This essence is abstract, in that the conceptual
+            construct is the same under many different representations. It is nonetheless highly precise and richly
+            detailed.</p>
+          <p>I believe the hard part of building software to be the specification, design, and testing of this
+            conceptual construct, not the labor of representing it and testing the fidelity of the representation. We
+            still make syntax errors, to be sure; but they are fuzz compared to the conceptual errors in most systems.
+          </p>
+        </blockquote> <a class=footnote-return href=#fnref:C><sup>[return]</sup></a>
+      </li>
+      <li id=fn:T>
+        <p>Curiously, he also claims, in the same essay, that no individual improvement can yield a 10x improvement
+          within one decade. While this technically doesn't contradict his Ahmdal's law argument plus the claim that
+          &quot;most&quot; (i.e., at least half) of complexity is essential/conceptual, it's unclear why he would
+          include this claim as well.</p>
+        <p>When Brooks revisited his essay in 1995 in No Silver Bullet Refired, he claimed that he was correct by using
+          the weakest form of the three claims he made in 1986, that within one decade, no single improvement would
+          result in an order of magnitude improvement. However, he did then re-state the strongest form of the claim he
+          made in 1986 and made it again in 1995, saying that this time, no set of technological improvements could
+          improve productivity more than 2x, for real:</p>
+        <blockquote>
+          <p>It is my opinion, and that is all, that the accidental or representational part of the work is now down to
+            about half or less of the total. Since this fraction is a question of fact, its value could in principle be
+            settled by measurement. Failing that, my estimate of it can be corrected by better informed and more current
+            estimates. Significantly, no one who has written publicly or privately has asserted that the accidental part
+            is as large as 9/10.</p>
+        </blockquote>
+        <p>By the way, I find it interesting that he says that no one disputed this 9/10ths figure. Per the body of this
+          post, I would put it at far above 9/10th for my day-to-day work and, if I were to try to solve the same
+          problems in 1986, the fraction would have been so high that people wouldn't have even conceived of the
+          problem. As a side effect of having worked in hardware for a decade, I've also done work that's not too
+          different from what some people faced in 1986 (microcode, assembly &amp; C written for DOS) and I would put
+          that work as easily above 9/10th as well.</p>
+        <p>Another part of his follow-up that I find interesting is that he quotes Harel's &quot;Biting the Silver
+          Bullet&quot; from 1992, which, among other things, argues that that decade deadline for an order of magnitude
+          improvement is arbitrary. Brooks' response to this is</p>
+        <blockquote>
+          <p>There are other reasons for the decade limit: the claims made for candidate bullets all have had a certain
+            immediacy about them . . . We will surely make substantial progress over the next 40 years; an order of
+            magnitude over 40 years is hardly magical.</p>
+        </blockquote>
+        <p>But by Brooks' own words when he revisits the argument in 1995, if 9/10th of complexity is essential, it
+          would be impossible to get more than an order of magnitude improvement from reducing it, with no caveat on the
+          timespan:</p>
+        <blockquote>
+          <p>&quot;NSB&quot; argues, indisputably, that if the accidental part of the work is less than 9/10 of the
+            total, shrinking it to zero (which would take magic) will not give an order of magnitude productivity
+            improvement.</p>
+        </blockquote>
+        <p>Both his original essay and the 1995 follow-up are charismatically written and contain a sort of local logic,
+          where each piece of the essay sounds somewhat reasonable if you don't think about it too hard and you forget
+          everything else the essay says. As with the original, a pedant could argue that this is technically not
+          incoherent — after all, Brooks could be saying:</p>
+        <ul>
+          <li>at most 9/10th of complexity is accidental (if we ignore the later 1/2 claim, which is the kind of
+            suspension of memory/disbelief one must do to read the essay)</li>
+          <li>it would not be surprising for us to eliminate 100% of accidental complexity after 40 years</li>
+        </ul>
+        <p>While this is technically consistent (again, if we ignore the part that's inconsistent) and is a set of
+          claims one could make, this would imply that 40 years from 1986, i.e., in 2026, it wouldn't be implausible for
+          there to be literally zero room for any sort of productivity improvement from tooling, languages, or any other
+          potential source of improvement. But this is absurd. If we look at other sections of Brooks' essay and combine
+          their reasoning, we see other inconsistencies and absurdities.</p> <a class=footnote-return
+          href=#fnref:T><sup>[return]</sup></a>
+      </li>
+      <li id=fn:L>
+        <p>Another issue that we see here is Brooks' insistence on bright-line distinctions between categories.
+          Essential vs. accidental complexity. &quot;Types&quot; of solutions, such as languages vs. &quot;build vs.
+          buy&quot;, etc.</p>
+        <p>Brooks admits that &quot;build vs. buy&quot; is one avenue of attack on essential complexity. Perhaps he
+          would agree that buying a regexp package would reduce the essential complexity since that would allow me to
+          avoid keeping all of the concepts associated with writing a parser in my head for simple tasks. But what if,
+          instead of buying regexes, I used a language where they're bundled into the standard library or is otherwise
+          distributed with the language? Or what if, instead of having to write my own concurrency primitives, those are
+          bundled into the language? Or for that matter, what about <a href=https://golang.org/pkg/net/http />an entire
+          HTTP server</a>? There is no bright-line distinction between what's in a library one can &quot;buy&quot;
+          (for free in many cases nowadays) and one that's bundled into the language, so there cannot be a bright-line
+          distinction between what gains a language provides and what gains can be &quot;bought&quot;. But if there's no
+          bright-line distinction here, then it's not possible to say that one of these can reduce essential complexity
+          and the other can't and maintain a bright-line distinction between essential and accidental complexity (in a
+          response to Brooks, Harel argued against there being a clear distinction in a response, and Brooks' response
+          was to say that there there is, in fact, a bright-line distinction, although he provided no new argument).</p>
+        <p>Brooks' repeated insistence on these false distinctions means that the reasoning in the essay isn't
+          composable. As we've already seen in another footnote, if you take reasoning from one part of the essay and
+          apply it alongside reasoning from another part of the essay, it's easy to create absurd outcomes and sometimes
+          outright contradictions.</p>
+        <p>I suspect this is one reason discussions about essential vs. accidental complexity are so muddled. It's not
+          just that <a href=https://twitter.com/hillelogram/status/1211433465956196352>Brooks is being vague and
+            handwave-y</a>, he's actually not self-consistent, so there isn't and cannot be a coherent takeaway. Michael
+          Feathers has noted <a href=https://twitter.com/mfeathers/status/1259295515532865543>that people are generally
+            not able to correct identify essential complexity</a>; as he says, <a
+            href=https://twitter.com/mfeathers/status/1256995176959971329>One person’s essential complexity is another
+            person’s accidental complexity.</a>. This is exactly what we should expect from the essay, since people who
+          have different parts of it in mind will end up with incompatible views.</p>
+        <p>This is also a problem when critisizing Brooks. Inevitably, someone will say that what Brooks really meant
+          was something completely different. And that will be true. But Brooks will have meant something completely
+          different while also having meant the things he said that I mention. In defense of the view I'm presenting in
+          the body of the text here, it's a coherent view that one could have had in 1986. Many of Brooks' statements
+          don't make sense even when considered as standalone statements, let alone when cross-referenced with the rest
+          of his essay. For example, the statement that no single development will result in an order of magnitude
+          improvement in the next decade. This statement is meaningless as Brooks does not define and no one can
+          definitively say what a &quot;single improvement&quot; is. And, as mentioned above, Brooks' essay reads quite
+          oddly and basically does not make sense if that's what he's trying to claim. Another issue with most other
+          readings of Brooks is that those are positions that are also meaningless even if Brooks had done the work to
+          make them well defined. Why does it matter if one single improvement or two result in an order of magnitude
+          improvement. If it's two improvements, we'll use them both.</p> <a class=footnote-return
+          href=#fnref:L><sup>[return]</sup></a>
+      </li>
+      <li id=fn:F>
+        <p>Let's arbitrarily use a Motorola 68k processor with an FP co-processor that could do 200 kFLOPS as a
+          reference for how much power we might have in a consumer CPU (FLOPS is a bad metric for multiple reasons, but
+          this is just to get an idea of what it would take to get 1 CPU-year of computational resources, and Brooks
+          himself uses MIPS as a term as if it's meaningful). By comparison, the Cray-2 could achieve 1.9 GFLOPS, or
+          roughly 10000x the performance (I think actually less if we were to do a comparable comparison instead of
+          using non-comparable GFLOPS numbers, but let's be generous here). There are 525600 / 5 = 105120 five minute
+          periods in a year, so to get 1 CPU year's worth of computation in five minutes we'd need 105120 / 10000 = 10
+          Cray-2s per query, not including the overhead of aggregating results across Cray-2s.</p>
+        <p>It's unreasonable to think that a consumer software company in 1986 would have enough Cray-2s lying around to
+          allow for any random programmer to quickly run CPU years worth of queries whenever they wanted to do some data
+          analysis. One sources claims that 27 Cray-2s were ever made over the production lifetime of the machine (1985
+          to 1990). Even if my employer owned all of them and they were all created by 1986, that still wouldn't be
+          sufficient to allow the kind of ad hoc querying capacity that I have access to in 2020.</p>
+        <p>Today, someone at a startup can even make an analogous argument when comparing to a decade ago. You used to
+          have to operate a cluster that would be prohibitively annoying for a startup to operate unless the startup is
+          very specialized, but you can now just use Snowflake and basically get Presto but only pay for the
+          computational power you use (plus a healthy markup) instead of paying to own a cluster and for all of the
+          employees necessary to make sure the cluster is operable.</p> <a class=footnote-return
+          href=#fnref:F><sup>[return]</sup></a>
+      </li>
+      <li id=fn:O>I actually run into one of these every time I publish a new post. I write my posts in Google docs and
+        then copy them into emacs running inside tmux running inside Alacritty. My posts are small enough to fit inside
+        L2 cache, so I could have 64B/3.5 cycle write bandwidth. And yet, the copy+paste operation can take ~1 minute
+        and is so slow I can watch the text get pasted in. Since my chip is working super hard to make sure the
+        copy+paste happens, it's running at its full non-turbo frequency of 4.2Ghz, giving it 76.8GB/s of write
+        bandwidth. For a 40kB post, 1 minute = 666B/s. 76.8G/666 =~ 8 orders of magnitude left on the table. <a
+          class=footnote-return href=#fnref:O><sup>[return]</sup></a></li>
+      <li id=fn:V>In this specific case, I'm sure somebody will argue that Visual Studio was quite nice in 2000 and ran
+        on much slower computers (and the debugger was arguably better than it is in the current version). But there was
+        no comparable tool on Linux, nor was there anything comparable to today's options in the VSCode-like space of
+        easy-to-learn programming editor that provides programming-specific facilities (as opposed to being a souped up
+        version of notepad) without being a full-fledged IDE. <a class=footnote-return
+          href=#fnref:V><sup>[return]</sup></a></li>
+      <li id=fn:A>
+        <p>And by the way, this didn't only happen in 1955. I've worked with people who, this century, told me that
+          assembly is basically as productive as any high level language. This probably sounds ridiculous to almost
+          every reader of this blog, but if you talk to people who spend all day writing microcode or assembly, you'll
+          occasionally meet somebody who believes this.</p>
+        <p>Thinking that the tools you personally use are as good as it gets is an easy trap to fall into.</p> <a
+          class=footnote-return href=#fnref:A><sup>[return]</sup></a>
+      </li>
+    </ol>
+  </div>
+  <div class=np> <a href=https://danluu.com/car-safety />How do cars fare in crash tests they&#39;re not specifically
+    optimized for? →</a> </div>
+  <div class=np> <a href=https://danluu.com />Archive</a> <a href=https://www.patreon.com/danluu>Support this site
+      (patreon)</a> <a href=https://danluu.com/about />About</a> <a href=https://twitter.com/danluu>Twitter</a> <a
+      href=https://danluu.com/atom.xml rel=alternate type=application/rss+xml>RSS</a></div>

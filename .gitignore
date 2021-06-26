@@ -25,3 +25,7 @@ front/src/deps/**
 
 test-data/**
 test-data/graphminer-current-old.json
+
+back/back
+
+**.exe

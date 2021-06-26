@@ -2,6 +2,25 @@
 
 import * as mat4 from "./deps/mat4.js";
 
+const webglConstantsOld = {
+  vertexShaderSource: `
+    attribute vec4 aVertexPosition;
+
+    uniform mat4 uModelViewMatrix;
+    uniform mat4 uProjectionMatrix;
+
+    void main() {
+      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+    }
+ `,
+  fragmentShaderSource: `
+  
+    void main() {
+      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }`
+}
+
+
 const webglConstants = {
   vertexShaderSource: `
     attribute vec4 aVertexPosition;
@@ -14,11 +33,12 @@ const webglConstants = {
     }
  `,
   fragmentShaderSource: `
+  uniform vec2 resolution;
+  
     void main() {
-      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+      gl_FragColor = vec4(0,1.0, 1.0, 1.0);
     }`
 }
-
 function initBuffers(gl) {
 
   const positionBuffer = gl.createBuffer();

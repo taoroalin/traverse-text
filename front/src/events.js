@@ -16,7 +16,6 @@ if (isOsMac) {
 
 const eventHandlerWrapper = (fn) => {
   return (event) => {
-    mut.startEdit() //@TODO swap this out with sessionState setter to avoid huge performance drain
     fn(event)
     mut.finishEdit()
   }
@@ -62,7 +61,7 @@ const expandTemplate = () => {
       }
     }
   } else
-    notifyText("can't use a template inside a block that has children")
+    render.notifyText("can't use a template inside a block that has children")
   idElements.templateList.style.display = "none"
 }
 
@@ -134,7 +133,7 @@ const dedentFocusedBlock = () => {
     macros.move(bid, grandparentId, idx + 1)
     focusIdPosition()
   } else {
-    // notifyText("can't dedent from page root", 2) // don't need error message here?
+    // render.notifyText("can't dedent from page root", 2) // don't need error message here?
   }
 }
 
@@ -261,10 +260,7 @@ const globalHotkeys = {
   },
   "undo": {
     key: "z", control: true, fn: () => {
-      if (undoCommitList.length > 0) {
-        undo()
-        renderSessionState()
-      }
+      mut.undo()
     }
   },
   "delete block": {
@@ -277,7 +273,7 @@ const globalHotkeys = {
         focusBlockVerticalOffset(-1)
         macros.delete(oldFocusId)
       } else {
-        notifyText(`no "delete block" for blocks with children or the only block in a page (at least right now)`)
+        render.notifyText(`no "delete block" for blocks with children or the only block in a page (at least right now)`)
       }
     }
   },
@@ -303,7 +299,7 @@ const globalHotkeys = {
       if (id)
         navigator.clipboard.writeText("((" + id + "))")
       else
-        notifyText("no block focused, cannot copy block id")
+        render.notifyText("no block focused, cannot copy block id")
     }
   },
   "move block to link": {
@@ -311,7 +307,7 @@ const globalHotkeys = {
     fn: () => {
       updateCursorSpanInfo()
       if (!editingLink) {
-        notifyText(`move the current block to the page link you're hovering. 
+        render.notifyText(`move the current block to the page link you're hovering. 
       No page link hovered `)
         return
       }
@@ -345,7 +341,7 @@ const globalHotkeys = {
     fn: () => {
       updateCursorSpanInfo()
       if (!editingLink) {
-        notifyText(`move the current block to the page link you're hovering. 
+        render.notifyText(`move the current block to the page link you're hovering. 
       No page link hovered `)
         return
       }
@@ -378,7 +374,7 @@ const globalHotkeys = {
   collapse: {
     key: "c", alt: true, fn: () => {
       if (!sessionState.isFocused) {
-        notifyText(`Collapse children of current block. 
+        render.notifyText(`Collapse children of current block. 
       No block focused`)
         return
       }
@@ -402,7 +398,7 @@ const globalHotkeys = {
         }
       }
       if (!sessionState.focusId) {
-        notifyText(`"remove empty blocks inside" needs a block to be selected`)
+        render.notifyText(`"remove empty blocks inside" needs a block to be selected`)
         return
       }
       removeEmtpyInside(sessionState.focusId)
@@ -947,7 +943,7 @@ disconnectedFileInput.addEventListener('change', (event) => {
         setActiveStore(roamJsonToStore(files[0].name, files[0].text))
         preprocessImportedStore()
       } else {
-        notifyText("Markdown import doesn't work yet. Upload a .json file, or a .zip file containing a .json file instead.", 12)
+        render.notifyText("Markdown import doesn't work yet. Upload a .json file, or a .zip file containing a .json file instead.", 12)
         throw new Error("md import doesn't work")
         const mds = []
         for (let file of files) {
@@ -970,7 +966,7 @@ disconnectedFileInput.addEventListener('change', (event) => {
   } else if (extension === "br") {
     addGraphBloxBr(name, file)
   } else {
-    notifyText("Traverse Text only accepts a .json file or .zip file containing 1 .json file") // add "md" once that works
+    render.notifyText("Traverse Text only accepts a .json file or .zip file containing 1 .json file") // add "md" once that works
   }
 })
 
@@ -1047,7 +1043,8 @@ idElements.reallyWantToLeave.children[0].addEventListener('click', mut.signOut)
 
 topButtons["Create New Graph"].addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
-    createAndSwitchToNewStore(event.target.value)
+    const graphName = event.target.value
+    mut.createEmpty(graphName)
   }
 })
 
@@ -1065,7 +1062,7 @@ idElements.loginForm.addEventListener("submit", async (event) => {
   idElements.loginPassword.value = ""
   const logInError = await mut.login(email, password)
   if (logInError) {
-    notifyText("Invalid email or password")// @TODO make good, specific error messages
+    render.notifyText("Invalid email or password")// @TODO make good, specific error messages
   } else {
     unfocusLoginSignup()
   }
@@ -1081,7 +1078,7 @@ idElements.signupForm.addEventListener("submit", async (event) => {
   idElements.signupPassword.value = ""
   const signUpError = await mut.signup(email, username, password)
   if (signUpError) {
-    notifyText("Invalid email, username, or password")
+    render.notifyText("Invalid email, username, or password")
   } else {
     unfocusLoginSignup()
   }
